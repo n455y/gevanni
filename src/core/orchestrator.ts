@@ -36,6 +36,7 @@ import {
   LoadJobsByScanIdCommand,
   GenerateReportCommand,
 } from "../commands/index.js";
+import { startTamperProxy } from "../plugins/proxy/http-proxy.js";
 
 // --- Branded type helpers ---
 
@@ -99,59 +100,64 @@ class Orchestrator {
     // 1. Process each scenario
     const allJobs: Job[] = [];
 
-    for (const scenario of scenarios) {
-      logger.debug(`Processing scenario: ${scenario.name}`);
+    const planProxy = await startTamperProxy([], commandBus);
+    try {
+      for (const scenario of scenarios) {
+        logger.debug(`Processing scenario: ${scenario.name}`);
 
-      // a. Dispatch ReplayCommand with empty instructions to get original request
-      const replayResult: { request: HttpRequest; response: HttpResponse } =
-        await commandBus.dispatch(new ReplayCommand(scenario, []));
+        // a. Dispatch ReplayCommand with empty instructions to get original request
+        const replayResult: { request: HttpRequest; response: HttpResponse } =
+          await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port }));
 
-      // b. Broadcast ParseRequestCommand to collect all InspectionParameters
-      const parseResults: InspectionParameter[][] = await commandBus.broadcast(
-        new ParseRequestCommand(replayResult.request),
-      );
-      const parameters: InspectionParameter[] = parseResults.flat();
-      logger.debug(
-        `Found ${parameters.length} inspection parameters for ${scenario.name}`,
-      );
-
-      // c. Broadcast CreateInspectorsCommand to collect all SignatureInspectors
-      const inspectorResults: SignatureInspector[][] =
-        await commandBus.broadcast(
-          new CreateInspectorsCommand(parameters),
+        // b. Broadcast ParseRequestCommand to collect all InspectionParameters
+        const parseResults: InspectionParameter[][] = await commandBus.broadcast(
+          new ParseRequestCommand(replayResult.request),
         );
-      const inspectors: SignatureInspector[] = inspectorResults.flat();
+        const parameters: InspectionParameter[] = parseResults.flat();
+        logger.debug(
+          `Found ${parameters.length} inspection parameters for ${scenario.name}`,
+        );
 
-      // d. For each inspector, create a Job
-      for (const inspector of inspectors) {
-        const jid = jobId();
-        const rid = requestId();
-        const job: Job = {
-          id: jid,
-          scenarioId: scenario.id,
-          requestId: rid,
-          signatureName: inspector.signatureName,
-          parameters: inspector.parameters,
-          status: "pending" as JobStatus,
-          finding: null,
-          error: null,
-          createdAt: now,
-          updatedAt: now,
-        };
+        // c. Broadcast CreateInspectorsCommand to collect all SignatureInspectors
+        const inspectorResults: SignatureInspector[][] =
+          await commandBus.broadcast(
+            new CreateInspectorsCommand(parameters),
+          );
+        const inspectors: SignatureInspector[] = inspectorResults.flat();
 
-        allJobs.push(job);
-        inspectorMap.set(jid, inspector);
+        // d. For each inspector, create a Job
+        for (const inspector of inspectors) {
+          const jid = jobId();
+          const rid = requestId();
+          const job: Job = {
+            id: jid,
+            scenarioId: scenario.id,
+            requestId: rid,
+            signatureName: inspector.signatureName,
+            parameters: inspector.parameters,
+            status: "pending" as JobStatus,
+            finding: null,
+            error: null,
+            createdAt: now,
+            updatedAt: now,
+          };
 
-        // Save job via storage
-        await commandBus.dispatch(new SaveJobCommand(job));
+          allJobs.push(job);
+          inspectorMap.set(jid, inspector);
 
-        // Emit job created event
-        eventBus.publish("plan:jobCreated", {
-          jobId: jid,
-          signatureName: inspector.signatureName,
-          scenarioName: scenario.name,
-        });
+          // Save job via storage
+          await commandBus.dispatch(new SaveJobCommand(job));
+
+          // Emit job created event
+          eventBus.publish("plan:jobCreated", {
+            jobId: jid,
+            signatureName: inspector.signatureName,
+            scenarioName: scenario.name,
+          });
+        }
       }
+    } finally {
+      planProxy.close();
     }
 
     // 2. Save scan state
@@ -231,9 +237,14 @@ class Orchestrator {
           const scenario: Scenario = await commandBus.dispatch(
             new LoadScenarioCommand(job.scenarioId),
           );
-          return commandBus.dispatch(
-            new ReplayCommand(scenario, instructions),
-          );
+          const proxy = await startTamperProxy(instructions, commandBus);
+          try {
+            return commandBus.dispatch(
+              new ReplayCommand(scenario, { instructions, proxyPort: proxy.port }),
+            );
+          } finally {
+            proxy.close();
+          }
         };
 
         // Run inspection
