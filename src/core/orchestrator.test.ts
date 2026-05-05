@@ -131,7 +131,7 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      // Use empty scenarioPaths since we test with mock command handlers
+      // No scenarios provided
       const result = await orchestrator.plan([]);
 
       expect(result.scanId).toBeDefined();

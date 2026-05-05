@@ -6,14 +6,14 @@ import type { LogLevel } from "../core/logger.js";
 interface ResolvedConfig {
   concurrency: number;
   plugins: PluginConfig[];
-  scenarioPaths: string[];
+  scenarioSources: unknown[];
   logLevel: LogLevel;
 }
 
 interface RawConfig {
   concurrency?: number;
   plugins?: PluginConfig[];
-  scenarioPaths?: string[];
+  scenarioSources?: unknown[];
   logLevel?: LogLevel;
 }
 
@@ -24,7 +24,7 @@ const DEFAULT_CONFIG: ResolvedConfig = {
   concurrency: DEFAULT_CONCURRENCY,
   logLevel: DEFAULT_LOG_LEVEL,
   plugins: [],
-  scenarioPaths: [],
+  scenarioSources: [],
 };
 
 function loadConfig(
@@ -46,7 +46,7 @@ function loadConfig(
     concurrency: cliOverrides?.concurrency ?? fileConfig.concurrency ?? DEFAULT_CONFIG.concurrency,
     logLevel: cliOverrides?.logLevel ?? fileConfig.logLevel ?? DEFAULT_CONFIG.logLevel,
     plugins: cliOverrides?.plugins ?? fileConfig.plugins ?? DEFAULT_CONFIG.plugins,
-    scenarioPaths: cliOverrides?.scenarioPaths ?? fileConfig.scenarioPaths ?? DEFAULT_CONFIG.scenarioPaths,
+    scenarioSources: cliOverrides?.scenarioSources ?? fileConfig.scenarioSources ?? DEFAULT_CONFIG.scenarioSources,
   };
 
   return resolved;

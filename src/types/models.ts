@@ -123,7 +123,7 @@ interface ScanState {
 interface ScanConfig {
   concurrency: number;
   plugins: PluginConfig[];
-  scenarioPaths: string[];
+  scenarioSources: unknown[];
 }
 
 interface PluginConfig {

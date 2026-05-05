@@ -28,7 +28,7 @@ describe("loadConfig", () => {
       concurrency: 5,
       logLevel: "info",
       plugins: [],
-      scenarioPaths: [],
+      scenarioSources: [],
     });
   });
 
@@ -42,7 +42,7 @@ describe("loadConfig", () => {
         concurrency: 5,
         logLevel: "info",
         plugins: [],
-        scenarioPaths: [],
+        scenarioSources: [],
       });
     } finally {
       process.chdir(originalCwd);
@@ -53,7 +53,7 @@ describe("loadConfig", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarioPaths: ["./collections/"],
+      scenarioSources: ["./collections/"],
       plugins: [
         { type: "scenarioReplayer", name: "postman", options: {} },
         { type: "signature", name: "reflected-xss", options: {} },
@@ -63,7 +63,7 @@ describe("loadConfig", () => {
     const config = loadConfig(configPath);
     expect(config.concurrency).toBe(3);
     expect(config.logLevel).toBe("debug");
-    expect(config.scenarioPaths).toEqual(["./collections/"]);
+    expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toHaveLength(2);
     expect(config.plugins[0]).toEqual({
       type: "scenarioReplayer",
@@ -81,14 +81,14 @@ describe("loadConfig", () => {
     expect(config.concurrency).toBe(10);
     expect(config.logLevel).toBe("info");
     expect(config.plugins).toEqual([]);
-    expect(config.scenarioPaths).toEqual([]);
+    expect(config.scenarioSources).toEqual([]);
   });
 
   it("CLI overrides take precedence over file values", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarioPaths: ["./collections/"],
+      scenarioSources: ["./collections/"],
       plugins: [{ type: "proxy", name: "http-proxy", options: {} }],
     });
 
@@ -100,7 +100,7 @@ describe("loadConfig", () => {
     expect(config.concurrency).toBe(20);
     expect(config.logLevel).toBe("error");
     // File values used for non-overridden fields
-    expect(config.scenarioPaths).toEqual(["./collections/"]);
+    expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toEqual([
       { type: "proxy", name: "http-proxy", options: {} },
     ]);
@@ -110,12 +110,12 @@ describe("loadConfig", () => {
     const configPath = path.join(tmpDir, "nonexistent.json");
     const config = loadConfig(configPath, {
       concurrency: 100,
-      scenarioPaths: ["./custom/"],
+      scenarioSources: ["./custom/"],
     });
 
     expect(config.concurrency).toBe(100);
     expect(config.logLevel).toBe("info");
-    expect(config.scenarioPaths).toEqual(["./custom/"]);
+    expect(config.scenarioSources).toEqual(["./custom/"]);
     expect(config.plugins).toEqual([]);
   });
 
@@ -128,7 +128,7 @@ describe("loadConfig", () => {
       concurrency: 5,
       logLevel: "info",
       plugins: [],
-      scenarioPaths: [],
+      scenarioSources: [],
     });
   });
 
@@ -140,7 +140,7 @@ describe("loadConfig", () => {
       concurrency: 5,
       logLevel: "info",
       plugins: [],
-      scenarioPaths: [],
+      scenarioSources: [],
     });
   });
 
@@ -148,7 +148,7 @@ describe("loadConfig", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarioPaths: ["./collections/"],
+      scenarioSources: ["./collections/"],
       plugins: [
         { type: "scenarioReplayer", name: "postman", options: {} },
         { type: "proxy", name: "http-proxy", options: {} },
@@ -169,7 +169,7 @@ describe("loadConfig", () => {
     const config = loadConfig(configPath);
     expect(config.concurrency).toBe(3);
     expect(config.logLevel).toBe("debug");
-    expect(config.scenarioPaths).toEqual(["./collections/"]);
+    expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toHaveLength(13);
   });
 });

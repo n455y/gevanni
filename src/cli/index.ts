@@ -19,12 +19,12 @@ interface CliOptions {
 
 async function loadScenarios(
   loaders: ScenarioLoaderPlugin[],
-  scenarioPaths: string[],
+  scenarioSources: unknown[],
 ): Promise<Scenario[]> {
   const scenarios: Scenario[] = [];
-  for (const path of scenarioPaths) {
+  for (const source of scenarioSources) {
     for (const loader of loaders) {
-      const loaded = await loader.load(path);
+      const loaded = await loader.load(source);
       scenarios.push(...loaded);
     }
   }
@@ -95,7 +95,7 @@ program
       opts.config,
       overrides,
     );
-    const scenarios = await loadScenarios(loaders, config.scenarioPaths);
+    const scenarios = await loadScenarios(loaders, config.scenarioSources);
     const { scanId, inspectors } = await orchestrator.plan(scenarios);
     await orchestrator.scan(scanId, inspectors, config.concurrency);
     await orchestrator.report(scanId);
@@ -113,7 +113,7 @@ program
       opts.config,
       buildOverrides(opts),
     );
-    const scenarios = await loadScenarios(loaders, config.scenarioPaths);
+    const scenarios = await loadScenarios(loaders, config.scenarioSources);
     await orchestrator.plan(scenarios);
   });
 
