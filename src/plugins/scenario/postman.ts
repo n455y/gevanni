@@ -1,4 +1,4 @@
-import type { HttpRequest, Exchange, Scenario } from "../../types/models.js";
+import type { Exchange, Scenario } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ReplayCommand } from "../../commands/replay.js";
 import { LoadExchangesCommand } from "../../commands/exchange.js";
@@ -29,35 +29,6 @@ interface PostmanItem {
   request: PostmanRequest;
 }
 
-// --- Helpers ---
-
-function buildRequest(scenario: Scenario): HttpRequest {
-  const source = scenario.source as { item: PostmanItem };
-  const item = source.item;
-  const req = item.request;
-
-  const url = typeof req.url === "string" ? req.url : req.url.raw;
-
-  const headers: Record<string, string> = {};
-  if (Array.isArray(req.header)) {
-    for (const h of req.header) {
-      headers[h.key] = h.value;
-    }
-  }
-
-  let body: Buffer | null = null;
-  if (req.body?.raw != null) {
-    body = Buffer.from(req.body.raw, "utf-8");
-  }
-
-  return {
-    method: req.method,
-    url,
-    headers,
-    body,
-  };
-}
-
 // --- Newman Runner ---
 
 function runNewman(
@@ -65,34 +36,37 @@ function runNewman(
   proxyPort: number,
   replayId: string,
 ): Promise<void> {
-  const source = scenario.source as { item: PostmanItem };
-  const item = source.item;
-  const req = item.request;
+  const source = scenario.source as { items: PostmanItem[] };
+  const items = source.items;
 
-  const url = typeof req.url === "string" ? req.url : req.url.raw;
+  const newmanItems = items.map((item, index) => {
+    const req = item.request;
+    const url = typeof req.url === "string" ? req.url : req.url.raw;
 
-  const header = [
-    ...(Array.isArray(req.header) ? req.header : []),
-    { key: "X-Gevanni-Exchange-Id", value: replayId },
-  ];
+    const isLast = index === items.length - 1;
+    const header = [
+      ...(Array.isArray(req.header) ? req.header : []),
+      ...(isLast ? [{ key: "X-Gevanni-Exchange-Id", value: replayId }] : []),
+    ];
 
-  const newmanItem = {
-    name: scenario.name,
-    request: {
-      method: req.method,
-      url,
-      header,
-      ...(req.body ? { body: req.body } : {}),
-    },
-  };
+    return {
+      name: `${scenario.name}-${index}`,
+      request: {
+        method: req.method,
+        url,
+        header,
+        ...(req.body ? { body: req.body } : {}),
+      },
+    };
+  });
 
   const collection = {
     info: {
-      name: "gevanni-single-request",
+      name: "gevanni-multi-request",
       schema:
         "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     },
-    item: [newmanItem],
+    item: newmanItems,
   };
 
   const proxyUrl = `http://127.0.0.1:${proxyPort}`;
@@ -127,18 +101,19 @@ class PostmanPlugin implements Plugin {
     const { commandBus } = context;
     context.commandBus.register(ReplayCommand, async (cmd: ReplayCommand) => {
       const { scenario, config } = cmd;
-      const request = buildRequest(scenario);
       await runNewman(scenario, config.proxyPort, config.replayId);
       const exchanges = await commandBus.dispatch<Exchange[]>(
         new LoadExchangesCommand(config.replayId),
       );
       if (exchanges.length === 0) {
-        throw new Error(`No exchange captured for replayId: ${config.replayId}`);
+        throw new Error(
+          `No exchange captured for replayId: ${config.replayId}`,
+        );
       }
-      return exchanges[0];
+      return exchanges;
     });
   }
 }
 
-export { PostmanPlugin, buildRequest, runNewman };
+export { PostmanPlugin, runNewman };
 export type { PostmanHeader, PostmanBody, PostmanRequest, PostmanItem };
