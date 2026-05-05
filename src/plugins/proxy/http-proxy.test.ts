@@ -6,16 +6,31 @@ import { HttpProxyPlugin } from "./http-proxy.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import { startTamperProxy } from "./http-proxy.js";
-import type { TamperInstruction } from "../../types/models.js";
+import type { TamperInstruction, HttpRequest, HttpResponse } from "../../types/models.js";
+import type { Exchange } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
-import type { HttpRequest, HttpResponse } from "../../types/models.js";
+import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
 let serverPort: number;
 
+const testExchanges = new Map<string, Exchange[]>();
+
 beforeEach(async () => {
   commandBus = new InMemoryCommandBus();
+
+  testExchanges.clear();
+
+  commandBus.register(SaveExchangeCommand, async (cmd: SaveExchangeCommand) => {
+    const existing = testExchanges.get(cmd.replayId) ?? [];
+    existing.push(cmd.exchange);
+    testExchanges.set(cmd.replayId, existing);
+  });
+
+  commandBus.register(LoadExchangesCommand, async (cmd: LoadExchangesCommand) => {
+    return testExchanges.get(cmd.replayId) ?? [];
+  });
 
   // Start a local HTTP server for integration testing
   server = http.createServer((req, res) => {
@@ -309,6 +324,98 @@ describe("startTamperProxy", () => {
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
     expect(body.url).toBe("/test?q=%3Cscript%3E");
+
+    proxy.close();
+  });
+
+  it("saves exchange when X-Gevanni-Replay-Id header is present", async () => {
+    const replayId = "replay-test-001";
+    const proxy = await startTamperProxy([], commandBus);
+
+    commandBus.register(
+      ApplyTamperCommand,
+      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+    );
+
+    const response = await new Promise<{ statusCode: number; body: string }>(
+      (resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: "127.0.0.1",
+            port: proxy.port,
+            method: "GET",
+            path: `http://127.0.0.1:${serverPort}/exchange-test`,
+            headers: {
+              host: `127.0.0.1:${serverPort}`,
+              "x-gevanni-replay-id": replayId,
+            },
+          },
+          (res) => {
+            const chunks: Buffer[] = [];
+            res.on("data", (chunk: Buffer) => chunks.push(chunk));
+            res.on("end", () => {
+              resolve({
+                statusCode: res.statusCode ?? 0,
+                body: Buffer.concat(chunks).toString("utf-8"),
+              });
+            });
+          },
+        );
+        req.on("error", reject);
+        req.end();
+      },
+    );
+
+    expect(response.statusCode).toBe(200);
+
+    const exchanges = await commandBus.dispatch<Exchange[]>(
+      new LoadExchangesCommand(replayId),
+    );
+    expect(exchanges).toHaveLength(1);
+    expect(exchanges[0].request.method).toBe("GET");
+    expect(exchanges[0].response.statusCode).toBe(200);
+
+    proxy.close();
+  });
+
+  it("does not save exchange when X-Gevanni-Replay-Id header is absent", async () => {
+    const proxy = await startTamperProxy([], commandBus);
+
+    commandBus.register(
+      ApplyTamperCommand,
+      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+    );
+
+    const response = await new Promise<{ statusCode: number; body: string }>(
+      (resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: "127.0.0.1",
+            port: proxy.port,
+            method: "GET",
+            path: `http://127.0.0.1:${serverPort}/no-header-test`,
+            headers: { host: `127.0.0.1:${serverPort}` },
+          },
+          (res) => {
+            const chunks: Buffer[] = [];
+            res.on("data", (chunk: Buffer) => chunks.push(chunk));
+            res.on("end", () => {
+              resolve({
+                statusCode: res.statusCode ?? 0,
+                body: Buffer.concat(chunks).toString("utf-8"),
+              });
+            });
+          },
+        );
+        req.on("error", reject);
+        req.end();
+      },
+    );
+
+    expect(response.statusCode).toBe(200);
+
+    // Verify no exchanges were saved
+    expect(testExchanges.size).toBe(0);
 
     proxy.close();
   });

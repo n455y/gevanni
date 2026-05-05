@@ -1,10 +1,16 @@
 import http from "node:http";
 import https from "node:https";
-import type { HttpRequest, HttpResponse, TamperInstruction } from "../../types/models.js";
+import type {
+  HttpRequest,
+  HttpResponse,
+  TamperInstruction,
+  Exchange,
+} from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import type { CommandBus } from "../../core/command-bus.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { SaveExchangeCommand } from "../../commands/exchange.js";
 
 function sendRequest(request: HttpRequest): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
@@ -35,8 +41,7 @@ function sendRequest(request: HttpRequest): Promise<HttpResponse> {
           }
         }
 
-        const body =
-          chunks.length > 0 ? Buffer.concat(chunks) : null;
+        const body = chunks.length > 0 ? Buffer.concat(chunks) : null;
 
         resolve({
           statusCode: res.statusCode ?? 0,
@@ -84,6 +89,9 @@ function startTamperProxy(
       }
       delete headers["proxy-connection"];
 
+      const replayId = headers["x-gevanni-replay-id"];
+      delete headers["x-gevanni-replay-id"];
+
       const httpRequest: HttpRequest = {
         method: req.method!,
         url: req.url!,
@@ -105,11 +113,47 @@ function startTamperProxy(
           headers: { ...tampered.headers, host: targetUrl.host },
         },
         (proxyRes) => {
-          res.writeHead(
-            proxyRes.statusCode!,
-            proxyRes.headers as Record<string, string>,
-          );
-          proxyRes.pipe(res);
+          if (replayId) {
+            // Buffer response for exchange capture
+            const chunks: Buffer[] = [];
+            proxyRes.on("data", (chunk: Buffer) => chunks.push(chunk));
+            proxyRes.on("end", async () => {
+              const responseBody =
+                chunks.length > 0 ? Buffer.concat(chunks) : null;
+
+              const responseHeaders: Record<string, string> = {};
+              for (const [key, value] of Object.entries(proxyRes.headers)) {
+                if (typeof value === "string") {
+                  responseHeaders[key] = value;
+                } else if (Array.isArray(value)) {
+                  responseHeaders[key] = value.join(", ");
+                }
+              }
+
+              const exchange: Exchange = {
+                request: tampered,
+                response: {
+                  statusCode: proxyRes.statusCode ?? 0,
+                  headers: responseHeaders,
+                  body: responseBody,
+                },
+              };
+              await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
+
+              res.writeHead(
+                proxyRes.statusCode!,
+                proxyRes.headers as Record<string, string>,
+              );
+              res.end(responseBody ?? Buffer.alloc(0));
+            });
+          } else {
+            // Stream response without buffering
+            res.writeHead(
+              proxyRes.statusCode!,
+              proxyRes.headers as Record<string, string>,
+            );
+            proxyRes.pipe(res);
+          }
         },
       );
 
