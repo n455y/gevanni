@@ -1,4 +1,7 @@
 declare module "newman" {
+  import type { Agent as HttpAgent } from "node:http";
+  import type { Agent as HttpsAgent } from "node:https";
+
   interface NewmanRunOptions {
     collection: Record<string, unknown>;
     reporters?: string[];
@@ -13,6 +16,10 @@ declare module "newman" {
     ignoreRedirects?: boolean;
     insecure?: boolean;
     bail?: boolean | string[];
+    requestAgents?: {
+      http?: HttpAgent;
+      https?: HttpsAgent;
+    };
     suppressExitCode?: boolean;
   }
 
