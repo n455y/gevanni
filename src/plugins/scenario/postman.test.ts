@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import http from "node:http";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { PostmanPlugin, buildRequest } from "./postman.js";
+import { PostmanPlugin, buildRequest, runNewman } from "./postman.js";
 import { ReplayCommand } from "../../commands/replay.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import type { HttpRequest, HttpResponse, Scenario, TamperInstruction } from "../../types/models.js";
@@ -91,7 +91,7 @@ function makeTamperInstruction(): TamperInstruction {
 }
 
 describe("PostmanPlugin", () => {
-  it("sends request directly when no instructions are provided", async () => {
+  it("sends request directly when no instructions are provided", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
     await plugin.init({
       commandBus,
@@ -117,7 +117,7 @@ describe("PostmanPlugin", () => {
     expect(body.url).toBe("/test");
   });
 
-  it("delegates to InterceptCommand when instructions are provided", async () => {
+  it("delegates to InterceptCommand when instructions are provided", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
     await plugin.init({
       commandBus,
@@ -157,7 +157,7 @@ describe("PostmanPlugin", () => {
     expect(result.response.headers["x-mock"]).toBe("true");
   });
 
-  it("sends POST request with body from scenario source", async () => {
+  it("sends POST request with body from scenario source", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
     await plugin.init({
       commandBus,
@@ -303,5 +303,61 @@ describe("buildRequest", () => {
     // Empty raw string produces an empty Buffer
     expect(request.body).not.toBeNull();
     expect((request.body as Buffer).toString("utf-8")).toBe("");
+  });
+});
+
+describe("runNewman", () => {
+  it("executes a GET request and returns the response", { timeout: 30_000 }, async () => {
+    const scenario: Scenario = {
+      id: "s1" as Brand<string, "ScenarioId">,
+      name: "Test Newman GET",
+      type: "postman" as Brand<string, "ScenarioType">,
+      source: {
+        item: {
+          request: {
+            method: "GET",
+            url: { raw: `http://127.0.0.1:${serverPort}/test` },
+          },
+        },
+      },
+    };
+
+    const response = await runNewman(scenario);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["x-test"]).toBe("ok");
+
+    const body = JSON.parse(
+      (response.body as Buffer).toString("utf-8"),
+    );
+    expect(body.method).toBe("GET");
+    expect(body.url).toBe("/test");
+  });
+
+  it("executes a POST request with body", { timeout: 30_000 }, async () => {
+    const scenario: Scenario = {
+      id: "s2" as Brand<string, "ScenarioId">,
+      name: "Test Newman POST",
+      type: "postman" as Brand<string, "ScenarioType">,
+      source: {
+        item: {
+          request: {
+            method: "POST",
+            url: { raw: `http://127.0.0.1:${serverPort}/submit` },
+            header: [{ key: "Content-Type", value: "application/json" }],
+            body: { mode: "raw", raw: '{"key":"value"}' },
+          },
+        },
+      },
+    };
+
+    const response = await runNewman(scenario);
+
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(
+      (response.body as Buffer).toString("utf-8"),
+    );
+    expect(body.method).toBe("POST");
+    expect(body.body).toBe('{"key":"value"}');
   });
 });

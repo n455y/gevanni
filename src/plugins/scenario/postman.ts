@@ -1,9 +1,8 @@
-import http from "node:http";
-import https from "node:https";
 import type { HttpRequest, HttpResponse, Scenario } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ReplayCommand } from "../../commands/replay.js";
 import { InterceptCommand } from "../../commands/intercept.js";
+import newman from "newman";
 
 // --- Postman Collection types (v2.1 subset) ---
 
@@ -60,54 +59,68 @@ function buildRequest(scenario: Scenario): HttpRequest {
   };
 }
 
-function sendRequest(request: HttpRequest): Promise<HttpResponse> {
+function runNewman(scenario: Scenario): Promise<HttpResponse> {
+  const source = scenario.source as { item: PostmanItem };
+  const item = source.item;
+  const req = item.request;
+
+  // Newman's runtime does not resolve { raw: "..." } URL objects correctly,
+  // so we must pass the URL as a plain string.
+  const url = typeof req.url === "string" ? req.url : req.url.raw;
+
+  const newmanItem = {
+    name: scenario.name,
+    request: {
+      method: req.method,
+      url,
+      ...(Array.isArray(req.header) && req.header.length > 0
+        ? { header: req.header }
+        : {}),
+      ...(req.body ? { body: req.body } : {}),
+    },
+  };
+
+  const collection = {
+    info: {
+      name: "gevanni-single-request",
+      schema:
+        "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    },
+    item: [newmanItem],
+  };
+
   return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(request.url);
-    const isHttps = parsedUrl.protocol === "https:";
-    const lib = isHttps ? https : http;
+    newman.run({ collection, reporters: [] }, (err, summary) => {
+      if (err) {
+        reject(err);
+        return;
+      }
 
-    const options: https.RequestOptions = {
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port || (isHttps ? 443 : 80),
-      path: parsedUrl.pathname + parsedUrl.search,
-      method: request.method,
-      headers: { ...request.headers },
-    };
+      const exec = summary.run.executions[0];
 
-    const req = lib.request(options, (res) => {
-      const chunks: Buffer[] = [];
-      res.on("data", (chunk: Buffer) => {
-        chunks.push(chunk);
+      if (exec.requestError) {
+        reject(exec.requestError);
+        return;
+      }
+
+      const res = exec.response;
+      if (!res) {
+        reject(new Error("No response returned from newman"));
+        return;
+      }
+
+      const headers: Record<string, string> = {};
+      const headerMembers = res.headers?.members ?? [];
+      for (const h of headerMembers) {
+        headers[h.key.toLowerCase()] = h.value;
+      }
+
+      resolve({
+        statusCode: res.code,
+        headers,
+        body: Buffer.from(res.stream),
       });
-      res.on("end", () => {
-        const resHeaders: Record<string, string> = {};
-        for (const [key, value] of Object.entries(res.headers)) {
-          if (typeof value === "string") {
-            resHeaders[key] = value;
-          } else if (Array.isArray(value)) {
-            resHeaders[key] = value.join(", ");
-          }
-        }
-
-        const resBody =
-          chunks.length > 0 ? Buffer.concat(chunks) : null;
-
-        resolve({
-          statusCode: res.statusCode ?? 0,
-          headers: resHeaders,
-          body: resBody,
-        });
-      });
-      res.on("error", reject);
     });
-
-    req.on("error", reject);
-
-    if (request.body) {
-      req.write(request.body);
-    }
-
-    req.end();
   });
 }
 
@@ -133,11 +146,11 @@ class PostmanPlugin implements Plugin {
       }
 
       // Send directly if no tampering needed
-      const response = await sendRequest(request);
+      const response = await runNewman(scenario);
       return { request, response };
     });
   }
 }
 
-export { PostmanPlugin, buildRequest, sendRequest };
+export { PostmanPlugin, buildRequest, runNewman };
 export type { PostmanHeader, PostmanBody, PostmanRequest, PostmanItem };
