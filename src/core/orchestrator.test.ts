@@ -135,8 +135,53 @@ describe("Orchestrator", () => {
       const result = await orchestrator.plan([]);
 
       expect(result.scanId).toBeDefined();
-      expect(result.inspectors.size).toBe(0); // No scenarios loaded from empty paths
+      expect(result.inspectors.size).toBe(0); // No scenarios provided
       expect(events).toContain("scan:started");
+    });
+
+    it("processes provided scenarios and creates jobs", async () => {
+      const mockScenario: Scenario = {
+        id: "sc-1" as Brand<string, "ScenarioId">,
+        name: "Test Scenario",
+        type: "postman" as Brand<string, "ScenarioType">,
+        source: {
+          item: {
+            request: { method: "GET", url: { raw: "https://example.com" } },
+          },
+        },
+      };
+
+      commandBus.register(ReplayCommand, async () => ({
+        request: mockRequest,
+        response: mockResponse,
+      }));
+      commandBus.register(ParseRequestCommand, async () => mockParameters);
+
+      const mockInspector = new MockInspector(mockParameters);
+      commandBus.register(CreateInspectorsCommand, async () => [mockInspector]);
+
+      const savedJobs: Job[] = [];
+      commandBus.register(SaveJobCommand, async (cmd: SaveJobCommand) => {
+        savedJobs.push(cmd.job);
+      });
+      commandBus.register(SaveScanStateCommand, async () => {});
+
+      const events: string[] = [];
+      eventBus.subscribe("plan:jobCreated", () => { events.push("plan:jobCreated"); });
+
+      const orchestrator = new Orchestrator({
+        commandBus,
+        eventBus,
+        logger,
+      });
+
+      const result = await orchestrator.plan([mockScenario]);
+
+      expect(savedJobs).toHaveLength(1);
+      expect(savedJobs[0].scenarioId).toBe("sc-1");
+      expect(savedJobs[0].signatureName).toBe("mock-sig");
+      expect(result.inspectors.size).toBe(1);
+      expect(events).toContain("plan:jobCreated");
     });
 
     it("saves scan state with planning status", async () => {
