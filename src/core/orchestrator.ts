@@ -106,8 +106,7 @@ class Orchestrator {
 
         // a. Dispatch ReplayCommand with empty instructions to get original request
         const rid = requestId();
-        const replayResult: Exchange =
-          await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port, replayId: rid }));
+        const replayResult = (await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port, replayId: rid })) as Exchange[])[0];
 
         // b. Broadcast ParseRequestCommand to collect all InspectionParameters
         const parseResults: InspectionParameter[][] = await commandBus.broadcast(
@@ -239,9 +238,10 @@ class Orchestrator {
           );
           const proxy = await startTamperProxy(instructions, commandBus);
           try {
-            return commandBus.dispatch(
+            const [exchange] = await commandBus.dispatch(
               new ReplayCommand(scenario, { instructions, proxyPort: proxy.port, replayId: job.id as string }),
-            );
+            ) as Exchange[];
+            return exchange;
           } finally {
             proxy.close();
           }

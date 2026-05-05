@@ -102,10 +102,10 @@ describe("Orchestrator", () => {
   describe("plan phase", () => {
     it("creates jobs and inspectors for scenarios", async () => {
       // Register command handlers
-      commandBus.register(ReplayCommand, async () => ({
+      commandBus.register(ReplayCommand, async () => [{
         request: mockRequest,
         response: mockResponse,
-      }));
+      }]);
 
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
@@ -145,16 +145,16 @@ describe("Orchestrator", () => {
         name: "Test Scenario",
         type: "postman" as Brand<string, "ScenarioType">,
         source: {
-          item: {
+          items: [{
             request: { method: "GET", url: { raw: "https://example.com" } },
-          },
+          }],
         },
       };
 
-      commandBus.register(ReplayCommand, async () => ({
+      commandBus.register(ReplayCommand, async () => [{
         request: mockRequest,
         response: mockResponse,
-      }));
+      }]);
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
       const mockInspector = new MockInspector(mockParameters);
@@ -185,10 +185,10 @@ describe("Orchestrator", () => {
     });
 
     it("saves scan state with planning status", async () => {
-      commandBus.register(ReplayCommand, async () => ({
+      commandBus.register(ReplayCommand, async () => [{
         request: mockRequest,
         response: mockResponse,
-      }));
+      }]);
       commandBus.register(ParseRequestCommand, async () => []);
       commandBus.register(CreateInspectorsCommand, async () => []);
       commandBus.register(SaveJobCommand, async () => {});
@@ -239,12 +239,12 @@ describe("Orchestrator", () => {
         id: mockJob.scenarioId,
         name: "test",
         type: "postman" as Brand<string, "ScenarioType">,
-        source: { item: { request: { method: "GET", url: { raw: "https://example.com" } } } },
+        source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
       }));
-      commandBus.register(ReplayCommand, async () => ({
+      commandBus.register(ReplayCommand, async () => [{
         request: mockRequest,
         response: mockResponse,
-      }));
+      }]);
 
       eventBus.subscribe("scan:jobStarted", () => { events.push("started"); });
       eventBus.subscribe("scan:jobCompleted", () => { events.push("completed"); });
@@ -304,12 +304,12 @@ describe("Orchestrator", () => {
         id: mockJob.scenarioId,
         name: "test",
         type: "postman" as Brand<string, "ScenarioType">,
-        source: { item: { request: { method: "GET", url: { raw: "https://example.com" } } } },
+        source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
       }));
-      commandBus.register(ReplayCommand, async () => ({
+      commandBus.register(ReplayCommand, async () => [{
         request: mockRequest,
         response: mockResponse,
-      }));
+      }]);
 
       eventBus.subscribe("scan:jobError", () => { events.push("error"); });
 
