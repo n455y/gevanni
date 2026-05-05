@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createJsonParserPlugin } from "./json-parser.js";
+import { JsonParserPlugin } from "./json-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type {
   HttpRequest,
@@ -38,7 +38,7 @@ function flatParams(results: InspectionParameter[][]): AnyJsonParam[] {
 
 describe("JsonParserPlugin", () => {
   it("parses nested JSON body and extracts parameters with paths", async () => {
-    const plugin = createJsonParserPlugin();
+    const plugin = new JsonParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -94,7 +94,7 @@ describe("JsonParserPlugin", () => {
   });
 
   it("returns empty array when content-type is not application/json", async () => {
-    const plugin = createJsonParserPlugin();
+    const plugin = new JsonParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -116,7 +116,7 @@ describe("JsonParserPlugin", () => {
   });
 
   it("returns empty array when body is null", async () => {
-    const plugin = createJsonParserPlugin();
+    const plugin = new JsonParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -138,7 +138,7 @@ describe("JsonParserPlugin", () => {
   });
 
   it("returns empty array for invalid JSON", async () => {
-    const plugin = createJsonParserPlugin();
+    const plugin = new JsonParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -154,7 +154,7 @@ describe("JsonParserPlugin", () => {
   });
 
   it("parses JSON arrays with indexed paths", async () => {
-    const plugin = createJsonParserPlugin();
+    const plugin = new JsonParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -200,7 +200,7 @@ describe("JsonParserPlugin", () => {
   });
 
   it("handles boolean and null primitives", async () => {
-    const plugin = createJsonParserPlugin();
+    const plugin = new JsonParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

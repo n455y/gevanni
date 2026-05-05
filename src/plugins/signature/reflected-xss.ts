@@ -33,29 +33,27 @@ class ReflectedXssInspector implements SignatureInspector {
   }
 }
 
-function createReflectedXssPlugin(): Plugin {
-  return {
-    name: "reflected-xss",
+class ReflectedXssPlugin implements Plugin {
+  readonly name = "reflected-xss";
 
-    async init(context: PluginContext): Promise<void> {
-      context.commandBus.register(
-        CreateInspectorsCommand,
-        async (cmd: CreateInspectorsCommand) => {
-          const inspectors: SignatureInspector[] = [];
-          for (const param of cmd.parameters) {
-            if (
-              param.type === ("query" as Brand<"query", "ParameterType">) ||
-              param.type === ("jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">) ||
-              param.type === ("form" as Brand<"form", "ParameterType">)
-            ) {
-              inspectors.push(new ReflectedXssInspector(param));
-            }
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      CreateInspectorsCommand,
+      async (cmd: CreateInspectorsCommand) => {
+        const inspectors: SignatureInspector[] = [];
+        for (const param of cmd.parameters) {
+          if (
+            param.type === ("query" as Brand<"query", "ParameterType">) ||
+            param.type === ("jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">) ||
+            param.type === ("form" as Brand<"form", "ParameterType">)
+          ) {
+            inspectors.push(new ReflectedXssInspector(param));
           }
-          return inspectors;
-        },
-      );
-    },
-  };
+        }
+        return inspectors;
+      },
+    );
+  }
 }
 
-export { ReflectedXssInspector, createReflectedXssPlugin };
+export { ReflectedXssInspector, ReflectedXssPlugin };

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createQueryTamperPlugin } from "./query-tamper.js";
+import { QueryTamperPlugin } from "./query-tamper.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import type { Brand, TamperMethod } from "../../types/branded.js";
@@ -36,7 +36,7 @@ function makeQueryInstruction(
 
 describe("QueryTamperPlugin", () => {
   it("replaces query parameter value with payload", async () => {
-    const plugin = createQueryTamperPlugin();
+    const plugin = new QueryTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -69,7 +69,7 @@ describe("QueryTamperPlugin", () => {
   });
 
   it("appends payload to existing query parameter value", async () => {
-    const plugin = createQueryTamperPlugin();
+    const plugin = new QueryTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -99,7 +99,7 @@ describe("QueryTamperPlugin", () => {
   });
 
   it("prepends payload to existing query parameter value", async () => {
-    const plugin = createQueryTamperPlugin();
+    const plugin = new QueryTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -129,7 +129,7 @@ describe("QueryTamperPlugin", () => {
   });
 
   it("returns request unchanged when no query instructions", async () => {
-    const plugin = createQueryTamperPlugin();
+    const plugin = new QueryTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -166,7 +166,7 @@ describe("QueryTamperPlugin", () => {
   });
 
   it("handles multiple query parameters", async () => {
-    const plugin = createQueryTamperPlugin();
+    const plugin = new QueryTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

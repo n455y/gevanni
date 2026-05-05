@@ -46,38 +46,38 @@ function computeSummary(jobs: Job[]): ReportSummary {
   };
 }
 
-function createJsonReporterPlugin(): Plugin {
-  return {
-    name: "json-reporter",
+class JsonReporterPlugin implements Plugin {
+  readonly name = "json-reporter";
+  private outputPath: string | undefined;
 
-    async init(ctx: PluginContext): Promise<void> {
-      const cfg = ctx.config as JsonReporterConfig;
+  async init(ctx: PluginContext): Promise<void> {
+    const cfg = ctx.config as JsonReporterConfig;
+    this.outputPath = cfg.outputPath;
 
-      ctx.commandBus.register(GenerateReportCommand, async (cmd) => {
-        const { scanState, jobs } = cmd.payload;
+    ctx.commandBus.register(GenerateReportCommand, async (cmd) => {
+      const { scanState, jobs } = cmd.payload;
 
-        const summary = computeSummary(jobs);
+      const summary = computeSummary(jobs);
 
-        const report: Report = {
-          scanState,
-          jobs,
-          summary,
-        };
+      const report: Report = {
+        scanState,
+        jobs,
+        summary,
+      };
 
-        const outputPath =
-          cfg.outputPath ??
-          `gevanni-report-${scanState.id as string}.json`;
+      const resolvedPath =
+        this.outputPath ??
+        `gevanni-report-${scanState.id as string}.json`;
 
-        const dir = join(outputPath, "..");
-        await fs.mkdir(dir, { recursive: true });
-        await fs.writeFile(
-          outputPath,
-          JSON.stringify(report, null, 2),
-          "utf-8",
-        );
-      });
-    },
-  };
+      const dir = join(resolvedPath, "..");
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
+        resolvedPath,
+        JSON.stringify(report, null, 2),
+        "utf-8",
+      );
+    });
+  }
 }
 
-export { createJsonReporterPlugin };
+export { JsonReporterPlugin };

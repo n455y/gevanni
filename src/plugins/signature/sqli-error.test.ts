@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createSqliErrorPlugin, SqliErrorInspector, SQL_ERROR_PATTERNS } from "./sqli-error.js";
+import { SqliErrorPlugin, SqliErrorInspector, SQL_ERROR_PATTERNS } from "./sqli-error.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import type { InspectionParameter, HttpRequest, HttpResponse } from "../../types/models.js";
 import type { Brand, TamperMethod } from "../../types/branded.js";
@@ -58,7 +58,7 @@ const mockRequest: HttpRequest = {
 
 describe("SqliErrorPlugin", () => {
   it("creates inspectors for query and jsonPrimitive parameters", async () => {
-    const plugin = createSqliErrorPlugin();
+    const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -84,7 +84,7 @@ describe("SqliErrorPlugin", () => {
   });
 
   it("does not create inspectors for non-matching parameter types", async () => {
-    const plugin = createSqliErrorPlugin();
+    const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

@@ -19,19 +19,17 @@ const ALLOWED_TAMPERS: TamperMethod[] = [
   "prependValue" as TamperMethod,
 ];
 
-function createJsonParserPlugin(): Plugin {
-  return {
-    name: "json-parser",
+class JsonParserPlugin implements Plugin {
+  readonly name = "json-parser";
 
-    async init(context: PluginContext): Promise<void> {
-      context.commandBus.register(
-        ParseRequestCommand,
-        async (cmd: ParseRequestCommand) => {
-          return parseJsonParameters(cmd.request);
-        },
-      );
-    },
-  };
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      ParseRequestCommand,
+      async (cmd: ParseRequestCommand) => {
+        return parseJsonParameters(cmd.request);
+      },
+    );
+  }
 }
 
 function parseJsonParameters(
@@ -95,4 +93,4 @@ function extractJsonParams(
   }
 }
 
-export { createJsonParserPlugin };
+export { JsonParserPlugin };

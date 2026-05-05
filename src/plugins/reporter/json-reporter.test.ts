@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createJsonReporterPlugin } from "./json-reporter.js";
+import { JsonReporterPlugin } from "./json-reporter.js";
 import { GenerateReportCommand } from "../../commands/report.js";
 import type { Job, ScanState } from "../../types/models.js";
 import type {
@@ -75,7 +75,7 @@ describe("JsonReporterPlugin", () => {
   it("writes report to the configured output path", async () => {
     const outputPath = join(tempDir, "report.json");
 
-    const plugin = createJsonReporterPlugin();
+    const plugin = new JsonReporterPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -107,7 +107,7 @@ describe("JsonReporterPlugin", () => {
   });
 
   it("uses auto-generated path based on scan ID when no outputPath configured", async () => {
-    const plugin = createJsonReporterPlugin();
+    const plugin = new JsonReporterPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -136,7 +136,7 @@ describe("JsonReporterPlugin", () => {
   it("computes correct summary for mixed job statuses", async () => {
     const outputPath = join(tempDir, "mixed-report.json");
 
-    const plugin = createJsonReporterPlugin();
+    const plugin = new JsonReporterPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -200,7 +200,7 @@ describe("JsonReporterPlugin", () => {
   it("handles empty jobs list", async () => {
     const outputPath = join(tempDir, "empty-report.json");
 
-    const plugin = createJsonReporterPlugin();
+    const plugin = new JsonReporterPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -230,7 +230,7 @@ describe("JsonReporterPlugin", () => {
     const nestedDir = join(tempDir, "nested", "dir");
     const outputPath = join(nestedDir, "report.json");
 
-    const plugin = createJsonReporterPlugin();
+    const plugin = new JsonReporterPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

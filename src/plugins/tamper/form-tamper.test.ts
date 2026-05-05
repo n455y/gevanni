@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createFormTamperPlugin } from "./form-tamper.js";
+import { FormTamperPlugin } from "./form-tamper.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import type { Brand, TamperMethod } from "../../types/branded.js";
@@ -45,7 +45,7 @@ function makeFormInstruction(
 
 describe("FormTamperPlugin", () => {
   it("replaces form parameter value with payload", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -74,7 +74,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("appends payload to existing form parameter value", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -99,7 +99,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("prepends payload to existing form parameter value", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -124,7 +124,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("returns request unchanged when content-type is not form-urlencoded", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -153,7 +153,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("returns request unchanged when instruction param is not in form body", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -176,7 +176,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("does not tamper query string URL parameters", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -206,7 +206,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("handles multiple form parameters", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -240,7 +240,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("returns request unchanged when body is null", async () => {
-    const plugin = createFormTamperPlugin();
+    const plugin = new FormTamperPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

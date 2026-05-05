@@ -7,24 +7,20 @@ import type {
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 
-function createFormParserPlugin(): Plugin {
-  return {
-    name: "form-parser",
+class FormParserPlugin implements Plugin {
+  readonly name = "form-parser";
 
-    async init(context: PluginContext): Promise<void> {
-      context.commandBus.register(
-        ParseRequestCommand,
-        async (cmd: ParseRequestCommand) => {
-          return parseFormParameters(cmd.request);
-        },
-      );
-    },
-  };
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      ParseRequestCommand,
+      async (cmd: ParseRequestCommand) => {
+        return parseFormParameters(cmd.request);
+      },
+    );
+  }
 }
 
-function parseFormParameters(
-  request: HttpRequest,
-): InspectionParameter[] {
+function parseFormParameters(request: HttpRequest): InspectionParameter[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/x-www-form-urlencoded")) {
     return [];
@@ -54,4 +50,4 @@ function parseFormParameters(
   return params;
 }
 
-export { createFormParserPlugin };
+export { FormParserPlugin };

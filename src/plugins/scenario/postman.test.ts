@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import http from "node:http";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createPostmanPlugin, buildRequest } from "./postman.js";
+import { PostmanPlugin, buildRequest } from "./postman.js";
 import { ReplayCommand } from "../../commands/replay.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import type { HttpRequest, HttpResponse, Scenario, TamperInstruction } from "../../types/models.js";
@@ -92,7 +92,7 @@ function makeTamperInstruction(): TamperInstruction {
 
 describe("PostmanPlugin", () => {
   it("sends request directly when no instructions are provided", async () => {
-    const plugin = createPostmanPlugin();
+    const plugin = new PostmanPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -118,7 +118,7 @@ describe("PostmanPlugin", () => {
   });
 
   it("delegates to InterceptCommand when instructions are provided", async () => {
-    const plugin = createPostmanPlugin();
+    const plugin = new PostmanPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -158,7 +158,7 @@ describe("PostmanPlugin", () => {
   });
 
   it("sends POST request with body from scenario source", async () => {
-    const plugin = createPostmanPlugin();
+    const plugin = new PostmanPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

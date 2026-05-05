@@ -56,40 +56,38 @@ function sendRequest(request: HttpRequest): Promise<HttpResponse> {
   });
 }
 
-function createHttpProxyPlugin(): Plugin {
-  return {
-    name: "http-proxy",
+class HttpProxyPlugin implements Plugin {
+  readonly name = "http-proxy";
+  private extraHeaders: Record<string, string> = {};
 
-    async init(context: PluginContext): Promise<void> {
-      const commandBus = context.commandBus;
-      const extraHeaders = (context.config.headers ?? {}) as Record<
-        string,
-        string
-      >;
+  async init(context: PluginContext): Promise<void> {
+    this.extraHeaders = (context.config.headers ?? {}) as Record<
+      string,
+      string
+    >;
 
-      commandBus.register(
-        InterceptCommand,
-        async (cmd: InterceptCommand) => {
-          // 1. Apply tamper via pipeline
-          const modifiedRequest = await commandBus.pipe(
-            new ApplyTamperCommand(cmd.request, cmd.instructions),
-          );
+    context.commandBus.register(
+      InterceptCommand,
+      async (cmd: InterceptCommand) => {
+        // 1. Apply tamper via pipeline
+        const modifiedRequest = await context.commandBus.pipe(
+          new ApplyTamperCommand(cmd.request, cmd.instructions),
+        );
 
-          // 2. Merge extra config headers
-          const finalRequest: HttpRequest = {
-            method: modifiedRequest.method,
-            url: modifiedRequest.url,
-            headers: { ...extraHeaders, ...modifiedRequest.headers },
-            body: modifiedRequest.body,
-          };
+        // 2. Merge extra config headers
+        const finalRequest: HttpRequest = {
+          method: modifiedRequest.method,
+          url: modifiedRequest.url,
+          headers: { ...this.extraHeaders, ...modifiedRequest.headers },
+          body: modifiedRequest.body,
+        };
 
-          // 3. Send request to target
-          const response = await sendRequest(finalRequest);
-          return { request: modifiedRequest, response };
-        },
-      );
-    },
-  };
+        // 3. Send request to target
+        const response = await sendRequest(finalRequest);
+        return { request: modifiedRequest, response };
+      },
+    );
+  }
 }
 
-export { createHttpProxyPlugin, sendRequest };
+export { HttpProxyPlugin, sendRequest };

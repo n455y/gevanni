@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createConsoleReporterPlugin } from "./console-reporter.js";
+import { ConsoleReporterPlugin } from "./console-reporter.js";
 import { GenerateReportCommand } from "../../commands/report.js";
 import type { Job, ScanState } from "../../types/models.js";
 import type {
@@ -57,7 +57,7 @@ let commandBus: InMemoryCommandBus;
 
 beforeEach(async () => {
   commandBus = new InMemoryCommandBus();
-  const plugin = createConsoleReporterPlugin();
+  const plugin = new ConsoleReporterPlugin();
   await plugin.init({
     commandBus,
     eventBus: new InMemoryEventBus(),

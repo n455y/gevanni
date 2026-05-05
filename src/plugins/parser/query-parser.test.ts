@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createQueryParserPlugin } from "./query-parser.js";
+import { QueryParserPlugin } from "./query-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest, QueryParameter } from "../../types/models.js";
 import type { Brand, TamperMethod } from "../../types/branded.js";
@@ -18,7 +18,7 @@ function flatParams(results: QueryParameter[][]): QueryParameter[] {
 
 describe("QueryParserPlugin", () => {
   it("parses URL query string parameters", async () => {
-    const plugin = createQueryParserPlugin();
+    const plugin = new QueryParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -64,7 +64,7 @@ describe("QueryParserPlugin", () => {
   });
 
   it("returns empty array when URL has no query string", async () => {
-    const plugin = createQueryParserPlugin();
+    const plugin = new QueryParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -86,7 +86,7 @@ describe("QueryParserPlugin", () => {
   });
 
   it("returns empty array for empty query string", async () => {
-    const plugin = createQueryParserPlugin();
+    const plugin = new QueryParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

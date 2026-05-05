@@ -13,51 +13,49 @@ const JSON_TYPES = new Set([
   "jsonObject",
 ]);
 
-function createJsonTamperPlugin(): Plugin {
-  return {
-    name: "json-tamper",
+class JsonTamperPlugin implements Plugin {
+  readonly name = "json-tamper";
 
-    async init(context: PluginContext): Promise<void> {
-      context.commandBus.register(
-        ApplyTamperCommand,
-        async (
-          cmd: ApplyTamperCommand,
-          request: HttpRequest,
-        ): Promise<HttpRequest> => {
-          const jsonInstructions = cmd.instructions.filter((instr) =>
-            JSON_TYPES.has(instr.parameter.type as string),
-          );
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      ApplyTamperCommand,
+      async (
+        cmd: ApplyTamperCommand,
+        request: HttpRequest,
+      ): Promise<HttpRequest> => {
+        const jsonInstructions = cmd.instructions.filter((instr) =>
+          JSON_TYPES.has(instr.parameter.type as string),
+        );
 
-          if (jsonInstructions.length === 0) {
-            return request;
-          }
+        if (jsonInstructions.length === 0) {
+          return request;
+        }
 
-          if (!request.body) {
-            return request;
-          }
+        if (!request.body) {
+          return request;
+        }
 
-          let jsonBody: JsonValue;
-          try {
-            jsonBody = JSON.parse(request.body.toString("utf-8")) as JsonValue;
-          } catch {
-            return request;
-          }
+        let jsonBody: JsonValue;
+        try {
+          jsonBody = JSON.parse(request.body.toString("utf-8")) as JsonValue;
+        } catch {
+          return request;
+        }
 
-          for (const instr of jsonInstructions) {
-            const path = (instr.parameter.location as { path: string[] }).path;
-            jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
-          }
+        for (const instr of jsonInstructions) {
+          const path = (instr.parameter.location as { path: string[] }).path;
+          jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
+        }
 
-          return {
-            method: request.method,
-            url: request.url,
-            headers: request.headers,
-            body: Buffer.from(JSON.stringify(jsonBody), "utf-8"),
-          };
-        },
-      );
-    },
-  };
+        return {
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          body: Buffer.from(JSON.stringify(jsonBody), "utf-8"),
+        };
+      },
+    );
+  }
 }
 
 function applyAtPath(
@@ -110,4 +108,4 @@ function applyTamperValue(
   }
 }
 
-export { createJsonTamperPlugin };
+export { JsonTamperPlugin };

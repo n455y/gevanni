@@ -113,33 +113,31 @@ function sendRequest(request: HttpRequest): Promise<HttpResponse> {
 
 // --- Plugin ---
 
-function createPostmanPlugin(): Plugin {
-  return {
-    name: "postman",
+class PostmanPlugin implements Plugin {
+  readonly name = "postman";
 
-    async init(context: PluginContext): Promise<void> {
-      const commandBus = context.commandBus;
+  async init(context: PluginContext): Promise<void> {
+    const commandBus = context.commandBus;
 
-      commandBus.register(ReplayCommand, async (cmd) => {
-        const { scenario, instructions } = cmd;
+    commandBus.register(ReplayCommand, async (cmd) => {
+      const { scenario, instructions } = cmd;
 
-        // Build HttpRequest from scenario source
-        const request = buildRequest(scenario);
+      // Build HttpRequest from scenario source
+      const request = buildRequest(scenario);
 
-        if (instructions.length > 0) {
-          // Delegate to proxy for tampered requests
-          return commandBus.dispatch(
-            new InterceptCommand(request, instructions),
-          );
-        }
+      if (instructions.length > 0) {
+        // Delegate to proxy for tampered requests
+        return commandBus.dispatch(
+          new InterceptCommand(request, instructions),
+        );
+      }
 
-        // Send directly if no tampering needed
-        const response = await sendRequest(request);
-        return { request, response };
-      });
-    },
-  };
+      // Send directly if no tampering needed
+      const response = await sendRequest(request);
+      return { request, response };
+    });
+  }
 }
 
-export { createPostmanPlugin, buildRequest, sendRequest };
+export { PostmanPlugin, buildRequest, sendRequest };
 export type { PostmanHeader, PostmanBody, PostmanRequest, PostmanItem };

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import http from "node:http";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createHttpProxyPlugin } from "./http-proxy.js";
+import { HttpProxyPlugin } from "./http-proxy.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, HttpResponse } from "../../types/models.js";
@@ -59,7 +59,7 @@ function makeRequest(url: string, method = "GET"): HttpRequest {
 
 describe("HttpProxyPlugin", () => {
   it("registers the plugin and intercepts an HTTP request", async () => {
-    const plugin = createHttpProxyPlugin();
+    const plugin = new HttpProxyPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -91,7 +91,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("pipes through ApplyTamperCommand before sending", async () => {
-    const plugin = createHttpProxyPlugin();
+    const plugin = new HttpProxyPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -123,7 +123,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("sends POST request with body", async () => {
-    const plugin = createHttpProxyPlugin();
+    const plugin = new HttpProxyPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -156,7 +156,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("adds extra headers from config", async () => {
-    const plugin = createHttpProxyPlugin();
+    const plugin = new HttpProxyPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -183,7 +183,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("returns the modified request in the result", async () => {
-    const plugin = createHttpProxyPlugin();
+    const plugin = new HttpProxyPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

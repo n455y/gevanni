@@ -41,28 +41,26 @@ class SqliErrorInspector implements SignatureInspector {
   }
 }
 
-function createSqliErrorPlugin(): Plugin {
-  return {
-    name: "sqli-error",
+class SqliErrorPlugin implements Plugin {
+  readonly name = "sqli-error";
 
-    async init(context: PluginContext): Promise<void> {
-      context.commandBus.register(
-        CreateInspectorsCommand,
-        async (cmd: CreateInspectorsCommand) => {
-          const inspectors: SignatureInspector[] = [];
-          for (const param of cmd.parameters) {
-            if (
-              param.type === ("query" as Brand<"query", "ParameterType">) ||
-              param.type === ("jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">)
-            ) {
-              inspectors.push(new SqliErrorInspector(param));
-            }
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      CreateInspectorsCommand,
+      async (cmd: CreateInspectorsCommand) => {
+        const inspectors: SignatureInspector[] = [];
+        for (const param of cmd.parameters) {
+          if (
+            param.type === ("query" as Brand<"query", "ParameterType">) ||
+            param.type === ("jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">)
+          ) {
+            inspectors.push(new SqliErrorInspector(param));
           }
-          return inspectors;
-        },
-      );
-    },
-  };
+        }
+        return inspectors;
+      },
+    );
+  }
 }
 
-export { SqliErrorInspector, SQL_ERROR_PATTERNS, createSqliErrorPlugin };
+export { SqliErrorInspector, SQL_ERROR_PATTERNS, SqliErrorPlugin };

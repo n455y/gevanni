@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createFormParserPlugin } from "./form-parser.js";
+import { FormParserPlugin } from "./form-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest, QueryParameter } from "../../types/models.js";
 import type { Brand, TamperMethod } from "../../types/branded.js";
@@ -27,7 +27,7 @@ function flatParams(results: QueryParameter[][]): QueryParameter[] {
 
 describe("FormParserPlugin", () => {
   it("parses form URL-encoded body parameters", async () => {
-    const plugin = createFormParserPlugin();
+    const plugin = new FormParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -67,7 +67,7 @@ describe("FormParserPlugin", () => {
   });
 
   it("returns empty array when content-type is not form-urlencoded", async () => {
-    const plugin = createFormParserPlugin();
+    const plugin = new FormParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -89,7 +89,7 @@ describe("FormParserPlugin", () => {
   });
 
   it("returns empty array when body is null", async () => {
-    const plugin = createFormParserPlugin();
+    const plugin = new FormParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -111,7 +111,7 @@ describe("FormParserPlugin", () => {
   });
 
   it("handles content-type with charset parameter", async () => {
-    const plugin = createFormParserPlugin();
+    const plugin = new FormParserPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

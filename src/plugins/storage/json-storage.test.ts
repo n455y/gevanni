@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createJsonStoragePlugin } from "./json-storage.js";
+import { JsonStoragePlugin } from "./json-storage.js";
 import {
   SaveJobCommand,
   LoadJobCommand,
@@ -81,7 +81,7 @@ beforeEach(async () => {
   );
   commandBus = new InMemoryCommandBus();
 
-  const plugin = createJsonStoragePlugin();
+  const plugin = new JsonStoragePlugin();
   await plugin.init({
     commandBus,
     eventBus: new InMemoryEventBus(),

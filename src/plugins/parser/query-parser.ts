@@ -7,19 +7,17 @@ import type {
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 
-function createQueryParserPlugin(): Plugin {
-  return {
-    name: "query-parser",
+class QueryParserPlugin implements Plugin {
+  readonly name = "query-parser";
 
-    async init(context: PluginContext): Promise<void> {
-      context.commandBus.register(
-        ParseRequestCommand,
-        async (cmd: ParseRequestCommand) => {
-          return parseQueryParameters(cmd.request);
-        },
-      );
-    },
-  };
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      ParseRequestCommand,
+      async (cmd: ParseRequestCommand) => {
+        return parseQueryParameters(cmd.request);
+      },
+    );
+  }
 }
 
 function parseQueryParameters(
@@ -45,4 +43,4 @@ function parseQueryParameters(
   return params;
 }
 
-export { createQueryParserPlugin };
+export { QueryParserPlugin };

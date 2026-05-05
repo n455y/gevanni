@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { createReflectedXssPlugin, ReflectedXssInspector } from "./reflected-xss.js";
+import { ReflectedXssPlugin, ReflectedXssInspector } from "./reflected-xss.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import type { InspectionParameter, HttpRequest, HttpResponse } from "../../types/models.js";
 import type { Brand, TamperMethod } from "../../types/branded.js";
@@ -58,7 +58,7 @@ const mockRequest: HttpRequest = {
 
 describe("ReflectedXssPlugin", () => {
   it("creates inspectors for query and jsonPrimitive parameters", async () => {
-    const plugin = createReflectedXssPlugin();
+    const plugin = new ReflectedXssPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -84,7 +84,7 @@ describe("ReflectedXssPlugin", () => {
   });
 
   it("creates inspectors for form parameters", async () => {
-    const plugin = createReflectedXssPlugin();
+    const plugin = new ReflectedXssPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -102,7 +102,7 @@ describe("ReflectedXssPlugin", () => {
   });
 
   it("does not create inspectors for non-matching parameter types", async () => {
-    const plugin = createReflectedXssPlugin();
+    const plugin = new ReflectedXssPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
