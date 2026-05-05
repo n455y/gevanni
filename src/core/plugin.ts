@@ -1,5 +1,6 @@
 import type { CommandBus } from "./command-bus.js";
 import type { EventBus } from "./event-bus.js";
+import type { Scenario } from "../types/models.js";
 
 interface PluginContext {
   commandBus: CommandBus;
@@ -11,6 +12,10 @@ interface Plugin {
   readonly name: string;
   init(context: PluginContext): Promise<void>;
   destroy?(): Promise<void>;
+}
+
+interface ScenarioLoaderPlugin extends Plugin {
+  load(source: unknown): Promise<Scenario[]>;
 }
 
 interface PluginConfig {
@@ -77,4 +82,5 @@ export {
   type PluginContext,
   type PluginConfig,
   type PluginRegistry,
+  type ScenarioLoaderPlugin,
 };
