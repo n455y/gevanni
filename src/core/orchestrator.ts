@@ -1,12 +1,8 @@
 import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import type {
   ScanId,
   JobId,
   RequestId,
-  ScenarioId,
-  ScenarioType,
   JobStatus,
   ScanStatus,
   IsoDateTime,
@@ -55,82 +51,8 @@ function requestId(): RequestId {
   return crypto.randomUUID() as RequestId;
 }
 
-function scenarioId(): ScenarioId {
-  return crypto.randomUUID() as ScenarioId;
-}
-
 function isoNow(): IsoDateTime {
   return new Date().toISOString() as IsoDateTime;
-}
-
-// --- Load scenarios from Postman collections ---
-
-interface PostmanItem {
-  name: string;
-  request: unknown;
-  item?: PostmanItem[];
-}
-
-interface PostmanCollection {
-  info?: { name?: string };
-  item?: PostmanItem[];
-}
-
-function flattenItems(items: PostmanItem[]): PostmanItem[] {
-  const result: PostmanItem[] = [];
-  for (const item of items) {
-    if (item.item && item.item.length > 0) {
-      result.push(...flattenItems(item.item));
-    } else if (item.request) {
-      result.push(item);
-    }
-  }
-  return result;
-}
-
-function loadScenarios(scenarioPaths: string[]): Scenario[] {
-  const scenarios: Scenario[] = [];
-
-  for (const scenarioPath of scenarioPaths) {
-    const resolved = path.resolve(scenarioPath);
-
-    let files: string[];
-    try {
-      const stat = fs.statSync(resolved);
-      if (stat.isDirectory()) {
-        files = fs
-          .readdirSync(resolved)
-          .filter((f) => f.endsWith(".json"))
-          .map((f) => path.join(resolved, f));
-      } else {
-        files = [resolved];
-      }
-    } catch {
-      continue;
-    }
-
-    for (const file of files) {
-      try {
-        const raw = fs.readFileSync(file, "utf-8");
-        const collection = JSON.parse(raw) as PostmanCollection;
-        const items = collection.item ?? [];
-        const flatItems = flattenItems(items);
-
-        for (const item of flatItems) {
-          scenarios.push({
-            id: scenarioId(),
-            name: item.name ?? "unnamed",
-            type: "postman" as ScenarioType,
-            source: { item },
-          });
-        }
-      } catch {
-        // Skip invalid files
-      }
-    }
-  }
-
-  return scenarios;
 }
 
 // --- Worker pool ---
@@ -165,18 +87,16 @@ class Orchestrator {
   constructor(private deps: OrchestratorDeps) {}
 
   async plan(
-    scenarioPaths: string[],
+    scenarios: Scenario[],
   ): Promise<{ scanId: ScanId; inspectors: Map<string, SignatureInspector> }> {
     const { commandBus, eventBus, logger } = this.deps;
     const id = scanId();
     const now = isoNow();
     const inspectorMap = new Map<string, SignatureInspector>();
 
-    // 1. Load scenarios from paths
-    const scenarios = loadScenarios(scenarioPaths);
     logger.info(`Loaded ${scenarios.length} scenarios`);
 
-    // 2. Process each scenario
+    // 1. Process each scenario
     const allJobs: Job[] = [];
 
     for (const scenario of scenarios) {
@@ -234,7 +154,7 @@ class Orchestrator {
       }
     }
 
-    // 3. Save scan state
+    // 2. Save scan state
     const scanState: ScanState = {
       id,
       status: "planning" as ScanStatus,
@@ -243,7 +163,7 @@ class Orchestrator {
     };
     await commandBus.dispatch(new SaveScanStateCommand(scanState));
 
-    // 4. Emit events
+    // 3. Emit events
     eventBus.publish("scan:started", { scanId: id });
 
     logger.info(`Plan phase complete: ${allJobs.length} jobs created for scan ${id}`);
@@ -476,4 +396,4 @@ class Orchestrator {
   }
 }
 
-export { Orchestrator, type OrchestratorDeps, loadScenarios, runWithConcurrency };
+export { Orchestrator, type OrchestratorDeps, runWithConcurrency };
