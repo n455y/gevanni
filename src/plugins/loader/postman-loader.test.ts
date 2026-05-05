@@ -76,7 +76,7 @@ describe("PostmanLoaderPlugin", () => {
       expect(result[0].type).toBe("postman" as Brand<string, "ScenarioType">);
       expect(result[0].id).toBeDefined();
       expect(result[0].source).toEqual({
-        item: collection.item[0],
+        items: [collection.item[0]],
       });
 
       fs.rmSync(tmpDir, { recursive: true });
