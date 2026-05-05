@@ -328,7 +328,7 @@ describe("startTamperProxy", () => {
     proxy.close();
   });
 
-  it("saves exchange when X-Gevanni-Replay-Id header is present", async () => {
+  it("saves exchange when X-Gevanni-Exchange-Id header is present", async () => {
     const replayId = "replay-test-001";
     const proxy = await startTamperProxy([], commandBus);
 
@@ -347,7 +347,7 @@ describe("startTamperProxy", () => {
             path: `http://127.0.0.1:${serverPort}/exchange-test`,
             headers: {
               host: `127.0.0.1:${serverPort}`,
-              "x-gevanni-replay-id": replayId,
+              "x-gevanni-exchange-id": replayId,
             },
           },
           (res) => {
@@ -378,7 +378,7 @@ describe("startTamperProxy", () => {
     proxy.close();
   });
 
-  it("does not save exchange when X-Gevanni-Replay-Id header is absent", async () => {
+  it("does not save exchange when X-Gevanni-Exchange-Id header is absent", async () => {
     const proxy = await startTamperProxy([], commandBus);
 
     commandBus.register(

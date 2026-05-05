@@ -73,7 +73,7 @@ function runNewman(
 
   const header = [
     ...(Array.isArray(req.header) ? req.header : []),
-    { key: "X-Gevanni-Replay-Id", value: replayId },
+    { key: "X-Gevanni-Exchange-Id", value: replayId },
   ];
 
   const newmanItem = {
@@ -132,6 +132,9 @@ class PostmanPlugin implements Plugin {
       const exchanges = await commandBus.dispatch<Exchange[]>(
         new LoadExchangesCommand(config.replayId),
       );
+      if (exchanges.length === 0) {
+        throw new Error(`No exchange captured for replayId: ${config.replayId}`);
+      }
       return exchanges[0];
     });
   }

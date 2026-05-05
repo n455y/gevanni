@@ -89,8 +89,8 @@ function startTamperProxy(
       }
       delete headers["proxy-connection"];
 
-      const replayId = headers["x-gevanni-replay-id"];
-      delete headers["x-gevanni-replay-id"];
+      const exchangeId = headers["x-gevanni-exchange-id"];
+      delete headers["x-gevanni-exchange-id"];
 
       const httpRequest: HttpRequest = {
         method: req.method!,
@@ -113,7 +113,7 @@ function startTamperProxy(
           headers: { ...tampered.headers, host: targetUrl.host },
         },
         (proxyRes) => {
-          if (replayId) {
+          if (exchangeId) {
             // Buffer response for exchange capture
             const chunks: Buffer[] = [];
             proxyRes.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -138,7 +138,7 @@ function startTamperProxy(
                   body: responseBody,
                 },
               };
-              await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
+              await commandBus.dispatch(new SaveExchangeCommand(exchangeId, exchange));
 
               res.writeHead(
                 proxyRes.statusCode!,
