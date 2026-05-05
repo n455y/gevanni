@@ -74,7 +74,7 @@ class PostmanLoaderPlugin implements ScenarioLoaderPlugin {
       id: scenarioId(),
       name: item.name ?? "unnamed",
       type: "postman" as Brand<string, "ScenarioType">,
-      source: { item },
+      source: { items: [item] },
     }));
   }
 }
