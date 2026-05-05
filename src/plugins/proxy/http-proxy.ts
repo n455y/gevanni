@@ -1,7 +1,8 @@
 import http from "node:http";
 import https from "node:https";
-import type { HttpRequest, HttpResponse } from "../../types/models.js";
+import type { HttpRequest, HttpResponse, TamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
+import type { CommandBus } from "../../core/command-bus.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
@@ -56,6 +57,93 @@ function sendRequest(request: HttpRequest): Promise<HttpResponse> {
   });
 }
 
+// --- Tamper Proxy ---
+
+interface TamperProxy {
+  port: number;
+  close: () => void;
+}
+
+function startTamperProxy(
+  instructions: TamperInstruction[],
+  commandBus: CommandBus,
+): Promise<TamperProxy> {
+  const server = http.createServer(async (req, res) => {
+    try {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(Buffer.from(chunk));
+      }
+      const body = chunks.length > 0 ? Buffer.concat(chunks) : null;
+
+      const headers: Record<string, string> = {};
+      for (const [key, value] of Object.entries(req.headers)) {
+        if (typeof value === "string") {
+          headers[key] = value;
+        }
+      }
+      delete headers["proxy-connection"];
+
+      const httpRequest: HttpRequest = {
+        method: req.method!,
+        url: req.url!,
+        headers,
+        body,
+      };
+
+      const tampered = await commandBus.pipe<HttpRequest>(
+        new ApplyTamperCommand(httpRequest, instructions),
+      );
+
+      const targetUrl = new URL(tampered.url);
+      const proxyReq = http.request(
+        {
+          hostname: targetUrl.hostname,
+          port: targetUrl.port || 80,
+          path: targetUrl.pathname + targetUrl.search,
+          method: tampered.method,
+          headers: { ...tampered.headers, host: targetUrl.host },
+        },
+        (proxyRes) => {
+          res.writeHead(
+            proxyRes.statusCode!,
+            proxyRes.headers as Record<string, string>,
+          );
+          proxyRes.pipe(res);
+        },
+      );
+
+      proxyReq.on("error", (err) => {
+        if (!res.headersSent) {
+          res.writeHead(502);
+        }
+        res.end(`Proxy error: ${err.message}`);
+      });
+
+      if (tampered.body) {
+        proxyReq.write(tampered.body);
+      }
+      proxyReq.end();
+    } catch (err) {
+      if (!res.headersSent) {
+        res.writeHead(500);
+      }
+      res.end(`Proxy error: ${err}`);
+    }
+  });
+
+  return new Promise((resolve) => {
+    server.listen(0, () => {
+      const addr = server.address()!;
+      const port = typeof addr === "string" ? parseInt(addr) : addr.port;
+      resolve({
+        port,
+        close: () => server.closeAllConnections(),
+      });
+    });
+  });
+}
+
 class HttpProxyPlugin implements Plugin {
   readonly name = "http-proxy";
   private extraHeaders: Record<string, string> = {};
@@ -90,4 +178,5 @@ class HttpProxyPlugin implements Plugin {
   }
 }
 
-export { HttpProxyPlugin, sendRequest };
+export { HttpProxyPlugin, sendRequest, startTamperProxy };
+export type { TamperProxy };

@@ -5,6 +5,9 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { HttpProxyPlugin } from "./http-proxy.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { startTamperProxy } from "./http-proxy.js";
+import type { TamperInstruction } from "../../types/models.js";
+import type { Brand } from "../../types/branded.js";
 import type { HttpRequest, HttpResponse } from "../../types/models.js";
 
 let commandBus: InMemoryCommandBus;
@@ -206,5 +209,107 @@ describe("HttpProxyPlugin", () => {
 
     // The returned request should be the modified one from the tamper pipeline
     expect(result.request.headers["x-tampered"]).toBe("true");
+  });
+});
+
+describe("startTamperProxy", () => {
+  it("starts a proxy that forwards requests via tamper pipeline", async () => {
+    const proxy = await startTamperProxy([], commandBus);
+
+    commandBus.register(
+      ApplyTamperCommand,
+      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+    );
+
+    const response = await new Promise<{ statusCode: number; body: string }>((resolve, reject) => {
+      const req = http.request(
+        {
+          hostname: "127.0.0.1",
+          port: proxy.port,
+          method: "GET",
+          path: `http://127.0.0.1:${serverPort}/proxy-test`,
+          headers: { host: `127.0.0.1:${serverPort}` },
+        },
+        (res) => {
+          const chunks: Buffer[] = [];
+          res.on("data", (chunk: Buffer) => chunks.push(chunk));
+          res.on("end", () => {
+            resolve({
+              statusCode: res.statusCode ?? 0,
+              body: Buffer.concat(chunks).toString("utf-8"),
+            });
+          });
+        },
+      );
+      req.on("error", reject);
+      req.end();
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body);
+    expect(body.url).toBe("/proxy-test");
+
+    proxy.close();
+  });
+
+  it("applies tamper instructions to requests passing through", async () => {
+    const instructions: TamperInstruction[] = [
+      {
+        parameter: {
+          type: "query" as Brand<"query", "ParameterType">,
+          location: { name: "q" },
+          originalValue: "original",
+          allowedTampers: ["replaceValue" as Brand<"replaceValue", "TamperMethod">],
+        },
+        payload: "<script>" as Brand<string, "Payload">,
+        method: "replaceValue" as Brand<"replaceValue", "TamperMethod">,
+      },
+    ];
+
+    commandBus.register(
+      ApplyTamperCommand,
+      async (_cmd: ApplyTamperCommand, request: HttpRequest) => {
+        const url = new URL(request.url);
+        const searchParams = new URLSearchParams(url.search);
+        for (const instr of _cmd.instructions) {
+          const paramName = (instr.parameter.location as { name: string }).name;
+          searchParams.set(paramName, instr.payload as string);
+        }
+        url.search = searchParams.toString();
+        return { ...request, url: url.toString() };
+      },
+    );
+
+    const proxy = await startTamperProxy(instructions, commandBus);
+
+    const response = await new Promise<{ statusCode: number; body: string }>((resolve, reject) => {
+      const req = http.request(
+        {
+          hostname: "127.0.0.1",
+          port: proxy.port,
+          method: "GET",
+          path: `http://127.0.0.1:${serverPort}/test?q=original`,
+          headers: { host: `127.0.0.1:${serverPort}` },
+        },
+        (res) => {
+          const chunks: Buffer[] = [];
+          res.on("data", (chunk: Buffer) => chunks.push(chunk));
+          res.on("end", () => {
+            resolve({
+              statusCode: res.statusCode ?? 0,
+              body: Buffer.concat(chunks).toString("utf-8"),
+            });
+          });
+        },
+      );
+      req.on("error", reject);
+      req.end();
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body);
+    expect(body.url).toBe("/test?q=%3Cscript%3E");
+
+    proxy.close();
   });
 });
