@@ -1,6 +1,7 @@
-import type { HttpRequest, HttpResponse, Scenario } from "../../types/models.js";
+import type { HttpRequest, Exchange, Scenario } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
-import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
+import { ReplayCommand } from "../../commands/replay.js";
+import { LoadExchangesCommand } from "../../commands/exchange.js";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import newman from "newman";
@@ -59,21 +60,28 @@ function buildRequest(scenario: Scenario): HttpRequest {
 
 // --- Newman Runner ---
 
-function runNewman(scenario: Scenario, proxyPort: number): Promise<HttpResponse> {
+function runNewman(
+  scenario: Scenario,
+  proxyPort: number,
+  replayId: string,
+): Promise<void> {
   const source = scenario.source as { item: PostmanItem };
   const item = source.item;
   const req = item.request;
 
   const url = typeof req.url === "string" ? req.url : req.url.raw;
 
+  const header = [
+    ...(Array.isArray(req.header) ? req.header : []),
+    { key: "X-Gevanni-Replay-Id", value: replayId },
+  ];
+
   const newmanItem = {
     name: scenario.name,
     request: {
       method: req.method,
       url,
-      ...(Array.isArray(req.header) && req.header.length > 0
-        ? { header: req.header }
-        : {}),
+      header,
       ...(req.body ? { body: req.body } : {}),
     },
   };
@@ -99,30 +107,12 @@ function runNewman(scenario: Scenario, proxyPort: number): Promise<HttpResponse>
           https: new HttpsProxyAgent(proxyUrl),
         },
       },
-      (err, summary) => {
+      (err) => {
         if (err) {
           reject(err);
           return;
         }
-
-        const exec = summary.run.executions[0];
-
-        const res = exec.response;
-        if (!res) {
-          reject(new Error("No response returned from newman"));
-          return;
-        }
-
-        const headers: Record<string, string> = {};
-        for (const h of res.headers.all()) {
-          headers[h.key.toLowerCase()] = h.value;
-        }
-
-        resolve({
-          statusCode: res.code,
-          headers,
-          body: Buffer.from(res.stream ?? Buffer.alloc(0)),
-        });
+        resolve();
       },
     );
   });
@@ -134,11 +124,15 @@ class PostmanPlugin implements Plugin {
   readonly name = "postman";
 
   async init(context: PluginContext): Promise<void> {
+    const { commandBus } = context;
     context.commandBus.register(ReplayCommand, async (cmd: ReplayCommand) => {
       const { scenario, config } = cmd;
       const request = buildRequest(scenario);
-      const response = await runNewman(scenario, config.proxyPort);
-      return { request, response };
+      await runNewman(scenario, config.proxyPort, config.replayId);
+      const exchanges = await commandBus.dispatch<Exchange[]>(
+        new LoadExchangesCommand(config.replayId),
+      );
+      return exchanges[0];
     });
   }
 }
