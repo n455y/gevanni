@@ -7,7 +7,7 @@ interface ReplayConfig {
   replayId: string;
 }
 
-class ReplayCommand extends SingleCommand<Exchange> {
+class ReplayCommand extends SingleCommand<Exchange[]> {
   readonly type = "replay";
   constructor(readonly scenario: Scenario, readonly config: ReplayConfig) { super(); }
 }
