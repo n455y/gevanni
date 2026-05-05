@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import http from "node:http";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { PostmanPlugin, buildRequest, runNewman } from "./postman.js";
+import { PostmanPlugin, runNewman } from "./postman.js";
 import { startTamperProxy } from "../proxy/http-proxy.js";
 import type { TamperProxy } from "../proxy/http-proxy.js";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
@@ -79,14 +79,16 @@ function makeScenario(overrides: {
     name: "Test Scenario",
     type: "postman" as Brand<string, "ScenarioType">,
     source: {
-      item: {
-        request: {
-          method,
-          url: { raw: url },
-          header: headers,
-          ...(body !== undefined ? { body: { mode: "raw", raw: body } } : {}),
+      items: [
+        {
+          request: {
+            method,
+            url: { raw: url },
+            header: headers,
+            ...(body !== undefined ? { body: { mode: "raw", raw: body } } : {}),
+          },
         },
-      },
+      ],
     },
   };
 }
@@ -118,9 +120,10 @@ describe("PostmanPlugin", () => {
     const scenario = makeScenario({ method: "GET" });
     const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-plan" };
 
-    const result = await commandBus.dispatch<Exchange>(
+    const results = await commandBus.dispatch<Exchange[]>(
       new ReplayCommand(scenario, config),
     );
+    const result = results[0];
 
     expect(result.request).toBeDefined();
     expect(result.response).toBeDefined();
@@ -159,9 +162,10 @@ describe("PostmanPlugin", () => {
     });
     const config: ReplayConfig = { instructions, proxyPort: proxy.port, replayId: "test-tamper" };
 
-    const result = await commandBus.dispatch<Exchange>(
+    const results = await commandBus.dispatch<Exchange[]>(
       new ReplayCommand(scenario, config),
     );
+    const result = results[0];
 
     expect(result.response.statusCode).toBe(200);
 
@@ -189,9 +193,10 @@ describe("PostmanPlugin", () => {
     });
     const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-post" };
 
-    const result = await commandBus.dispatch<Exchange>(
+    const results = await commandBus.dispatch<Exchange[]>(
       new ReplayCommand(scenario, config),
     );
+    const result = results[0];
 
     expect(result.response.statusCode).toBe(200);
 
@@ -202,127 +207,6 @@ describe("PostmanPlugin", () => {
     expect(body.body).toBe('{"key":"value"}');
 
     proxy.close();
-  });
-});
-
-describe("buildRequest", () => {
-  it("builds a GET request from a Postman item with url object", () => {
-    const scenario: Scenario = {
-      id: "s1" as Brand<string, "ScenarioId">,
-      name: "Test",
-      type: "postman" as Brand<string, "ScenarioType">,
-      source: {
-        item: {
-          request: {
-            method: "GET",
-            url: { raw: "https://example.com/api/users" },
-            header: [
-              { key: "Accept", value: "application/json" },
-              { key: "Authorization", value: "Bearer token123" },
-            ],
-          },
-        },
-      },
-    };
-
-    const request = buildRequest(scenario);
-
-    expect(request.method).toBe("GET");
-    expect(request.url).toBe("https://example.com/api/users");
-    expect(request.headers["Accept"]).toBe("application/json");
-    expect(request.headers["Authorization"]).toBe("Bearer token123");
-    expect(request.body).toBeNull();
-  });
-
-  it("builds a POST request with body from a Postman item", () => {
-    const scenario: Scenario = {
-      id: "s2" as Brand<string, "ScenarioId">,
-      name: "Test POST",
-      type: "postman" as Brand<string, "ScenarioType">,
-      source: {
-        item: {
-          request: {
-            method: "POST",
-            url: { raw: "https://example.com/api/submit" },
-            header: [{ key: "Content-Type", value: "application/json" }],
-            body: { mode: "raw", raw: '{"name":"test"}' },
-          },
-        },
-      },
-    };
-
-    const request = buildRequest(scenario);
-
-    expect(request.method).toBe("POST");
-    expect(request.url).toBe("https://example.com/api/submit");
-    expect(request.headers["Content-Type"]).toBe("application/json");
-    expect(request.body).not.toBeNull();
-    expect((request.body as Buffer).toString("utf-8")).toBe('{"name":"test"}');
-  });
-
-  it("handles url as a plain string", () => {
-    const scenario: Scenario = {
-      id: "s3" as Brand<string, "ScenarioId">,
-      name: "Test String URL",
-      type: "postman" as Brand<string, "ScenarioType">,
-      source: {
-        item: {
-          request: {
-            method: "GET",
-            url: "https://example.com/string-url",
-          },
-        },
-      },
-    };
-
-    const request = buildRequest(scenario);
-
-    expect(request.url).toBe("https://example.com/string-url");
-  });
-
-  it("handles missing headers and body gracefully", () => {
-    const scenario: Scenario = {
-      id: "s4" as Brand<string, "ScenarioId">,
-      name: "Minimal",
-      type: "postman" as Brand<string, "ScenarioType">,
-      source: {
-        item: {
-          request: {
-            method: "DELETE",
-            url: { raw: "https://example.com/resource/1" },
-          },
-        },
-      },
-    };
-
-    const request = buildRequest(scenario);
-
-    expect(request.method).toBe("DELETE");
-    expect(request.url).toBe("https://example.com/resource/1");
-    expect(request.headers).toEqual({});
-    expect(request.body).toBeNull();
-  });
-
-  it("handles body with empty raw string", () => {
-    const scenario: Scenario = {
-      id: "s5" as Brand<string, "ScenarioId">,
-      name: "Empty Body",
-      type: "postman" as Brand<string, "ScenarioType">,
-      source: {
-        item: {
-          request: {
-            method: "PUT",
-            url: { raw: "https://example.com/resource" },
-            body: { mode: "raw", raw: "" },
-          },
-        },
-      },
-    };
-
-    const request = buildRequest(scenario);
-
-    expect(request.body).not.toBeNull();
-    expect((request.body as Buffer).toString("utf-8")).toBe("");
   });
 });
 
@@ -343,12 +227,14 @@ describe("runNewman", () => {
       name: "Test Newman GET",
       type: "postman" as Brand<string, "ScenarioType">,
       source: {
-        item: {
-          request: {
-            method: "GET",
-            url: { raw: `http://127.0.0.1:${serverPort}/test` },
+        items: [
+          {
+            request: {
+              method: "GET",
+              url: { raw: `http://127.0.0.1:${serverPort}/test` },
+            },
           },
-        },
+        ],
       },
     };
 
@@ -363,19 +249,72 @@ describe("runNewman", () => {
       name: "Test Newman POST",
       type: "postman" as Brand<string, "ScenarioType">,
       source: {
-        item: {
-          request: {
-            method: "POST",
-            url: { raw: `http://127.0.0.1:${serverPort}/submit` },
-            header: [{ key: "Content-Type", value: "application/json" }],
-            body: { mode: "raw", raw: '{"key":"value"}' },
+        items: [
+          {
+            request: {
+              method: "POST",
+              url: { raw: `http://127.0.0.1:${serverPort}/submit` },
+              header: [{ key: "Content-Type", value: "application/json" }],
+              body: { mode: "raw", raw: '{"key":"value"}' },
+            },
           },
-        },
+        ],
       },
     };
 
     await expect(
       runNewman(scenario, runNewmanProxy.port, "test-replay-id"),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("PostmanPlugin multi-request", () => {
+  it("sends multiple requests but only saves exchanges for the last item", { timeout: 30_000 }, async () => {
+    const plugin = new PostmanPlugin();
+    const proxy = await startTamperProxy([], commandBus);
+
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const scenario: Scenario = {
+      id: "multi-1" as Brand<string, "ScenarioId">,
+      name: "Multi Request",
+      type: "postman" as Brand<string, "ScenarioType">,
+      source: {
+        items: [
+          {
+            request: {
+              method: "GET",
+              url: { raw: `http://127.0.0.1:${serverPort}/setup` },
+            },
+          },
+          {
+            request: {
+              method: "GET",
+              url: { raw: `http://127.0.0.1:${serverPort}/main` },
+            },
+          },
+        ],
+      },
+    };
+
+    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-multi" };
+
+    const results = await commandBus.dispatch<Exchange[]>(
+      new ReplayCommand(scenario, config),
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].response.statusCode).toBe(200);
+
+    const body = JSON.parse(
+      (results[0].response.body as Buffer).toString("utf-8"),
+    );
+    expect(body.url).toBe("/main");
+
+    proxy.close();
   });
 });
