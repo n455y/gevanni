@@ -304,7 +304,7 @@ describe("startTamperProxy", () => {
           port: proxy.port,
           method: "GET",
           path: `http://127.0.0.1:${serverPort}/test?q=original`,
-          headers: { host: `127.0.0.1:${serverPort}` },
+          headers: { host: `127.0.0.1:${serverPort}`, "x-gevanni-tamper": "true" },
         },
         (res) => {
           const chunks: Buffer[] = [];

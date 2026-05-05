@@ -46,7 +46,12 @@ function runNewman(
     const isLast = index === items.length - 1;
     const header = [
       ...(Array.isArray(req.header) ? req.header : []),
-      ...(isLast ? [{ key: "X-Gevanni-Exchange-Id", value: replayId }] : []),
+      ...(isLast
+        ? [
+            { key: "X-Gevanni-Exchange-Id", value: replayId },
+            { key: "X-Gevanni-Tamper", value: "true" },
+          ]
+        : []),
     ];
 
     return {

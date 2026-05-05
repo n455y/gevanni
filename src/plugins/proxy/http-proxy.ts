@@ -6,6 +6,7 @@ import type {
   TamperInstruction,
   Exchange,
 } from "../../types/models.js";
+import type { ExchangeId } from "../../types/branded.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import type { CommandBus } from "../../core/command-bus.js";
 import { InterceptCommand } from "../../commands/intercept.js";
@@ -89,8 +90,13 @@ function startTamperProxy(
       }
       delete headers["proxy-connection"];
 
-      const exchangeId = headers["x-gevanni-exchange-id"];
+      const exchangeId = headers["x-gevanni-exchange-id"] as
+        | ExchangeId
+        | undefined;
       delete headers["x-gevanni-exchange-id"];
+
+      const shouldTamper = headers["x-gevanni-tamper"] === "true";
+      delete headers["x-gevanni-tamper"];
 
       const httpRequest: HttpRequest = {
         method: req.method!,
@@ -99,9 +105,11 @@ function startTamperProxy(
         body,
       };
 
-      const tampered = await commandBus.pipe<HttpRequest>(
-        new ApplyTamperCommand(httpRequest, instructions),
-      );
+      const tampered = shouldTamper
+        ? await commandBus.pipe<HttpRequest>(
+            new ApplyTamperCommand(httpRequest, instructions),
+          )
+        : httpRequest;
 
       const targetUrl = new URL(tampered.url);
       const proxyReq = http.request(
@@ -131,6 +139,7 @@ function startTamperProxy(
               }
 
               const exchange: Exchange = {
+                id: exchangeId,
                 request: tampered,
                 response: {
                   statusCode: proxyRes.statusCode ?? 0,
@@ -138,7 +147,9 @@ function startTamperProxy(
                   body: responseBody,
                 },
               };
-              await commandBus.dispatch(new SaveExchangeCommand(exchangeId, exchange));
+              await commandBus.dispatch(
+                new SaveExchangeCommand(exchangeId, exchange),
+              );
 
               res.writeHead(
                 proxyRes.statusCode!,
