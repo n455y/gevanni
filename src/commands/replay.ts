@@ -1,5 +1,5 @@
 import { SingleCommand } from "../core/command.js";
-import type { Scenario, TamperInstruction, HttpRequest, HttpResponse } from "../types/models.js";
+import type { Scenario, TamperInstruction, Exchange } from "../types/models.js";
 
 interface ReplayConfig {
   instructions: TamperInstruction[];
@@ -7,7 +7,7 @@ interface ReplayConfig {
   replayId: string;
 }
 
-class ReplayCommand extends SingleCommand<{ request: HttpRequest; response: HttpResponse }> {
+class ReplayCommand extends SingleCommand<Exchange> {
   readonly type = "replay";
   constructor(readonly scenario: Scenario, readonly config: ReplayConfig) { super(); }
 }
