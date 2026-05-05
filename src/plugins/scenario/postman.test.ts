@@ -3,8 +3,10 @@ import http from "node:http";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { PostmanPlugin, buildRequest, runNewman } from "./postman.js";
-import { ReplayCommand } from "../../commands/replay.js";
-import { InterceptCommand } from "../../commands/intercept.js";
+import { startTamperProxy } from "../proxy/http-proxy.js";
+import type { TamperProxy } from "../proxy/http-proxy.js";
+import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
+import { QueryTamperPlugin } from "../tamper/query-tamper.js";
 import type { HttpRequest, HttpResponse, Scenario, TamperInstruction } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 
@@ -15,7 +17,6 @@ let serverPort: number;
 beforeEach(async () => {
   commandBus = new InMemoryCommandBus();
 
-  // Start a local HTTP server for integration testing
   server = http.createServer((req, res) => {
     let body = "";
     req.on("data", (chunk) => {
@@ -91,8 +92,10 @@ function makeTamperInstruction(): TamperInstruction {
 }
 
 describe("PostmanPlugin", () => {
-  it("sends request directly when no instructions are provided", { timeout: 30_000 }, async () => {
+  it("sends request through proxy with empty instructions", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
+    const proxy = await startTamperProxy([], commandBus);
+
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -100,9 +103,10 @@ describe("PostmanPlugin", () => {
     });
 
     const scenario = makeScenario({ method: "GET" });
+    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port };
 
     const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new ReplayCommand(scenario, []),
+      new ReplayCommand(scenario, config),
     );
 
     expect(result.request).toBeDefined();
@@ -115,50 +119,51 @@ describe("PostmanPlugin", () => {
     );
     expect(body.method).toBe("GET");
     expect(body.url).toBe("/test");
+
+    proxy.close();
   });
 
-  it("delegates to InterceptCommand when instructions are provided", { timeout: 30_000 }, async () => {
+  it("applies tamper via proxy when instructions are provided", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
+    const queryTamper = new QueryTamperPlugin();
+    const instructions = [makeTamperInstruction()];
+    const proxy = await startTamperProxy(instructions, commandBus);
+
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
       config: {},
     });
-
-    // Register a mock InterceptCommand handler
-    let interceptedRequest: HttpRequest | null = null;
-    let interceptedInstructions: TamperInstruction[] | null = null;
-
-    commandBus.register(InterceptCommand, async (cmd: InterceptCommand) => {
-      interceptedRequest = cmd.request;
-      interceptedInstructions = cmd.instructions;
-      // Return a mock response
-      return {
-        request: cmd.request,
-        response: {
-          statusCode: 200,
-          headers: { "x-mock": "true" },
-          body: Buffer.from("mocked"),
-        },
-      };
+    await queryTamper.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
     });
 
-    const scenario = makeScenario({ method: "POST" });
-    const instructions = [makeTamperInstruction()];
+    const scenario = makeScenario({
+      method: "GET",
+      url: `http://127.0.0.1:${serverPort}/test?q=original`,
+    });
+    const config: ReplayConfig = { instructions, proxyPort: proxy.port };
 
     const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new ReplayCommand(scenario, instructions),
+      new ReplayCommand(scenario, config),
     );
 
-    // Should have delegated to InterceptCommand
-    expect(interceptedRequest).toBeDefined();
-    expect(interceptedRequest!.method).toBe("POST");
-    expect(interceptedInstructions).toHaveLength(1);
-    expect(result.response.headers["x-mock"]).toBe("true");
+    expect(result.response.statusCode).toBe(200);
+
+    const body = JSON.parse(
+      (result.response.body as Buffer).toString("utf-8"),
+    );
+    expect(body.url).toBe("/test?q=%3Cscript%3E");
+
+    proxy.close();
   });
 
   it("sends POST request with body from scenario source", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
+    const proxy = await startTamperProxy([], commandBus);
+
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -169,9 +174,10 @@ describe("PostmanPlugin", () => {
       method: "POST",
       body: '{"key":"value"}',
     });
+    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port };
 
     const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new ReplayCommand(scenario, []),
+      new ReplayCommand(scenario, config),
     );
 
     expect(result.response.statusCode).toBe(200);
@@ -181,6 +187,8 @@ describe("PostmanPlugin", () => {
     );
     expect(body.method).toBe("POST");
     expect(body.body).toBe('{"key":"value"}');
+
+    proxy.close();
   });
 });
 
@@ -300,13 +308,22 @@ describe("buildRequest", () => {
 
     const request = buildRequest(scenario);
 
-    // Empty raw string produces an empty Buffer
     expect(request.body).not.toBeNull();
     expect((request.body as Buffer).toString("utf-8")).toBe("");
   });
 });
 
 describe("runNewman", () => {
+  let runNewmanProxy: TamperProxy;
+
+  beforeEach(async () => {
+    runNewmanProxy = await startTamperProxy([], commandBus);
+  });
+
+  afterEach(() => {
+    runNewmanProxy.close();
+  });
+
   it("executes a GET request and returns the response", { timeout: 30_000 }, async () => {
     const scenario: Scenario = {
       id: "s1" as Brand<string, "ScenarioId">,
@@ -322,7 +339,7 @@ describe("runNewman", () => {
       },
     };
 
-    const response = await runNewman(scenario);
+    const response = await runNewman(scenario, runNewmanProxy.port);
 
     expect(response.statusCode).toBe(200);
     expect(response.headers["x-test"]).toBe("ok");
@@ -351,7 +368,7 @@ describe("runNewman", () => {
       },
     };
 
-    const response = await runNewman(scenario);
+    const response = await runNewman(scenario, runNewmanProxy.port);
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(
