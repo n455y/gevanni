@@ -7,12 +7,28 @@ import { loadConfig } from "../config/loader.js";
 import { registerBuiltinPlugins } from "../builtin.js";
 import { Orchestrator } from "../core/orchestrator.js";
 import type { LogLevel } from "../core/logger.js";
+import type { ScenarioLoaderPlugin } from "../core/plugin.js";
+import type { Scenario } from "../types/models.js";
 
 interface CliOptions {
   config?: string;
   verbose?: boolean;
   quiet?: boolean;
   concurrency?: string;
+}
+
+async function loadScenarios(
+  loaders: ScenarioLoaderPlugin[],
+  scenarioPaths: string[],
+): Promise<Scenario[]> {
+  const scenarios: Scenario[] = [];
+  for (const path of scenarioPaths) {
+    for (const loader of loaders) {
+      const loaded = await loader.load(path);
+      scenarios.push(...loaded);
+    }
+  }
+  return scenarios;
 }
 
 function buildOverrides(
@@ -44,14 +60,18 @@ async function bootstrap(
   const registry = new PluginRegistryImpl();
 
   registerBuiltinPlugins(registry);
-  await registry.initializeAll({
+  const plugins = await registry.initializeAll({
     commandBus,
     eventBus,
     pluginConfigs: config.plugins,
   });
 
+  const loaders = plugins.filter(
+    (p): p is ScenarioLoaderPlugin => "load" in p && typeof (p as any).load === "function",
+  );
+
   const orchestrator = new Orchestrator({ commandBus, eventBus, logger });
-  return { config, logger, commandBus, eventBus, registry, orchestrator };
+  return { config, logger, commandBus, eventBus, registry, orchestrator, loaders };
 }
 
 // CLI setup
@@ -71,13 +91,12 @@ program
   .option("--concurrency <n>", "Parallel workers")
   .action(async (opts: CliOptions) => {
     const overrides = buildOverrides(opts);
-    const { config, logger, orchestrator } = await bootstrap(
+    const { config, logger, orchestrator, loaders } = await bootstrap(
       opts.config,
       overrides,
     );
-    const { scanId, inspectors } = await orchestrator.plan(
-      config.scenarioPaths,
-    );
+    const scenarios = await loadScenarios(loaders, config.scenarioPaths);
+    const { scanId, inspectors } = await orchestrator.plan(scenarios);
     await orchestrator.scan(scanId, inspectors, config.concurrency);
     await orchestrator.report(scanId);
   });
@@ -90,11 +109,12 @@ program
   .option("--verbose", "Debug logging")
   .option("--quiet", "Minimal logging")
   .action(async (opts: CliOptions) => {
-    const { config, orchestrator } = await bootstrap(
+    const { config, orchestrator, loaders } = await bootstrap(
       opts.config,
       buildOverrides(opts),
     );
-    await orchestrator.plan(config.scenarioPaths);
+    const scenarios = await loadScenarios(loaders, config.scenarioPaths);
+    await orchestrator.plan(scenarios);
   });
 
 // resume command

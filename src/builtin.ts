@@ -1,5 +1,6 @@
 import type { PluginRegistry } from "./core/plugin.js";
 import { PostmanPlugin } from "./plugins/scenario/postman.js";
+import { PostmanLoaderPlugin } from "./plugins/loader/postman-loader.js";
 import { HttpProxyPlugin } from "./plugins/proxy/http-proxy.js";
 import { QueryParserPlugin } from "./plugins/parser/query-parser.js";
 import { JsonParserPlugin } from "./plugins/parser/json-parser.js";
@@ -15,6 +16,7 @@ import { JsonReporterPlugin } from "./plugins/reporter/json-reporter.js";
 
 function registerBuiltinPlugins(registry: PluginRegistry): void {
   registry.register("scenarioReplayer", "postman", () => new PostmanPlugin());
+  registry.register("scenarioLoader", "postman", () => new PostmanLoaderPlugin());
   registry.register("proxy", "http-proxy", () => new HttpProxyPlugin());
   registry.register("parser", "query-parser", () => new QueryParserPlugin());
   registry.register("parser", "json-parser", () => new JsonParserPlugin());
