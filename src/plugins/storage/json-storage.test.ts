@@ -15,7 +15,11 @@ import {
   LoadScanStateCommand,
   LoadScenarioCommand,
 } from "../../commands/storage.js";
-import type { Job, ScanState, Scenario } from "../../types/models.js";
+import {
+  SaveExchangeCommand,
+  LoadExchangesCommand,
+} from "../../commands/exchange.js";
+import type { Job, ScanState, Scenario, Exchange } from "../../types/models.js";
 import type {
   ScanId,
   JobId,
@@ -327,6 +331,59 @@ describe("JsonStoragePlugin", () => {
           new LoadScenarioCommand(asScenarioId("nonexistent")),
         ),
       ).rejects.toThrow("Scenario not found");
+    });
+  });
+
+  describe("SaveExchangeCommand / LoadExchangesCommand", () => {
+    const exchange: Exchange = {
+      request: {
+        method: "GET",
+        url: "http://example.com/test",
+        headers: { "content-type": "text/plain" },
+        body: null,
+      },
+      response: {
+        statusCode: 200,
+        headers: { "content-type": "text/plain" },
+        body: Buffer.from("ok"),
+      },
+    };
+
+    it("saves and loads exchanges by replayId", async () => {
+      const replayId = "test-replay-001";
+      await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
+      const loaded: Exchange[] = await commandBus.dispatch(
+        new LoadExchangesCommand(replayId),
+      );
+      expect(loaded).toHaveLength(1);
+      expect(loaded[0].request.method).toBe("GET");
+      expect(loaded[0].response.statusCode).toBe(200);
+    });
+
+    it("returns empty array when no exchanges exist", async () => {
+      const loaded: Exchange[] = await commandBus.dispatch(
+        new LoadExchangesCommand("nonexistent-id"),
+      );
+      expect(loaded).toEqual([]);
+    });
+
+    it("accumulates multiple exchanges for same replayId", async () => {
+      const replayId = "test-replay-002";
+      await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
+      const exchange2: Exchange = {
+        request: {
+          method: "POST",
+          url: "http://example.com/submit",
+          headers: {},
+          body: Buffer.from("data"),
+        },
+        response: { statusCode: 201, headers: {}, body: null },
+      };
+      await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange2));
+      const loaded: Exchange[] = await commandBus.dispatch(
+        new LoadExchangesCommand(replayId),
+      );
+      expect(loaded).toHaveLength(2);
     });
   });
 });

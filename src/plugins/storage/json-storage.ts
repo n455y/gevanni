@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import type { CommandBus } from "../../core/command-bus.js";
-import type { Job, ScanState, Scenario } from "../../types/models.js";
+import type { Job, ScanState, Scenario, Exchange } from "../../types/models.js";
 import type { ScanId, JobId, JobStatus } from "../../types/branded.js";
 import {
   SaveJobCommand,
@@ -14,6 +14,10 @@ import {
   LoadScanStateCommand,
   LoadScenarioCommand,
 } from "../../commands/storage.js";
+import {
+  SaveExchangeCommand,
+  LoadExchangesCommand,
+} from "../../commands/exchange.js";
 
 // --- Helpers ---
 
@@ -190,6 +194,23 @@ class JsonStoragePlugin implements Plugin {
       }
 
       throw new Error(`Scenario not found: ${cmd.id as string}`);
+    });
+
+    // --- Exchange storage ---
+    const exchangesPath = (replayId: string) =>
+      join(this.outputDir, "exchanges", `${replayId}.json`);
+
+    bus.register(SaveExchangeCommand, async (cmd) => {
+      const path = exchangesPath(cmd.replayId);
+      const exchanges: Exchange[] =
+        (await readJsonFile<Exchange[]>(path)) ?? [];
+      exchanges.push(cmd.exchange);
+      await writeJsonFile(path, exchanges);
+    });
+
+    bus.register(LoadExchangesCommand, async (cmd) => {
+      const path = exchangesPath(cmd.replayId);
+      return (await readJsonFile<Exchange[]>(path)) ?? [];
     });
 
     // Ensure base output directory exists
