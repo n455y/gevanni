@@ -79,7 +79,7 @@ class InMemoryCommandBus implements CommandBus {
     }
     let accumulator: TResult = command.initial;
     for (const handler of handlers) {
-      accumulator = await (handler as any)(command, accumulator);
+      accumulator = await (handler as PipelineHandler<typeof command, TResult>)(command, accumulator);
     }
     return accumulator;
   }
