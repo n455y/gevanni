@@ -135,3 +135,32 @@ describe("InMemoryCommandBus", () => {
     });
   });
 });
+
+describe("InMemoryCommandBus edge cases", () => {
+  it("broadcast executes handlers in parallel", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.register(CollectCommand, async (cmd: CollectCommand) => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return [cmd.input + "-slow"];
+    });
+    bus.register(CollectCommand, async (cmd: CollectCommand) => {
+      return [cmd.input + "-fast"];
+    });
+    const results = await bus.broadcast(new CollectCommand("test"));
+    expect(results).toHaveLength(2);
+    expect(results).toEqual([["test-slow"], ["test-fast"]]);
+  });
+
+  it("pipe passes initial value through even with no handlers", async () => {
+    const bus = new InMemoryCommandBus();
+    const result = await bus.pipe(new AccumulateCommand(42));
+    expect(result).toBe(0);
+  });
+
+  it("dispatch rejects with descriptive error when no handler", async () => {
+    const bus = new InMemoryCommandBus();
+    await expect(bus.dispatch(new EchoCommand("hello"))).rejects.toThrow(
+      "No handler registered for command: EchoCommand",
+    );
+  });
+});
