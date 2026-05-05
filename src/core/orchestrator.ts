@@ -14,8 +14,7 @@ import type {
   ScanState,
   Scenario,
   InspectionParameter,
-  HttpRequest,
-  HttpResponse,
+  Exchange,
   Finding,
   TamperInstruction,
 } from "../types/models.js";
@@ -106,8 +105,9 @@ class Orchestrator {
         logger.debug(`Processing scenario: ${scenario.name}`);
 
         // a. Dispatch ReplayCommand with empty instructions to get original request
-        const replayResult: { request: HttpRequest; response: HttpResponse } =
-          await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port, replayId: id as string }));
+        const rid = requestId();
+        const replayResult: Exchange =
+          await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port, replayId: rid }));
 
         // b. Broadcast ParseRequestCommand to collect all InspectionParameters
         const parseResults: InspectionParameter[][] = await commandBus.broadcast(
