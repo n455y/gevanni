@@ -89,6 +89,12 @@ interface HttpResponse {
   body: Buffer | null;
 }
 
+// --- Exchange ---
+interface Exchange {
+  request: HttpRequest;
+  response: HttpResponse;
+}
+
 // --- Finding ---
 interface Finding {
   vulnerable: boolean;
@@ -148,6 +154,7 @@ export type {
   TamperInstruction,
   HttpRequest,
   HttpResponse,
+  Exchange,
   Finding,
   Job,
   ScanState,

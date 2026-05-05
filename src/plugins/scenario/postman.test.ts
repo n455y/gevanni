@@ -103,7 +103,7 @@ describe("PostmanPlugin", () => {
     });
 
     const scenario = makeScenario({ method: "GET" });
-    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port };
+    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-plan" };
 
     const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
       new ReplayCommand(scenario, config),
@@ -144,7 +144,7 @@ describe("PostmanPlugin", () => {
       method: "GET",
       url: `http://127.0.0.1:${serverPort}/test?q=original`,
     });
-    const config: ReplayConfig = { instructions, proxyPort: proxy.port };
+    const config: ReplayConfig = { instructions, proxyPort: proxy.port, replayId: "test-tamper" };
 
     const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
       new ReplayCommand(scenario, config),
@@ -174,7 +174,7 @@ describe("PostmanPlugin", () => {
       method: "POST",
       body: '{"key":"value"}',
     });
-    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port };
+    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-post" };
 
     const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
       new ReplayCommand(scenario, config),

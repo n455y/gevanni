@@ -5,3 +5,4 @@ export * from "./intercept.js";
 export * from "./tamper.js";
 export * from "./storage.js";
 export * from "./report.js";
+export * from "./exchange.js";

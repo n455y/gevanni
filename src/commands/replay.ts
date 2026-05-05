@@ -4,6 +4,7 @@ import type { Scenario, TamperInstruction, HttpRequest, HttpResponse } from "../
 interface ReplayConfig {
   instructions: TamperInstruction[];
   proxyPort: number;
+  replayId: string;
 }
 
 class ReplayCommand extends SingleCommand<{ request: HttpRequest; response: HttpResponse }> {
