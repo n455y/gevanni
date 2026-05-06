@@ -3,7 +3,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { ReflectedXssPlugin, ReflectedXssInspector } from "./reflected-xss.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
-import type { InspectionParameter, HttpRequest, HttpResponse } from "../../types/models.js";
+import type { InspectionParameter, HttpRequest } from "../../types/models.js";
 import { ReplaceValue, AppendValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { FormParameterType } from "../parser/form-parser.js";
@@ -61,7 +61,7 @@ const mockRequest: HttpRequest = {
 };
 
 describe("ReflectedXssPlugin", () => {
-  it("creates inspectors for query and jsonPrimitive parameters", async () => {
+  it("creates inspectors only for parameters with AppendValue tamper", async () => {
     const plugin = new ReflectedXssPlugin();
     await plugin.init({
       commandBus,
@@ -80,11 +80,9 @@ describe("ReflectedXssPlugin", () => {
 
     expect(results).toHaveLength(1);
     const inspectors = results[0];
-    expect(inspectors).toHaveLength(2);
+    expect(inspectors).toHaveLength(1);
     expect(inspectors[0].signatureName).toBe("reflected-xss");
     expect(inspectors[0].parameters).toEqual([params[0]]);
-    expect(inspectors[1].signatureName).toBe("reflected-xss");
-    expect(inspectors[1].parameters).toEqual([params[1]]);
   });
 
   it("creates inspectors for form parameters", async () => {
