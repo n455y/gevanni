@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import type { CommandBus } from "../../core/command-bus.js";
 import type { Job, ScanState, Scenario, Exchange } from "../../types/models.js";
-import type { ScanId, JobId, JobStatus } from "../../types/branded.js";
+import type { ScanId, JobStatus } from "../../types/branded.js";
 import {
   SaveJobCommand,
   LoadJobCommand,
@@ -50,6 +50,23 @@ interface JsonStorageConfig {
 class JsonStoragePlugin implements Plugin {
   readonly name = "json-storage";
   private outputDir = "./gevanni-results";
+  private fileLocks = new Map<string, Promise<void>>();
+
+  private async withFileLock<T>(filePath: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.fileLocks.get(filePath);
+    let resolve!: () => void;
+    const next = new Promise<void>((r) => { resolve = r; });
+    this.fileLocks.set(filePath, next);
+    if (prev) await prev.catch(() => {});
+    try {
+      return await fn();
+    } finally {
+      resolve();
+      if (this.fileLocks.get(filePath) === next) {
+        this.fileLocks.delete(filePath);
+      }
+    }
+  }
 
   async init(context: PluginContext): Promise<void> {
     const cfg = context.config as JsonStorageConfig;
@@ -65,9 +82,11 @@ class JsonStoragePlugin implements Plugin {
     // --- SaveJobCommand ---
     bus.register(SaveJobCommand, async (cmd) => {
       const path = jobsPath(cmd.job.scenarioId as unknown as ScanId);
-      const jobs: Job[] = (await readJsonFile<Job[]>(path)) ?? [];
-      jobs.push(cmd.job);
-      await writeJsonFile(path, jobs);
+      await this.withFileLock(path, async () => {
+        const jobs: Job[] = (await readJsonFile<Job[]>(path)) ?? [];
+        jobs.push(cmd.job);
+        await writeJsonFile(path, jobs);
+      });
     });
 
     // --- LoadJobCommand ---
@@ -148,16 +167,18 @@ class JsonStoragePlugin implements Plugin {
         });
         for (const entry of entries) {
           if (!entry.isDirectory()) continue;
-          const path = join(this.outputDir, entry.name, "jobs.json");
-          const jobs = await readJsonFile<Job[]>(path);
-          if (!jobs) continue;
-          const idx = jobs.findIndex((j) => j.id === cmd.id);
-          if (idx !== -1) {
-            jobs[idx] = { ...jobs[idx], ...cmd.updates, id: jobs[idx].id };
-            await writeJsonFile(path, jobs);
-            updated = true;
-            break;
-          }
+          const filePath = join(this.outputDir, entry.name, "jobs.json");
+          await this.withFileLock(filePath, async () => {
+            const jobs = await readJsonFile<Job[]>(filePath);
+            if (!jobs) return;
+            const idx = jobs.findIndex((j) => j.id === cmd.id);
+            if (idx !== -1) {
+              jobs[idx] = { ...jobs[idx], ...cmd.updates, id: jobs[idx].id };
+              await writeJsonFile(filePath, jobs);
+              updated = true;
+            }
+          });
+          if (updated) break;
         }
       } catch {
         // outputDir may not exist yet
@@ -237,10 +258,12 @@ class JsonStoragePlugin implements Plugin {
 
     bus.register(SaveExchangeCommand, async (cmd) => {
       const path = exchangesPath(cmd.replayId);
-      const exchanges: Exchange[] =
-        (await readJsonFile<Exchange[]>(path)) ?? [];
-      exchanges.push(cmd.exchange);
-      await writeJsonFile(path, exchanges);
+      await this.withFileLock(path, async () => {
+        const exchanges: Exchange[] =
+          (await readJsonFile<Exchange[]>(path)) ?? [];
+        exchanges.push(cmd.exchange);
+        await writeJsonFile(path, exchanges);
+      });
     });
 
     bus.register(LoadExchangesCommand, async (cmd) => {
