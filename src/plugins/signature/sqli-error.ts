@@ -55,9 +55,10 @@ class SqliErrorPlugin implements Plugin {
         const inspectors: SignatureInspector[] = [];
         for (const param of cmd.parameters) {
           if (
-            param.type === QueryParameterType ||
-            param.type === JsonPrimitiveParameterType ||
-            param.type === HeaderParameterType
+            (param.type === QueryParameterType ||
+              param.type === JsonPrimitiveParameterType ||
+              param.type === HeaderParameterType) &&
+            param.allowedTampers.includes(AppendValue)
           ) {
             inspectors.push(new SqliErrorInspector(param));
           }

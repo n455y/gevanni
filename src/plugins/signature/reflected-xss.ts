@@ -1,5 +1,5 @@
 import type { Payload, Evidence } from "../../types/branded.js";
-import { ReplaceValue } from "../../types/branded.js";
+import { AppendValue } from "../../types/branded.js";
 import type { InspectionParameter, Finding } from "../../types/models.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
@@ -22,7 +22,7 @@ class ReflectedXssInspector implements SignatureInspector {
     const instruction = {
       parameter: this.param,
       payload,
-      method: ReplaceValue,
+      method: AppendValue,
     };
     const { request, response } = await replay([instruction]);
     const body = response.body?.toString() ?? "";
@@ -48,10 +48,11 @@ class ReflectedXssPlugin implements Plugin {
         const inspectors: SignatureInspector[] = [];
         for (const param of cmd.parameters) {
           if (
-            param.type === QueryParameterType ||
-            param.type === JsonPrimitiveParameterType ||
-            param.type === FormParameterType ||
-            param.type === HeaderParameterType
+            (param.type === QueryParameterType ||
+              param.type === JsonPrimitiveParameterType ||
+              param.type === FormParameterType ||
+              param.type === HeaderParameterType) &&
+            param.allowedTampers.includes(AppendValue)
           ) {
             inspectors.push(new ReflectedXssInspector(param));
           }
