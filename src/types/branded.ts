@@ -11,7 +11,10 @@ type ExchangeId = Brand<string, "ExchangeId">;
 class ScenarioType {
   private _brand = "ScenarioType" as const;
 }
-type ParameterType = Brand<string, "ParameterType">;
+class ParameterType {
+  private _brand = "ParameterType" as const;
+}
+class HeaderParameterType extends ParameterType {}
 
 type TamperMethod = Brand<
   "replaceValue" | "appendValue" | "prependValue",
@@ -41,6 +44,7 @@ export {
   ExchangeId,
   ScenarioType,
   ParameterType,
+  HeaderParameterType,
   TamperMethod,
   JobStatus,
   ScanStatus,

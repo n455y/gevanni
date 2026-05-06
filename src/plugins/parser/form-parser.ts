@@ -1,11 +1,17 @@
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import { ParameterType } from "../../types/branded.js";
+import type { TamperMethod } from "../../types/branded.js";
 import type {
   HttpRequest,
   InspectionParameter,
-  QueryParameter,
 } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
+import { QueryParameterType } from "./query-parser.js";
+import type { QueryParameter } from "./query-parser.js";
+
+class FormParameterType extends ParameterType {}
+
+type FormParameter = InspectionParameter<typeof FormParameterType, { name: string }, string>;
 
 class FormParserPlugin implements Plugin {
   readonly name = "form-parser";
@@ -35,7 +41,7 @@ function parseFormParameters(request: HttpRequest): InspectionParameter[] {
 
   for (const [name, value] of searchParams) {
     const param: QueryParameter = {
-      type: "query" as Brand<"query", "ParameterType">,
+      type: QueryParameterType,
       location: { name },
       originalValue: value,
       allowedTampers: [
@@ -50,4 +56,5 @@ function parseFormParameters(request: HttpRequest): InspectionParameter[] {
   return params;
 }
 
-export { FormParserPlugin };
+export { FormParserPlugin, FormParameterType };
+export type { FormParameter };

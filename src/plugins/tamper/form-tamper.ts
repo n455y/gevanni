@@ -1,7 +1,8 @@
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { TamperMethod } from "../../types/branded.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { QueryParameterType } from "../parser/query-parser.js";
 
 class FormTamperPlugin implements Plugin {
   readonly name = "form-tamper";
@@ -26,8 +27,7 @@ class FormTamperPlugin implements Plugin {
 
         const formInstructions = cmd.instructions.filter((instr) => {
           if (
-            instr.parameter.type !==
-            ("query" as Brand<"query", "ParameterType">)
+            instr.parameter.type !== QueryParameterType
           ) {
             return false;
           }

@@ -5,6 +5,8 @@ import { JsonTamperPlugin } from "./json-tamper.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import type { Brand, TamperMethod } from "../../types/branded.js";
+import { QueryParameterType } from "../parser/query-parser.js";
+import { JsonPrimitiveParameterType, JsonArrayParameterType } from "../parser/json-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -20,7 +22,7 @@ function makeJsonPrimitiveInstruction(
 ): TamperInstruction {
   return {
     parameter: {
-      type: "jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">,
+      type: JsonPrimitiveParameterType,
       location: { path },
       originalValue,
       allowedTampers: [
@@ -129,7 +131,7 @@ describe("JsonTamperPlugin", () => {
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
     const instruction: TamperInstruction = {
       parameter: {
-        type: "query" as Brand<"query", "ParameterType">,
+        type: QueryParameterType,
         location: { name: "foo" },
         originalValue: "bar",
         allowedTampers: [
@@ -225,7 +227,7 @@ describe("JsonTamperPlugin", () => {
 
     const instruction: TamperInstruction = {
       parameter: {
-        type: "jsonArray" as Brand<"jsonArray", "ParameterType">,
+        type: JsonArrayParameterType,
         location: { path: ["items"] },
         originalValue: ["a", "b"],
         allowedTampers: [

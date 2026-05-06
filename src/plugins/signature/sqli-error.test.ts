@@ -4,7 +4,11 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { SqliErrorPlugin, SqliErrorInspector, SQL_ERROR_PATTERNS } from "./sqli-error.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import type { InspectionParameter, HttpRequest, HttpResponse } from "../../types/models.js";
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { TamperMethod } from "../../types/branded.js";
+import { QueryParameterType } from "../parser/query-parser.js";
+import { FormParameterType } from "../parser/form-parser.js";
+import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
+import { HeaderParameterType } from "../../types/branded.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 
 let commandBus: InMemoryCommandBus;
@@ -15,7 +19,7 @@ beforeEach(() => {
 
 function makeQueryParam(name: string, value: string): InspectionParameter {
   return {
-    type: "query" as Brand<"query", "ParameterType">,
+    type: QueryParameterType,
     location: { name },
     originalValue: value,
     allowedTampers: ["replaceValue" as TamperMethod, "appendValue" as TamperMethod],
@@ -24,7 +28,7 @@ function makeQueryParam(name: string, value: string): InspectionParameter {
 
 function makeJsonPrimitiveParam(path: string[], value: unknown): InspectionParameter {
   return {
-    type: "jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">,
+    type: JsonPrimitiveParameterType,
     location: { path },
     originalValue: value,
     allowedTampers: ["replaceValue" as TamperMethod],
@@ -33,7 +37,7 @@ function makeJsonPrimitiveParam(path: string[], value: unknown): InspectionParam
 
 function makeFormParam(name: string, value: string): InspectionParameter {
   return {
-    type: "form" as Brand<"form", "ParameterType">,
+    type: FormParameterType,
     location: { name },
     originalValue: value,
     allowedTampers: ["replaceValue" as TamperMethod, "appendValue" as TamperMethod],
@@ -42,7 +46,7 @@ function makeFormParam(name: string, value: string): InspectionParameter {
 
 function makeHeaderParam(name: string, value: string): InspectionParameter {
   return {
-    type: "header" as Brand<"header", "ParameterType">,
+    type: HeaderParameterType,
     location: { name },
     originalValue: value,
     allowedTampers: ["replaceValue" as TamperMethod],

@@ -1,4 +1,5 @@
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import { ParameterType } from "../../types/branded.js";
+import type { TamperMethod } from "../../types/branded.js";
 import type {
   HttpRequest,
   InspectionParameter,
@@ -6,12 +7,17 @@ import type {
   JsonArray,
   JsonObject,
   JsonValue,
-  JsonPrimitiveParameter,
-  JsonArrayParameter,
-  JsonObjectParameter,
 } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
+
+class JsonPrimitiveParameterType extends ParameterType {}
+class JsonArrayParameterType extends ParameterType {}
+class JsonObjectParameterType extends ParameterType {}
+
+type JsonPrimitiveParameter = InspectionParameter<typeof JsonPrimitiveParameterType, { path: string[] }, JsonPrimitive>;
+type JsonArrayParameter = InspectionParameter<typeof JsonArrayParameterType, { path: string[] }, JsonArray>;
+type JsonObjectParameter = InspectionParameter<typeof JsonObjectParameterType, { path: string[] }, JsonObject>;
 
 const ALLOWED_TAMPERS: TamperMethod[] = [
   "replaceValue" as TamperMethod,
@@ -63,14 +69,14 @@ function extractJsonParams(
 ): void {
   if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
     params.push({
-      type: "jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">,
+      type: JsonPrimitiveParameterType,
       location: { path },
       originalValue: value as JsonPrimitive,
       allowedTampers: [...ALLOWED_TAMPERS],
     } satisfies JsonPrimitiveParameter);
   } else if (Array.isArray(value)) {
     params.push({
-      type: "jsonArray" as Brand<"jsonArray", "ParameterType">,
+      type: JsonArrayParameterType,
       location: { path },
       originalValue: value as JsonArray,
       allowedTampers: [...ALLOWED_TAMPERS],
@@ -81,7 +87,7 @@ function extractJsonParams(
     }
   } else if (typeof value === "object") {
     params.push({
-      type: "jsonObject" as Brand<"jsonObject", "ParameterType">,
+      type: JsonObjectParameterType,
       location: { path },
       originalValue: value as JsonObject,
       allowedTampers: [...ALLOWED_TAMPERS],
@@ -93,4 +99,5 @@ function extractJsonParams(
   }
 }
 
-export { JsonParserPlugin };
+export { JsonParserPlugin, JsonPrimitiveParameterType, JsonArrayParameterType, JsonObjectParameterType };
+export type { JsonPrimitiveParameter, JsonArrayParameter, JsonObjectParameter };

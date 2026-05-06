@@ -1,4 +1,4 @@
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { TamperMethod } from "../../types/branded.js";
 import type {
   HttpRequest,
   TamperInstruction,
@@ -6,11 +6,12 @@ import type {
 } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { JsonPrimitiveParameterType, JsonArrayParameterType, JsonObjectParameterType } from "../parser/json-parser.js";
 
 const JSON_TYPES = new Set([
-  "jsonPrimitive",
-  "jsonArray",
-  "jsonObject",
+  JsonPrimitiveParameterType,
+  JsonArrayParameterType,
+  JsonObjectParameterType,
 ]);
 
 class JsonTamperPlugin implements Plugin {
@@ -24,7 +25,7 @@ class JsonTamperPlugin implements Plugin {
         request: HttpRequest,
       ): Promise<HttpRequest> => {
         const jsonInstructions = cmd.instructions.filter((instr) =>
-          JSON_TYPES.has(instr.parameter.type as string),
+          JSON_TYPES.has(instr.parameter.type),
         );
 
         if (jsonInstructions.length === 0) {

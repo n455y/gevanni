@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { QueryParserPlugin } from "./query-parser.js";
+import { QueryParserPlugin, QueryParameterType } from "./query-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import type { HttpRequest, QueryParameter } from "../../types/models.js";
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { HttpRequest } from "../../types/models.js";
+import type { TamperMethod } from "../../types/branded.js";
+import type { QueryParameter } from "./query-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -40,7 +41,7 @@ describe("QueryParserPlugin", () => {
     expect(params).toEqual(
       expect.arrayContaining([
         {
-          type: "query" as Brand<"query", "ParameterType">,
+          type: QueryParameterType,
           location: { name: "foo" },
           originalValue: "bar",
           allowedTampers: [
@@ -50,7 +51,7 @@ describe("QueryParserPlugin", () => {
           ],
         },
         {
-          type: "query" as Brand<"query", "ParameterType">,
+          type: QueryParameterType,
           location: { name: "baz" },
           originalValue: "123",
           allowedTampers: [

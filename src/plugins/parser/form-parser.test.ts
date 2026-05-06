@@ -3,8 +3,10 @@ import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { FormParserPlugin } from "./form-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import type { HttpRequest, QueryParameter } from "../../types/models.js";
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { HttpRequest } from "../../types/models.js";
+import type { TamperMethod } from "../../types/branded.js";
+import { QueryParameterType } from "./query-parser.js";
+import type { QueryParameter } from "./query-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -43,7 +45,7 @@ describe("FormParserPlugin", () => {
     expect(params).toEqual(
       expect.arrayContaining([
         {
-          type: "query" as Brand<"query", "ParameterType">,
+          type: QueryParameterType,
           location: { name: "username" },
           originalValue: "admin",
           allowedTampers: [
@@ -53,7 +55,7 @@ describe("FormParserPlugin", () => {
           ],
         },
         {
-          type: "query" as Brand<"query", "ParameterType">,
+          type: QueryParameterType,
           location: { name: "password" },
           originalValue: "secret",
           allowedTampers: [

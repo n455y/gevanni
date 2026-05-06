@@ -1,11 +1,16 @@
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import { ParameterType } from "../../types/branded.js";
+import type { TamperMethod } from "../../types/branded.js";
 import type {
   HttpRequest,
   InspectionParameter,
-  QueryParameter,
 } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
+
+class QueryParameterType extends ParameterType {}
+const queryParameterType = new QueryParameterType();
+
+type QueryParameter = InspectionParameter<typeof QueryParameterType, { name: string }, string>;
 
 class QueryParserPlugin implements Plugin {
   readonly name = "query-parser";
@@ -28,7 +33,7 @@ function parseQueryParameters(
 
   for (const [name, value] of url.searchParams) {
     const param: QueryParameter = {
-      type: "query" as Brand<"query", "ParameterType">,
+      type: QueryParameterType,
       location: { name },
       originalValue: value,
       allowedTampers: [
@@ -43,4 +48,5 @@ function parseQueryParameters(
   return params;
 }
 
-export { QueryParserPlugin };
+export type { QueryParameter };
+export { QueryParserPlugin, QueryParameterType };

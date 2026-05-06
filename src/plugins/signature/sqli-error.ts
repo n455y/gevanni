@@ -1,8 +1,10 @@
-import type { Brand, Payload, Evidence, TamperMethod } from "../../types/branded.js";
+import type { Payload, Evidence, TamperMethod } from "../../types/branded.js";
 import type { InspectionParameter, Finding } from "../../types/models.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
+import { QueryParameterType } from "../parser/query-parser.js";
+import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
 
 const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
@@ -51,8 +53,8 @@ class SqliErrorPlugin implements Plugin {
         const inspectors: SignatureInspector[] = [];
         for (const param of cmd.parameters) {
           if (
-            param.type === ("query" as Brand<"query", "ParameterType">) ||
-            param.type === ("jsonPrimitive" as Brand<"jsonPrimitive", "ParameterType">)
+            param.type === QueryParameterType ||
+            param.type === JsonPrimitiveParameterType
           ) {
             inspectors.push(new SqliErrorInspector(param));
           }
