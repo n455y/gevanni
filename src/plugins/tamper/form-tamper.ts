@@ -2,7 +2,7 @@ import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../typ
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import { QueryParameterType } from "../parser/query-parser.js";
+import { FormParameterType } from "../parser/form-parser.js";
 
 class FormTamperPlugin implements Plugin {
   readonly name = "form-tamper";
@@ -27,7 +27,7 @@ class FormTamperPlugin implements Plugin {
 
         const formInstructions = cmd.instructions.filter((instr) => {
           if (
-            instr.parameter.type !== QueryParameterType
+            instr.parameter.type !== FormParameterType
           ) {
             return false;
           }

@@ -5,8 +5,6 @@ import type {
 } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { QueryParameterType } from "./query-parser.js";
-import type { QueryParameter } from "./query-parser.js";
 
 class FormParameterType extends ParameterType {}
 
@@ -39,8 +37,8 @@ function parseFormParameters(request: HttpRequest): InspectionParameter[] {
   const params: InspectionParameter[] = [];
 
   for (const [name, value] of searchParams) {
-    const param: QueryParameter = {
-      type: QueryParameterType,
+    const param: FormParameter = {
+      type: FormParameterType,
       location: { name },
       originalValue: value,
       allowedTampers: [

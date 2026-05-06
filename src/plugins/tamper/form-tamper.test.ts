@@ -6,7 +6,7 @@ import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import { QueryParameterType } from "../parser/query-parser.js";
+import { FormParameterType } from "../parser/form-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -31,7 +31,7 @@ function makeFormInstruction(
 ): TamperInstruction {
   return {
     parameter: {
-      type: QueryParameterType,
+      type: FormParameterType,
       location: { name: paramName },
       originalValue,
       allowedTampers: [

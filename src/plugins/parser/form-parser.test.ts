@@ -5,8 +5,8 @@ import { FormParserPlugin } from "./form-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest } from "../../types/models.js";
 import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import { QueryParameterType } from "./query-parser.js";
-import type { QueryParameter } from "./query-parser.js";
+import { FormParameterType } from "./form-parser.js";
+import type { FormParameter } from "./form-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -23,8 +23,8 @@ function makeFormRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: QueryParameter[][]): QueryParameter[] {
-  return results.flat() as QueryParameter[];
+function flatParams(results: FormParameter[][]): FormParameter[] {
+  return results.flat() as FormParameter[];
 }
 
 describe("FormParserPlugin", () => {
@@ -45,7 +45,7 @@ describe("FormParserPlugin", () => {
     expect(params).toEqual(
       expect.arrayContaining([
         {
-          type: QueryParameterType,
+          type: FormParameterType,
           location: { name: "username" },
           originalValue: "admin",
           allowedTampers: [
@@ -55,7 +55,7 @@ describe("FormParserPlugin", () => {
           ],
         },
         {
-          type: QueryParameterType,
+          type: FormParameterType,
           location: { name: "password" },
           originalValue: "secret",
           allowedTampers: [
