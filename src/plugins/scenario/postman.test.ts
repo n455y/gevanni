@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import http from "node:http";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { PostmanPlugin, runNewman } from "./postman.js";
+import { PostmanPlugin, PostmanScenarioType, runNewman } from "./postman.js";
 import { startTamperProxy } from "../proxy/http-proxy.js";
 import type { TamperProxy } from "../proxy/http-proxy.js";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
@@ -77,7 +77,7 @@ function makeScenario(overrides: {
   return {
     id: "test-scenario-1" as Brand<string, "ScenarioId">,
     name: "Test Scenario",
-    type: "postman" as Brand<string, "ScenarioType">,
+    type: PostmanScenarioType,
     source: {
       items: [
         {
@@ -225,7 +225,7 @@ describe("runNewman", () => {
     const scenario: Scenario = {
       id: "s1" as Brand<string, "ScenarioId">,
       name: "Test Newman GET",
-      type: "postman" as Brand<string, "ScenarioType">,
+      type: PostmanScenarioType,
       source: {
         items: [
           {
@@ -247,7 +247,7 @@ describe("runNewman", () => {
     const scenario: Scenario = {
       id: "s2" as Brand<string, "ScenarioId">,
       name: "Test Newman POST",
-      type: "postman" as Brand<string, "ScenarioType">,
+      type: PostmanScenarioType,
       source: {
         items: [
           {
@@ -282,7 +282,7 @@ describe("PostmanPlugin multi-request", () => {
     const scenario: Scenario = {
       id: "multi-1" as Brand<string, "ScenarioId">,
       name: "Multi Request",
-      type: "postman" as Brand<string, "ScenarioType">,
+      type: PostmanScenarioType,
       source: {
         items: [
           {

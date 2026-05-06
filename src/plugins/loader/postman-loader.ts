@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import crypto from "node:crypto";
 import type { Scenario } from "../../types/models.js";
-import type { Brand, ScenarioId } from "../../types/branded.js";
+import { PostmanScenarioType } from "../scenario/postman.js";
+import type { ScenarioId } from "../../types/branded.js";
 import type { ScenarioLoaderPlugin, PluginContext } from "../../core/plugin.js";
 
 // --- Postman Collection types (v2.1 subset) ---
@@ -73,7 +74,7 @@ class PostmanLoaderPlugin implements ScenarioLoaderPlugin {
     return flatItems.map((item) => ({
       id: scenarioId(),
       name: item.name ?? "unnamed",
-      type: "postman" as Brand<string, "ScenarioType">,
+      type: PostmanScenarioType,
       source: { items: [item] },
     }));
   }

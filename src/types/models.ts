@@ -1,10 +1,12 @@
+import {
+  ScenarioType,
+} from "./branded.js";
 import type {
   ScenarioId,
   JobId,
   RequestId,
   ScanId,
   ExchangeId,
-  ScenarioType,
   TamperMethod,
   JobStatus,
   ScanStatus,
@@ -19,7 +21,7 @@ import type { Brand } from "./branded.js";
 interface Scenario {
   id: ScenarioId;
   name: string;
-  type: ScenarioType;
+  type: typeof ScenarioType;
   source: unknown;
 }
 

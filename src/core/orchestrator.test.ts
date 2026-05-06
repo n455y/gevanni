@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { PostmanScenarioType } from "../plugins/scenario/postman.js";
 import { InMemoryCommandBus } from "./command-bus.js";
 import { InMemoryEventBus } from "./event-bus.js";
 import { createLogger } from "./logger.js";
@@ -144,7 +145,7 @@ describe("Orchestrator", () => {
       const mockScenario: Scenario = {
         id: "sc-1" as Brand<string, "ScenarioId">,
         name: "Test Scenario",
-        type: "postman" as Brand<string, "ScenarioType">,
+        type: PostmanScenarioType,
         source: {
           items: [{
             request: { method: "GET", url: { raw: "https://example.com" } },
@@ -241,7 +242,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScenarioCommand, async () => ({
         id: mockJob.scenarioId,
         name: "test",
-        type: "postman" as Brand<string, "ScenarioType">,
+        type: PostmanScenarioType,
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
       }));
       commandBus.register(ReplayCommand, async () => [{
@@ -307,7 +308,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScenarioCommand, async () => ({
         id: mockJob.scenarioId,
         name: "test",
-        type: "postman" as Brand<string, "ScenarioType">,
+        type: PostmanScenarioType,
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
       }));
       commandBus.register(ReplayCommand, async () => [{

@@ -8,7 +8,9 @@ type ScanId = Brand<string, "ScanId">;
 type ExchangeId = Brand<string, "ExchangeId">;
 
 // --- Enum-like (fixed values + Brand) ---
-type ScenarioType = Brand<string, "ScenarioType">;
+class ScenarioType {
+  private _brand = "ScenarioType" as const;
+}
 type ParameterType = Brand<string, "ParameterType">;
 
 type TamperMethod = Brand<

@@ -1,4 +1,5 @@
 import type { Exchange, Scenario } from "../../types/models.js";
+import { ScenarioType } from "../../types/branded.js";
 import type { ExchangeId } from "../../types/branded.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ReplayCommand } from "../../commands/replay.js";
@@ -124,5 +125,7 @@ class PostmanPlugin implements Plugin {
   }
 }
 
-export { PostmanPlugin, runNewman };
+class PostmanScenarioType extends ScenarioType {}
+
+export { PostmanPlugin, PostmanScenarioType, runNewman };
 export type { PostmanHeader, PostmanBody, PostmanRequest, PostmanItem };

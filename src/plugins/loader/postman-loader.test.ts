@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "path";
 import { PostmanLoaderPlugin } from "./postman-loader.js";
-import type { Brand } from "../../types/branded.js";
+import { PostmanScenarioType } from "../scenario/postman.js";
 
 describe("PostmanLoaderPlugin", () => {
   const loader = new PostmanLoaderPlugin();
@@ -73,7 +73,7 @@ describe("PostmanLoaderPlugin", () => {
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe("Get Users");
       expect(result[1].name).toBe("Create User");
-      expect(result[0].type).toBe("postman" as Brand<string, "ScenarioType">);
+      expect(result[0].type).toBe(PostmanScenarioType);
       expect(result[0].id).toBeDefined();
       expect(result[0].source).toEqual({
         items: [collection.item[0]],
