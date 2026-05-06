@@ -14,7 +14,6 @@ class ScenarioType {
 class ParameterType {
   private _brand = "ParameterType" as const;
 }
-class HeaderParameterType extends ParameterType {}
 
 class TamperMethod {
   private _brand = "TamperMethod" as const;
@@ -47,7 +46,6 @@ export {
   ExchangeId,
   ScenarioType,
   ParameterType,
-  HeaderParameterType,
   TamperMethod,
   ReplaceValue,
   AppendValue,

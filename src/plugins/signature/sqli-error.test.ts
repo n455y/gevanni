@@ -8,7 +8,7 @@ import { ReplaceValue, AppendValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { FormParameterType } from "../parser/form-parser.js";
 import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
-import { HeaderParameterType } from "../../types/branded.js";
+import { HeaderParameterType } from "../parser/header-parser.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 
 let commandBus: InMemoryCommandBus;
