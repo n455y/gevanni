@@ -1,5 +1,8 @@
 import http from "node:http";
 import https from "node:https";
+import net, { type AddressInfo } from "node:net";
+import { TLSSocket } from "node:tls";
+import selfsigned from "selfsigned";
 import type {
   HttpRequest,
   HttpResponse,
@@ -70,11 +73,22 @@ interface TamperProxy {
   close: () => void;
 }
 
-function startTamperProxy(
+async function startTamperProxy(
   instructions: TamperInstruction[],
   commandBus: CommandBus,
 ): Promise<TamperProxy> {
-  const server = http.createServer(async (req, res) => {
+  const notAfterDate = new Date();
+  notAfterDate.setFullYear(notAfterDate.getFullYear() + 10);
+  const pems = await selfsigned.generate(
+    [{ name: "commonName", value: "Gevanni Proxy CA" }],
+    { algorithm: "sha256", notAfterDate },
+  );
+
+  const requestHandler = async (
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+  ) => {
+    const isHttps = req.socket instanceof TLSSocket;
     try {
       const chunks: Buffer[] = [];
       for await (const chunk of req) {
@@ -101,9 +115,11 @@ function startTamperProxy(
       const shouldTamper = headers["x-gevanni-tamper"] === "true";
       delete headers["x-gevanni-tamper"];
 
+      const url = isHttps ? `https://${req.headers.host}${req.url}` : req.url!;
+
       const httpRequest: HttpRequest = {
         method: req.method!,
-        url: req.url!,
+        url,
         headers,
         body,
       };
@@ -115,17 +131,20 @@ function startTamperProxy(
         : httpRequest;
 
       const targetUrl = new URL(tampered.url);
-      const proxyReq = http.request(
+      const targetIsHttps = targetUrl.protocol === "https:";
+      const lib = targetIsHttps ? https : http;
+      const proxyReq = lib.request(
         {
           hostname: targetUrl.hostname,
-          port: targetUrl.port || 80,
+          port: targetUrl.port || (targetIsHttps ? 443 : 80),
           path: targetUrl.pathname + targetUrl.search,
           method: tampered.method,
           headers: { ...tampered.headers, host: targetUrl.host },
-        },
+          rejectUnauthorized: false,
+          autoSelectFamily: false,
+        } as https.RequestOptions,
         (proxyRes) => {
           if (exchangeId) {
-            // Buffer response for exchange capture
             const chunks: Buffer[] = [];
             proxyRes.on("data", (chunk: Buffer) => chunks.push(chunk));
             proxyRes.on("end", async () => {
@@ -161,7 +180,6 @@ function startTamperProxy(
               res.end(responseBody ?? Buffer.alloc(0));
             });
           } else {
-            // Stream response without buffering
             res.writeHead(
               proxyRes.statusCode!,
               proxyRes.headers as Record<string, string>,
@@ -188,6 +206,33 @@ function startTamperProxy(
       }
       res.end(`Proxy error: ${err}`);
     }
+  };
+
+  const server = http.createServer(requestHandler);
+
+  const httpsServer = https.createServer(
+    { key: pems.private, cert: pems.cert },
+    requestHandler,
+  );
+
+  const httpsServerPort = new Promise<number>((resolve) => {
+    httpsServer.listen(0, () => {
+      resolve((httpsServer.address() as AddressInfo).port);
+    });
+  });
+
+  server.on("connect", async (req, socket, head) => {
+    const port = await httpsServerPort;
+    const serverSocket = net.connect(port, "127.0.0.1", () => {
+      socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+      serverSocket.write(head);
+      serverSocket.pipe(socket);
+      socket.pipe(serverSocket);
+    });
+    serverSocket.on("error", (err) => {
+      console.error(`[PROXY-CONNECT] Error: ${err.message}`);
+      socket.end();
+    });
   });
 
   return new Promise((resolve) => {
@@ -196,7 +241,12 @@ function startTamperProxy(
       const port = typeof addr === "string" ? parseInt(addr) : addr.port;
       resolve({
         port,
-        close: () => server.closeAllConnections(),
+        close: () => {
+          server.closeAllConnections();
+          server.close();
+          httpsServer.closeAllConnections();
+          httpsServer.close();
+        },
       });
     });
   });

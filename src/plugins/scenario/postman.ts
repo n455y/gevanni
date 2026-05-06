@@ -83,6 +83,7 @@ function runNewman(
     newman.run(
       {
         collection,
+        insecure: true,
         reporters: [],
         requestAgents: {
           http: new HttpProxyAgent(proxyUrl),

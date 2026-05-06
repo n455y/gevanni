@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import http from "node:http";
+import https from "node:https";
+import selfsigned from "selfsigned";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { HttpProxyPlugin } from "./http-proxy.js";
@@ -419,5 +422,154 @@ describe("startTamperProxy", () => {
     expect(testExchanges.size).toBe(0);
 
     proxy.close();
+  });
+
+  describe("HTTPS MITM", () => {
+    let httpsTarget: https.Server;
+    let httpsTargetPort: number;
+
+    beforeEach(async () => {
+      const targetPems = await selfsigned.generate(
+        [{ name: "commonName", value: "test-server" }],
+        { algorithm: "sha256" },
+      );
+
+      httpsTarget = https.createServer(
+        { key: targetPems.private, cert: targetPems.cert },
+        (req, res) => {
+          let body = "";
+          req.on("data", (chunk) => {
+            body += chunk;
+          });
+          req.on("end", () => {
+            res.writeHead(200, {
+              "Content-Type": "application/json",
+              "X-Test": "https-ok",
+            });
+            res.end(
+              JSON.stringify({
+                method: req.method,
+                url: req.url,
+                headers: req.headers,
+                body,
+              }),
+            );
+          });
+        },
+      );
+
+      await new Promise<void>((resolve) => {
+        httpsTarget.listen(0, () => resolve());
+      });
+      const addr = httpsTarget.address();
+      if (addr && typeof addr === "object") {
+        httpsTargetPort = addr.port;
+      } else {
+        throw new Error("Failed to get HTTPS target port");
+      }
+    });
+
+    afterEach(() => {
+      httpsTarget.close();
+    });
+
+    it("intercepts HTTPS requests via CONNECT tunnel", async () => {
+      const proxy = await startTamperProxy([], commandBus);
+
+      commandBus.register(
+        ApplyTamperCommand,
+        async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      );
+
+      const agent = new HttpsProxyAgent(`http://127.0.0.1:${proxy.port}`);
+
+      const response = await new Promise<{ statusCode: number; body: string }>(
+        (resolve, reject) => {
+          const req = https.request(
+            {
+              hostname: "127.0.0.1",
+              port: httpsTargetPort,
+              path: "/https-test",
+              method: "GET",
+              agent,
+              rejectUnauthorized: false,
+            },
+            (res) => {
+              const chunks: Buffer[] = [];
+              res.on("data", (chunk: Buffer) => chunks.push(chunk));
+              res.on("end", () => {
+                resolve({
+                  statusCode: res.statusCode ?? 0,
+                  body: Buffer.concat(chunks).toString("utf-8"),
+                });
+              });
+            },
+          );
+          req.on("error", reject);
+          req.end();
+        },
+      );
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.url).toBe("/https-test");
+
+      proxy.close();
+    }, 15000);
+
+    it("saves exchange for HTTPS requests", async () => {
+      const replayId = "replay-https-001";
+      const proxy = await startTamperProxy([], commandBus);
+
+      commandBus.register(
+        ApplyTamperCommand,
+        async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      );
+
+      const agent = new HttpsProxyAgent(`http://127.0.0.1:${proxy.port}`);
+
+      const response = await new Promise<{ statusCode: number; body: string }>(
+        (resolve, reject) => {
+          const req = https.request(
+            {
+              hostname: "127.0.0.1",
+              port: httpsTargetPort,
+              path: "/exchange-https-test",
+              method: "GET",
+              agent,
+              rejectUnauthorized: false,
+              headers: {
+                "x-gevanni-exchange-id": replayId,
+                "x-gevanni-replay-id": replayId,
+              },
+            },
+            (res) => {
+              const chunks: Buffer[] = [];
+              res.on("data", (chunk: Buffer) => chunks.push(chunk));
+              res.on("end", () => {
+                resolve({
+                  statusCode: res.statusCode ?? 0,
+                  body: Buffer.concat(chunks).toString("utf-8"),
+                });
+              });
+            },
+          );
+          req.on("error", reject);
+          req.end();
+        },
+      );
+
+      expect(response.statusCode).toBe(200);
+
+      const exchanges = await commandBus.dispatch<Exchange[]>(
+        new LoadExchangesCommand(replayId),
+      );
+      expect(exchanges).toHaveLength(1);
+      expect(exchanges[0].request.method).toBe("GET");
+      expect(exchanges[0].request.url).toContain("https://");
+      expect(exchanges[0].response.statusCode).toBe(200);
+
+      proxy.close();
+    }, 15000);
   });
 });
