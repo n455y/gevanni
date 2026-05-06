@@ -41,13 +41,9 @@ class ReflectedXssPlugin implements Plugin {
     context.commandBus.register(
       CreateInspectorsCommand,
       async (cmd: CreateInspectorsCommand) => {
-        const inspectors: SignatureInspector[] = [];
-        for (const param of cmd.parameters) {
-          if (param.allowedTampers.includes(AppendValue)) {
-            inspectors.push(new ReflectedXssInspector(param));
-          }
-        }
-        return inspectors;
+        return cmd.parameters
+          .filter((p) => p.allowedTampers.includes(AppendValue))
+          .map((p) => new ReflectedXssInspector(p));
       },
     );
   }
