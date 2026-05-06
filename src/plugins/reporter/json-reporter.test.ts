@@ -42,6 +42,7 @@ function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
     id: asJobId("job-1"),
+    scanId: asScanId("test-scan-id"),
     scenarioId: asScenarioId("scan-1"),
     requestId: asRequestId("req-1"),
     signatureName: "reflected-xss",

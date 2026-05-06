@@ -108,6 +108,7 @@ interface Finding {
 // --- Job ---
 interface Job {
   id: JobId;
+  scanId: ScanId;
   scenarioId: ScenarioId;
   requestId: RequestId;
   signatureName: string;

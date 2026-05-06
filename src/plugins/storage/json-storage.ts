@@ -12,6 +12,7 @@ import {
   UpdateJobCommand,
   SaveScanStateCommand,
   LoadScanStateCommand,
+  SaveScenarioCommand,
   LoadScenarioCommand,
 } from "../../commands/storage.js";
 import {
@@ -95,16 +96,45 @@ class JsonStoragePlugin implements Plugin {
 
     // --- LoadJobsByScanIdCommand ---
     bus.register(LoadJobsByScanIdCommand, async (cmd) => {
-      const path = jobsPath(cmd.scanId);
-      return (await readJsonFile<Job[]>(path)) ?? [];
+      const allJobs: Job[] = [];
+      try {
+        const entries = await fs.readdir(this.outputDir, {
+          withFileTypes: true,
+        });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const path = join(this.outputDir, entry.name, "jobs.json");
+          const jobs = await readJsonFile<Job[]>(path);
+          if (jobs) {
+            allJobs.push(...jobs.filter((j) => j.scanId === cmd.scanId));
+          }
+        }
+      } catch {
+        // outputDir may not exist yet
+      }
+      return allJobs;
     });
 
     // --- LoadPendingJobsCommand ---
     bus.register(LoadPendingJobsCommand, async (cmd) => {
-      const path = jobsPath(cmd.scanId);
-      const jobs = (await readJsonFile<Job[]>(path)) ?? [];
-      return jobs.filter(
-        (j) => j.status === ("pending" as JobStatus),
+      const allJobs: Job[] = [];
+      try {
+        const entries = await fs.readdir(this.outputDir, {
+          withFileTypes: true,
+        });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const path = join(this.outputDir, entry.name, "jobs.json");
+          const jobs = await readJsonFile<Job[]>(path);
+          if (jobs) {
+            allJobs.push(...jobs);
+          }
+        }
+      } catch {
+        // outputDir may not exist yet
+      }
+      return allJobs.filter(
+        (j) => j.status === ("pending" as JobStatus) && j.scanId === cmd.scanId,
       );
     });
 
@@ -172,6 +202,11 @@ class JsonStoragePlugin implements Plugin {
       } catch {
         return null;
       }
+    });
+
+    // --- SaveScenarioCommand ---
+    bus.register(SaveScenarioCommand, async (cmd) => {
+      await writeJsonFile(scenarioPath(cmd.scenario.id as unknown as ScanId), cmd.scenario);
     });
 
     // --- LoadScenarioCommand ---

@@ -32,6 +32,7 @@ import {
   SaveScanStateCommand,
   LoadScanStateCommand,
   LoadScenarioCommand,
+  SaveScenarioCommand,
   LoadJobsByScanIdCommand,
   GenerateReportCommand,
 } from "../commands/index.js";
@@ -104,7 +105,10 @@ class Orchestrator {
       for (const scenario of scenarios) {
         logger.debug(`Processing scenario: ${scenario.name}`);
 
-        // a. Dispatch ReplayCommand with empty instructions to get original request
+        // a. Save scenario for later retrieval during scan
+        await commandBus.dispatch(new SaveScenarioCommand(scenario));
+
+        // b. Dispatch ReplayCommand with empty instructions to get original request
         const rid = requestId();
         const replayResult = (await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port, replayId: rid })) as Exchange[])[0];
 
@@ -130,6 +134,7 @@ class Orchestrator {
           const rid = requestId();
           const job: Job = {
             id: jid,
+            scanId: id,
             scenarioId: scenario.id,
             requestId: rid,
             signatureName: inspector.signatureName,

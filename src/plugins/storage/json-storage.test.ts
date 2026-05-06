@@ -42,6 +42,7 @@ const asIsoDateTime = (s: string) => s as IsoDateTime;
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
     id: asJobId("job-1"),
+    scanId: asScanId("test-scan-id"),
     scenarioId: asScenarioId("scan-1"),
     requestId: "req-1" as any,
     signatureName: "sig-1",
@@ -141,10 +142,12 @@ describe("JsonStoragePlugin", () => {
       const scanId = asScanId("scan-1");
       const job1 = makeJob({
         id: asJobId("job-1"),
+        scanId: asScanId("scan-1"),
         scenarioId: asScenarioId("scan-1"),
       });
       const job2 = makeJob({
         id: asJobId("job-2"),
+        scanId: asScanId("scan-1"),
         scenarioId: asScenarioId("scan-1"),
       });
 
@@ -171,16 +174,19 @@ describe("JsonStoragePlugin", () => {
       const scanId = asScanId("scan-1");
       const pendingJob = makeJob({
         id: asJobId("job-pending"),
+        scanId: asScanId("scan-1"),
         scenarioId: asScenarioId("scan-1"),
         status: asJobStatus("pending"),
       });
       const completedJob = makeJob({
         id: asJobId("job-completed"),
+        scanId: asScanId("scan-1"),
         scenarioId: asScenarioId("scan-1"),
         status: asJobStatus("completed"),
       });
       const errorJob = makeJob({
         id: asJobId("job-error"),
+        scanId: asScanId("scan-1"),
         scenarioId: asScenarioId("scan-1"),
         status: asJobStatus("error"),
       });
@@ -200,6 +206,7 @@ describe("JsonStoragePlugin", () => {
       const scanId = asScanId("scan-1");
       const completedJob = makeJob({
         id: asJobId("job-1"),
+        scanId: asScanId("scan-1"),
         scenarioId: asScenarioId("scan-1"),
         status: asJobStatus("completed"),
       });

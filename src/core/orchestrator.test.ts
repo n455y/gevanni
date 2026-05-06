@@ -25,6 +25,7 @@ import {
   LoadScanStateCommand,
   LoadJobsByScanIdCommand,
   GenerateReportCommand,
+  SaveScenarioCommand,
   LoadScenarioCommand,
 } from "../commands/index.js";
 
@@ -164,6 +165,7 @@ describe("Orchestrator", () => {
       commandBus.register(SaveJobCommand, async (cmd: SaveJobCommand) => {
         savedJobs.push(cmd.job);
       });
+      commandBus.register(SaveScenarioCommand, async () => {});
       commandBus.register(SaveScanStateCommand, async () => {});
 
       const events: string[] = [];
@@ -211,6 +213,7 @@ describe("Orchestrator", () => {
       const scanId = "test-scan-id" as Brand<string, "ScanId">;
       const mockJob: Job = {
         id: "job-1" as Brand<string, "JobId">,
+        scanId: "test-scan-id" as Brand<string, "ScanId">,
         scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
         requestId: "req-1" as Brand<string, "RequestId">,
         signatureName: "mock-sig",
@@ -269,6 +272,7 @@ describe("Orchestrator", () => {
       const scanId = "test-scan-id" as Brand<string, "ScanId">;
       const mockJob: Job = {
         id: "job-err" as Brand<string, "JobId">,
+        scanId: "test-scan-id" as Brand<string, "ScanId">,
         scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
         requestId: "req-1" as Brand<string, "RequestId">,
         signatureName: "failing-sig",
@@ -360,6 +364,7 @@ describe("Orchestrator", () => {
       const mockJobs: Job[] = [
         {
           id: "job-1" as Brand<string, "JobId">,
+          scanId: "report-scan-id" as Brand<string, "ScanId">,
           scenarioId: "sc-1" as Brand<string, "ScenarioId">,
           requestId: "req-1" as Brand<string, "RequestId">,
           signatureName: "reflected-xss",

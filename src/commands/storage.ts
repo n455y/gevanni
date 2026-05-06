@@ -30,9 +30,13 @@ class LoadScanStateCommand extends SingleCommand<ScanState | null> {
   readonly type = "loadScanState";
   constructor(readonly id: ScanId) { super(); }
 }
+class SaveScenarioCommand extends SingleCommand<void> {
+  readonly type = "saveScenario";
+  constructor(readonly scenario: Scenario) { super(); }
+}
 class LoadScenarioCommand extends SingleCommand<Scenario> {
   readonly type = "loadScenario";
   constructor(readonly id: ScenarioId) { super(); }
 }
 
-export { SaveJobCommand, LoadJobCommand, LoadJobsByScanIdCommand, LoadPendingJobsCommand, UpdateJobCommand, SaveScanStateCommand, LoadScanStateCommand, LoadScenarioCommand };
+export { SaveJobCommand, LoadJobCommand, LoadJobsByScanIdCommand, LoadPendingJobsCommand, UpdateJobCommand, SaveScanStateCommand, LoadScanStateCommand, SaveScenarioCommand, LoadScenarioCommand };
