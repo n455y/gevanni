@@ -1,4 +1,9 @@
-import { ParameterType, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  ParameterType,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 
 class HeaderParameterType extends ParameterType {}
 import type { HttpRequest, InspectionParameter } from "../../types/models.js";

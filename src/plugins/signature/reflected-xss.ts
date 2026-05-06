@@ -7,6 +7,7 @@ import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { FormParameterType } from "../parser/form-parser.js";
 import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
+import { HeaderParameterType } from "../parser/header-parser.js";
 
 class ReflectedXssInspector implements SignatureInspector {
   readonly signatureName = "reflected-xss";
@@ -49,7 +50,8 @@ class ReflectedXssPlugin implements Plugin {
           if (
             param.type === QueryParameterType ||
             param.type === JsonPrimitiveParameterType ||
-            param.type === FormParameterType
+            param.type === FormParameterType ||
+            param.type === HeaderParameterType
           ) {
             inspectors.push(new ReflectedXssInspector(param));
           }

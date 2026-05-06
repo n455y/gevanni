@@ -6,6 +6,7 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
+import { HeaderParameterType } from "../parser/header-parser.js";
 
 const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
@@ -55,7 +56,8 @@ class SqliErrorPlugin implements Plugin {
         for (const param of cmd.parameters) {
           if (
             param.type === QueryParameterType ||
-            param.type === JsonPrimitiveParameterType
+            param.type === JsonPrimitiveParameterType ||
+            param.type === HeaderParameterType
           ) {
             inspectors.push(new SqliErrorInspector(param));
           }
