@@ -348,6 +348,7 @@ describe("startTamperProxy", () => {
             headers: {
               host: `127.0.0.1:${serverPort}`,
               "x-gevanni-exchange-id": replayId,
+              "x-gevanni-replay-id": replayId,
             },
           },
           (res) => {

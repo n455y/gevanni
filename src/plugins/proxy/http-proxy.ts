@@ -95,6 +95,9 @@ function startTamperProxy(
         | undefined;
       delete headers["x-gevanni-exchange-id"];
 
+      const replayId = headers["x-gevanni-replay-id"];
+      delete headers["x-gevanni-replay-id"];
+
       const shouldTamper = headers["x-gevanni-tamper"] === "true";
       delete headers["x-gevanni-tamper"];
 
@@ -148,7 +151,7 @@ function startTamperProxy(
                 },
               };
               await commandBus.dispatch(
-                new SaveExchangeCommand(exchangeId, exchange),
+                new SaveExchangeCommand(replayId!, exchange),
               );
 
               res.writeHead(

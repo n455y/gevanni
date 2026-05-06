@@ -1,9 +1,11 @@
 import type { Exchange, Scenario } from "../../types/models.js";
+import type { ExchangeId } from "../../types/branded.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ReplayCommand } from "../../commands/replay.js";
 import { LoadExchangesCommand } from "../../commands/exchange.js";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
+import { randomUUID } from "node:crypto";
 import newman from "newman";
 
 // --- Postman Collection types (v2.1 subset) ---
@@ -46,9 +48,10 @@ function runNewman(
     const isLast = index === items.length - 1;
     const header = [
       ...(Array.isArray(req.header) ? req.header : []),
+      { key: "X-Gevanni-Replay-Id", value: replayId },
       ...(isLast
         ? [
-            { key: "X-Gevanni-Exchange-Id", value: replayId },
+            { key: "X-Gevanni-Exchange-Id", value: randomUUID() as ExchangeId },
             { key: "X-Gevanni-Tamper", value: "true" },
           ]
         : []),

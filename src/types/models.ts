@@ -3,6 +3,7 @@ import type {
   JobId,
   RequestId,
   ScanId,
+  ExchangeId,
   ScenarioType,
   TamperMethod,
   JobStatus,
@@ -91,6 +92,7 @@ interface HttpResponse {
 
 // --- Exchange ---
 interface Exchange {
+  id: ExchangeId;
   request: HttpRequest;
   response: HttpResponse;
 }

@@ -20,6 +20,7 @@ import {
   LoadExchangesCommand,
 } from "../../commands/exchange.js";
 import type { Job, ScanState, Scenario, Exchange } from "../../types/models.js";
+import type { ExchangeId } from "../../types/branded.js";
 import type {
   ScanId,
   JobId,
@@ -336,6 +337,7 @@ describe("JsonStoragePlugin", () => {
 
   describe("SaveExchangeCommand / LoadExchangesCommand", () => {
     const exchange: Exchange = {
+      id: "exchange-001" as ExchangeId,
       request: {
         method: "GET",
         url: "http://example.com/test",
@@ -371,6 +373,7 @@ describe("JsonStoragePlugin", () => {
       const replayId = "test-replay-002";
       await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
       const exchange2: Exchange = {
+        id: "exchange-002" as ExchangeId,
         request: {
           method: "POST",
           url: "http://example.com/submit",

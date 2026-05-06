@@ -5,6 +5,7 @@ type ScenarioId = Brand<string, "ScenarioId">;
 type JobId = Brand<string, "JobId">;
 type RequestId = Brand<string, "RequestId">;
 type ScanId = Brand<string, "ScanId">;
+type ExchangeId = Brand<string, "ExchangeId">;
 
 // --- Enum-like (fixed values + Brand) ---
 type ScenarioType = Brand<string, "ScenarioType">;
@@ -35,6 +36,7 @@ export {
   JobId,
   RequestId,
   ScanId,
+  ExchangeId,
   ScenarioType,
   ParameterType,
   TamperMethod,
