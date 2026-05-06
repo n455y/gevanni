@@ -15,6 +15,8 @@ import { JsonStoragePlugin } from "./plugins/storage/json-storage.js";
 import { ConsoleReporterPlugin } from "./plugins/reporter/console-reporter.js";
 import { JsonReporterPlugin } from "./plugins/reporter/json-reporter.js";
 import { HeaderParserPlugin } from "./plugins/parser/header-parser.js";
+import { GraphQLParserPlugin } from "./plugins/parser/graphql-parser.js";
+import { GraphQLTamperPlugin } from "./plugins/tamper/graphql-tamper.js";
 
 function registerBuiltinPlugins(registry: PluginRegistry): void {
   registry.register("scenarioReplayer", "postman", () => new PostmanPlugin());
@@ -28,10 +30,12 @@ function registerBuiltinPlugins(registry: PluginRegistry): void {
   registry.register("parser", "json-parser", () => new JsonParserPlugin());
   registry.register("parser", "form-parser", () => new FormParserPlugin());
   registry.register("parser", "header-parser", () => new HeaderParserPlugin());
+  registry.register("parser", "graphql-parser", () => new GraphQLParserPlugin());
   registry.register("tamper", "query-tamper", () => new QueryTamperPlugin());
   registry.register("tamper", "json-tamper", () => new JsonTamperPlugin());
   registry.register("tamper", "form-tamper", () => new FormTamperPlugin());
   registry.register("tamper", "header-tamper", () => new HeaderTamperPlugin());
+  registry.register("tamper", "graphql-tamper", () => new GraphQLTamperPlugin());
   registry.register(
     "signature",
     "reflected-xss",
