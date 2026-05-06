@@ -16,10 +16,13 @@ class ParameterType {
 }
 class HeaderParameterType extends ParameterType {}
 
-type TamperMethod = Brand<
-  "replaceValue" | "appendValue" | "prependValue",
-  "TamperMethod"
->;
+class TamperMethod {
+  private _brand = "TamperMethod" as const;
+}
+class ReplaceValue extends TamperMethod {}
+class AppendValue extends TamperMethod {}
+class PrependValue extends TamperMethod {}
+
 type JobStatus = Brand<
   "pending" | "running" | "completed" | "error",
   "JobStatus"
@@ -46,6 +49,9 @@ export {
   ParameterType,
   HeaderParameterType,
   TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
   JobStatus,
   ScanStatus,
   Payload,

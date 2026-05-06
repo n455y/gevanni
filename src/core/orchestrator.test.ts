@@ -15,6 +15,7 @@ import type {
   Scenario,
 } from "../types/models.js";
 import type { Brand, JobStatus, ScanStatus } from "../types/branded.js";
+import { ReplaceValue } from "../types/branded.js";
 import { QueryParameterType } from "../plugins/parser/query-parser.js";
 import {
   ReplayCommand,
@@ -51,7 +52,7 @@ const mockParameters: InspectionParameter[] = [
     type: QueryParameterType,
     location: { name: "q" },
     originalValue: "hello",
-    allowedTampers: ["replaceValue" as Brand<"replaceValue", "TamperMethod">],
+    allowedTampers: [ReplaceValue],
   },
 ];
 

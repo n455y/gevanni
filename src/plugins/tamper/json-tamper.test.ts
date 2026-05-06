@@ -4,7 +4,8 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { JsonTamperPlugin } from "./json-tamper.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { Brand } from "../../types/branded.js";
+import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { JsonPrimitiveParameterType, JsonArrayParameterType } from "../parser/json-parser.js";
 
@@ -18,7 +19,7 @@ function makeJsonPrimitiveInstruction(
   path: string[],
   originalValue: unknown,
   payload: string,
-  method: TamperMethod,
+  method: typeof TamperMethod,
 ): TamperInstruction {
   return {
     parameter: {
@@ -26,9 +27,9 @@ function makeJsonPrimitiveInstruction(
       location: { path },
       originalValue,
       allowedTampers: [
-        "replaceValue" as TamperMethod,
-        "appendValue" as TamperMethod,
-        "prependValue" as TamperMethod,
+        ReplaceValue,
+        AppendValue,
+        PrependValue,
       ],
     },
     payload: payload as Brand<string, "Payload">,
@@ -59,7 +60,7 @@ describe("JsonTamperPlugin", () => {
       ["user", "name"],
       "test",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -85,7 +86,7 @@ describe("JsonTamperPlugin", () => {
       ["user", "name"],
       "test",
       "INJECTED",
-      "appendValue" as TamperMethod,
+      AppendValue,
     );
 
     const result = await commandBus.pipe(
@@ -109,7 +110,7 @@ describe("JsonTamperPlugin", () => {
       ["user", "name"],
       "test",
       "INJECTED",
-      "prependValue" as TamperMethod,
+      PrependValue,
     );
 
     const result = await commandBus.pipe(
@@ -135,13 +136,13 @@ describe("JsonTamperPlugin", () => {
         location: { name: "foo" },
         originalValue: "bar",
         allowedTampers: [
-          "replaceValue" as TamperMethod,
-          "appendValue" as TamperMethod,
-          "prependValue" as TamperMethod,
+          ReplaceValue,
+          AppendValue,
+          PrependValue,
         ],
       },
       payload: "INJECTED" as Brand<string, "Payload">,
-      method: "replaceValue" as TamperMethod,
+      method: ReplaceValue,
     };
 
     const result = await commandBus.pipe(
@@ -170,7 +171,7 @@ describe("JsonTamperPlugin", () => {
       ["name"],
       "test",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -196,13 +197,13 @@ describe("JsonTamperPlugin", () => {
         ["user", "name"],
         "test",
         "X",
-        "replaceValue" as TamperMethod,
+        ReplaceValue,
       ),
       makeJsonPrimitiveInstruction(
         ["user", "email"],
         "a@b.com",
         "Y",
-        "appendValue" as TamperMethod,
+        AppendValue,
       ),
     ];
 
@@ -231,13 +232,13 @@ describe("JsonTamperPlugin", () => {
         location: { path: ["items"] },
         originalValue: ["a", "b"],
         allowedTampers: [
-          "replaceValue" as TamperMethod,
-          "appendValue" as TamperMethod,
-          "prependValue" as TamperMethod,
+          ReplaceValue,
+          AppendValue,
+          PrependValue,
         ],
       },
       payload: "INJECTED" as Brand<string, "Payload">,
-      method: "replaceValue" as TamperMethod,
+      method: ReplaceValue,
     };
 
     const result = await commandBus.pipe(

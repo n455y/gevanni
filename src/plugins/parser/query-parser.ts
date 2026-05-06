@@ -1,16 +1,20 @@
-import { ParameterType } from "../../types/branded.js";
-import type { TamperMethod } from "../../types/branded.js";
-import type {
-  HttpRequest,
-  InspectionParameter,
-} from "../../types/models.js";
+import {
+  ParameterType,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
+import type { HttpRequest, InspectionParameter } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 
 class QueryParameterType extends ParameterType {}
-const queryParameterType = new QueryParameterType();
 
-type QueryParameter = InspectionParameter<typeof QueryParameterType, { name: string }, string>;
+type QueryParameter = InspectionParameter<
+  typeof QueryParameterType,
+  { name: string },
+  string
+>;
 
 class QueryParserPlugin implements Plugin {
   readonly name = "query-parser";
@@ -25,9 +29,7 @@ class QueryParserPlugin implements Plugin {
   }
 }
 
-function parseQueryParameters(
-  request: HttpRequest,
-): InspectionParameter[] {
+function parseQueryParameters(request: HttpRequest): InspectionParameter[] {
   const url = new URL(request.url);
   const params: InspectionParameter[] = [];
 
@@ -36,11 +38,7 @@ function parseQueryParameters(
       type: QueryParameterType,
       location: { name },
       originalValue: value,
-      allowedTampers: [
-        "replaceValue" as TamperMethod,
-        "appendValue" as TamperMethod,
-        "prependValue" as TamperMethod,
-      ],
+      allowedTampers: [ReplaceValue, AppendValue, PrependValue],
     };
     params.push(param);
   }

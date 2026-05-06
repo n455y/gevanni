@@ -1,4 +1,4 @@
-import type { TamperMethod } from "../../types/branded.js";
+import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import type {
   HttpRequest,
   TamperInstruction,
@@ -63,7 +63,7 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: string,
-  method: TamperMethod,
+  method: typeof TamperMethod,
 ): JsonValue {
   if (path.length === 0) {
     return applyTamperValue(root, payload, method);
@@ -95,14 +95,14 @@ function applyAtPath(
 function applyTamperValue(
   current: JsonValue,
   payload: string,
-  method: TamperMethod,
+  method: typeof TamperMethod,
 ): JsonValue {
   switch (method) {
-    case "replaceValue" as TamperMethod:
+    case ReplaceValue:
       return payload;
-    case "appendValue" as TamperMethod:
+    case AppendValue:
       return String(current) + payload;
-    case "prependValue" as TamperMethod:
+    case PrependValue:
       return payload + String(current);
     default:
       return current;

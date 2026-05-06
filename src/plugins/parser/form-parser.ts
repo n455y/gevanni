@@ -1,5 +1,4 @@
-import { ParameterType } from "../../types/branded.js";
-import type { TamperMethod } from "../../types/branded.js";
+import { ParameterType, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import type {
   HttpRequest,
   InspectionParameter,
@@ -45,9 +44,9 @@ function parseFormParameters(request: HttpRequest): InspectionParameter[] {
       location: { name },
       originalValue: value,
       allowedTampers: [
-        "replaceValue" as TamperMethod,
-        "appendValue" as TamperMethod,
-        "prependValue" as TamperMethod,
+        ReplaceValue,
+        AppendValue,
+        PrependValue,
       ],
     };
     params.push(param);

@@ -1,5 +1,4 @@
-import { ParameterType } from "../../types/branded.js";
-import type { TamperMethod } from "../../types/branded.js";
+import { ParameterType, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import type {
   HttpRequest,
   InspectionParameter,
@@ -19,10 +18,10 @@ type JsonPrimitiveParameter = InspectionParameter<typeof JsonPrimitiveParameterT
 type JsonArrayParameter = InspectionParameter<typeof JsonArrayParameterType, { path: string[] }, JsonArray>;
 type JsonObjectParameter = InspectionParameter<typeof JsonObjectParameterType, { path: string[] }, JsonObject>;
 
-const ALLOWED_TAMPERS: TamperMethod[] = [
-  "replaceValue" as TamperMethod,
-  "appendValue" as TamperMethod,
-  "prependValue" as TamperMethod,
+const ALLOWED_TAMPERS = [
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
 ];
 
 class JsonParserPlugin implements Plugin {

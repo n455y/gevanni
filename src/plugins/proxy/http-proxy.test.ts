@@ -12,6 +12,7 @@ import { startTamperProxy } from "./http-proxy.js";
 import type { TamperInstruction, HttpRequest, HttpResponse } from "../../types/models.js";
 import type { Exchange } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
+import { ReplaceValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
 
@@ -278,10 +279,10 @@ describe("startTamperProxy", () => {
           type: QueryParameterType,
           location: { name: "q" },
           originalValue: "original",
-          allowedTampers: ["replaceValue" as Brand<"replaceValue", "TamperMethod">],
+          allowedTampers: [ReplaceValue],
         },
         payload: "<script>" as Brand<string, "Payload">,
-        method: "replaceValue" as Brand<"replaceValue", "TamperMethod">,
+        method: ReplaceValue,
       },
     ];
 

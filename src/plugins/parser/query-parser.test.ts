@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { QueryParserPlugin, QueryParameterType } from "./query-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest } from "../../types/models.js";
-import type { TamperMethod } from "../../types/branded.js";
+import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import type { QueryParameter } from "./query-parser.js";
 
 let commandBus: InMemoryCommandBus;
@@ -45,9 +45,9 @@ describe("QueryParserPlugin", () => {
           location: { name: "foo" },
           originalValue: "bar",
           allowedTampers: [
-            "replaceValue" as TamperMethod,
-            "appendValue" as TamperMethod,
-            "prependValue" as TamperMethod,
+            ReplaceValue,
+            AppendValue,
+            PrependValue,
           ],
         },
         {
@@ -55,9 +55,9 @@ describe("QueryParserPlugin", () => {
           location: { name: "baz" },
           originalValue: "123",
           allowedTampers: [
-            "replaceValue" as TamperMethod,
-            "appendValue" as TamperMethod,
-            "prependValue" as TamperMethod,
+            ReplaceValue,
+            AppendValue,
+            PrependValue,
           ],
         },
       ]),

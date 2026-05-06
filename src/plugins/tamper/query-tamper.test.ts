@@ -4,7 +4,8 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { QueryTamperPlugin } from "./query-tamper.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { Brand } from "../../types/branded.js";
+import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
 
@@ -18,7 +19,7 @@ function makeQueryInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: TamperMethod,
+  method: typeof TamperMethod,
 ): TamperInstruction {
   return {
     parameter: {
@@ -26,9 +27,9 @@ function makeQueryInstruction(
       location: { name: paramName },
       originalValue,
       allowedTampers: [
-        "replaceValue" as TamperMethod,
-        "appendValue" as TamperMethod,
-        "prependValue" as TamperMethod,
+        ReplaceValue,
+        AppendValue,
+        PrependValue,
       ],
     },
     payload: payload as Brand<string, "Payload">,
@@ -56,7 +57,7 @@ describe("QueryTamperPlugin", () => {
       "foo",
       "bar",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -89,7 +90,7 @@ describe("QueryTamperPlugin", () => {
       "foo",
       "bar",
       "INJECTED",
-      "appendValue" as TamperMethod,
+      AppendValue,
     );
 
     const result = await commandBus.pipe(
@@ -119,7 +120,7 @@ describe("QueryTamperPlugin", () => {
       "foo",
       "bar",
       "INJECTED",
-      "prependValue" as TamperMethod,
+      PrependValue,
     );
 
     const result = await commandBus.pipe(
@@ -151,13 +152,13 @@ describe("QueryTamperPlugin", () => {
         location: { path: ["user", "name"] },
         originalValue: "test",
         allowedTampers: [
-          "replaceValue" as TamperMethod,
-          "appendValue" as TamperMethod,
-          "prependValue" as TamperMethod,
+          ReplaceValue,
+          AppendValue,
+          PrependValue,
         ],
       },
       payload: "INJECTED" as Brand<string, "Payload">,
-      method: "replaceValue" as TamperMethod,
+      method: ReplaceValue,
     };
 
     const result = await commandBus.pipe(
@@ -183,8 +184,8 @@ describe("QueryTamperPlugin", () => {
     };
 
     const instructions = [
-      makeQueryInstruction("foo", "bar", "X", "replaceValue" as TamperMethod),
-      makeQueryInstruction("baz", "123", "Y", "appendValue" as TamperMethod),
+      makeQueryInstruction("foo", "bar", "X", ReplaceValue),
+      makeQueryInstruction("baz", "123", "Y", AppendValue),
     ];
 
     const result = await commandBus.pipe(

@@ -1,4 +1,4 @@
-import type { TamperMethod } from "../../types/branded.js";
+import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
@@ -55,14 +55,14 @@ class QueryTamperPlugin implements Plugin {
 function applyTamper(
   current: string,
   payload: string,
-  method: TamperMethod,
+  method: typeof TamperMethod,
 ): string {
   switch (method) {
-    case "replaceValue" as TamperMethod:
+    case ReplaceValue:
       return payload;
-    case "appendValue" as TamperMethod:
+    case AppendValue:
       return current + payload;
-    case "prependValue" as TamperMethod:
+    case PrependValue:
       return payload + current;
     default:
       return current;

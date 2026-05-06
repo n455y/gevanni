@@ -1,4 +1,5 @@
-import type { Payload, Evidence, TamperMethod } from "../../types/branded.js";
+import type { Payload, Evidence } from "../../types/branded.js";
+import { ReplaceValue } from "../../types/branded.js";
 import type { InspectionParameter, Finding } from "../../types/models.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
@@ -20,7 +21,7 @@ class ReflectedXssInspector implements SignatureInspector {
     const instruction = {
       parameter: this.param,
       payload,
-      method: "replaceValue" as TamperMethod,
+      method: ReplaceValue,
     };
     const { request, response } = await replay([instruction]);
     const body = response.body?.toString() ?? "";

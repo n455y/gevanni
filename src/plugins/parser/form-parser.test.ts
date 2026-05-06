@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { FormParserPlugin } from "./form-parser.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest } from "../../types/models.js";
-import type { TamperMethod } from "../../types/branded.js";
+import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import { QueryParameterType } from "./query-parser.js";
 import type { QueryParameter } from "./query-parser.js";
 
@@ -49,9 +49,9 @@ describe("FormParserPlugin", () => {
           location: { name: "username" },
           originalValue: "admin",
           allowedTampers: [
-            "replaceValue" as TamperMethod,
-            "appendValue" as TamperMethod,
-            "prependValue" as TamperMethod,
+            ReplaceValue,
+            AppendValue,
+            PrependValue,
           ],
         },
         {
@@ -59,9 +59,9 @@ describe("FormParserPlugin", () => {
           location: { name: "password" },
           originalValue: "secret",
           allowedTampers: [
-            "replaceValue" as TamperMethod,
-            "appendValue" as TamperMethod,
-            "prependValue" as TamperMethod,
+            ReplaceValue,
+            AppendValue,
+            PrependValue,
           ],
         },
       ]),

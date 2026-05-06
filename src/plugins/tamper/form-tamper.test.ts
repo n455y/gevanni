@@ -4,7 +4,8 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { FormTamperPlugin } from "./form-tamper.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
-import type { Brand, TamperMethod } from "../../types/branded.js";
+import type { Brand } from "../../types/branded.js";
+import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 
 let commandBus: InMemoryCommandBus;
@@ -26,7 +27,7 @@ function makeFormInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: TamperMethod,
+  method: typeof TamperMethod,
 ): TamperInstruction {
   return {
     parameter: {
@@ -34,9 +35,9 @@ function makeFormInstruction(
       location: { name: paramName },
       originalValue,
       allowedTampers: [
-        "replaceValue" as TamperMethod,
-        "appendValue" as TamperMethod,
-        "prependValue" as TamperMethod,
+        ReplaceValue,
+        AppendValue,
+        PrependValue,
       ],
     },
     payload: payload as Brand<string, "Payload">,
@@ -58,7 +59,7 @@ describe("FormTamperPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -87,7 +88,7 @@ describe("FormTamperPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      "appendValue" as TamperMethod,
+      AppendValue,
     );
 
     const result = await commandBus.pipe(
@@ -112,7 +113,7 @@ describe("FormTamperPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      "prependValue" as TamperMethod,
+      PrependValue,
     );
 
     const result = await commandBus.pipe(
@@ -143,7 +144,7 @@ describe("FormTamperPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -166,7 +167,7 @@ describe("FormTamperPlugin", () => {
       "nonexistent",
       "value",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -195,7 +196,7 @@ describe("FormTamperPlugin", () => {
       "redirect",
       "home",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -220,13 +221,13 @@ describe("FormTamperPlugin", () => {
         "username",
         "admin",
         "X",
-        "replaceValue" as TamperMethod,
+        ReplaceValue,
       ),
       makeFormInstruction(
         "password",
         "secret",
         "Y",
-        "appendValue" as TamperMethod,
+        AppendValue,
       ),
     ];
 
@@ -259,7 +260,7 @@ describe("FormTamperPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      "replaceValue" as TamperMethod,
+      ReplaceValue,
     );
 
     const result = await commandBus.pipe(

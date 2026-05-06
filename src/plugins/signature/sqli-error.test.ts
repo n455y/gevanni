@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { SqliErrorPlugin, SqliErrorInspector, SQL_ERROR_PATTERNS } from "./sqli-error.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import type { InspectionParameter, HttpRequest, HttpResponse } from "../../types/models.js";
-import type { TamperMethod } from "../../types/branded.js";
+import { ReplaceValue, AppendValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 import { FormParameterType } from "../parser/form-parser.js";
 import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
@@ -22,7 +22,7 @@ function makeQueryParam(name: string, value: string): InspectionParameter {
     type: QueryParameterType,
     location: { name },
     originalValue: value,
-    allowedTampers: ["replaceValue" as TamperMethod, "appendValue" as TamperMethod],
+    allowedTampers: [ReplaceValue, AppendValue],
   };
 }
 
@@ -31,7 +31,7 @@ function makeJsonPrimitiveParam(path: string[], value: unknown): InspectionParam
     type: JsonPrimitiveParameterType,
     location: { path },
     originalValue: value,
-    allowedTampers: ["replaceValue" as TamperMethod],
+    allowedTampers: [ReplaceValue],
   };
 }
 
@@ -40,7 +40,7 @@ function makeFormParam(name: string, value: string): InspectionParameter {
     type: FormParameterType,
     location: { name },
     originalValue: value,
-    allowedTampers: ["replaceValue" as TamperMethod, "appendValue" as TamperMethod],
+    allowedTampers: [ReplaceValue, AppendValue],
   };
 }
 
@@ -49,7 +49,7 @@ function makeHeaderParam(name: string, value: string): InspectionParameter {
     type: HeaderParameterType,
     location: { name },
     originalValue: value,
-    allowedTampers: ["replaceValue" as TamperMethod],
+    allowedTampers: [ReplaceValue],
   };
 }
 

@@ -1,11 +1,10 @@
-import { ScenarioType, ParameterType } from "./branded.js";
+import { ScenarioType, ParameterType, TamperMethod } from "./branded.js";
 import type {
   ScenarioId,
   JobId,
   RequestId,
   ScanId,
   ExchangeId,
-  TamperMethod,
   JobStatus,
   ScanStatus,
   Payload,
@@ -31,7 +30,7 @@ interface InspectionParameter<
   type: P;
   location: L;
   originalValue: V;
-  allowedTampers: TamperMethod[];
+  allowedTampers: (typeof TamperMethod)[];
 }
 
 type JsonPrimitive = string | number | boolean | null;
@@ -43,7 +42,7 @@ type JsonObject = { [key: string]: JsonValue };
 interface TamperInstruction {
   parameter: InspectionParameter;
   payload: Payload;
-  method: TamperMethod;
+  method: typeof TamperMethod;
 }
 
 // --- HTTP ---

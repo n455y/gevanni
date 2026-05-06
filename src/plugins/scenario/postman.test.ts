@@ -10,6 +10,7 @@ import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchan
 import { QueryTamperPlugin } from "../tamper/query-tamper.js";
 import type { Scenario, TamperInstruction, Exchange } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
+import { ReplaceValue } from "../../types/branded.js";
 import { QueryParameterType } from "../parser/query-parser.js";
 
 let commandBus: InMemoryCommandBus;
@@ -100,10 +101,10 @@ function makeTamperInstruction(): TamperInstruction {
       type: QueryParameterType,
       location: { name: "q" },
       originalValue: "original",
-      allowedTampers: ["replaceValue" as Brand<"replaceValue", "TamperMethod">],
+      allowedTampers: [ReplaceValue],
     },
     payload: "<script>" as Brand<string, "Payload">,
-    method: "replaceValue" as Brand<"replaceValue", "TamperMethod">,
+    method: ReplaceValue,
   };
 }
 

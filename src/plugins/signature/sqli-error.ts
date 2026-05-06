@@ -1,4 +1,5 @@
-import type { Payload, Evidence, TamperMethod } from "../../types/branded.js";
+import type { Payload, Evidence } from "../../types/branded.js";
+import { AppendValue } from "../../types/branded.js";
 import type { InspectionParameter, Finding } from "../../types/models.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
@@ -27,7 +28,7 @@ class SqliErrorInspector implements SignatureInspector {
     const instruction = {
       parameter: this.param,
       payload,
-      method: "appendValue" as TamperMethod,
+      method: AppendValue,
     };
     const { request, response } = await replay([instruction]);
     const body = response.body?.toString() ?? "";
