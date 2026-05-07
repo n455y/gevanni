@@ -4,8 +4,8 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { QueryParserPlugin, QueryTamperPlugin } from "./query.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import type { HttpRequest, TamperInstruction } from "../../types/models.js";
-import { QueryParameter, JsonPrimitiveParameter } from "../../types/models.js";
+import type { HttpRequest } from "../../types/models.js";
+import { QueryParameter, JsonPrimitiveParameter, TamperInstruction, QueryTamperInstruction } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 
@@ -24,16 +24,16 @@ function makeQueryInstruction(
   originalValue: string,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction<QueryParameter> {
-  return {
-    parameter: new QueryParameter(
+): QueryTamperInstruction {
+  return new QueryTamperInstruction(
+    new QueryParameter(
       { name: paramName },
       originalValue,
       [ReplaceValue, AppendValue, PrependValue],
     ),
-    payload: payload as Brand<string, "Payload">,
+    payload as Brand<string, "Payload">,
     method,
-  };
+  );
 }
 
 describe("QueryParserPlugin", () => {
@@ -227,15 +227,15 @@ describe("QueryTamperPlugin", () => {
       body: null,
     };
 
-    const instruction: TamperInstruction<JsonPrimitiveParameter> = {
-      parameter: new JsonPrimitiveParameter(
+    const instruction = new TamperInstruction(
+      new JsonPrimitiveParameter(
         { path: ["user", "name"] },
         "test",
         [ReplaceValue, AppendValue, PrependValue],
       ),
-      payload: "INJECTED" as Brand<string, "Payload">,
-      method: ReplaceValue,
-    };
+      "INJECTED" as Brand<string, "Payload">,
+      ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),

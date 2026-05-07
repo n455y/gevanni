@@ -8,7 +8,8 @@ import type { TamperProxy } from "../proxy/http-proxy.js";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
 import { QueryTamperPlugin } from "../parameter/query.js";
-import type { Scenario, TamperInstruction, Exchange } from "../../types/models.js";
+import type { Scenario, Exchange } from "../../types/models.js";
+import { QueryTamperInstruction } from "../../types/models.js";
 import { QueryParameter } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { ReplaceValue } from "../../types/branded.js";
@@ -95,12 +96,12 @@ function makeScenario(overrides: {
   };
 }
 
-function makeTamperInstruction(): TamperInstruction {
-  return {
-    parameter: new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
-    payload: "<script>" as Brand<string, "Payload">,
-    method: ReplaceValue,
-  };
+function makeTamperInstruction(): QueryTamperInstruction {
+  return new QueryTamperInstruction(
+    new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
+    "<script>" as Brand<string, "Payload">,
+    ReplaceValue,
+  );
 }
 
 describe("PostmanPlugin", () => {

@@ -9,7 +9,8 @@ import { HttpProxyPlugin } from "./http-proxy.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import { startTamperProxy } from "./http-proxy.js";
-import type { TamperInstruction, HttpRequest, HttpResponse } from "../../types/models.js";
+import type { HttpRequest, HttpResponse } from "../../types/models.js";
+import { TamperInstruction } from "../../types/models.js";
 import type { Exchange } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { ReplaceValue } from "../../types/branded.js";
@@ -274,11 +275,11 @@ describe("startTamperProxy", () => {
 
   it("applies tamper instructions to requests passing through", async () => {
     const instructions: TamperInstruction[] = [
-      {
-        parameter: new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
-        payload: "<script>" as Brand<string, "Payload">,
-        method: ReplaceValue,
-      },
+      new TamperInstruction(
+        new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
+        "<script>" as Brand<string, "Payload">,
+        ReplaceValue,
+      ),
     ];
 
     commandBus.register(

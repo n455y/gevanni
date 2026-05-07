@@ -7,11 +7,13 @@ import {
   JsonArrayParameter,
   JsonObjectParameter,
   QueryParameter,
+  TamperInstruction,
+  JsonPrimitiveTamperInstruction,
+  JsonArrayTamperInstruction,
 } from "../../types/models.js";
 import type {
   HttpRequest,
   InspectionParameter,
-  TamperInstruction,
 } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
@@ -47,16 +49,16 @@ function makeJsonPrimitiveInstruction(
   originalValue: unknown,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction<JsonPrimitiveParameter> {
-  return {
-    parameter: new JsonPrimitiveParameter(
+): JsonPrimitiveTamperInstruction {
+  return new JsonPrimitiveTamperInstruction(
+    new JsonPrimitiveParameter(
       { path },
       originalValue as string | number | boolean | null,
       [ReplaceValue, AppendValue, PrependValue],
     ),
-    payload: payload as Brand<string, "Payload">,
+    payload as Brand<string, "Payload">,
     method,
-  };
+  );
 }
 
 describe("JsonParserPlugin", () => {
@@ -331,15 +333,15 @@ describe("JsonTamperPlugin", () => {
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
-    const instruction: TamperInstruction<QueryParameter> = {
-      parameter: new QueryParameter(
+    const instruction = new TamperInstruction(
+      new QueryParameter(
         { name: "foo" },
         "bar",
         [ReplaceValue, AppendValue, PrependValue],
       ),
-      payload: "INJECTED" as Brand<string, "Payload">,
-      method: ReplaceValue,
-    };
+      "INJECTED" as Brand<string, "Payload">,
+      ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),
@@ -422,15 +424,15 @@ describe("JsonTamperPlugin", () => {
 
     const request = makeJsonRequest(`{"items":["a","b"]}`);
 
-    const instruction: TamperInstruction<JsonArrayParameter> = {
-      parameter: new JsonArrayParameter(
+    const instruction = new JsonArrayTamperInstruction(
+      new JsonArrayParameter(
         { path: ["items"] },
         ["a", "b"],
         [ReplaceValue, AppendValue, PrependValue],
       ),
-      payload: "INJECTED" as Brand<string, "Payload">,
-      method: ReplaceValue,
-    };
+      "INJECTED" as Brand<string, "Payload">,
+      ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),

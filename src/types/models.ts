@@ -117,11 +117,22 @@ class GraphQLVariableParameter extends InspectionParameter<{ path: string[] }, J
 }
 
 // --- TamperInstruction ---
-interface TamperInstruction<P extends InspectionParameter<unknown, unknown> = InspectionParameter<unknown, unknown>> {
-  parameter: P;
-  payload: Payload;
-  method: typeof TamperMethod;
+class TamperInstruction<P extends InspectionParameter<unknown, unknown> = InspectionParameter<unknown, unknown>> {
+  constructor(
+    readonly parameter: P,
+    readonly payload: Payload,
+    readonly method: typeof TamperMethod,
+  ) {}
 }
+
+class QueryTamperInstruction extends TamperInstruction<QueryParameter> {}
+class FormTamperInstruction extends TamperInstruction<FormParameter> {}
+class HeaderTamperInstruction extends TamperInstruction<HeaderParameter> {}
+class JsonPrimitiveTamperInstruction extends TamperInstruction<JsonPrimitiveParameter> {}
+class JsonArrayTamperInstruction extends TamperInstruction<JsonArrayParameter> {}
+class JsonObjectTamperInstruction extends TamperInstruction<JsonObjectParameter> {}
+class GraphQLQueryTamperInstruction extends TamperInstruction<GraphQLQueryParameter> {}
+class GraphQLVariableTamperInstruction extends TamperInstruction<GraphQLVariableParameter> {}
 
 type NamedParameter = QueryParameter | FormParameter | HeaderParameter;
 type JsonParameter = JsonPrimitiveParameter | JsonArrayParameter | JsonObjectParameter;
@@ -202,7 +213,6 @@ export type {
   JsonArray,
   JsonObject,
   JsonValue,
-  TamperInstruction,
   HttpRequest,
   HttpResponse,
   Exchange,
@@ -222,4 +232,13 @@ export {
   JsonObjectParameter,
   GraphQLQueryParameter,
   GraphQLVariableParameter,
+  TamperInstruction,
+  QueryTamperInstruction,
+  FormTamperInstruction,
+  HeaderTamperInstruction,
+  JsonPrimitiveTamperInstruction,
+  JsonArrayTamperInstruction,
+  JsonObjectTamperInstruction,
+  GraphQLQueryTamperInstruction,
+  GraphQLVariableTamperInstruction,
 };

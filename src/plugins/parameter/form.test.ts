@@ -4,8 +4,8 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { FormParserPlugin, FormTamperPlugin } from "./form.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import type { HttpRequest, TamperInstruction } from "../../types/models.js";
-import { FormParameter } from "../../types/models.js";
+import type { HttpRequest } from "../../types/models.js";
+import { FormParameter, FormTamperInstruction } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 
@@ -33,16 +33,16 @@ function makeFormInstruction(
   originalValue: string,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction<FormParameter> {
-  return {
-    parameter: new FormParameter(
+): FormTamperInstruction {
+  return new FormTamperInstruction(
+    new FormParameter(
       { name: paramName },
       originalValue,
       [ReplaceValue, AppendValue, PrependValue],
     ),
-    payload: payload as Brand<string, "Payload">,
+    payload as Brand<string, "Payload">,
     method,
-  };
+  );
 }
 
 describe("FormParserPlugin", () => {

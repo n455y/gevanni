@@ -2,23 +2,32 @@ import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../typ
 import type {
   HttpRequest,
   InspectionParameter,
-  TamperInstruction,
   JsonPrimitive,
   JsonArray,
   JsonObject,
   JsonValue,
 } from "../../types/models.js";
-import { JsonPrimitiveParameter, JsonArrayParameter, JsonObjectParameter } from "../../types/models.js";
+import {
+  JsonPrimitiveParameter,
+  JsonArrayParameter,
+  JsonObjectParameter,
+  JsonPrimitiveTamperInstruction,
+  JsonArrayTamperInstruction,
+  JsonObjectTamperInstruction,
+  TamperInstruction,
+} from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-type JsonTamperInstruction = TamperInstruction<JsonPrimitiveParameter | JsonArrayParameter | JsonObjectParameter>;
+type JsonTamperInstruction = JsonPrimitiveTamperInstruction | JsonArrayTamperInstruction | JsonObjectTamperInstruction;
 
 const ALLOWED_TAMPERS = [ReplaceValue, AppendValue, PrependValue];
 
-function isJsonParameter(param: InspectionParameter<unknown, unknown>): param is JsonPrimitiveParameter | JsonArrayParameter | JsonObjectParameter {
-  return param instanceof JsonPrimitiveParameter || param instanceof JsonArrayParameter || param instanceof JsonObjectParameter;
+function isJsonInstruction(instr: TamperInstruction): instr is JsonTamperInstruction {
+  return instr instanceof JsonPrimitiveTamperInstruction
+    || instr instanceof JsonArrayTamperInstruction
+    || instr instanceof JsonObjectTamperInstruction;
 }
 
 class JsonParserPlugin implements Plugin {
@@ -44,9 +53,7 @@ class JsonTamperPlugin implements Plugin {
         cmd: ApplyTamperCommand,
         request: HttpRequest,
       ): Promise<HttpRequest> => {
-        const jsonInstructions = cmd.instructions.filter(
-          (instr): instr is JsonTamperInstruction => isJsonParameter(instr.parameter),
-        );
+        const jsonInstructions = cmd.instructions.filter(isJsonInstruction);
 
         if (jsonInstructions.length === 0) {
           return request;

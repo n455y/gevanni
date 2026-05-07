@@ -6,8 +6,11 @@ import {
   GraphQLQueryParameter,
   GraphQLVariableParameter,
   QueryParameter,
+  GraphQLQueryTamperInstruction,
+  GraphQLVariableTamperInstruction,
+  TamperInstruction,
 } from "../../types/models.js";
-import type { InspectionParameter, HttpRequest, TamperInstruction, JsonValue } from "../../types/models.js";
+import type { InspectionParameter, HttpRequest, JsonValue } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { Brand } from "../../types/branded.js";
@@ -38,16 +41,16 @@ function makeQueryInstruction(
   field: string,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction<GraphQLQueryParameter> {
-  return {
-    parameter: new GraphQLQueryParameter(
+): GraphQLQueryTamperInstruction {
+  return new GraphQLQueryTamperInstruction(
+    new GraphQLQueryParameter(
       { field },
       "",
       [ReplaceValue, AppendValue, PrependValue],
     ),
-    payload: payload as Brand<string, "Payload">,
+    payload as Brand<string, "Payload">,
     method,
-  };
+  );
 }
 
 function makeVariableInstruction(
@@ -55,16 +58,16 @@ function makeVariableInstruction(
   originalValue: JsonValue,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction<GraphQLVariableParameter> {
-  return {
-    parameter: new GraphQLVariableParameter(
+): GraphQLVariableTamperInstruction {
+  return new GraphQLVariableTamperInstruction(
+    new GraphQLVariableParameter(
       { path },
       originalValue,
       [ReplaceValue, AppendValue, PrependValue],
     ),
-    payload: payload as Brand<string, "Payload">,
+    payload as Brand<string, "Payload">,
     method,
-  };
+  );
 }
 
 describe("GraphQLParserPlugin", () => {
@@ -431,15 +434,15 @@ describe("GraphQLTamperPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{}}`,
     );
-    const instruction: TamperInstruction<QueryParameter> = {
-      parameter: new QueryParameter(
+    const instruction = new TamperInstruction(
+      new QueryParameter(
         { name: "foo" },
         "bar",
         [ReplaceValue, AppendValue, PrependValue],
       ),
-      payload: "INJECTED" as Brand<string, "Payload">,
-      method: ReplaceValue,
-    };
+      "INJECTED" as Brand<string, "Payload">,
+      ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),

@@ -2,21 +2,25 @@ import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../typ
 import type {
   HttpRequest,
   InspectionParameter,
-  TamperInstruction,
   JsonValue,
   JsonObject,
 } from "../../types/models.js";
-import { GraphQLQueryParameter, GraphQLVariableParameter } from "../../types/models.js";
+import {
+  GraphQLQueryParameter,
+  GraphQLVariableParameter,
+  GraphQLQueryTamperInstruction,
+  GraphQLVariableTamperInstruction,
+  TamperInstruction,
+} from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-type GraphQLQueryTamperInstruction = TamperInstruction<GraphQLQueryParameter>;
-type GraphQLVariableTamperInstruction = TamperInstruction<GraphQLVariableParameter>;
 type GraphQLTamperInstruction = GraphQLQueryTamperInstruction | GraphQLVariableTamperInstruction;
 
-function isGraphQLParameter(param: InspectionParameter<unknown, unknown>): param is GraphQLQueryParameter | GraphQLVariableParameter {
-  return param instanceof GraphQLQueryParameter || param instanceof GraphQLVariableParameter;
+function isGraphQLInstruction(instr: TamperInstruction): instr is GraphQLTamperInstruction {
+  return instr instanceof GraphQLQueryTamperInstruction
+    || instr instanceof GraphQLVariableTamperInstruction;
 }
 
 const ALLOWED_TAMPERS = [ReplaceValue, AppendValue, PrependValue];
@@ -44,9 +48,7 @@ class GraphQLTamperPlugin implements Plugin {
         cmd: ApplyTamperCommand,
         request: HttpRequest,
       ): Promise<HttpRequest> => {
-        const graphqlInstructions = cmd.instructions.filter(
-          (instr): instr is GraphQLTamperInstruction => isGraphQLParameter(instr.parameter),
-        );
+        const graphqlInstructions = cmd.instructions.filter(isGraphQLInstruction);
 
         if (graphqlInstructions.length === 0) {
           return request;
@@ -64,7 +66,7 @@ class GraphQLTamperPlugin implements Plugin {
         }
 
         for (const instr of graphqlInstructions) {
-          if (instr.parameter instanceof GraphQLQueryParameter) {
+          if (instr instanceof GraphQLQueryTamperInstruction) {
             const field = instr.parameter.location.field;
             if (typeof jsonBody === "object" && jsonBody !== null && !Array.isArray(jsonBody) && field in jsonBody) {
               (jsonBody as Record<string, JsonValue>)[field] = applyTamperValue(
@@ -73,7 +75,7 @@ class GraphQLTamperPlugin implements Plugin {
                 instr.method,
               );
             }
-          } else if (instr.parameter instanceof GraphQLVariableParameter) {
+          } else if (instr instanceof GraphQLVariableTamperInstruction) {
             const path = instr.parameter.location.path;
             jsonBody = applyAtPath(jsonBody, path, instr.payload as string, instr.method);
           }

@@ -1,11 +1,9 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { HttpRequest, InspectionParameter, TamperInstruction } from "../../types/models.js";
-import { QueryParameter } from "../../types/models.js";
+import type { HttpRequest, InspectionParameter } from "../../types/models.js";
+import { QueryParameter, QueryTamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-
-type QueryTamperInstruction = TamperInstruction<QueryParameter>;
 
 class QueryParserPlugin implements Plugin {
   readonly name = "query-parser";
@@ -32,7 +30,7 @@ class QueryTamperPlugin implements Plugin {
       ): Promise<HttpRequest> => {
         const queryInstructions = cmd.instructions.filter(
           (instr): instr is QueryTamperInstruction =>
-            instr.parameter instanceof QueryParameter,
+            instr instanceof QueryTamperInstruction,
         );
 
         if (queryInstructions.length === 0) {
