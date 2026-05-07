@@ -275,8 +275,7 @@ describe("startTamperProxy", () => {
 
   it("applies tamper instructions to requests passing through", async () => {
     const instructions: TamperInstruction[] = [
-      new TamperInstruction(
-        new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
+      new QueryParameter({ name: "q" }, "original", [ReplaceValue]).createInstruction(
         "<script>" as Brand<string, "Payload">,
         ReplaceValue,
       ),

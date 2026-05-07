@@ -23,9 +23,13 @@ interface Scenario {
 
 // --- InspectionParameter ---
 abstract class InspectionParameter<L, V> {
-  abstract readonly location: L;
-  abstract readonly originalValue: V;
-  abstract readonly allowedTampers: (typeof TamperMethod)[];
+  constructor(
+    readonly location: L,
+    readonly originalValue: V,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {}
+
+  abstract createInstruction(payload: Payload, method: typeof TamperMethod): TamperInstruction;
 }
 
 // --- JSON types ---

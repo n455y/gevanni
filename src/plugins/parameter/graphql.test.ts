@@ -9,7 +9,6 @@ import {
   GraphQLVariableTamperInstruction,
 } from "./graphql.js";
 import { QueryParameter } from "./query.js";
-import { TamperInstruction } from "../../types/models.js";
 import type { InspectionParameter, HttpRequest, JsonValue } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
@@ -434,12 +433,11 @@ describe("GraphQLTamperPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{}}`,
     );
-    const instruction = new TamperInstruction(
-      new QueryParameter(
+    const instruction = new QueryParameter(
         { name: "foo" },
         "bar",
         [ReplaceValue, AppendValue, PrependValue],
-      ),
+      ).createInstruction(
       "INJECTED" as Brand<string, "Payload">,
       ReplaceValue,
     );

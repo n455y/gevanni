@@ -102,6 +102,7 @@ describe("ConsoleReporterPlugin", () => {
           location: { name: "q" },
           originalValue: "<script>alert(1)</script>",
           allowedTampers: [],
+          createInstruction: () => { throw new Error("not implemented"); },
         },
       ],
       finding: {

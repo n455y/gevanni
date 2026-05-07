@@ -1,7 +1,6 @@
 import type { Payload, Evidence } from "../../types/branded.js";
 import { AppendValue } from "../../types/branded.js";
 import type { InspectionParameter, Finding } from "../../types/models.js";
-import { TamperInstruction } from "../../types/models.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
@@ -16,11 +15,7 @@ class ReflectedXssInspector implements SignatureInspector {
 
   async inspect(replay: ReplayFn): Promise<Finding> {
     const payload = "<script>alert(1)</script>" as Payload;
-    const instruction = new TamperInstruction(
-      this.param,
-      payload,
-      AppendValue,
-    );
+    const instruction = this.param.createInstruction(payload, AppendValue);
     const { request, response } = await replay([instruction]);
     const body = response.body?.toString() ?? "";
     const vulnerable = body.includes(payload);

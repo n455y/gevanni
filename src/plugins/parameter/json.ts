@@ -1,4 +1,5 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import type { Payload } from "../../types/branded.js";
 import type {
   HttpRequest,
   JsonPrimitive,
@@ -11,42 +12,19 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class JsonPrimitiveParameter extends InspectionParameter<
-  { path: string[] },
-  JsonPrimitive
-> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonPrimitive,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
+class JsonPrimitiveParameter extends InspectionParameter<{ path: string[] }, JsonPrimitive> {
+  createInstruction(payload: Payload, method: typeof TamperMethod): JsonPrimitiveTamperInstruction {
+    return new JsonPrimitiveTamperInstruction(this, payload, method);
   }
 }
-
-class JsonArrayParameter extends InspectionParameter<
-  { path: string[] },
-  JsonArray
-> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonArray,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
+class JsonArrayParameter extends InspectionParameter<{ path: string[] }, JsonArray> {
+  createInstruction(payload: Payload, method: typeof TamperMethod): JsonArrayTamperInstruction {
+    return new JsonArrayTamperInstruction(this, payload, method);
   }
 }
-
-class JsonObjectParameter extends InspectionParameter<
-  { path: string[] },
-  JsonObject
-> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonObject,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
+class JsonObjectParameter extends InspectionParameter<{ path: string[] }, JsonObject> {
+  createInstruction(payload: Payload, method: typeof TamperMethod): JsonObjectTamperInstruction {
+    return new JsonObjectTamperInstruction(this, payload, method);
   }
 }
 

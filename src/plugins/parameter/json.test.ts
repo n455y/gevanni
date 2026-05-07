@@ -10,7 +10,6 @@ import {
   JsonArrayTamperInstruction,
 } from "./json.js";
 import { QueryParameter } from "./query.js";
-import { TamperInstruction } from "../../types/models.js";
 import type {
   HttpRequest,
   InspectionParameter,
@@ -333,12 +332,11 @@ describe("JsonTamperPlugin", () => {
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
-    const instruction = new TamperInstruction(
-      new QueryParameter(
+    const instruction = new QueryParameter(
         { name: "foo" },
         "bar",
         [ReplaceValue, AppendValue, PrependValue],
-      ),
+      ).createInstruction(
       "INJECTED" as Brand<string, "Payload">,
       ReplaceValue,
     );

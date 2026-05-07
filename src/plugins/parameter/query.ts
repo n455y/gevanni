@@ -1,4 +1,5 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import type { Payload } from "../../types/branded.js";
 import { InspectionParameter, TamperInstruction } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
@@ -6,12 +7,8 @@ import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
 class QueryParameter extends InspectionParameter<{ name: string }, string> {
-  constructor(
-    readonly location: { name: string },
-    readonly originalValue: string,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
+  createInstruction(payload: Payload, method: typeof TamperMethod): QueryTamperInstruction {
+    return new QueryTamperInstruction(this, payload, method);
   }
 }
 

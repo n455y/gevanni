@@ -1,4 +1,5 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import type { Payload } from "../../types/branded.js";
 import type {
   HttpRequest,
   JsonValue,
@@ -9,29 +10,14 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class GraphQLQueryParameter extends InspectionParameter<
-  { field: string },
-  string
-> {
-  constructor(
-    readonly location: { field: string },
-    readonly originalValue: string,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
+class GraphQLQueryParameter extends InspectionParameter<{ field: string }, string> {
+  createInstruction(payload: Payload, method: typeof TamperMethod): GraphQLQueryTamperInstruction {
+    return new GraphQLQueryTamperInstruction(this, payload, method);
   }
 }
-
-class GraphQLVariableParameter extends InspectionParameter<
-  { path: string[] },
-  JsonValue
-> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonValue,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
+class GraphQLVariableParameter extends InspectionParameter<{ path: string[] }, JsonValue> {
+  createInstruction(payload: Payload, method: typeof TamperMethod): GraphQLVariableTamperInstruction {
+    return new GraphQLVariableTamperInstruction(this, payload, method);
   }
 }
 

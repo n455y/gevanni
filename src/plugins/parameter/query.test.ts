@@ -7,7 +7,6 @@ import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest } from "../../types/models.js";
 import { QueryParameter } from "./query.js";
 import { JsonPrimitiveParameter } from "./json.js";
-import { TamperInstruction } from "../../types/models.js";
 import { QueryTamperInstruction } from "./query.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
@@ -230,12 +229,11 @@ describe("QueryTamperPlugin", () => {
       body: null,
     };
 
-    const instruction = new TamperInstruction(
-      new JsonPrimitiveParameter(
+    const instruction = new JsonPrimitiveParameter(
         { path: ["user", "name"] },
         "test",
         [ReplaceValue, AppendValue, PrependValue],
-      ),
+      ).createInstruction(
       "INJECTED" as Brand<string, "Payload">,
       ReplaceValue,
     );
