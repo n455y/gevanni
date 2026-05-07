@@ -1,14 +1,6 @@
-import type { InspectionParameter, HttpRequest, HttpResponse, TamperInstruction, Finding } from "../types/models.js";
-
-type ReplayFn = (instructions: TamperInstruction[]) => Promise<{
-  request: HttpRequest;
-  response: HttpResponse;
-}>;
-
-interface SignatureInspector {
+interface InspectorDefinition {
   readonly signatureName: string;
-  readonly parameters: InspectionParameter<unknown, unknown>[];
-  inspect(replay: ReplayFn): Promise<Finding>;
+  readonly parameterIndices: number[];
 }
 
-export { SignatureInspector, ReplayFn };
+export { InspectorDefinition };

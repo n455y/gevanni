@@ -6,7 +6,6 @@ import type {
   JobStatus,
   ScanStatus,
   IsoDateTime,
-  TamperMethod,
   ErrorMessage,
 } from "../types/branded.js";
 import type {
@@ -21,11 +20,12 @@ import type {
 import type { CommandBus } from "./command-bus.js";
 import type { EventBus } from "./event-bus.js";
 import type { Logger } from "./logger.js";
-import type { SignatureInspector, ReplayFn } from "./inspector.js";
+import type { InspectorDefinition } from "./inspector.js";
 import {
   ReplayCommand,
   ParseRequestCommand,
   CreateInspectorsCommand,
+  RunInspectionCommand,
   SaveJobCommand,
   LoadPendingJobsCommand,
   UpdateJobCommand,
@@ -89,11 +89,11 @@ class Orchestrator {
 
   async plan(
     scenarios: Scenario[],
-  ): Promise<{ scanId: ScanId; inspectors: Map<string, SignatureInspector> }> {
+  ): Promise<{ scanId: ScanId; definitions: Map<string, InspectorDefinition> }> {
     const { commandBus, eventBus, logger } = this.deps;
     const id = scanId();
     const now = isoNow();
-    const inspectorMap = new Map<string, SignatureInspector>();
+    const definitionMap = new Map<string, InspectorDefinition>();
 
     logger.info(`Loaded ${scenarios.length} scenarios`);
 
@@ -121,15 +121,15 @@ class Orchestrator {
           `Found ${parameters.length} inspection parameters for ${scenario.name}`,
         );
 
-        // c. Broadcast CreateInspectorsCommand to collect all SignatureInspectors
-        const inspectorResults: SignatureInspector[][] =
+        // c. Broadcast CreateInspectorsCommand to collect all InspectorDefinitions
+        const definitionResults: InspectorDefinition[][] =
           await commandBus.broadcast(
             new CreateInspectorsCommand(parameters),
           );
-        const inspectors: SignatureInspector[] = inspectorResults.flat();
+        const definitions: InspectorDefinition[] = definitionResults.flat();
 
-        // d. For each inspector, create a Job
-        for (const inspector of inspectors) {
+        // d. For each definition, create a Job
+        for (const def of definitions) {
           const jid = jobId();
           const rid = requestId();
           const job: Job = {
@@ -137,8 +137,8 @@ class Orchestrator {
             scanId: id,
             scenarioId: scenario.id,
             requestId: rid,
-            signatureName: inspector.signatureName,
-            parameters: inspector.parameters,
+            signatureName: def.signatureName,
+            parameters: def.parameterIndices.map((i) => parameters[i]!),
             status: "pending" as JobStatus,
             finding: null,
             error: null,
@@ -147,7 +147,7 @@ class Orchestrator {
           };
 
           allJobs.push(job);
-          inspectorMap.set(jid, inspector);
+          definitionMap.set(jid, def);
 
           // Save job via storage
           await commandBus.dispatch(new SaveJobCommand(job));
@@ -155,7 +155,7 @@ class Orchestrator {
           // Emit job created event
           eventBus.publish("plan:jobCreated", {
             jobId: jid,
-            signatureName: inspector.signatureName,
+            signatureName: def.signatureName,
             scenarioName: scenario.name,
           });
         }
@@ -178,12 +178,12 @@ class Orchestrator {
 
     logger.info(`Plan phase complete: ${allJobs.length} jobs created for scan ${id}`);
 
-    return { scanId: id, inspectors: inspectorMap };
+    return { scanId: id, definitions: definitionMap };
   }
 
   async scan(
     scanId: ScanId,
-    inspectors: Map<string, SignatureInspector>,
+    definitions: Map<string, InspectorDefinition>,
     concurrency: number,
   ): Promise<void> {
     const { commandBus, eventBus, logger } = this.deps;
@@ -228,14 +228,14 @@ class Orchestrator {
         );
         eventBus.publish("scan:jobStarted", { jobId: job.id });
 
-        // Get inspector
-        const inspector = inspectors.get(job.id as string);
-        if (!inspector) {
-          throw new Error(`No inspector found for job ${job.id as string}`);
+        // Get inspector definition
+        const def = definitions.get(job.id as string);
+        if (!def) {
+          throw new Error(`No inspector definition found for job ${job.id as string}`);
         }
 
         // Create replay function
-        const replay: ReplayFn = async (
+        const replay = async (
           instructions: TamperInstruction[],
         ) => {
           const scenario: Scenario = await commandBus.dispatch(
@@ -253,7 +253,13 @@ class Orchestrator {
         };
 
         // Run inspection
-        const finding = await inspector.inspect(replay);
+        const finding: Finding = await commandBus.dispatch(
+          new RunInspectionCommand({
+            signatureName: def.signatureName,
+            parameters: job.parameters,
+            replay,
+          }),
+        ) as Finding;
 
         // Update job with finding
         const completedNow = isoNow();
@@ -373,42 +379,18 @@ class Orchestrator {
       return;
     }
 
-    // 3. Reconstruct inspectors by collecting all parameters from pending jobs
-    const allParameters: InspectionParameter<unknown, unknown>[] = [];
-    for (const job of pendingJobs) {
-      allParameters.push(...job.parameters);
-    }
-
-    // Deduplicate parameters by comparing signatureName + parameters
-    const inspectorResults: SignatureInspector[][] =
-      await commandBus.broadcast(
-        new CreateInspectorsCommand(allParameters),
-      );
-    const allInspectors: SignatureInspector[] = inspectorResults.flat();
-
-    // 4. Match inspectors to jobs
-    const inspectorMap = new Map<string, SignatureInspector>();
+    // 3. Build definition map from pending jobs
+    const definitionMap = new Map<string, InspectorDefinition>();
 
     for (const job of pendingJobs) {
-      const matched = allInspectors.find(
-        (insp) =>
-          insp.signatureName === job.signatureName &&
-          insp.parameters.length === job.parameters.length &&
-          insp.parameters.every(
-            (p, i) =>
-              p.constructor === job.parameters[i].constructor &&
-              JSON.stringify(p.location) ===
-                JSON.stringify(job.parameters[i].location),
-          ),
-      );
-
-      if (matched) {
-        inspectorMap.set(job.id as string, matched);
-      }
+      definitionMap.set(job.id as string, {
+        signatureName: job.signatureName,
+        parameterIndices: job.parameters.map((_, i) => i),
+      });
     }
 
-    // 5. Run scan phase
-    await this.scan(sid, inspectorMap, concurrency ?? 5);
+    // 4. Run scan phase
+    await this.scan(sid, definitionMap, concurrency ?? 5);
   }
 }
 

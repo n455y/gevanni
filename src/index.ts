@@ -14,7 +14,6 @@ export {
   type Plugin,
   type PluginContext,
   type PluginRegistry,
-  type SignatureInspector,
-  type ReplayFn,
+  type InspectorDefinition,
 } from "./core/index.js";
 export * from "./commands/index.js";

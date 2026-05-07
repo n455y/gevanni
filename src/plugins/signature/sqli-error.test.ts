@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { SqliErrorPlugin, SqliErrorInspector, SQL_ERROR_PATTERNS } from "./sqli-error.js";
+import { SqliErrorPlugin, SQL_ERROR_PATTERNS } from "./sqli-error.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
-import type { InspectionParameter, HttpRequest, JsonPrimitive } from "../../types/models.js";
+import { RunInspectionCommand } from "../../commands/run-inspection.js";
+import type { InspectionParameter, HttpRequest, JsonPrimitive, Finding } from "../../types/models.js";
 import { QueryParameter } from "../parameter/query.js";
 import { JsonPrimitiveParameter } from "../parameter/json.js";
 import { HeaderParameter } from "../parameter/header.js";
 import { ReplaceValue, AppendValue } from "../../types/branded.js";
-import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
+import type { InspectorDefinition } from "../../core/inspector.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -36,7 +37,7 @@ const mockRequest: HttpRequest = {
 };
 
 describe("SqliErrorPlugin", () => {
-  it("creates inspectors only for parameters with AppendValue tamper", async () => {
+  it("creates definitions only for parameters with AppendValue tamper", async () => {
     const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,
@@ -49,18 +50,18 @@ describe("SqliErrorPlugin", () => {
       makeJsonPrimitiveParam(["user", "id"], 1),
     ];
 
-    const results = await commandBus.broadcast<SignatureInspector[]>(
+    const results = await commandBus.broadcast<InspectorDefinition[]>(
       new CreateInspectorsCommand(params),
     );
 
     expect(results).toHaveLength(1);
-    const inspectors = results[0];
-    expect(inspectors).toHaveLength(1);
-    expect(inspectors[0].signatureName).toBe("sqli-error");
-    expect(inspectors[0].parameters).toEqual([params[0]]);
+    const definitions = results[0];
+    expect(definitions).toHaveLength(1);
+    expect(definitions[0].signatureName).toBe("sqli-error");
+    expect(definitions[0].parameterIndices).toEqual([0]);
   });
 
-  it("does not create inspectors for non-matching parameter types", async () => {
+  it("does not create definitions for non-matching parameter types", async () => {
     const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,
@@ -73,19 +74,24 @@ describe("SqliErrorPlugin", () => {
       makeHeaderParam("Authorization", "Bearer token"),
     ];
 
-    const results = await commandBus.broadcast<SignatureInspector[]>(
+    const results = await commandBus.broadcast<InspectorDefinition[]>(
       new CreateInspectorsCommand(params),
     );
 
-    const inspectors = results[0];
-    expect(inspectors).toHaveLength(0);
+    const definitions = results[0];
+    expect(definitions).toHaveLength(0);
   });
 
   it("detects MySQL SQL error in response body", async () => {
-    const param = makeQueryParam("id", "1");
-    const inspector = new SqliErrorInspector(param);
+    const plugin = new SqliErrorPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
 
-    const mockReplay: ReplayFn = async () => ({
+    const param = makeQueryParam("id", "1");
+    const mockReplay = async () => ({
       request: mockRequest,
       response: {
         statusCode: 500,
@@ -94,16 +100,28 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding = await inspector.inspect(mockReplay);
+    const finding: Finding = await commandBus.dispatch(
+      new RunInspectionCommand({
+        signatureName: "sqli-error",
+        parameters: [param],
+        replay: mockReplay,
+      }),
+    );
+
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence).toContain("SQL error pattern detected");
   });
 
   it("detects PostgreSQL SQL error in response body", async () => {
-    const param = makeQueryParam("id", "1");
-    const inspector = new SqliErrorInspector(param);
+    const plugin = new SqliErrorPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
 
-    const mockReplay: ReplayFn = async () => ({
+    const param = makeQueryParam("id", "1");
+    const mockReplay = async () => ({
       request: mockRequest,
       response: {
         statusCode: 500,
@@ -112,16 +130,28 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding = await inspector.inspect(mockReplay);
+    const finding: Finding = await commandBus.dispatch(
+      new RunInspectionCommand({
+        signatureName: "sqli-error",
+        parameters: [param],
+        replay: mockReplay,
+      }),
+    );
+
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence).toContain("SQL error pattern detected");
   });
 
   it("detects Oracle SQL error in response body", async () => {
-    const param = makeQueryParam("id", "1");
-    const inspector = new SqliErrorInspector(param);
+    const plugin = new SqliErrorPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
 
-    const mockReplay: ReplayFn = async () => ({
+    const param = makeQueryParam("id", "1");
+    const mockReplay = async () => ({
       request: mockRequest,
       response: {
         statusCode: 500,
@@ -130,15 +160,27 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding = await inspector.inspect(mockReplay);
+    const finding: Finding = await commandBus.dispatch(
+      new RunInspectionCommand({
+        signatureName: "sqli-error",
+        parameters: [param],
+        replay: mockReplay,
+      }),
+    );
+
     expect(finding.vulnerable).toBe(true);
   });
 
   it("detects SQL Server error in response body", async () => {
-    const param = makeQueryParam("id", "1");
-    const inspector = new SqliErrorInspector(param);
+    const plugin = new SqliErrorPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
 
-    const mockReplay: ReplayFn = async () => ({
+    const param = makeQueryParam("id", "1");
+    const mockReplay = async () => ({
       request: mockRequest,
       response: {
         statusCode: 500,
@@ -147,32 +189,56 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding = await inspector.inspect(mockReplay);
+    const finding: Finding = await commandBus.dispatch(
+      new RunInspectionCommand({
+        signatureName: "sqli-error",
+        parameters: [param],
+        replay: mockReplay,
+      }),
+    );
+
     expect(finding.vulnerable).toBe(true);
   });
 
   it("detects SQLite error in response body", async () => {
-    const param = makeQueryParam("id", "1");
-    const inspector = new SqliErrorInspector(param);
+    const plugin = new SqliErrorPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
 
-    const mockReplay: ReplayFn = async () => ({
+    const param = makeQueryParam("id", "1");
+    const mockReplay = async () => ({
       request: mockRequest,
       response: {
         statusCode: 500,
         headers: {},
-        body: Buffer.from("SQLITE_ERROR: near \"OR\": syntax error"),
+        body: Buffer.from('SQLITE_ERROR: near "OR": syntax error'),
       },
     });
 
-    const finding = await inspector.inspect(mockReplay);
+    const finding: Finding = await commandBus.dispatch(
+      new RunInspectionCommand({
+        signatureName: "sqli-error",
+        parameters: [param],
+        replay: mockReplay,
+      }),
+    );
+
     expect(finding.vulnerable).toBe(true);
   });
 
   it("does not report vulnerability when no SQL error in response", async () => {
-    const param = makeQueryParam("id", "1");
-    const inspector = new SqliErrorInspector(param);
+    const plugin = new SqliErrorPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
 
-    const mockReplay: ReplayFn = async () => ({
+    const param = makeQueryParam("id", "1");
+    const mockReplay = async () => ({
       request: mockRequest,
       response: {
         statusCode: 200,
@@ -181,16 +247,28 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding = await inspector.inspect(mockReplay);
+    const finding: Finding = await commandBus.dispatch(
+      new RunInspectionCommand({
+        signatureName: "sqli-error",
+        parameters: [param],
+        replay: mockReplay,
+      }),
+    );
+
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence).toContain("No SQL error pattern detected");
   });
 
   it("handles null response body", async () => {
-    const param = makeQueryParam("id", "1");
-    const inspector = new SqliErrorInspector(param);
+    const plugin = new SqliErrorPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
 
-    const mockReplay: ReplayFn = async () => ({
+    const param = makeQueryParam("id", "1");
+    const mockReplay = async () => ({
       request: mockRequest,
       response: {
         statusCode: 200,
@@ -199,7 +277,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding = await inspector.inspect(mockReplay);
+    const finding: Finding = await commandBus.dispatch(
+      new RunInspectionCommand({
+        signatureName: "sqli-error",
+        parameters: [param],
+        replay: mockReplay,
+      }),
+    );
+
     expect(finding.vulnerable).toBe(false);
   });
 
@@ -209,6 +294,6 @@ describe("SqliErrorPlugin", () => {
     expect(SQL_ERROR_PATTERNS[1].test("PostgreSQL ERROR: syntax error")).toBe(true);
     expect(SQL_ERROR_PATTERNS[2].test("ORA-12345")).toBe(true);
     expect(SQL_ERROR_PATTERNS[3].test("Microsoft OLE DB Provider for ODBC SQL Server error")).toBe(true);
-    expect(SQL_ERROR_PATTERNS[4].test("SQLITE_ERROR: near \"OR\": syntax error")).toBe(true);
+    expect(SQL_ERROR_PATTERNS[4].test('SQLITE_ERROR: near "OR": syntax error')).toBe(true);
   });
 });

@@ -4,7 +4,7 @@ import { InMemoryCommandBus } from "./command-bus.js";
 import { InMemoryEventBus } from "./event-bus.js";
 import { createLogger } from "./logger.js";
 import { Orchestrator } from "./orchestrator.js";
-import type { SignatureInspector, ReplayFn } from "./inspector.js";
+import type { InspectorDefinition } from "./inspector.js";
 import type {
   Finding,
   HttpRequest,
@@ -21,6 +21,7 @@ import {
   ReplayCommand,
   ParseRequestCommand,
   CreateInspectorsCommand,
+  RunInspectionCommand,
   SaveJobCommand,
   LoadPendingJobsCommand,
   UpdateJobCommand,
@@ -58,24 +59,6 @@ const mockFinding: Finding = {
   response: mockResponse,
 };
 
-// --- Mock inspector ---
-
-class MockInspector implements SignatureInspector {
-  readonly signatureName = "mock-sig";
-  readonly parameters: InspectionParameter<unknown, unknown>[];
-
-  constructor(
-    parameters: InspectionParameter<unknown, unknown>[],
-    private result: Finding = mockFinding,
-  ) {
-    this.parameters = parameters;
-  }
-
-  async inspect(_replay: ReplayFn): Promise<Finding> {
-    return this.result;
-  }
-}
-
 // --- Mock logger ---
 
 function createMockLogger() {
@@ -99,8 +82,7 @@ describe("Orchestrator", () => {
   });
 
   describe("plan phase", () => {
-    it("creates jobs and inspectors for scenarios", async () => {
-      // Register command handlers
+    it("creates jobs and definitions for scenarios", async () => {
       commandBus.register(ReplayCommand, async () => [{
         request: mockRequest,
         response: mockResponse,
@@ -108,9 +90,12 @@ describe("Orchestrator", () => {
 
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
-      const mockInspector = new MockInspector(mockParameters);
+      const mockDefinition: InspectorDefinition = {
+        signatureName: "mock-sig",
+        parameterIndices: [0],
+      };
       commandBus.register(CreateInspectorsCommand, async () => [
-        mockInspector,
+        mockDefinition,
       ]);
 
       const savedJobs: Job[] = [];
@@ -130,11 +115,10 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      // No scenarios provided
       const result = await orchestrator.plan([]);
 
       expect(result.scanId).toBeDefined();
-      expect(result.inspectors.size).toBe(0); // No scenarios provided
+      expect(result.definitions.size).toBe(0);
       expect(events).toContain("scan:started");
     });
 
@@ -156,8 +140,11 @@ describe("Orchestrator", () => {
       }]);
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
-      const mockInspector = new MockInspector(mockParameters);
-      commandBus.register(CreateInspectorsCommand, async () => [mockInspector]);
+      const mockDefinition: InspectorDefinition = {
+        signatureName: "mock-sig",
+        parameterIndices: [0],
+      };
+      commandBus.register(CreateInspectorsCommand, async () => [mockDefinition]);
 
       const savedJobs: Job[] = [];
       commandBus.register(SaveJobCommand, async (cmd: SaveJobCommand) => {
@@ -180,7 +167,7 @@ describe("Orchestrator", () => {
       expect(savedJobs).toHaveLength(1);
       expect(savedJobs[0].scenarioId).toBe("sc-1");
       expect(savedJobs[0].signatureName).toBe("mock-sig");
-      expect(result.inspectors.size).toBe(1);
+      expect(result.definitions.size).toBe(1);
       expect(events).toContain("plan:jobCreated");
     });
 
@@ -223,10 +210,11 @@ describe("Orchestrator", () => {
         updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
       };
 
-      const mockInspector = new MockInspector(mockParameters);
-
-      const inspectors = new Map<string, SignatureInspector>();
-      inspectors.set("job-1", mockInspector);
+      const definitions = new Map<string, InspectorDefinition>();
+      definitions.set("job-1", {
+        signatureName: "mock-sig",
+        parameterIndices: [0],
+      });
 
       const updateCalls: Partial<Job>[] = [];
       const events: string[] = [];
@@ -246,6 +234,7 @@ describe("Orchestrator", () => {
         request: mockRequest,
         response: mockResponse,
       }]);
+      commandBus.register(RunInspectionCommand, async () => mockFinding);
 
       eventBus.subscribe("scan:jobStarted", () => { events.push("started"); });
       eventBus.subscribe("scan:jobCompleted", () => { events.push("completed"); });
@@ -256,9 +245,8 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      await orchestrator.scan(scanId, inspectors, 2);
+      await orchestrator.scan(scanId, definitions, 2);
 
-      // Should have at least 2 updates: running then completed
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
       expect(updateCalls[0].status).toBe("running" as JobStatus);
       expect(updateCalls[1].status).toBe("completed" as JobStatus);
@@ -282,17 +270,11 @@ describe("Orchestrator", () => {
         updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
       };
 
-      // Inspector that always throws
-      const failingInspector: SignatureInspector = {
+      const definitions = new Map<string, InspectorDefinition>();
+      definitions.set("job-err", {
         signatureName: "failing-sig",
-        parameters: mockParameters,
-        async inspect() {
-          throw new Error("Inspection failed");
-        },
-      };
-
-      const inspectors = new Map<string, SignatureInspector>();
-      inspectors.set("job-err", failingInspector);
+        parameterIndices: [0],
+      });
 
       const updateCalls: Partial<Job>[] = [];
       const events: string[] = [];
@@ -312,6 +294,9 @@ describe("Orchestrator", () => {
         request: mockRequest,
         response: mockResponse,
       }]);
+      commandBus.register(RunInspectionCommand, async () => {
+        throw new Error("Inspection failed");
+      });
 
       eventBus.subscribe("scan:jobError", () => { events.push("error"); });
 
@@ -321,10 +306,9 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      await orchestrator.scan(scanId, inspectors, 2);
+      await orchestrator.scan(scanId, definitions, 2);
 
       expect(events).toContain("error");
-      // running then error
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
       expect(updateCalls[0].status).toBe("running" as JobStatus);
       expect(updateCalls[1].status).toBe("error" as JobStatus);
@@ -332,7 +316,7 @@ describe("Orchestrator", () => {
 
     it("handles empty job list", async () => {
       const scanId = "test-scan-id" as Brand<string, "ScanId">;
-      const inspectors = new Map<string, SignatureInspector>();
+      const definitions = new Map<string, InspectorDefinition>();
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadPendingJobsCommand, async () => []);
@@ -343,7 +327,7 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      await orchestrator.scan(scanId, inspectors, 2);
+      await orchestrator.scan(scanId, definitions, 2);
 
       expect(logger.info).toHaveBeenCalledWith("No pending jobs to scan");
     });

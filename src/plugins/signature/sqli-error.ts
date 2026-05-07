@@ -1,9 +1,8 @@
 import type { Payload, Evidence } from "../../types/branded.js";
 import { AppendValue } from "../../types/branded.js";
-import type { InspectionParameter, Finding } from "../../types/models.js";
-import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
+import { RunInspectionCommand } from "../../commands/run-inspection.js";
 
 const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
@@ -13,31 +12,6 @@ const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQLITE_ERROR/i,
 ];
 
-class SqliErrorInspector implements SignatureInspector {
-  readonly signatureName = "sqli-error";
-  readonly parameters: InspectionParameter<unknown, unknown>[];
-
-  constructor(private param: InspectionParameter<unknown, unknown>) {
-    this.parameters = [param];
-  }
-
-  async inspect(replay: ReplayFn): Promise<Finding> {
-    const payload = "' OR 1=1--" as Payload;
-    const instruction = this.param.createInstruction(payload, AppendValue);
-    const { request, response } = await replay([instruction]);
-    const body = response.body?.toString() ?? "";
-    const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));
-    return {
-      vulnerable,
-      evidence: (vulnerable
-        ? `SQL error pattern detected in response`
-        : `No SQL error pattern detected`) as Evidence,
-      request,
-      response,
-    };
-  }
-}
-
 class SqliErrorPlugin implements Plugin {
   readonly name = "sqli-error";
 
@@ -46,11 +20,40 @@ class SqliErrorPlugin implements Plugin {
       CreateInspectorsCommand,
       async (cmd: CreateInspectorsCommand) => {
         return cmd.parameters
-          .filter((p) => p.allowedTampers.includes(AppendValue))
-          .map((p) => new SqliErrorInspector(p));
+          .map((p, i) => ({ param: p, index: i }))
+          .filter(({ param }) => param.allowedTampers.includes(AppendValue))
+          .map(({ index }) => ({
+            signatureName: "sqli-error",
+            parameterIndices: [index],
+          }));
+      },
+    );
+
+    context.commandBus.register(
+      RunInspectionCommand,
+      async (cmd: RunInspectionCommand) => {
+        const { signatureName, parameters, replay } = cmd.payload;
+        if (signatureName !== "sqli-error") {
+          throw new Error(`Unknown signature: ${signatureName}`);
+        }
+
+        const param = parameters[0];
+        const payload = "' OR 1=1--" as Payload;
+        const instruction = param.createInstruction(payload, AppendValue);
+        const { request, response } = await replay([instruction]);
+        const body = response.body?.toString() ?? "";
+        const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));
+        return {
+          vulnerable,
+          evidence: (vulnerable
+            ? `SQL error pattern detected in response`
+            : `No SQL error pattern detected`) as Evidence,
+          request,
+          response,
+        };
       },
     );
   }
 }
 
-export { SqliErrorInspector, SQL_ERROR_PATTERNS, SqliErrorPlugin };
+export { SqliErrorPlugin, SQL_ERROR_PATTERNS };

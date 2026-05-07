@@ -6,3 +6,4 @@ export * from "./tamper.js";
 export * from "./storage.js";
 export * from "./report.js";
 export * from "./exchange.js";
+export * from "./run-inspection.js";
