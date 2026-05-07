@@ -26,17 +26,20 @@ abstract class InspectionParameter<L, V> {
   constructor(
     readonly location: L,
     readonly originalValue: V,
-    readonly allowedTampers: (typeof TamperMethod)[],
+    readonly allowedTampers: TamperMethod[],
   ) {}
 
-  abstract createInstruction(payload: Payload, method: typeof TamperMethod): TamperInstruction;
+  abstract createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): TamperInstruction;
 }
 
 // --- JSON types ---
 type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 type JsonArray = JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
+type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
 // --- TamperInstruction ---
 abstract class TamperInstruction<
@@ -48,7 +51,7 @@ abstract class TamperInstruction<
   constructor(
     readonly parameter: P,
     readonly payload: Payload,
-    readonly method: typeof TamperMethod,
+    readonly method: TamperMethod,
   ) {}
 }
 

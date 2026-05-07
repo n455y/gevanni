@@ -1,4 +1,9 @@
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
 import { InspectionParameter, TamperInstruction } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
@@ -7,7 +12,10 @@ import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
 class FormParameter extends InspectionParameter<{ name: string }, string> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): FormTamperInstruction {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): FormTamperInstruction {
     return new FormTamperInstruction(this, payload, method);
   }
 }
@@ -48,10 +56,12 @@ class FormTamperPlugin implements Plugin {
 
         const formBody = new URLSearchParams(request.body.toString("utf-8"));
 
-        const formInstructions = cmd.instructions.filter(
-          (instr): instr is FormTamperInstruction =>
-            instr instanceof FormTamperInstruction,
-        ).filter((instr) => formBody.has(instr.parameter.location.name));
+        const formInstructions = cmd.instructions
+          .filter(
+            (instr): instr is FormTamperInstruction =>
+              instr instanceof FormTamperInstruction,
+          )
+          .filter((instr) => formBody.has(instr.parameter.location.name));
 
         if (formInstructions.length === 0) {
           return request;
@@ -76,7 +86,9 @@ class FormTamperPlugin implements Plugin {
   }
 }
 
-function parseFormParameters(request: HttpRequest): InspectionParameter<unknown, unknown>[] {
+function parseFormParameters(
+  request: HttpRequest,
+): InspectionParameter<unknown, unknown>[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/x-www-form-urlencoded")) {
     return [];
@@ -90,11 +102,13 @@ function parseFormParameters(request: HttpRequest): InspectionParameter<unknown,
   const params: InspectionParameter<unknown, unknown>[] = [];
 
   for (const [name, value] of searchParams) {
-    params.push(new FormParameter(
-      { name },
-      value,
-      [ReplaceValue, AppendValue, PrependValue],
-    ));
+    params.push(
+      new FormParameter({ name }, value, [
+        ReplaceValue,
+        AppendValue,
+        PrependValue,
+      ]),
+    );
   }
 
   return params;
@@ -103,7 +117,7 @@ function parseFormParameters(request: HttpRequest): InspectionParameter<unknown,
 function applyTamper(
   current: string,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): string {
   switch (method) {
     case ReplaceValue:
@@ -117,4 +131,9 @@ function applyTamper(
   }
 }
 
-export { FormParserPlugin, FormTamperPlugin, FormParameter, FormTamperInstruction };
+export {
+  FormParserPlugin,
+  FormTamperPlugin,
+  FormParameter,
+  FormTamperInstruction,
+};

@@ -1,4 +1,9 @@
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
 import { InspectionParameter, TamperInstruction } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
@@ -7,7 +12,10 @@ import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
 class QueryParameter extends InspectionParameter<{ name: string }, string> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): QueryTamperInstruction {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): QueryTamperInstruction {
     return new QueryTamperInstruction(this, payload, method);
   }
 }
@@ -70,16 +78,20 @@ class QueryTamperPlugin implements Plugin {
   }
 }
 
-function parseQueryParameters(request: HttpRequest): InspectionParameter<unknown, unknown>[] {
+function parseQueryParameters(
+  request: HttpRequest,
+): InspectionParameter<unknown, unknown>[] {
   const url = new URL(request.url);
   const params: InspectionParameter<unknown, unknown>[] = [];
 
   for (const [name, value] of url.searchParams) {
-    params.push(new QueryParameter(
-      { name },
-      value,
-      [ReplaceValue, AppendValue, PrependValue],
-    ));
+    params.push(
+      new QueryParameter({ name }, value, [
+        ReplaceValue,
+        AppendValue,
+        PrependValue,
+      ]),
+    );
   }
 
   return params;
@@ -88,7 +100,7 @@ function parseQueryParameters(request: HttpRequest): InspectionParameter<unknown
 function applyTamper(
   current: string,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): string {
   switch (method) {
     case ReplaceValue:
@@ -102,4 +114,9 @@ function applyTamper(
   }
 }
 
-export { QueryParserPlugin, QueryTamperPlugin, QueryParameter, QueryTamperInstruction };
+export {
+  QueryParserPlugin,
+  QueryTamperPlugin,
+  QueryParameter,
+  QueryTamperInstruction,
+};

@@ -9,11 +9,20 @@ import {
   GraphQLVariableTamperInstruction,
 } from "./graphql.js";
 import { QueryParameter } from "./query.js";
-import type { InspectionParameter, HttpRequest, JsonValue } from "../../types/models.js";
+import type {
+  InspectionParameter,
+  HttpRequest,
+  JsonValue,
+} from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { Brand } from "../../types/branded.js";
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 
 type AnyGraphQLParam = GraphQLQueryParameter | GraphQLVariableParameter;
 
@@ -32,21 +41,23 @@ function makeGraphQLRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: InspectionParameter<unknown, unknown>[][]): AnyGraphQLParam[] {
+function flatParams(
+  results: InspectionParameter<unknown, unknown>[][],
+): AnyGraphQLParam[] {
   return results.flat() as AnyGraphQLParam[];
 }
 
 function makeQueryInstruction(
   field: string,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): GraphQLQueryTamperInstruction {
   return new GraphQLQueryTamperInstruction(
-    new GraphQLQueryParameter(
-      { field },
-      "",
-      [ReplaceValue, AppendValue, PrependValue],
-    ),
+    new GraphQLQueryParameter({ field }, "", [
+      ReplaceValue,
+      AppendValue,
+      PrependValue,
+    ]),
     payload as Brand<string, "Payload">,
     method,
   );
@@ -56,14 +67,14 @@ function makeVariableInstruction(
   path: string[],
   originalValue: JsonValue,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): GraphQLVariableTamperInstruction {
   return new GraphQLVariableTamperInstruction(
-    new GraphQLVariableParameter(
-      { path },
-      originalValue,
-      [ReplaceValue, AppendValue, PrependValue],
-    ),
+    new GraphQLVariableParameter({ path }, originalValue, [
+      ReplaceValue,
+      AppendValue,
+      PrependValue,
+    ]),
     payload as Brand<string, "Payload">,
     method,
   );
@@ -89,8 +100,7 @@ describe("GraphQLParserPlugin", () => {
 
     const queryParam = params.find(
       (p): p is GraphQLQueryParameter =>
-        p instanceof GraphQLQueryParameter &&
-        p.location.field === "query",
+        p instanceof GraphQLQueryParameter && p.location.field === "query",
     );
     expect(queryParam).toBeDefined();
     expect(queryParam!.originalValue).toBe(
@@ -433,14 +443,11 @@ describe("GraphQLTamperPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{}}`,
     );
-    const instruction = new QueryParameter(
-        { name: "foo" },
-        "bar",
-        [ReplaceValue, AppendValue, PrependValue],
-      ).createInstruction(
-      "INJECTED" as Brand<string, "Payload">,
+    const instruction = new QueryParameter({ name: "foo" }, "bar", [
       ReplaceValue,
-    );
+      AppendValue,
+      PrependValue,
+    ]).createInstruction("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),
@@ -485,18 +492,8 @@ describe("GraphQLTamperPlugin", () => {
       `{"query":"{ users { name } }","variables":{"id":"123","name":"test"}}`,
     );
     const instructions = [
-      makeVariableInstruction(
-        ["variables", "id"],
-        "123",
-        "X",
-        ReplaceValue,
-      ),
-      makeVariableInstruction(
-        ["variables", "name"],
-        "test",
-        "Y",
-        AppendValue,
-      ),
+      makeVariableInstruction(["variables", "id"], "123", "X", ReplaceValue),
+      makeVariableInstruction(["variables", "name"], "test", "Y", AppendValue),
     ];
 
     const result = await commandBus.pipe(

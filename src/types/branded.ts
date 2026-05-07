@@ -8,16 +8,16 @@ type ScanId = Brand<string, "ScanId">;
 type ExchangeId = Brand<string, "ExchangeId">;
 
 // --- Enum-like (fixed values + Brand) ---
-class ScenarioType {
-  private _brand = "ScenarioType" as const;
-}
 
-class TamperMethod {
-  private _brand = "TamperMethod" as const;
-}
-class ReplaceValue extends TamperMethod {}
-class AppendValue extends TamperMethod {}
-class PrependValue extends TamperMethod {}
+export type ScenarioType = Brand<string, "ScenarioType">;
+export const ScenarioType = (type: string) => type as ScenarioType;
+
+export type TamperMethod = Brand<string, "TamperMethod">;
+export const TamperMethod = (method: string) => method as TamperMethod;
+
+const ReplaceValue = TamperMethod("ReplaceValue");
+const AppendValue = TamperMethod("AppendValue");
+const PrependValue = TamperMethod("PrependValue");
 
 type JobStatus = Brand<
   "pending" | "running" | "completed" | "error",
@@ -41,8 +41,6 @@ export {
   RequestId,
   ScanId,
   ExchangeId,
-  ScenarioType,
-  TamperMethod,
   ReplaceValue,
   AppendValue,
   PrependValue,

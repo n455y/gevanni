@@ -1,4 +1,9 @@
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
 import type {
   HttpRequest,
@@ -12,18 +17,36 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class JsonPrimitiveParameter extends InspectionParameter<{ path: string[] }, JsonPrimitive> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): JsonPrimitiveTamperInstruction {
+class JsonPrimitiveParameter extends InspectionParameter<
+  { path: string[] },
+  JsonPrimitive
+> {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): JsonPrimitiveTamperInstruction {
     return new JsonPrimitiveTamperInstruction(this, payload, method);
   }
 }
-class JsonArrayParameter extends InspectionParameter<{ path: string[] }, JsonArray> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): JsonArrayTamperInstruction {
+class JsonArrayParameter extends InspectionParameter<
+  { path: string[] },
+  JsonArray
+> {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): JsonArrayTamperInstruction {
     return new JsonArrayTamperInstruction(this, payload, method);
   }
 }
-class JsonObjectParameter extends InspectionParameter<{ path: string[] }, JsonObject> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): JsonObjectTamperInstruction {
+class JsonObjectParameter extends InspectionParameter<
+  { path: string[] },
+  JsonObject
+> {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): JsonObjectTamperInstruction {
     return new JsonObjectTamperInstruction(this, payload, method);
   }
 }
@@ -32,14 +55,21 @@ class JsonPrimitiveTamperInstruction extends TamperInstruction<JsonPrimitivePara
 class JsonArrayTamperInstruction extends TamperInstruction<JsonArrayParameter> {}
 class JsonObjectTamperInstruction extends TamperInstruction<JsonObjectParameter> {}
 
-type JsonTamperInstruction = JsonPrimitiveTamperInstruction | JsonArrayTamperInstruction | JsonObjectTamperInstruction;
+type JsonTamperInstruction =
+  | JsonPrimitiveTamperInstruction
+  | JsonArrayTamperInstruction
+  | JsonObjectTamperInstruction;
 
 const ALLOWED_TAMPERS = [ReplaceValue, AppendValue, PrependValue];
 
-function isJsonInstruction(instr: TamperInstruction): instr is JsonTamperInstruction {
-  return instr instanceof JsonPrimitiveTamperInstruction
-    || instr instanceof JsonArrayTamperInstruction
-    || instr instanceof JsonObjectTamperInstruction;
+function isJsonInstruction(
+  instr: TamperInstruction,
+): instr is JsonTamperInstruction {
+  return (
+    instr instanceof JsonPrimitiveTamperInstruction ||
+    instr instanceof JsonArrayTamperInstruction ||
+    instr instanceof JsonObjectTamperInstruction
+  );
 }
 
 class JsonParserPlugin implements Plugin {
@@ -127,28 +157,23 @@ function extractJsonParams(
   path: string[],
   params: InspectionParameter<unknown, unknown>[],
 ): void {
-  if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    params.push(new JsonPrimitiveParameter(
-      { path },
-      value,
-      [...ALLOWED_TAMPERS],
-    ));
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    params.push(
+      new JsonPrimitiveParameter({ path }, value, [...ALLOWED_TAMPERS]),
+    );
   } else if (Array.isArray(value)) {
-    params.push(new JsonArrayParameter(
-      { path },
-      value,
-      [...ALLOWED_TAMPERS],
-    ));
+    params.push(new JsonArrayParameter({ path }, value, [...ALLOWED_TAMPERS]));
 
     for (let i = 0; i < value.length; i++) {
       extractJsonParams(value[i], [...path, String(i)], params);
     }
   } else if (typeof value === "object") {
-    params.push(new JsonObjectParameter(
-      { path },
-      value,
-      [...ALLOWED_TAMPERS],
-    ));
+    params.push(new JsonObjectParameter({ path }, value, [...ALLOWED_TAMPERS]));
 
     for (const key of Object.keys(value)) {
       extractJsonParams(value[key], [...path, key], params);
@@ -160,7 +185,7 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): JsonValue {
   if (path.length === 0) {
     return applyTamperValue(root, payload, method);
@@ -185,14 +210,19 @@ function applyAtPath(
     return root;
   }
   const copy = { ...root };
-  copy[key] = applyAtPath(copy[key] as JsonValue, path.slice(1), payload, method);
+  copy[key] = applyAtPath(
+    copy[key] as JsonValue,
+    path.slice(1),
+    payload,
+    method,
+  );
   return copy;
 }
 
 function applyTamperValue(
   current: JsonValue,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): JsonValue {
   switch (method) {
     case ReplaceValue:
@@ -206,4 +236,13 @@ function applyTamperValue(
   }
 }
 
-export { JsonParserPlugin, JsonTamperPlugin, JsonPrimitiveParameter, JsonArrayParameter, JsonObjectParameter, JsonPrimitiveTamperInstruction, JsonArrayTamperInstruction, JsonObjectTamperInstruction };
+export {
+  JsonParserPlugin,
+  JsonTamperPlugin,
+  JsonPrimitiveParameter,
+  JsonArrayParameter,
+  JsonObjectParameter,
+  JsonPrimitiveTamperInstruction,
+  JsonArrayTamperInstruction,
+  JsonObjectTamperInstruction,
+};

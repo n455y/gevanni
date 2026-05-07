@@ -1,22 +1,35 @@
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
-import type {
-  HttpRequest,
-  JsonValue,
-  JsonObject,
-} from "../../types/models.js";
+import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.js";
 import { InspectionParameter, TamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class GraphQLQueryParameter extends InspectionParameter<{ field: string }, string> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): GraphQLQueryTamperInstruction {
+class GraphQLQueryParameter extends InspectionParameter<
+  { field: string },
+  string
+> {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): GraphQLQueryTamperInstruction {
     return new GraphQLQueryTamperInstruction(this, payload, method);
   }
 }
-class GraphQLVariableParameter extends InspectionParameter<{ path: string[] }, JsonValue> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): GraphQLVariableTamperInstruction {
+class GraphQLVariableParameter extends InspectionParameter<
+  { path: string[] },
+  JsonValue
+> {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): GraphQLVariableTamperInstruction {
     return new GraphQLVariableTamperInstruction(this, payload, method);
   }
 }
@@ -24,11 +37,17 @@ class GraphQLVariableParameter extends InspectionParameter<{ path: string[] }, J
 class GraphQLQueryTamperInstruction extends TamperInstruction<GraphQLQueryParameter> {}
 class GraphQLVariableTamperInstruction extends TamperInstruction<GraphQLVariableParameter> {}
 
-type GraphQLTamperInstruction = GraphQLQueryTamperInstruction | GraphQLVariableTamperInstruction;
+type GraphQLTamperInstruction =
+  | GraphQLQueryTamperInstruction
+  | GraphQLVariableTamperInstruction;
 
-function isGraphQLInstruction(instr: TamperInstruction): instr is GraphQLTamperInstruction {
-  return instr instanceof GraphQLQueryTamperInstruction
-    || instr instanceof GraphQLVariableTamperInstruction;
+function isGraphQLInstruction(
+  instr: TamperInstruction,
+): instr is GraphQLTamperInstruction {
+  return (
+    instr instanceof GraphQLQueryTamperInstruction ||
+    instr instanceof GraphQLVariableTamperInstruction
+  );
 }
 
 const ALLOWED_TAMPERS = [ReplaceValue, AppendValue, PrependValue];
@@ -56,7 +75,8 @@ class GraphQLTamperPlugin implements Plugin {
         cmd: ApplyTamperCommand,
         request: HttpRequest,
       ): Promise<HttpRequest> => {
-        const graphqlInstructions = cmd.instructions.filter(isGraphQLInstruction);
+        const graphqlInstructions =
+          cmd.instructions.filter(isGraphQLInstruction);
 
         if (graphqlInstructions.length === 0) {
           return request;
@@ -76,7 +96,12 @@ class GraphQLTamperPlugin implements Plugin {
         for (const instr of graphqlInstructions) {
           if (instr instanceof GraphQLQueryTamperInstruction) {
             const field = instr.parameter.location.field;
-            if (typeof jsonBody === "object" && jsonBody !== null && !Array.isArray(jsonBody) && field in jsonBody) {
+            if (
+              typeof jsonBody === "object" &&
+              jsonBody !== null &&
+              !Array.isArray(jsonBody) &&
+              field in jsonBody
+            ) {
               (jsonBody as Record<string, JsonValue>)[field] = applyTamperValue(
                 (jsonBody as Record<string, JsonValue>)[field],
                 instr.payload as string,
@@ -85,7 +110,12 @@ class GraphQLTamperPlugin implements Plugin {
             }
           } else if (instr instanceof GraphQLVariableTamperInstruction) {
             const path = instr.parameter.location.path;
-            jsonBody = applyAtPath(jsonBody, path, instr.payload as string, instr.method);
+            jsonBody = applyAtPath(
+              jsonBody,
+              path,
+              instr.payload as string,
+              instr.method,
+            );
           }
         }
 
@@ -129,25 +159,33 @@ function parseGraphQLParameters(
 
   const params: InspectionParameter<unknown, unknown>[] = [];
 
-  params.push(new GraphQLQueryParameter(
-    { field: "query" },
-    parsed.query,
-    [...ALLOWED_TAMPERS],
-  ));
+  params.push(
+    new GraphQLQueryParameter({ field: "query" }, parsed.query, [
+      ...ALLOWED_TAMPERS,
+    ]),
+  );
 
-  if (
-    "operationName" in parsed &&
-    typeof parsed.operationName === "string"
-  ) {
-    params.push(new GraphQLQueryParameter(
-      { field: "operationName" },
-      parsed.operationName,
-      [...ALLOWED_TAMPERS],
-    ));
+  if ("operationName" in parsed && typeof parsed.operationName === "string") {
+    params.push(
+      new GraphQLQueryParameter(
+        { field: "operationName" },
+        parsed.operationName,
+        [...ALLOWED_TAMPERS],
+      ),
+    );
   }
 
-  if ("variables" in parsed && typeof parsed.variables === "object" && parsed.variables !== null && !Array.isArray(parsed.variables)) {
-    extractVariableParams(parsed.variables as JsonObject, ["variables"], params);
+  if (
+    "variables" in parsed &&
+    typeof parsed.variables === "object" &&
+    parsed.variables !== null &&
+    !Array.isArray(parsed.variables)
+  ) {
+    extractVariableParams(
+      parsed.variables as JsonObject,
+      ["variables"],
+      params,
+    );
   }
 
   return params;
@@ -166,11 +204,11 @@ function extractVariableParams(
       typeof value === "number" ||
       typeof value === "boolean"
     ) {
-      params.push(new GraphQLVariableParameter(
-        { path: currentPath },
-        value,
-        [...ALLOWED_TAMPERS],
-      ));
+      params.push(
+        new GraphQLVariableParameter({ path: currentPath }, value, [
+          ...ALLOWED_TAMPERS,
+        ]),
+      );
     } else if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i++) {
         extractVariableParams(
@@ -189,7 +227,7 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): JsonValue {
   if (path.length === 0) {
     return applyTamperValue(root, payload, method);
@@ -214,14 +252,19 @@ function applyAtPath(
     return root;
   }
   const copy = { ...root };
-  copy[key] = applyAtPath(copy[key] as JsonValue, path.slice(1), payload, method);
+  copy[key] = applyAtPath(
+    copy[key] as JsonValue,
+    path.slice(1),
+    payload,
+    method,
+  );
   return copy;
 }
 
 function applyTamperValue(
   current: JsonValue,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): JsonValue {
   switch (method) {
     case ReplaceValue:
@@ -235,4 +278,11 @@ function applyTamperValue(
   }
 }
 
-export { GraphQLParserPlugin, GraphQLTamperPlugin, GraphQLQueryParameter, GraphQLVariableParameter, GraphQLQueryTamperInstruction, GraphQLVariableTamperInstruction };
+export {
+  GraphQLParserPlugin,
+  GraphQLTamperPlugin,
+  GraphQLQueryParameter,
+  GraphQLVariableParameter,
+  GraphQLQueryTamperInstruction,
+  GraphQLVariableTamperInstruction,
+};

@@ -1,4 +1,9 @@
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
 import { InspectionParameter, TamperInstruction } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
@@ -7,7 +12,10 @@ import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
 class HeaderParameter extends InspectionParameter<{ name: string }, string> {
-  createInstruction(payload: Payload, method: typeof TamperMethod): HeaderTamperInstruction {
+  createInstruction(
+    payload: Payload,
+    method: TamperMethod,
+  ): HeaderTamperInstruction {
     return new HeaderTamperInstruction(this, payload, method);
   }
 }
@@ -66,15 +74,19 @@ class HeaderTamperPlugin implements Plugin {
   }
 }
 
-function parseHeaderParameters(request: HttpRequest): InspectionParameter<unknown, unknown>[] {
+function parseHeaderParameters(
+  request: HttpRequest,
+): InspectionParameter<unknown, unknown>[] {
   const params: InspectionParameter<unknown, unknown>[] = [];
 
   for (const [name, value] of Object.entries(request.headers)) {
-    params.push(new HeaderParameter(
-      { name },
-      value,
-      [ReplaceValue, AppendValue, PrependValue],
-    ));
+    params.push(
+      new HeaderParameter({ name }, value, [
+        ReplaceValue,
+        AppendValue,
+        PrependValue,
+      ]),
+    );
   }
 
   return params;
@@ -83,7 +95,7 @@ function parseHeaderParameters(request: HttpRequest): InspectionParameter<unknow
 function applyTamper(
   current: string,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): string {
   switch (method) {
     case ReplaceValue:
@@ -97,4 +109,9 @@ function applyTamper(
   }
 }
 
-export { HeaderParserPlugin, HeaderTamperPlugin, HeaderParameter, HeaderTamperInstruction };
+export {
+  HeaderParserPlugin,
+  HeaderTamperPlugin,
+  HeaderParameter,
+  HeaderTamperInstruction,
+};

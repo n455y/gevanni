@@ -10,14 +10,16 @@ import {
   JsonArrayTamperInstruction,
 } from "./json.js";
 import { QueryParameter } from "./query.js";
-import type {
-  HttpRequest,
-  InspectionParameter,
-} from "../../types/models.js";
+import type { HttpRequest, InspectionParameter } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { Brand } from "../../types/branded.js";
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 
 type AnyJsonParam =
   | JsonPrimitiveParameter
@@ -39,7 +41,9 @@ function makeJsonRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: InspectionParameter<unknown, unknown>[][]): AnyJsonParam[] {
+function flatParams(
+  results: InspectionParameter<unknown, unknown>[][],
+): AnyJsonParam[] {
   return results.flat() as AnyJsonParam[];
 }
 
@@ -47,7 +51,7 @@ function makeJsonPrimitiveInstruction(
   path: string[],
   originalValue: unknown,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): JsonPrimitiveTamperInstruction {
   return new JsonPrimitiveTamperInstruction(
     new JsonPrimitiveParameter(
@@ -78,8 +82,7 @@ describe("JsonParserPlugin", () => {
 
     const rootObj = params.find(
       (p): p is JsonObjectParameter =>
-        p instanceof JsonObjectParameter &&
-        p.location.path.length === 0,
+        p instanceof JsonObjectParameter && p.location.path.length === 0,
     );
     expect(rootObj).toBeDefined();
 
@@ -234,15 +237,13 @@ describe("JsonParserPlugin", () => {
 
     const activeParam = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p instanceof JsonPrimitiveParameter &&
-        p.location.path[0] === "active",
+        p instanceof JsonPrimitiveParameter && p.location.path[0] === "active",
     );
     expect(activeParam!.originalValue).toBe(true);
 
     const deletedParam = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p instanceof JsonPrimitiveParameter &&
-        p.location.path[0] === "deleted",
+        p instanceof JsonPrimitiveParameter && p.location.path[0] === "deleted",
     );
     expect(deletedParam!.originalValue).toBeNull();
   });
@@ -332,14 +333,11 @@ describe("JsonTamperPlugin", () => {
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
-    const instruction = new QueryParameter(
-        { name: "foo" },
-        "bar",
-        [ReplaceValue, AppendValue, PrependValue],
-      ).createInstruction(
-      "INJECTED" as Brand<string, "Payload">,
+    const instruction = new QueryParameter({ name: "foo" }, "bar", [
       ReplaceValue,
-    );
+      AppendValue,
+      PrependValue,
+    ]).createInstruction("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),
@@ -389,12 +387,7 @@ describe("JsonTamperPlugin", () => {
       `{"user":{"name":"test","email":"a@b.com"}}`,
     );
     const instructions = [
-      makeJsonPrimitiveInstruction(
-        ["user", "name"],
-        "test",
-        "X",
-        ReplaceValue,
-      ),
+      makeJsonPrimitiveInstruction(["user", "name"], "test", "X", ReplaceValue),
       makeJsonPrimitiveInstruction(
         ["user", "email"],
         "a@b.com",

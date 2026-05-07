@@ -125,7 +125,7 @@ class PostmanPlugin implements Plugin {
   }
 }
 
-class PostmanScenarioType extends ScenarioType {}
+export const PostmanScenarioType = ScenarioType("postman");
 
-export { PostmanPlugin, PostmanScenarioType, runNewman };
+export { PostmanPlugin, runNewman };
 export type { PostmanHeader, PostmanBody, PostmanRequest, PostmanItem };

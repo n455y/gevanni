@@ -9,7 +9,12 @@ import { QueryParameter } from "./query.js";
 import { JsonPrimitiveParameter } from "./json.js";
 import { QueryTamperInstruction } from "./query.js";
 import type { Brand } from "../../types/branded.js";
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -25,14 +30,14 @@ function makeQueryInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): QueryTamperInstruction {
   return new QueryTamperInstruction(
-    new QueryParameter(
-      { name: paramName },
-      originalValue,
-      [ReplaceValue, AppendValue, PrependValue],
-    ),
+    new QueryParameter({ name: paramName }, originalValue, [
+      ReplaceValue,
+      AppendValue,
+      PrependValue,
+    ]),
     payload as Brand<string, "Payload">,
     method,
   );
@@ -61,16 +66,16 @@ describe("QueryParserPlugin", () => {
     expect(params).toHaveLength(2);
     expect(params).toEqual(
       expect.arrayContaining([
-        new QueryParameter(
-          { name: "foo" },
-          "bar",
-          [ReplaceValue, AppendValue, PrependValue],
-        ),
-        new QueryParameter(
-          { name: "baz" },
-          "123",
-          [ReplaceValue, AppendValue, PrependValue],
-        ),
+        new QueryParameter({ name: "foo" }, "bar", [
+          ReplaceValue,
+          AppendValue,
+          PrependValue,
+        ]),
+        new QueryParameter({ name: "baz" }, "123", [
+          ReplaceValue,
+          AppendValue,
+          PrependValue,
+        ]),
       ]),
     );
   });
@@ -230,13 +235,10 @@ describe("QueryTamperPlugin", () => {
     };
 
     const instruction = new JsonPrimitiveParameter(
-        { path: ["user", "name"] },
-        "test",
-        [ReplaceValue, AppendValue, PrependValue],
-      ).createInstruction(
-      "INJECTED" as Brand<string, "Payload">,
-      ReplaceValue,
-    );
+      { path: ["user", "name"] },
+      "test",
+      [ReplaceValue, AppendValue, PrependValue],
+    ).createInstruction("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),

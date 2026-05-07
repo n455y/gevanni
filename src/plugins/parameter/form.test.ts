@@ -8,7 +8,12 @@ import type { HttpRequest } from "../../types/models.js";
 import { FormParameter } from "./form.js";
 import { FormTamperInstruction } from "./form.js";
 import type { Brand } from "../../types/branded.js";
-import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import {
+  TamperMethod,
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
+} from "../../types/branded.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -33,14 +38,14 @@ function makeFormInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: typeof TamperMethod,
+  method: TamperMethod,
 ): FormTamperInstruction {
   return new FormTamperInstruction(
-    new FormParameter(
-      { name: paramName },
-      originalValue,
-      [ReplaceValue, AppendValue, PrependValue],
-    ),
+    new FormParameter({ name: paramName }, originalValue, [
+      ReplaceValue,
+      AppendValue,
+      PrependValue,
+    ]),
     payload as Brand<string, "Payload">,
     method,
   );
@@ -63,16 +68,16 @@ describe("FormParserPlugin", () => {
     expect(params).toHaveLength(2);
     expect(params).toEqual(
       expect.arrayContaining([
-        new FormParameter(
-          { name: "username" },
-          "admin",
-          [ReplaceValue, AppendValue, PrependValue],
-        ),
-        new FormParameter(
-          { name: "password" },
-          "secret",
-          [ReplaceValue, AppendValue, PrependValue],
-        ),
+        new FormParameter({ name: "username" }, "admin", [
+          ReplaceValue,
+          AppendValue,
+          PrependValue,
+        ]),
+        new FormParameter({ name: "password" }, "secret", [
+          ReplaceValue,
+          AppendValue,
+          PrependValue,
+        ]),
       ]),
     );
   });
@@ -132,7 +137,9 @@ describe("FormParserPlugin", () => {
     const request: HttpRequest = {
       method: "POST",
       url: "http://example.com/login",
-      headers: { "content-type": "application/x-www-form-urlencoded; charset=UTF-8" },
+      headers: {
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+      },
       body: Buffer.from("key=value", "utf-8"),
     };
 
@@ -317,18 +324,8 @@ describe("FormTamperPlugin", () => {
 
     const request = makeFormRequest("username=admin&password=secret");
     const instructions = [
-      makeFormInstruction(
-        "username",
-        "admin",
-        "X",
-        ReplaceValue,
-      ),
-      makeFormInstruction(
-        "password",
-        "secret",
-        "Y",
-        AppendValue,
-      ),
+      makeFormInstruction("username", "admin", "X", ReplaceValue),
+      makeFormInstruction("password", "secret", "Y", AppendValue),
     ];
 
     const result = await commandBus.pipe(
