@@ -14,7 +14,7 @@ import { TamperInstruction } from "../../types/models.js";
 import type { Exchange } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { ReplaceValue } from "../../types/branded.js";
-import { QueryParameter } from "../../types/models.js";
+import { QueryParameter } from "../parameter/query.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
 
 let commandBus: InMemoryCommandBus;

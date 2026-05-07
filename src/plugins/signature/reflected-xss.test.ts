@@ -4,7 +4,10 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { ReflectedXssPlugin, ReflectedXssInspector } from "./reflected-xss.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import type { InspectionParameter, HttpRequest, JsonPrimitive } from "../../types/models.js";
-import { QueryParameter, FormParameter, JsonPrimitiveParameter, HeaderParameter } from "../../types/models.js";
+import { QueryParameter } from "../parameter/query.js";
+import { FormParameter } from "../parameter/form.js";
+import { JsonPrimitiveParameter } from "../parameter/json.js";
+import { HeaderParameter } from "../parameter/header.js";
 import { ReplaceValue, AppendValue } from "../../types/branded.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 

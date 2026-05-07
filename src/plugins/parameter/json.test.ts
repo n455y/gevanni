@@ -6,11 +6,11 @@ import {
   JsonPrimitiveParameter,
   JsonArrayParameter,
   JsonObjectParameter,
-  QueryParameter,
-  TamperInstruction,
   JsonPrimitiveTamperInstruction,
   JsonArrayTamperInstruction,
-} from "../../types/models.js";
+} from "./json.js";
+import { QueryParameter } from "./query.js";
+import { TamperInstruction } from "../../types/models.js";
 import type {
   HttpRequest,
   InspectionParameter,

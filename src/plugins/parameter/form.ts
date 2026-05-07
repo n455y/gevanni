@@ -1,9 +1,21 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { HttpRequest, InspectionParameter } from "../../types/models.js";
-import { FormParameter, FormTamperInstruction } from "../../types/models.js";
+import { InspectionParameter, TamperInstruction } from "../../types/models.js";
+import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+
+class FormParameter extends InspectionParameter<{ name: string }, string> {
+  constructor(
+    readonly location: { name: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class FormTamperInstruction extends TamperInstruction<FormParameter> {}
 
 class FormParserPlugin implements Plugin {
   readonly name = "form-parser";
@@ -108,4 +120,4 @@ function applyTamper(
   }
 }
 
-export { FormParserPlugin, FormTamperPlugin };
+export { FormParserPlugin, FormTamperPlugin, FormParameter, FormTamperInstruction };

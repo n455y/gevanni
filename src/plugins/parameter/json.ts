@@ -1,24 +1,58 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import type {
   HttpRequest,
-  InspectionParameter,
   JsonPrimitive,
   JsonArray,
   JsonObject,
   JsonValue,
 } from "../../types/models.js";
-import {
-  JsonPrimitiveParameter,
-  JsonArrayParameter,
-  JsonObjectParameter,
-  JsonPrimitiveTamperInstruction,
-  JsonArrayTamperInstruction,
-  JsonObjectTamperInstruction,
-  TamperInstruction,
-} from "../../types/models.js";
+import { InspectionParameter, TamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+
+class JsonPrimitiveParameter extends InspectionParameter<
+  { path: string[] },
+  JsonPrimitive
+> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonPrimitive,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class JsonArrayParameter extends InspectionParameter<
+  { path: string[] },
+  JsonArray
+> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonArray,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class JsonObjectParameter extends InspectionParameter<
+  { path: string[] },
+  JsonObject
+> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonObject,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class JsonPrimitiveTamperInstruction extends TamperInstruction<JsonPrimitiveParameter> {}
+class JsonArrayTamperInstruction extends TamperInstruction<JsonArrayParameter> {}
+class JsonObjectTamperInstruction extends TamperInstruction<JsonObjectParameter> {}
 
 type JsonTamperInstruction = JsonPrimitiveTamperInstruction | JsonArrayTamperInstruction | JsonObjectTamperInstruction;
 
@@ -194,4 +228,4 @@ function applyTamperValue(
   }
 }
 
-export { JsonParserPlugin, JsonTamperPlugin };
+export { JsonParserPlugin, JsonTamperPlugin, JsonPrimitiveParameter, JsonArrayParameter, JsonObjectParameter, JsonPrimitiveTamperInstruction, JsonArrayTamperInstruction, JsonObjectTamperInstruction };

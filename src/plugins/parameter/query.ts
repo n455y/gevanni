@@ -1,9 +1,21 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { HttpRequest, InspectionParameter } from "../../types/models.js";
-import { QueryParameter, QueryTamperInstruction } from "../../types/models.js";
+import { InspectionParameter, TamperInstruction } from "../../types/models.js";
+import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+
+class QueryParameter extends InspectionParameter<{ name: string }, string> {
+  constructor(
+    readonly location: { name: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class QueryTamperInstruction extends TamperInstruction<QueryParameter> {}
 
 class QueryParserPlugin implements Plugin {
   readonly name = "query-parser";
@@ -93,4 +105,4 @@ function applyTamper(
   }
 }
 
-export { QueryParserPlugin, QueryTamperPlugin };
+export { QueryParserPlugin, QueryTamperPlugin, QueryParameter, QueryTamperInstruction };

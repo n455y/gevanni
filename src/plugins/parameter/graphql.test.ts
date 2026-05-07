@@ -5,11 +5,11 @@ import { GraphQLParserPlugin, GraphQLTamperPlugin } from "./graphql.js";
 import {
   GraphQLQueryParameter,
   GraphQLVariableParameter,
-  QueryParameter,
   GraphQLQueryTamperInstruction,
   GraphQLVariableTamperInstruction,
-  TamperInstruction,
-} from "../../types/models.js";
+} from "./graphql.js";
+import { QueryParameter } from "./query.js";
+import { TamperInstruction } from "../../types/models.js";
 import type { InspectionParameter, HttpRequest, JsonValue } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";

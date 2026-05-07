@@ -16,7 +16,7 @@ import type {
 import type { InspectionParameter } from "../types/models.js";
 import type { Brand, JobStatus, ScanStatus } from "../types/branded.js";
 import { ReplaceValue } from "../types/branded.js";
-import { QueryParameter } from "../types/models.js";
+import { QueryParameter } from "../plugins/parameter/query.js";
 import {
   ReplayCommand,
   ParseRequestCommand,

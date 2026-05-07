@@ -5,7 +5,8 @@ import { FormParserPlugin, FormTamperPlugin } from "./form.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest } from "../../types/models.js";
-import { FormParameter, FormTamperInstruction } from "../../types/models.js";
+import { FormParameter } from "./form.js";
+import { FormTamperInstruction } from "./form.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 

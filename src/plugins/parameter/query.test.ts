@@ -5,7 +5,10 @@ import { QueryParserPlugin, QueryTamperPlugin } from "./query.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest } from "../../types/models.js";
-import { QueryParameter, JsonPrimitiveParameter, TamperInstruction, QueryTamperInstruction } from "../../types/models.js";
+import { QueryParameter } from "./query.js";
+import { JsonPrimitiveParameter } from "./json.js";
+import { TamperInstruction } from "../../types/models.js";
+import { QueryTamperInstruction } from "./query.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 

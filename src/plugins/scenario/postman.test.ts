@@ -7,10 +7,9 @@ import { startTamperProxy } from "../proxy/http-proxy.js";
 import type { TamperProxy } from "../proxy/http-proxy.js";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
-import { QueryTamperPlugin } from "../parameter/query.js";
+import { QueryTamperPlugin, QueryTamperInstruction } from "../parameter/query.js";
 import type { Scenario, Exchange } from "../../types/models.js";
-import { QueryTamperInstruction } from "../../types/models.js";
-import { QueryParameter } from "../../types/models.js";
+import { QueryParameter } from "../parameter/query.js";
 import type { Brand } from "../../types/branded.js";
 import { ReplaceValue } from "../../types/branded.js";
 

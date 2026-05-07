@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { HeaderParserPlugin } from "./header.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest } from "../../types/models.js";
-import { HeaderParameter } from "../../types/models.js";
+import { HeaderParameter } from "./header.js";
 import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 
 let commandBus: InMemoryCommandBus;

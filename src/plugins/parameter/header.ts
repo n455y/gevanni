@@ -1,9 +1,21 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { HttpRequest, InspectionParameter } from "../../types/models.js";
-import { HeaderParameter, HeaderTamperInstruction } from "../../types/models.js";
+import { InspectionParameter, TamperInstruction } from "../../types/models.js";
+import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+
+class HeaderParameter extends InspectionParameter<{ name: string }, string> {
+  constructor(
+    readonly location: { name: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class HeaderTamperInstruction extends TamperInstruction<HeaderParameter> {}
 
 class HeaderParserPlugin implements Plugin {
   readonly name = "header-parser";
@@ -88,4 +100,4 @@ function applyTamper(
   }
 }
 
-export { HeaderParserPlugin, HeaderTamperPlugin };
+export { HeaderParserPlugin, HeaderTamperPlugin, HeaderParameter, HeaderTamperInstruction };

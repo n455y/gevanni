@@ -28,115 +28,25 @@ abstract class InspectionParameter<L, V> {
   abstract readonly allowedTampers: (typeof TamperMethod)[];
 }
 
-// --- Named parameters (query, form, header) ---
-class QueryParameter extends InspectionParameter<{ name: string }, string> {
-  constructor(
-    readonly location: { name: string },
-    readonly originalValue: string,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
-class FormParameter extends InspectionParameter<{ name: string }, string> {
-  constructor(
-    readonly location: { name: string },
-    readonly originalValue: string,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
-class HeaderParameter extends InspectionParameter<{ name: string }, string> {
-  constructor(
-    readonly location: { name: string },
-    readonly originalValue: string,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
-// --- JSON parameters ---
+// --- JSON types ---
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 type JsonArray = JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 
-class JsonPrimitiveParameter extends InspectionParameter<{ path: string[] }, JsonPrimitive> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonPrimitive,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
-class JsonArrayParameter extends InspectionParameter<{ path: string[] }, JsonArray> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonArray,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
-class JsonObjectParameter extends InspectionParameter<{ path: string[] }, JsonObject> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonObject,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
-// --- GraphQL parameters ---
-class GraphQLQueryParameter extends InspectionParameter<{ field: string }, string> {
-  constructor(
-    readonly location: { field: string },
-    readonly originalValue: string,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
-class GraphQLVariableParameter extends InspectionParameter<{ path: string[] }, JsonValue> {
-  constructor(
-    readonly location: { path: string[] },
-    readonly originalValue: JsonValue,
-    readonly allowedTampers: (typeof TamperMethod)[],
-  ) {
-    super();
-  }
-}
-
 // --- TamperInstruction ---
-class TamperInstruction<P extends InspectionParameter<unknown, unknown> = InspectionParameter<unknown, unknown>> {
+abstract class TamperInstruction<
+  P extends InspectionParameter<unknown, unknown> = InspectionParameter<
+    unknown,
+    unknown
+  >,
+> {
   constructor(
     readonly parameter: P,
     readonly payload: Payload,
     readonly method: typeof TamperMethod,
   ) {}
 }
-
-class QueryTamperInstruction extends TamperInstruction<QueryParameter> {}
-class FormTamperInstruction extends TamperInstruction<FormParameter> {}
-class HeaderTamperInstruction extends TamperInstruction<HeaderParameter> {}
-class JsonPrimitiveTamperInstruction extends TamperInstruction<JsonPrimitiveParameter> {}
-class JsonArrayTamperInstruction extends TamperInstruction<JsonArrayParameter> {}
-class JsonObjectTamperInstruction extends TamperInstruction<JsonObjectParameter> {}
-class GraphQLQueryTamperInstruction extends TamperInstruction<GraphQLQueryParameter> {}
-class GraphQLVariableTamperInstruction extends TamperInstruction<GraphQLVariableParameter> {}
-
-type NamedParameter = QueryParameter | FormParameter | HeaderParameter;
-type JsonParameter = JsonPrimitiveParameter | JsonArrayParameter | JsonObjectParameter;
-type GraphQLParameter = GraphQLQueryParameter | GraphQLVariableParameter;
 
 // --- HTTP ---
 interface HttpRequest {
@@ -205,10 +115,6 @@ interface PluginConfig {
 
 export type {
   Scenario,
-  InspectionParameter,
-  NamedParameter,
-  JsonParameter,
-  GraphQLParameter,
   JsonPrimitive,
   JsonArray,
   JsonObject,
@@ -223,22 +129,4 @@ export type {
   PluginConfig,
 };
 
-export {
-  QueryParameter,
-  FormParameter,
-  HeaderParameter,
-  JsonPrimitiveParameter,
-  JsonArrayParameter,
-  JsonObjectParameter,
-  GraphQLQueryParameter,
-  GraphQLVariableParameter,
-  TamperInstruction,
-  QueryTamperInstruction,
-  FormTamperInstruction,
-  HeaderTamperInstruction,
-  JsonPrimitiveTamperInstruction,
-  JsonArrayTamperInstruction,
-  JsonObjectTamperInstruction,
-  GraphQLQueryTamperInstruction,
-  GraphQLVariableTamperInstruction,
-};
+export { InspectionParameter, TamperInstruction };

@@ -1,20 +1,42 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 import type {
   HttpRequest,
-  InspectionParameter,
   JsonValue,
   JsonObject,
 } from "../../types/models.js";
-import {
-  GraphQLQueryParameter,
-  GraphQLVariableParameter,
-  GraphQLQueryTamperInstruction,
-  GraphQLVariableTamperInstruction,
-  TamperInstruction,
-} from "../../types/models.js";
+import { InspectionParameter, TamperInstruction } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
+
+class GraphQLQueryParameter extends InspectionParameter<
+  { field: string },
+  string
+> {
+  constructor(
+    readonly location: { field: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class GraphQLVariableParameter extends InspectionParameter<
+  { path: string[] },
+  JsonValue
+> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonValue,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class GraphQLQueryTamperInstruction extends TamperInstruction<GraphQLQueryParameter> {}
+class GraphQLVariableTamperInstruction extends TamperInstruction<GraphQLVariableParameter> {}
 
 type GraphQLTamperInstruction = GraphQLQueryTamperInstruction | GraphQLVariableTamperInstruction;
 
@@ -227,4 +249,4 @@ function applyTamperValue(
   }
 }
 
-export { GraphQLParserPlugin, GraphQLTamperPlugin };
+export { GraphQLParserPlugin, GraphQLTamperPlugin, GraphQLQueryParameter, GraphQLVariableParameter, GraphQLQueryTamperInstruction, GraphQLVariableTamperInstruction };
