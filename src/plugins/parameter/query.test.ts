@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { QueryTamperPlugin } from "./query.js";
+import { QueryParserPlugin, QueryTamperPlugin } from "./query.js";
+import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import { QueryParameter, JsonPrimitiveParameter } from "../../types/models.js";
@@ -13,6 +14,10 @@ let commandBus: InMemoryCommandBus;
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
+
+function flatParams(results: QueryParameter[][]): QueryParameter[] {
+  return results.flat() as QueryParameter[];
+}
 
 function makeQueryInstruction(
   paramName: string,
@@ -30,6 +35,88 @@ function makeQueryInstruction(
     method,
   };
 }
+
+describe("QueryParserPlugin", () => {
+  it("parses URL query string parameters", async () => {
+    const plugin = new QueryParserPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const request: HttpRequest = {
+      method: "GET",
+      url: "http://example.com?foo=bar&baz=123",
+      headers: {},
+      body: null,
+    };
+
+    const params = flatParams(
+      await commandBus.broadcast(new ParseRequestCommand(request)),
+    );
+
+    expect(params).toHaveLength(2);
+    expect(params).toEqual(
+      expect.arrayContaining([
+        new QueryParameter(
+          { name: "foo" },
+          "bar",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
+        new QueryParameter(
+          { name: "baz" },
+          "123",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
+      ]),
+    );
+  });
+
+  it("returns empty array when URL has no query string", async () => {
+    const plugin = new QueryParserPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const request: HttpRequest = {
+      method: "GET",
+      url: "http://example.com",
+      headers: {},
+      body: null,
+    };
+
+    const params = flatParams(
+      await commandBus.broadcast(new ParseRequestCommand(request)),
+    );
+
+    expect(params).toHaveLength(0);
+  });
+
+  it("returns empty array for empty query string", async () => {
+    const plugin = new QueryParserPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const request: HttpRequest = {
+      method: "GET",
+      url: "http://example.com?",
+      headers: {},
+      body: null,
+    };
+
+    const params = flatParams(
+      await commandBus.broadcast(new ParseRequestCommand(request)),
+    );
+
+    expect(params).toHaveLength(0);
+  });
+});
 
 describe("QueryTamperPlugin", () => {
   it("replaces query parameter value with payload", async () => {

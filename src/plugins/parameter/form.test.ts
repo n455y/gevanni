@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { FormTamperPlugin } from "./form.js";
+import { FormParserPlugin, FormTamperPlugin } from "./form.js";
+import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
 import { FormParameter } from "../../types/models.js";
@@ -23,6 +24,10 @@ function makeFormRequest(body: string): HttpRequest {
   };
 }
 
+function flatParams(results: FormParameter[][]): FormParameter[] {
+  return results.flat() as FormParameter[];
+}
+
 function makeFormInstruction(
   paramName: string,
   originalValue: string,
@@ -39,6 +44,106 @@ function makeFormInstruction(
     method,
   };
 }
+
+describe("FormParserPlugin", () => {
+  it("parses form URL-encoded body parameters", async () => {
+    const plugin = new FormParserPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const request = makeFormRequest("username=admin&password=secret");
+    const params = flatParams(
+      await commandBus.broadcast(new ParseRequestCommand(request)),
+    );
+
+    expect(params).toHaveLength(2);
+    expect(params).toEqual(
+      expect.arrayContaining([
+        new FormParameter(
+          { name: "username" },
+          "admin",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
+        new FormParameter(
+          { name: "password" },
+          "secret",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
+      ]),
+    );
+  });
+
+  it("returns empty array when content-type is not form-urlencoded", async () => {
+    const plugin = new FormParserPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const request: HttpRequest = {
+      method: "POST",
+      url: "http://example.com/login",
+      headers: { "content-type": "application/json" },
+      body: Buffer.from("username=admin&password=secret", "utf-8"),
+    };
+
+    const params = flatParams(
+      await commandBus.broadcast(new ParseRequestCommand(request)),
+    );
+
+    expect(params).toHaveLength(0);
+  });
+
+  it("returns empty array when body is null", async () => {
+    const plugin = new FormParserPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const request: HttpRequest = {
+      method: "POST",
+      url: "http://example.com/login",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: null,
+    };
+
+    const params = flatParams(
+      await commandBus.broadcast(new ParseRequestCommand(request)),
+    );
+
+    expect(params).toHaveLength(0);
+  });
+
+  it("handles content-type with charset parameter", async () => {
+    const plugin = new FormParserPlugin();
+    await plugin.init({
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      config: {},
+    });
+
+    const request: HttpRequest = {
+      method: "POST",
+      url: "http://example.com/login",
+      headers: { "content-type": "application/x-www-form-urlencoded; charset=UTF-8" },
+      body: Buffer.from("key=value", "utf-8"),
+    };
+
+    const params = flatParams(
+      await commandBus.broadcast(new ParseRequestCommand(request)),
+    );
+
+    expect(params).toHaveLength(1);
+    expect(params[0].location).toEqual({ name: "key" });
+    expect(params[0].originalValue).toBe("value");
+  });
+});
 
 describe("FormTamperPlugin", () => {
   it("replaces form parameter value with payload", async () => {
@@ -198,7 +303,6 @@ describe("FormTamperPlugin", () => {
       new ApplyTamperCommand(request, [instruction]),
     );
 
-    // redirect is not in form body, so request should be unchanged
     expect(result).toEqual(request);
   });
 
