@@ -11,9 +11,6 @@ type ExchangeId = Brand<string, "ExchangeId">;
 class ScenarioType {
   private _brand = "ScenarioType" as const;
 }
-class ParameterType {
-  private _brand = "ParameterType" as const;
-}
 
 class TamperMethod {
   private _brand = "TamperMethod" as const;
@@ -45,7 +42,6 @@ export {
   ScanId,
   ExchangeId,
   ScenarioType,
-  ParameterType,
   TamperMethod,
   ReplaceValue,
   AppendValue,

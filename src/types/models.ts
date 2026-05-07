@@ -1,4 +1,4 @@
-import { ScenarioType, ParameterType, TamperMethod } from "./branded.js";
+import { ScenarioType, TamperMethod } from "./branded.js";
 import type {
   ScenarioId,
   JobId,
@@ -22,28 +22,110 @@ interface Scenario {
 }
 
 // --- InspectionParameter ---
-interface InspectionParameter<
-  P extends typeof ParameterType = typeof ParameterType,
-  L = unknown,
-  V = unknown,
-> {
-  type: P;
-  location: L;
-  originalValue: V;
-  allowedTampers: (typeof TamperMethod)[];
+abstract class InspectionParameter<L, V> {
+  abstract readonly location: L;
+  abstract readonly originalValue: V;
+  abstract readonly allowedTampers: (typeof TamperMethod)[];
 }
 
+// --- Named parameters (query, form, header) ---
+class QueryParameter extends InspectionParameter<{ name: string }, string> {
+  constructor(
+    readonly location: { name: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class FormParameter extends InspectionParameter<{ name: string }, string> {
+  constructor(
+    readonly location: { name: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class HeaderParameter extends InspectionParameter<{ name: string }, string> {
+  constructor(
+    readonly location: { name: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+// --- JSON parameters ---
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 type JsonArray = JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 
+class JsonPrimitiveParameter extends InspectionParameter<{ path: string[] }, JsonPrimitive> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonPrimitive,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class JsonArrayParameter extends InspectionParameter<{ path: string[] }, JsonArray> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonArray,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class JsonObjectParameter extends InspectionParameter<{ path: string[] }, JsonObject> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonObject,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+// --- GraphQL parameters ---
+class GraphQLQueryParameter extends InspectionParameter<{ field: string }, string> {
+  constructor(
+    readonly location: { field: string },
+    readonly originalValue: string,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
+class GraphQLVariableParameter extends InspectionParameter<{ path: string[] }, JsonValue> {
+  constructor(
+    readonly location: { path: string[] },
+    readonly originalValue: JsonValue,
+    readonly allowedTampers: (typeof TamperMethod)[],
+  ) {
+    super();
+  }
+}
+
 // --- TamperInstruction ---
-interface TamperInstruction {
-  parameter: InspectionParameter;
+interface TamperInstruction<P extends InspectionParameter<unknown, unknown> = InspectionParameter<unknown, unknown>> {
+  parameter: P;
   payload: Payload;
   method: typeof TamperMethod;
 }
+
+type NamedParameter = QueryParameter | FormParameter | HeaderParameter;
+type JsonParameter = JsonPrimitiveParameter | JsonArrayParameter | JsonObjectParameter;
+type GraphQLParameter = GraphQLQueryParameter | GraphQLVariableParameter;
 
 // --- HTTP ---
 interface HttpRequest {
@@ -81,7 +163,7 @@ interface Job {
   scenarioId: ScenarioId;
   requestId: RequestId;
   signatureName: string;
-  parameters: InspectionParameter[];
+  parameters: InspectionParameter<unknown, unknown>[];
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
@@ -113,6 +195,9 @@ interface PluginConfig {
 export type {
   Scenario,
   InspectionParameter,
+  NamedParameter,
+  JsonParameter,
+  GraphQLParameter,
   JsonPrimitive,
   JsonArray,
   JsonObject,
@@ -126,4 +211,15 @@ export type {
   ScanState,
   ScanConfig,
   PluginConfig,
+};
+
+export {
+  QueryParameter,
+  FormParameter,
+  HeaderParameter,
+  JsonPrimitiveParameter,
+  JsonArrayParameter,
+  JsonObjectParameter,
+  GraphQLQueryParameter,
+  GraphQLVariableParameter,
 };

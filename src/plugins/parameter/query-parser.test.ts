@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { QueryParserPlugin, QueryParameterType } from "./query-parser.js";
+import { QueryParserPlugin } from "./query.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest } from "../../types/models.js";
+import { QueryParameter } from "../../types/models.js";
 import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { QueryParameter } from "./query-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -40,26 +40,16 @@ describe("QueryParserPlugin", () => {
     expect(params).toHaveLength(2);
     expect(params).toEqual(
       expect.arrayContaining([
-        {
-          type: QueryParameterType,
-          location: { name: "foo" },
-          originalValue: "bar",
-          allowedTampers: [
-            ReplaceValue,
-            AppendValue,
-            PrependValue,
-          ],
-        },
-        {
-          type: QueryParameterType,
-          location: { name: "baz" },
-          originalValue: "123",
-          allowedTampers: [
-            ReplaceValue,
-            AppendValue,
-            PrependValue,
-          ],
-        },
+        new QueryParameter(
+          { name: "foo" },
+          "bar",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
+        new QueryParameter(
+          { name: "baz" },
+          "123",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
       ]),
     );
   });

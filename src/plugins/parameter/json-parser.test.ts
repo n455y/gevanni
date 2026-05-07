@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { JsonParserPlugin, JsonPrimitiveParameterType, JsonArrayParameterType, JsonObjectParameterType } from "./json-parser.js";
-import type { JsonPrimitiveParameter, JsonArrayParameter, JsonObjectParameter } from "./json-parser.js";
+import { JsonParserPlugin } from "./json.js";
+import {
+  JsonPrimitiveParameter,
+  JsonArrayParameter,
+  JsonObjectParameter,
+} from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type {
   HttpRequest,
@@ -29,7 +33,7 @@ function makeJsonRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: InspectionParameter[][]): AnyJsonParam[] {
+function flatParams(results: InspectionParameter<unknown, unknown>[][]): AnyJsonParam[] {
   return results.flat() as AnyJsonParam[];
 }
 
@@ -56,14 +60,14 @@ describe("JsonParserPlugin", () => {
 
     const rootObj = params.find(
       (p): p is JsonObjectParameter =>
-        p.type === JsonObjectParameterType &&
+        p instanceof JsonObjectParameter &&
         p.location.path.length === 0,
     );
     expect(rootObj).toBeDefined();
 
     const userObj = params.find(
       (p): p is JsonObjectParameter =>
-        p.type === JsonObjectParameterType &&
+        p instanceof JsonObjectParameter &&
         p.location.path.includes("user") &&
         p.location.path.length === 1,
     );
@@ -71,7 +75,7 @@ describe("JsonParserPlugin", () => {
 
     const nameParam = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p.type === JsonPrimitiveParameterType &&
+        p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
         p.location.path[0] === "user" &&
         p.location.path[1] === "name",
@@ -81,7 +85,7 @@ describe("JsonParserPlugin", () => {
 
     const ageParam = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p.type === JsonPrimitiveParameterType &&
+        p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
         p.location.path[0] === "user" &&
         p.location.path[1] === "age",
@@ -168,7 +172,7 @@ describe("JsonParserPlugin", () => {
 
     const arrayParam = params.find(
       (p): p is JsonArrayParameter =>
-        p.type === JsonArrayParameterType &&
+        p instanceof JsonArrayParameter &&
         p.location.path.length === 1 &&
         p.location.path[0] === "items",
     );
@@ -177,7 +181,7 @@ describe("JsonParserPlugin", () => {
 
     const item0 = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p.type === JsonPrimitiveParameterType &&
+        p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
         p.location.path[0] === "items" &&
         p.location.path[1] === "0",
@@ -187,7 +191,7 @@ describe("JsonParserPlugin", () => {
 
     const item1 = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p.type === JsonPrimitiveParameterType &&
+        p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
         p.location.path[0] === "items" &&
         p.location.path[1] === "1",
@@ -214,14 +218,14 @@ describe("JsonParserPlugin", () => {
 
     const activeParam = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p.type === JsonPrimitiveParameterType &&
+        p instanceof JsonPrimitiveParameter &&
         p.location.path[0] === "active",
     );
     expect(activeParam!.originalValue).toBe(true);
 
     const deletedParam = params.find(
       (p): p is JsonPrimitiveParameter =>
-        p.type === JsonPrimitiveParameterType &&
+        p instanceof JsonPrimitiveParameter &&
         p.location.path[0] === "deleted",
     );
     expect(deletedParam!.originalValue).toBeNull();

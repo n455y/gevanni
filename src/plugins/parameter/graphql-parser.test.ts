@@ -1,17 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
+import { GraphQLParserPlugin } from "./graphql.js";
 import {
-  GraphQLParserPlugin,
-  GraphQLQueryParameterType,
-  GraphQLVariableParameterType,
-} from "./graphql-parser.js";
-import type {
   GraphQLQueryParameter,
   GraphQLVariableParameter,
-} from "./graphql-parser.js";
+} from "../../types/models.js";
+import type { InspectionParameter } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import type { HttpRequest, InspectionParameter } from "../../types/models.js";
+import type { HttpRequest } from "../../types/models.js";
 
 type AnyGraphQLParam = GraphQLQueryParameter | GraphQLVariableParameter;
 
@@ -30,7 +27,7 @@ function makeGraphQLRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: InspectionParameter[][]): AnyGraphQLParam[] {
+function flatParams(results: InspectionParameter<unknown, unknown>[][]): AnyGraphQLParam[] {
   return results.flat() as AnyGraphQLParam[];
 }
 
@@ -55,7 +52,7 @@ describe("GraphQLParserPlugin", () => {
 
     const queryParam = params.find(
       (p): p is GraphQLQueryParameter =>
-        p.type === GraphQLQueryParameterType &&
+        p instanceof GraphQLQueryParameter &&
         p.location.field === "query",
     );
     expect(queryParam).toBeDefined();
@@ -65,7 +62,7 @@ describe("GraphQLParserPlugin", () => {
 
     const varParam = params.find(
       (p): p is GraphQLVariableParameter =>
-        p.type === GraphQLVariableParameterType &&
+        p instanceof GraphQLVariableParameter &&
         p.location.path.length === 2 &&
         p.location.path[0] === "variables" &&
         p.location.path[1] === "id",
@@ -94,7 +91,7 @@ describe("GraphQLParserPlugin", () => {
 
     const nameParam = params.find(
       (p): p is GraphQLVariableParameter =>
-        p.type === GraphQLVariableParameterType &&
+        p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.input.name",
     );
     expect(nameParam).toBeDefined();
@@ -102,7 +99,7 @@ describe("GraphQLParserPlugin", () => {
 
     const ageParam = params.find(
       (p): p is GraphQLVariableParameter =>
-        p.type === GraphQLVariableParameterType &&
+        p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.input.age",
     );
     expect(ageParam).toBeDefined();
@@ -129,7 +126,7 @@ describe("GraphQLParserPlugin", () => {
 
     const opParam = params.find(
       (p): p is GraphQLQueryParameter =>
-        p.type === GraphQLQueryParameterType &&
+        p instanceof GraphQLQueryParameter &&
         p.location.field === "operationName",
     );
     expect(opParam).toBeDefined();
@@ -230,7 +227,7 @@ describe("GraphQLParserPlugin", () => {
 
     const id0 = params.find(
       (p): p is GraphQLVariableParameter =>
-        p.type === GraphQLVariableParameterType &&
+        p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.ids.0",
     );
     expect(id0).toBeDefined();
@@ -238,7 +235,7 @@ describe("GraphQLParserPlugin", () => {
 
     const id1 = params.find(
       (p): p is GraphQLVariableParameter =>
-        p.type === GraphQLVariableParameterType &&
+        p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.ids.1",
     );
     expect(id1).toBeDefined();

@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { JsonTamperPlugin } from "./json-tamper.js";
+import { JsonTamperPlugin } from "./json.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
+import { QueryParameter, JsonPrimitiveParameter, JsonArrayParameter } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import { QueryParameterType } from "../parser/query-parser.js";
-import { JsonPrimitiveParameterType, JsonArrayParameterType } from "../parser/json-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -20,18 +19,13 @@ function makeJsonPrimitiveInstruction(
   originalValue: unknown,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction {
+): TamperInstruction<JsonPrimitiveParameter> {
   return {
-    parameter: {
-      type: JsonPrimitiveParameterType,
-      location: { path },
-      originalValue,
-      allowedTampers: [
-        ReplaceValue,
-        AppendValue,
-        PrependValue,
-      ],
-    },
+    parameter: new JsonPrimitiveParameter(
+      { path },
+      originalValue as string | number | boolean | null,
+      [ReplaceValue, AppendValue, PrependValue],
+    ),
     payload: payload as Brand<string, "Payload">,
     method,
   };
@@ -130,17 +124,12 @@ describe("JsonTamperPlugin", () => {
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
-    const instruction: TamperInstruction = {
-      parameter: {
-        type: QueryParameterType,
-        location: { name: "foo" },
-        originalValue: "bar",
-        allowedTampers: [
-          ReplaceValue,
-          AppendValue,
-          PrependValue,
-        ],
-      },
+    const instruction: TamperInstruction<QueryParameter> = {
+      parameter: new QueryParameter(
+        { name: "foo" },
+        "bar",
+        [ReplaceValue, AppendValue, PrependValue],
+      ),
       payload: "INJECTED" as Brand<string, "Payload">,
       method: ReplaceValue,
     };
@@ -226,17 +215,12 @@ describe("JsonTamperPlugin", () => {
 
     const request = makeJsonRequest(`{"items":["a","b"]}`);
 
-    const instruction: TamperInstruction = {
-      parameter: {
-        type: JsonArrayParameterType,
-        location: { path: ["items"] },
-        originalValue: ["a", "b"],
-        allowedTampers: [
-          ReplaceValue,
-          AppendValue,
-          PrependValue,
-        ],
-      },
+    const instruction: TamperInstruction<JsonArrayParameter> = {
+      parameter: new JsonArrayParameter(
+        { path: ["items"] },
+        ["a", "b"],
+        [ReplaceValue, AppendValue, PrependValue],
+      ),
       payload: "INJECTED" as Brand<string, "Payload">,
       method: ReplaceValue,
     };

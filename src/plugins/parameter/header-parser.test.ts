@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { HeaderParserPlugin, HeaderParameterType } from "./header-parser.js";
+import { HeaderParserPlugin } from "./header.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest } from "../../types/models.js";
+import { HeaderParameter } from "../../types/models.js";
 import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { HeaderParameter } from "./header-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -43,18 +43,16 @@ describe("HeaderParserPlugin", () => {
     expect(params).toHaveLength(2);
     expect(params).toEqual(
       expect.arrayContaining([
-        {
-          type: HeaderParameterType,
-          location: { name: "content-type" },
-          originalValue: "application/json",
-          allowedTampers: [ReplaceValue, AppendValue, PrependValue],
-        },
-        {
-          type: HeaderParameterType,
-          location: { name: "x-custom" },
-          originalValue: "value",
-          allowedTampers: [ReplaceValue, AppendValue, PrependValue],
-        },
+        new HeaderParameter(
+          { name: "content-type" },
+          "application/json",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
+        new HeaderParameter(
+          { name: "x-custom" },
+          "value",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
       ]),
     );
   });

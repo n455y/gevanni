@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { FormTamperPlugin } from "./form-tamper.js";
+import { FormTamperPlugin } from "./form.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
+import { FormParameter } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import { FormParameterType } from "../parser/form-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -28,18 +28,13 @@ function makeFormInstruction(
   originalValue: string,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction {
+): TamperInstruction<FormParameter> {
   return {
-    parameter: {
-      type: FormParameterType,
-      location: { name: paramName },
+    parameter: new FormParameter(
+      { name: paramName },
       originalValue,
-      allowedTampers: [
-        ReplaceValue,
-        AppendValue,
-        PrependValue,
-      ],
-    },
+      [ReplaceValue, AppendValue, PrependValue],
+    ),
     payload: payload as Brand<string, "Payload">,
     method,
   };

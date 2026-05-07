@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { QueryTamperPlugin } from "./query-tamper.js";
+import { QueryTamperPlugin } from "./query.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { HttpRequest, TamperInstruction } from "../../types/models.js";
+import { QueryParameter, JsonPrimitiveParameter } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import { QueryParameterType } from "../parser/query-parser.js";
-import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -20,18 +19,13 @@ function makeQueryInstruction(
   originalValue: string,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction {
+): TamperInstruction<QueryParameter> {
   return {
-    parameter: {
-      type: QueryParameterType,
-      location: { name: paramName },
+    parameter: new QueryParameter(
+      { name: paramName },
       originalValue,
-      allowedTampers: [
-        ReplaceValue,
-        AppendValue,
-        PrependValue,
-      ],
-    },
+      [ReplaceValue, AppendValue, PrependValue],
+    ),
     payload: payload as Brand<string, "Payload">,
     method,
   };
@@ -146,17 +140,12 @@ describe("QueryTamperPlugin", () => {
       body: null,
     };
 
-    const instruction: TamperInstruction = {
-      parameter: {
-        type: JsonPrimitiveParameterType,
-        location: { path: ["user", "name"] },
-        originalValue: "test",
-        allowedTampers: [
-          ReplaceValue,
-          AppendValue,
-          PrependValue,
-        ],
-      },
+    const instruction: TamperInstruction<JsonPrimitiveParameter> = {
+      parameter: new JsonPrimitiveParameter(
+        { path: ["user", "name"] },
+        "test",
+        [ReplaceValue, AppendValue, PrependValue],
+      ),
       payload: "INJECTED" as Brand<string, "Payload">,
       method: ReplaceValue,
     };

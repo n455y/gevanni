@@ -3,11 +3,9 @@ import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { SqliErrorPlugin, SqliErrorInspector, SQL_ERROR_PATTERNS } from "./sqli-error.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
-import type { InspectionParameter, HttpRequest } from "../../types/models.js";
+import type { InspectionParameter, HttpRequest, JsonPrimitive } from "../../types/models.js";
+import { QueryParameter, JsonPrimitiveParameter, HeaderParameter } from "../../types/models.js";
 import { ReplaceValue, AppendValue } from "../../types/branded.js";
-import { QueryParameterType } from "../parser/query-parser.js";
-import { JsonPrimitiveParameterType } from "../parser/json-parser.js";
-import { HeaderParameterType } from "../parser/header-parser.js";
 import type { SignatureInspector, ReplayFn } from "../../core/inspector.js";
 
 let commandBus: InMemoryCommandBus;
@@ -16,31 +14,16 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function makeQueryParam(name: string, value: string): InspectionParameter {
-  return {
-    type: QueryParameterType,
-    location: { name },
-    originalValue: value,
-    allowedTampers: [ReplaceValue, AppendValue],
-  };
+function makeQueryParam(name: string, value: string): InspectionParameter<unknown, unknown> {
+  return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
-function makeJsonPrimitiveParam(path: string[], value: unknown): InspectionParameter {
-  return {
-    type: JsonPrimitiveParameterType,
-    location: { path },
-    originalValue: value,
-    allowedTampers: [ReplaceValue],
-  };
+function makeJsonPrimitiveParam(path: string[], value: unknown): InspectionParameter<unknown, unknown> {
+  return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [ReplaceValue]);
 }
 
-function makeHeaderParam(name: string, value: string): InspectionParameter {
-  return {
-    type: HeaderParameterType,
-    location: { name },
-    originalValue: value,
-    allowedTampers: [ReplaceValue],
-  };
+function makeHeaderParam(name: string, value: string): InspectionParameter<unknown, unknown> {
+  return new HeaderParameter({ name }, value, [ReplaceValue]);
 }
 
 const mockRequest: HttpRequest = {

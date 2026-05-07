@@ -2,21 +2,16 @@ import type { PluginRegistry } from "./core/plugin.js";
 import { PostmanPlugin } from "./plugins/scenario/postman.js";
 import { PostmanLoaderPlugin } from "./plugins/loader/postman-loader.js";
 import { HttpProxyPlugin } from "./plugins/proxy/http-proxy.js";
-import { QueryParserPlugin } from "./plugins/parser/query-parser.js";
-import { JsonParserPlugin } from "./plugins/parser/json-parser.js";
-import { FormParserPlugin } from "./plugins/parser/form-parser.js";
-import { QueryTamperPlugin } from "./plugins/tamper/query-tamper.js";
-import { JsonTamperPlugin } from "./plugins/tamper/json-tamper.js";
-import { FormTamperPlugin } from "./plugins/tamper/form-tamper.js";
-import { HeaderTamperPlugin } from "./plugins/tamper/header-tamper.js";
+import { QueryParserPlugin, QueryTamperPlugin } from "./plugins/parameter/query.js";
+import { JsonParserPlugin, JsonTamperPlugin } from "./plugins/parameter/json.js";
+import { FormParserPlugin, FormTamperPlugin } from "./plugins/parameter/form.js";
+import { HeaderParserPlugin, HeaderTamperPlugin } from "./plugins/parameter/header.js";
 import { ReflectedXssPlugin } from "./plugins/signature/reflected-xss.js";
 import { SqliErrorPlugin } from "./plugins/signature/sqli-error.js";
 import { JsonStoragePlugin } from "./plugins/storage/json-storage.js";
 import { ConsoleReporterPlugin } from "./plugins/reporter/console-reporter.js";
 import { JsonReporterPlugin } from "./plugins/reporter/json-reporter.js";
-import { HeaderParserPlugin } from "./plugins/parser/header-parser.js";
-import { GraphQLParserPlugin } from "./plugins/parser/graphql-parser.js";
-import { GraphQLTamperPlugin } from "./plugins/tamper/graphql-tamper.js";
+import { GraphQLParserPlugin, GraphQLTamperPlugin } from "./plugins/parameter/graphql.js";
 
 function registerBuiltinPlugins(registry: PluginRegistry): void {
   registry.register("scenarioReplayer", "postman", () => new PostmanPlugin());

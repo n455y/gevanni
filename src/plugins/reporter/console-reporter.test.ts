@@ -99,7 +99,6 @@ describe("ConsoleReporterPlugin", () => {
       status: asJobStatus("completed"),
       parameters: [
         {
-          type: "query" as any,
           location: { name: "q" },
           originalValue: "<script>alert(1)</script>",
           allowedTampers: [],

@@ -7,11 +7,11 @@ import { startTamperProxy } from "../proxy/http-proxy.js";
 import type { TamperProxy } from "../proxy/http-proxy.js";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
-import { QueryTamperPlugin } from "../tamper/query-tamper.js";
+import { QueryTamperPlugin } from "../parameter/query.js";
 import type { Scenario, TamperInstruction, Exchange } from "../../types/models.js";
+import { QueryParameter } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { ReplaceValue } from "../../types/branded.js";
-import { QueryParameterType } from "../parser/query-parser.js";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
@@ -97,12 +97,7 @@ function makeScenario(overrides: {
 
 function makeTamperInstruction(): TamperInstruction {
   return {
-    parameter: {
-      type: QueryParameterType,
-      location: { name: "q" },
-      originalValue: "original",
-      allowedTampers: [ReplaceValue],
-    },
+    parameter: new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
     payload: "<script>" as Brand<string, "Payload">,
     method: ReplaceValue,
   };

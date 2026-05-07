@@ -1,16 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { GraphQLTamperPlugin } from "./graphql-tamper.js";
+import { GraphQLTamperPlugin } from "./graphql.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import type { HttpRequest, TamperInstruction } from "../../types/models.js";
+import type { HttpRequest, TamperInstruction, JsonValue } from "../../types/models.js";
+import { QueryParameter, GraphQLQueryParameter, GraphQLVariableParameter } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import { QueryParameterType } from "../parser/query-parser.js";
-import {
-  GraphQLQueryParameterType,
-  GraphQLVariableParameterType,
-} from "../parser/graphql-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -31,14 +27,13 @@ function makeQueryInstruction(
   field: string,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction {
+): TamperInstruction<GraphQLQueryParameter> {
   return {
-    parameter: {
-      type: GraphQLQueryParameterType,
-      location: { field },
-      originalValue: "",
-      allowedTampers: [ReplaceValue, AppendValue, PrependValue],
-    },
+    parameter: new GraphQLQueryParameter(
+      { field },
+      "",
+      [ReplaceValue, AppendValue, PrependValue],
+    ),
     payload: payload as Brand<string, "Payload">,
     method,
   };
@@ -46,17 +41,16 @@ function makeQueryInstruction(
 
 function makeVariableInstruction(
   path: string[],
-  originalValue: unknown,
+  originalValue: JsonValue,
   payload: string,
   method: typeof TamperMethod,
-): TamperInstruction {
+): TamperInstruction<GraphQLVariableParameter> {
   return {
-    parameter: {
-      type: GraphQLVariableParameterType,
-      location: { path },
+    parameter: new GraphQLVariableParameter(
+      { path },
       originalValue,
-      allowedTampers: [ReplaceValue, AppendValue, PrependValue],
-    },
+      [ReplaceValue, AppendValue, PrependValue],
+    ),
     payload: payload as Brand<string, "Payload">,
     method,
   };
@@ -218,13 +212,12 @@ describe("GraphQLTamperPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{}}`,
     );
-    const instruction: TamperInstruction = {
-      parameter: {
-        type: QueryParameterType,
-        location: { name: "foo" },
-        originalValue: "bar",
-        allowedTampers: [ReplaceValue, AppendValue, PrependValue],
-      },
+    const instruction: TamperInstruction<QueryParameter> = {
+      parameter: new QueryParameter(
+        { name: "foo" },
+        "bar",
+        [ReplaceValue, AppendValue, PrependValue],
+      ),
       payload: "INJECTED" as Brand<string, "Payload">,
       method: ReplaceValue,
     };

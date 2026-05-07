@@ -7,7 +7,7 @@ type ReplayFn = (instructions: TamperInstruction[]) => Promise<{
 
 interface SignatureInspector {
   readonly signatureName: string;
-  readonly parameters: InspectionParameter[];
+  readonly parameters: InspectionParameter<unknown, unknown>[];
   inspect(replay: ReplayFn): Promise<Finding>;
 }
 

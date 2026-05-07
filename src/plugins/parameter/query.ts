@@ -1,8 +1,24 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { HttpRequest, TamperInstruction } from "../../types/models.js";
+import type { HttpRequest, InspectionParameter, TamperInstruction } from "../../types/models.js";
+import { QueryParameter } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
+import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import { QueryParameterType } from "../parser/query-parser.js";
+
+type QueryTamperInstruction = TamperInstruction<QueryParameter>;
+
+class QueryParserPlugin implements Plugin {
+  readonly name = "query-parser";
+
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      ParseRequestCommand,
+      async (cmd: ParseRequestCommand) => {
+        return parseQueryParameters(cmd.request);
+      },
+    );
+  }
+}
 
 class QueryTamperPlugin implements Plugin {
   readonly name = "query-tamper";
@@ -15,8 +31,8 @@ class QueryTamperPlugin implements Plugin {
         request: HttpRequest,
       ): Promise<HttpRequest> => {
         const queryInstructions = cmd.instructions.filter(
-          (instr) =>
-            instr.parameter.type === QueryParameterType,
+          (instr): instr is QueryTamperInstruction =>
+            instr.parameter instanceof QueryParameter,
         );
 
         if (queryInstructions.length === 0) {
@@ -27,15 +43,10 @@ class QueryTamperPlugin implements Plugin {
         const searchParams = new URLSearchParams(url.search);
 
         for (const instr of queryInstructions) {
-          const paramName = (instr.parameter.location as { name: string })
-            .name;
+          const paramName = instr.parameter.location.name;
           const current = searchParams.get(paramName) ?? "";
           const payload = instr.payload as string;
-          const modified = applyTamper(
-            current,
-            payload,
-            instr.method,
-          );
+          const modified = applyTamper(current, payload, instr.method);
           searchParams.set(paramName, modified);
         }
 
@@ -50,6 +61,21 @@ class QueryTamperPlugin implements Plugin {
       },
     );
   }
+}
+
+function parseQueryParameters(request: HttpRequest): InspectionParameter<unknown, unknown>[] {
+  const url = new URL(request.url);
+  const params: InspectionParameter<unknown, unknown>[] = [];
+
+  for (const [name, value] of url.searchParams) {
+    params.push(new QueryParameter(
+      { name },
+      value,
+      [ReplaceValue, AppendValue, PrependValue],
+    ));
+  }
+
+  return params;
 }
 
 function applyTamper(
@@ -69,4 +95,4 @@ function applyTamper(
   }
 }
 
-export { QueryTamperPlugin };
+export { QueryParserPlugin, QueryTamperPlugin };

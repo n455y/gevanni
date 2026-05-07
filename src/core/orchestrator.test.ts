@@ -6,7 +6,6 @@ import { createLogger } from "./logger.js";
 import { Orchestrator } from "./orchestrator.js";
 import type { SignatureInspector, ReplayFn } from "./inspector.js";
 import type {
-  InspectionParameter,
   Finding,
   HttpRequest,
   HttpResponse,
@@ -14,9 +13,10 @@ import type {
   ScanState,
   Scenario,
 } from "../types/models.js";
+import type { InspectionParameter } from "../types/models.js";
 import type { Brand, JobStatus, ScanStatus } from "../types/branded.js";
 import { ReplaceValue } from "../types/branded.js";
-import { QueryParameterType } from "../plugins/parser/query-parser.js";
+import { QueryParameter } from "../types/models.js";
 import {
   ReplayCommand,
   ParseRequestCommand,
@@ -47,13 +47,8 @@ const mockResponse: HttpResponse = {
   body: Buffer.from("ok"),
 };
 
-const mockParameters: InspectionParameter[] = [
-  {
-    type: QueryParameterType,
-    location: { name: "q" },
-    originalValue: "hello",
-    allowedTampers: [ReplaceValue],
-  },
+const mockParameters: InspectionParameter<unknown, unknown>[] = [
+  new QueryParameter({ name: "q" }, "hello", [ReplaceValue]),
 ];
 
 const mockFinding: Finding = {
@@ -67,10 +62,10 @@ const mockFinding: Finding = {
 
 class MockInspector implements SignatureInspector {
   readonly signatureName = "mock-sig";
-  readonly parameters: InspectionParameter[];
+  readonly parameters: InspectionParameter<unknown, unknown>[];
 
   constructor(
-    parameters: InspectionParameter[],
+    parameters: InspectionParameter<unknown, unknown>[],
     private result: Finding = mockFinding,
   ) {
     this.parameters = parameters;

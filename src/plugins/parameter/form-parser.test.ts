@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { FormParserPlugin } from "./form-parser.js";
+import { FormParserPlugin } from "./form.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import type { HttpRequest } from "../../types/models.js";
+import { FormParameter } from "../../types/models.js";
 import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import { FormParameterType } from "./form-parser.js";
-import type { FormParameter } from "./form-parser.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -44,26 +43,16 @@ describe("FormParserPlugin", () => {
     expect(params).toHaveLength(2);
     expect(params).toEqual(
       expect.arrayContaining([
-        {
-          type: FormParameterType,
-          location: { name: "username" },
-          originalValue: "admin",
-          allowedTampers: [
-            ReplaceValue,
-            AppendValue,
-            PrependValue,
-          ],
-        },
-        {
-          type: FormParameterType,
-          location: { name: "password" },
-          originalValue: "secret",
-          allowedTampers: [
-            ReplaceValue,
-            AppendValue,
-            PrependValue,
-          ],
-        },
+        new FormParameter(
+          { name: "username" },
+          "admin",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
+        new FormParameter(
+          { name: "password" },
+          "secret",
+          [ReplaceValue, AppendValue, PrependValue],
+        ),
       ]),
     );
   });

@@ -13,7 +13,7 @@ import type { TamperInstruction, HttpRequest, HttpResponse } from "../../types/m
 import type { Exchange } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { ReplaceValue } from "../../types/branded.js";
-import { QueryParameterType } from "../parser/query-parser.js";
+import { QueryParameter } from "../../types/models.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
 
 let commandBus: InMemoryCommandBus;
@@ -275,12 +275,7 @@ describe("startTamperProxy", () => {
   it("applies tamper instructions to requests passing through", async () => {
     const instructions: TamperInstruction[] = [
       {
-        parameter: {
-          type: QueryParameterType,
-          location: { name: "q" },
-          originalValue: "original",
-          allowedTampers: [ReplaceValue],
-        },
+        parameter: new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
         payload: "<script>" as Brand<string, "Payload">,
         method: ReplaceValue,
       },

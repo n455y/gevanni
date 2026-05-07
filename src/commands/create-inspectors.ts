@@ -4,6 +4,6 @@ import type { SignatureInspector } from "../core/inspector.js";
 
 class CreateInspectorsCommand extends BroadcastCommand<SignatureInspector[]> {
   readonly type = "createInspectors";
-  constructor(readonly parameters: InspectionParameter[]) { super(); }
+  constructor(readonly parameters: InspectionParameter<unknown, unknown>[]) { super(); }
 }
 export { CreateInspectorsCommand };

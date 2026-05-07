@@ -113,10 +113,10 @@ class Orchestrator {
         const replayResult = (await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port, replayId: rid })) as Exchange[])[0];
 
         // b. Broadcast ParseRequestCommand to collect all InspectionParameters
-        const parseResults: InspectionParameter[][] = await commandBus.broadcast(
+        const parseResults: InspectionParameter<unknown, unknown>[][] = await commandBus.broadcast(
           new ParseRequestCommand(replayResult.request),
         );
-        const parameters: InspectionParameter[] = parseResults.flat();
+        const parameters: InspectionParameter<unknown, unknown>[] = parseResults.flat();
         logger.debug(
           `Found ${parameters.length} inspection parameters for ${scenario.name}`,
         );
@@ -374,7 +374,7 @@ class Orchestrator {
     }
 
     // 3. Reconstruct inspectors by collecting all parameters from pending jobs
-    const allParameters: InspectionParameter[] = [];
+    const allParameters: InspectionParameter<unknown, unknown>[] = [];
     for (const job of pendingJobs) {
       allParameters.push(...job.parameters);
     }
@@ -396,7 +396,7 @@ class Orchestrator {
           insp.parameters.length === job.parameters.length &&
           insp.parameters.every(
             (p, i) =>
-              p.type === job.parameters[i].type &&
+              p.constructor === job.parameters[i].constructor &&
               JSON.stringify(p.location) ===
                 JSON.stringify(job.parameters[i].location),
           ),

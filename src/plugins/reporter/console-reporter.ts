@@ -9,7 +9,7 @@ function formatParameter(job: Job): string {
         typeof p.location === "object" && p.location !== null
           ? JSON.stringify(p.location)
           : String(p.location);
-      return `${p.type} ${loc} = ${String(p.originalValue)}`;
+      return `${p.constructor.name} ${loc} = ${String(p.originalValue)}`;
     })
     .join(", ");
   return params;

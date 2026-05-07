@@ -15,9 +15,9 @@ const SQL_ERROR_PATTERNS: RegExp[] = [
 
 class SqliErrorInspector implements SignatureInspector {
   readonly signatureName = "sqli-error";
-  readonly parameters: InspectionParameter[];
+  readonly parameters: InspectionParameter<unknown, unknown>[];
 
-  constructor(private param: InspectionParameter) {
+  constructor(private param: InspectionParameter<unknown, unknown>) {
     this.parameters = [param];
   }
 

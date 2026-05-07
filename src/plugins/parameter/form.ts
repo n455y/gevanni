@@ -1,8 +1,24 @@
 import { TamperMethod, ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
-import type { HttpRequest, TamperInstruction } from "../../types/models.js";
+import type { HttpRequest, InspectionParameter, TamperInstruction } from "../../types/models.js";
+import { FormParameter } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
+import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import { FormParameterType } from "../parser/form-parser.js";
+
+type FormTamperInstruction = TamperInstruction<FormParameter>;
+
+class FormParserPlugin implements Plugin {
+  readonly name = "form-parser";
+
+  async init(context: PluginContext): Promise<void> {
+    context.commandBus.register(
+      ParseRequestCommand,
+      async (cmd: ParseRequestCommand) => {
+        return parseFormParameters(cmd.request);
+      },
+    );
+  }
+}
 
 class FormTamperPlugin implements Plugin {
   readonly name = "form-tamper";
@@ -25,24 +41,17 @@ class FormTamperPlugin implements Plugin {
 
         const formBody = new URLSearchParams(request.body.toString("utf-8"));
 
-        const formInstructions = cmd.instructions.filter((instr) => {
-          if (
-            instr.parameter.type !== FormParameterType
-          ) {
-            return false;
-          }
-          const paramName = (instr.parameter.location as { name: string })
-            .name;
-          return formBody.has(paramName);
-        });
+        const formInstructions = cmd.instructions.filter(
+          (instr): instr is FormTamperInstruction =>
+            instr.parameter instanceof FormParameter,
+        ).filter((instr) => formBody.has(instr.parameter.location.name));
 
         if (formInstructions.length === 0) {
           return request;
         }
 
         for (const instr of formInstructions) {
-          const paramName = (instr.parameter.location as { name: string })
-            .name;
+          const paramName = instr.parameter.location.name;
           const current = formBody.get(paramName) ?? "";
           const payload = instr.payload as string;
           const modified = applyTamper(current, payload, instr.method);
@@ -58,6 +67,30 @@ class FormTamperPlugin implements Plugin {
       },
     );
   }
+}
+
+function parseFormParameters(request: HttpRequest): InspectionParameter<unknown, unknown>[] {
+  const contentType = request.headers["content-type"] ?? "";
+  if (!contentType.includes("application/x-www-form-urlencoded")) {
+    return [];
+  }
+
+  if (!request.body) {
+    return [];
+  }
+
+  const searchParams = new URLSearchParams(request.body.toString("utf-8"));
+  const params: InspectionParameter<unknown, unknown>[] = [];
+
+  for (const [name, value] of searchParams) {
+    params.push(new FormParameter(
+      { name },
+      value,
+      [ReplaceValue, AppendValue, PrependValue],
+    ));
+  }
+
+  return params;
 }
 
 function applyTamper(
@@ -77,4 +110,4 @@ function applyTamper(
   }
 }
 
-export { FormTamperPlugin };
+export { FormParserPlugin, FormTamperPlugin };
