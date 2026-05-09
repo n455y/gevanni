@@ -1,5 +1,6 @@
 abstract class Command<TResult> {
   abstract readonly type: string;
+  declare readonly _result: TResult;
 }
 
 abstract class SingleCommand<TResult> extends Command<TResult> {}

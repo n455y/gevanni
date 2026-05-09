@@ -1,4 +1,5 @@
 import {
+  Command,
   type CommandHandler,
   type PipelineHandler,
   type SingleCommand,
@@ -6,18 +7,20 @@ import {
   type PipelineCommand,
 } from "./command.js";
 
+type CommandResult<T> = T extends Command<infer R> ? R : never;
+
 interface CommandBus {
-  register<T extends SingleCommand<TResult>, TResult>(
+  register<T extends SingleCommand<any>>(
     commandClass: new (...args: any[]) => T,
-    handler: CommandHandler<T, TResult>,
+    handler: CommandHandler<T, CommandResult<T>>,
   ): void;
-  register<T extends BroadcastCommand<TResult>, TResult>(
+  register<T extends BroadcastCommand<any>>(
     commandClass: new (...args: any[]) => T,
-    handler: CommandHandler<T, TResult>,
+    handler: CommandHandler<T, CommandResult<T>>,
   ): void;
-  register<T extends PipelineCommand<TAccumulator>, TAccumulator>(
+  register<T extends PipelineCommand<any>>(
     commandClass: new (...args: any[]) => T,
-    handler: PipelineHandler<T, TAccumulator>,
+    handler: PipelineHandler<T, CommandResult<T>>,
   ): void;
 
   dispatch<TResult>(command: SingleCommand<TResult>): Promise<TResult>;
