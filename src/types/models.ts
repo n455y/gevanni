@@ -18,7 +18,7 @@ import { SerializableBase, SerializableValue } from "./serializable.js";
 interface Scenario {
   id: ScenarioId;
   name: string;
-  type: typeof ScenarioType;
+  type: ScenarioType;
   source: unknown;
 }
 

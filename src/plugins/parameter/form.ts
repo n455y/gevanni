@@ -26,12 +26,9 @@ class FormParserPlugin implements Plugin {
   readonly name = "form-parser";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ParseRequestCommand,
-      async (cmd: ParseRequestCommand) => {
-        return parseFormParameters(cmd.request);
-      },
-    );
+    context.commandBus.register(ParseRequestCommand, async (cmd) => {
+      return parseFormParameters(cmd.request);
+    });
   }
 }
 
@@ -39,50 +36,44 @@ class FormTamperPlugin implements Plugin {
   readonly name = "form-tamper";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ApplyTamperCommand,
-      async (
-        cmd: ApplyTamperCommand,
-        request: HttpRequest,
-      ): Promise<HttpRequest> => {
-        const contentType = request.headers["content-type"] ?? "";
-        if (!contentType.includes("application/x-www-form-urlencoded")) {
-          return request;
-        }
+    context.commandBus.register(ApplyTamperCommand, async (cmd, request) => {
+      const contentType = request.headers["content-type"] ?? "";
+      if (!contentType.includes("application/x-www-form-urlencoded")) {
+        return request;
+      }
 
-        if (!request.body) {
-          return request;
-        }
+      if (!request.body) {
+        return request;
+      }
 
-        const formBody = new URLSearchParams(request.body.toString("utf-8"));
+      const formBody = new URLSearchParams(request.body.toString("utf-8"));
 
-        const formInstructions = cmd.instructions
-          .filter(
-            (instr): instr is FormTamperInstruction =>
-              instr instanceof FormTamperInstruction,
-          )
-          .filter((instr) => formBody.has(instr.parameter.location.name));
+      const formInstructions = cmd.instructions
+        .filter(
+          (instr): instr is FormTamperInstruction =>
+            instr instanceof FormTamperInstruction,
+        )
+        .filter((instr) => formBody.has(instr.parameter.location.name));
 
-        if (formInstructions.length === 0) {
-          return request;
-        }
+      if (formInstructions.length === 0) {
+        return request;
+      }
 
-        for (const instr of formInstructions) {
-          const paramName = instr.parameter.location.name;
-          const current = formBody.get(paramName) ?? "";
-          const payload = instr.payload as string;
-          const modified = applyTamper(current, payload, instr.method);
-          formBody.set(paramName, modified);
-        }
+      for (const instr of formInstructions) {
+        const paramName = instr.parameter.location.name;
+        const current = formBody.get(paramName) ?? "";
+        const payload = instr.payload as string;
+        const modified = applyTamper(current, payload, instr.method);
+        formBody.set(paramName, modified);
+      }
 
-        return {
-          method: request.method,
-          url: request.url,
-          headers: request.headers,
-          body: Buffer.from(formBody.toString(), "utf-8"),
-        };
-      },
-    );
+      return {
+        method: request.method,
+        url: request.url,
+        headers: request.headers,
+        body: Buffer.from(formBody.toString(), "utf-8"),
+      };
+    });
   }
 }
 

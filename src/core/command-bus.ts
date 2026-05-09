@@ -9,18 +9,14 @@ import {
 
 type CommandResult<T> = T extends Command<infer R> ? R : never;
 
+type HandlerFor<T extends Command<any>> = T extends PipelineCommand<any>
+  ? PipelineHandler<T, CommandResult<T>>
+  : CommandHandler<T, CommandResult<T>>;
+
 interface CommandBus {
-  register<T extends SingleCommand<any>>(
+  register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
-    handler: CommandHandler<T, CommandResult<T>>,
-  ): void;
-  register<T extends BroadcastCommand<any>>(
-    commandClass: new (...args: any[]) => T,
-    handler: CommandHandler<T, CommandResult<T>>,
-  ): void;
-  register<T extends PipelineCommand<any>>(
-    commandClass: new (...args: any[]) => T,
-    handler: PipelineHandler<T, CommandResult<T>>,
+    handler: HandlerFor<T>,
   ): void;
 
   dispatch<TResult>(command: SingleCommand<TResult>): Promise<TResult>;

@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { QueryParserPlugin, QueryTamperPlugin } from "./query.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import type { HttpRequest } from "../../types/models.js";
+import { InspectionParameter, type HttpRequest } from "../../types/models.js";
 import { QueryParameter } from "./query.js";
 import { JsonPrimitiveParameter } from "./json.js";
 import { QueryTamperInstruction } from "./query.js";
@@ -22,8 +22,8 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function flatParams(results: QueryParameter[][]): QueryParameter[] {
-  return results.flat() as QueryParameter[];
+function flatParams(results: InspectionParameter[][]): InspectionParameter[] {
+  return results.flat();
 }
 
 function makeQueryInstruction(

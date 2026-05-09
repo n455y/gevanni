@@ -3,16 +3,12 @@ import type { Job, ScanState } from "../../types/models.js";
 import { GenerateReportCommand } from "../../commands/report.js";
 
 function formatParameter(job: Job): string {
-  const params = job.parameters
-    .map((p) => {
-      const loc =
-        typeof p.location === "object" && p.location !== null
-          ? JSON.stringify(p.location)
-          : String(p.location);
-      return `${p.constructor.name} ${loc} = ${String(p.originalValue)}`;
-    })
-    .join(", ");
-  return params;
+  const p = job.parameter;
+  const loc =
+    typeof p.location === "object" && p.location !== null
+      ? JSON.stringify(p.location)
+      : String(p.location);
+  return `${p.constructor.name} ${loc} = ${String(p.originalValue)}`;
 }
 
 class ConsoleReporterPlugin implements Plugin {

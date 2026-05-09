@@ -3,7 +3,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { HeaderParserPlugin } from "./header.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import type { HttpRequest } from "../../types/models.js";
+import { InspectionParameter, type HttpRequest } from "../../types/models.js";
 import { HeaderParameter } from "./header.js";
 import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
 
@@ -13,8 +13,8 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function flatParams(results: HeaderParameter[][]): HeaderParameter[] {
-  return results.flat() as HeaderParameter[];
+function flatParams(results: InspectionParameter[][]): InspectionParameter[] {
+  return results.flat();
 }
 
 describe("HeaderParserPlugin", () => {

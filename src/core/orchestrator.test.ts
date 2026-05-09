@@ -94,7 +94,7 @@ describe("Orchestrator", () => {
 
       const mockDefinition: InspectorDefinition = {
         signatureName: "mock-sig",
-        parameterIndices: [0],
+        parameter: mockParameters[0],
       };
       commandBus.register(CreateInspectorsCommand, async () => [
         mockDefinition,
@@ -152,7 +152,7 @@ describe("Orchestrator", () => {
 
       const mockDefinition: InspectorDefinition = {
         signatureName: "mock-sig",
-        parameterIndices: [0],
+        parameter: mockParameters[0],
       };
       commandBus.register(CreateInspectorsCommand, async () => [
         mockDefinition,
@@ -218,7 +218,7 @@ describe("Orchestrator", () => {
         scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
         requestId: "req-1" as Brand<string, "RequestId">,
         signatureName: "mock-sig",
-        parameters: mockParameters,
+        parameter: mockParameters[0],
         status: "pending" as JobStatus,
         finding: null,
         error: null,
@@ -229,7 +229,7 @@ describe("Orchestrator", () => {
       const definitions = new Map<string, InspectorDefinition>();
       definitions.set("job-1", {
         signatureName: "mock-sig",
-        parameterIndices: [0],
+        parameter: mockParameters[0],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -288,7 +288,7 @@ describe("Orchestrator", () => {
         scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
         requestId: "req-1" as Brand<string, "RequestId">,
         signatureName: "failing-sig",
-        parameters: mockParameters,
+        parameter: mockParameters[0],
         status: "pending" as JobStatus,
         finding: null,
         error: null,
@@ -299,7 +299,7 @@ describe("Orchestrator", () => {
       const definitions = new Map<string, InspectorDefinition>();
       definitions.set("job-err", {
         signatureName: "failing-sig",
-        parameterIndices: [0],
+        parameter: mockParameters[0],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -384,7 +384,7 @@ describe("Orchestrator", () => {
           scenarioId: "sc-1" as Brand<string, "ScenarioId">,
           requestId: "req-1" as Brand<string, "RequestId">,
           signatureName: "reflected-xss",
-          parameters: mockParameters,
+          parameter: mockParameters[0],
           status: "completed" as JobStatus,
           finding: mockFinding,
           error: null,

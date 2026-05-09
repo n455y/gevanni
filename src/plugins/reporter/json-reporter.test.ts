@@ -6,7 +6,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { JsonReporterPlugin } from "./json-reporter.js";
 import { GenerateReportCommand } from "../../commands/report.js";
-import type { Job, ScanState } from "../../types/models.js";
+import { InspectionParameter, type Job, type ScanState } from "../../types/models.js";
 import type {
   ScanId,
   JobId,
@@ -46,7 +46,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: asScenarioId("scan-1"),
     requestId: asRequestId("req-1"),
     signatureName: "reflected-xss",
-    parameters: [],
+    parameter: new InspectionParameter({ name: "" }, "", []),
     status: asJobStatus("completed"),
     finding: null,
     error: null,

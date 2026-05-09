@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { FormParserPlugin, FormTamperPlugin } from "./form.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import type { HttpRequest } from "../../types/models.js";
+import { InspectionParameter, type HttpRequest } from "../../types/models.js";
 import { FormParameter } from "./form.js";
 import { FormTamperInstruction } from "./form.js";
 import type { Brand } from "../../types/branded.js";
@@ -30,8 +30,8 @@ function makeFormRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: FormParameter[][]): FormParameter[] {
-  return results.flat() as FormParameter[];
+function flatParams(results: InspectionParameter[][]): InspectionParameter[] {
+  return results.flat();
 }
 
 function makeFormInstruction(
