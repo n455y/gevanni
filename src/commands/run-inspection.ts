@@ -1,9 +1,15 @@
 import { SingleCommand } from "../core/command.js";
-import type { InspectionParameter, Finding, TamperInstruction, HttpRequest, HttpResponse } from "../types/models.js";
+import type {
+  InspectionParameter,
+  Finding,
+  TamperInstruction,
+  HttpRequest,
+  HttpResponse,
+} from "../types/models.js";
 
 interface RunInspectionPayload {
   signatureName: string;
-  parameters: InspectionParameter<unknown, unknown>[];
+  parameter: InspectionParameter;
   replay: (instructions: TamperInstruction[]) => Promise<{
     request: HttpRequest;
     response: HttpResponse;
@@ -12,7 +18,9 @@ interface RunInspectionPayload {
 
 class RunInspectionCommand extends SingleCommand<Finding> {
   readonly type = "runInspection";
-  constructor(readonly payload: RunInspectionPayload) { super(); }
+  constructor(readonly payload: RunInspectionPayload) {
+    super();
+  }
 }
 
 export { RunInspectionCommand, type RunInspectionPayload };

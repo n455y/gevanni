@@ -20,11 +20,10 @@ class SqliErrorPlugin implements Plugin {
       CreateInspectorsCommand,
       async (cmd: CreateInspectorsCommand) => {
         return cmd.parameters
-          .map((p, i) => ({ param: p, index: i }))
-          .filter(({ param }) => param.allowedTampers.includes(AppendValue))
-          .map(({ index }) => ({
+          .filter((param) => param.allowedTampers.includes(AppendValue))
+          .map((param) => ({
             signatureName: "sqli-error",
-            parameterIndices: [index],
+            parameter: param,
           }));
       },
     );
@@ -32,14 +31,13 @@ class SqliErrorPlugin implements Plugin {
     context.commandBus.register(
       RunInspectionCommand,
       async (cmd: RunInspectionCommand) => {
-        const { signatureName, parameters, replay } = cmd.payload;
+        const { signatureName, parameter, replay } = cmd.payload;
         if (signatureName !== "sqli-error") {
           throw new Error(`Unknown signature: ${signatureName}`);
         }
 
-        const param = parameters[0];
         const payload = "' OR 1=1--" as Payload;
-        const instruction = param.createInstruction(payload, AppendValue);
+        const instruction = parameter.createInstruction(payload, AppendValue);
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));

@@ -48,7 +48,7 @@ const mockResponse: HttpResponse = {
   body: Buffer.from("ok"),
 };
 
-const mockParameters: InspectionParameter<unknown, unknown>[] = [
+const mockParameters: InspectionParameter[] = [
   new QueryParameter({ name: "q" }, "hello", [ReplaceValue]),
 ];
 
@@ -83,10 +83,12 @@ describe("Orchestrator", () => {
 
   describe("plan phase", () => {
     it("creates jobs and definitions for scenarios", async () => {
-      commandBus.register(ReplayCommand, async () => [{
-        request: mockRequest,
-        response: mockResponse,
-      }]);
+      commandBus.register(ReplayCommand, async () => [
+        {
+          request: mockRequest,
+          response: mockResponse,
+        },
+      ]);
 
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
@@ -106,8 +108,12 @@ describe("Orchestrator", () => {
       commandBus.register(SaveScanStateCommand, async () => {});
 
       const events: string[] = [];
-      eventBus.subscribe("scan:started", () => { events.push("scan:started"); });
-      eventBus.subscribe("plan:jobCreated", () => { events.push("plan:jobCreated"); });
+      eventBus.subscribe("scan:started", () => {
+        events.push("scan:started");
+      });
+      eventBus.subscribe("plan:jobCreated", () => {
+        events.push("plan:jobCreated");
+      });
 
       const orchestrator = new Orchestrator({
         commandBus,
@@ -128,23 +134,29 @@ describe("Orchestrator", () => {
         name: "Test Scenario",
         type: PostmanScenarioType,
         source: {
-          items: [{
-            request: { method: "GET", url: { raw: "https://example.com" } },
-          }],
+          items: [
+            {
+              request: { method: "GET", url: { raw: "https://example.com" } },
+            },
+          ],
         },
       };
 
-      commandBus.register(ReplayCommand, async () => [{
-        request: mockRequest,
-        response: mockResponse,
-      }]);
+      commandBus.register(ReplayCommand, async () => [
+        {
+          request: mockRequest,
+          response: mockResponse,
+        },
+      ]);
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
       const mockDefinition: InspectorDefinition = {
         signatureName: "mock-sig",
         parameterIndices: [0],
       };
-      commandBus.register(CreateInspectorsCommand, async () => [mockDefinition]);
+      commandBus.register(CreateInspectorsCommand, async () => [
+        mockDefinition,
+      ]);
 
       const savedJobs: Job[] = [];
       commandBus.register(SaveJobCommand, async (cmd: SaveJobCommand) => {
@@ -154,7 +166,9 @@ describe("Orchestrator", () => {
       commandBus.register(SaveScanStateCommand, async () => {});
 
       const events: string[] = [];
-      eventBus.subscribe("plan:jobCreated", () => { events.push("plan:jobCreated"); });
+      eventBus.subscribe("plan:jobCreated", () => {
+        events.push("plan:jobCreated");
+      });
 
       const orchestrator = new Orchestrator({
         commandBus,
@@ -172,10 +186,12 @@ describe("Orchestrator", () => {
     });
 
     it("saves scan state with planning status", async () => {
-      commandBus.register(ReplayCommand, async () => [{
-        request: mockRequest,
-        response: mockResponse,
-      }]);
+      commandBus.register(ReplayCommand, async () => [
+        {
+          request: mockRequest,
+          response: mockResponse,
+        },
+      ]);
       commandBus.register(ParseRequestCommand, async () => []);
       commandBus.register(CreateInspectorsCommand, async () => []);
       commandBus.register(SaveJobCommand, async () => {});
@@ -228,16 +244,26 @@ describe("Orchestrator", () => {
         id: mockJob.scenarioId,
         name: "test",
         type: PostmanScenarioType,
-        source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
+        source: {
+          items: [
+            { request: { method: "GET", url: { raw: "https://example.com" } } },
+          ],
+        },
       }));
-      commandBus.register(ReplayCommand, async () => [{
-        request: mockRequest,
-        response: mockResponse,
-      }]);
+      commandBus.register(ReplayCommand, async () => [
+        {
+          request: mockRequest,
+          response: mockResponse,
+        },
+      ]);
       commandBus.register(RunInspectionCommand, async () => mockFinding);
 
-      eventBus.subscribe("scan:jobStarted", () => { events.push("started"); });
-      eventBus.subscribe("scan:jobCompleted", () => { events.push("completed"); });
+      eventBus.subscribe("scan:jobStarted", () => {
+        events.push("started");
+      });
+      eventBus.subscribe("scan:jobCompleted", () => {
+        events.push("completed");
+      });
 
       const orchestrator = new Orchestrator({
         commandBus,
@@ -288,17 +314,25 @@ describe("Orchestrator", () => {
         id: mockJob.scenarioId,
         name: "test",
         type: PostmanScenarioType,
-        source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
+        source: {
+          items: [
+            { request: { method: "GET", url: { raw: "https://example.com" } } },
+          ],
+        },
       }));
-      commandBus.register(ReplayCommand, async () => [{
-        request: mockRequest,
-        response: mockResponse,
-      }]);
+      commandBus.register(ReplayCommand, async () => [
+        {
+          request: mockRequest,
+          response: mockResponse,
+        },
+      ]);
       commandBus.register(RunInspectionCommand, async () => {
         throw new Error("Inspection failed");
       });
 
-      eventBus.subscribe("scan:jobError", () => { events.push("error"); });
+      eventBus.subscribe("scan:jobError", () => {
+        events.push("error");
+      });
 
       const orchestrator = new Orchestrator({
         commandBus,
@@ -363,9 +397,12 @@ describe("Orchestrator", () => {
       commandBus.register(LoadJobsByScanIdCommand, async () => mockJobs);
 
       let reportPayload: { scanState: ScanState; jobs: Job[] } | null = null;
-      commandBus.register(GenerateReportCommand, async (cmd: GenerateReportCommand) => {
-        reportPayload = cmd.payload;
-      });
+      commandBus.register(
+        GenerateReportCommand,
+        async (cmd: GenerateReportCommand) => {
+          reportPayload = cmd.payload;
+        },
+      );
 
       const orchestrator = new Orchestrator({
         commandBus,

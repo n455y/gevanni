@@ -78,11 +78,9 @@ class QueryTamperPlugin implements Plugin {
   }
 }
 
-function parseQueryParameters(
-  request: HttpRequest,
-): InspectionParameter<unknown, unknown>[] {
+function parseQueryParameters(request: HttpRequest): InspectionParameter[] {
   const url = new URL(request.url);
-  const params: InspectionParameter<unknown, unknown>[] = [];
+  const params: InspectionParameter[] = [];
 
   for (const [name, value] of url.searchParams) {
     params.push(

@@ -41,9 +41,7 @@ function makeJsonRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(
-  results: InspectionParameter<unknown, unknown>[][],
-): AnyJsonParam[] {
+function flatParams(results: InspectionParameter[][]): AnyJsonParam[] {
   return results.flat() as AnyJsonParam[];
 }
 

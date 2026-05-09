@@ -41,9 +41,7 @@ function makeGraphQLRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(
-  results: InspectionParameter<unknown, unknown>[][],
-): AnyGraphQLParam[] {
+function flatParams(results: InspectionParameter[][]): AnyGraphQLParam[] {
   return results.flat() as AnyGraphQLParam[];
 }
 

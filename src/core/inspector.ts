@@ -1,6 +1,8 @@
+import { InspectionParameter } from "../types/models.js";
+
 interface InspectorDefinition {
   readonly signatureName: string;
-  readonly parameterIndices: number[];
+  readonly parameter: InspectionParameter;
 }
 
 export { InspectorDefinition };

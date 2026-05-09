@@ -86,9 +86,7 @@ class FormTamperPlugin implements Plugin {
   }
 }
 
-function parseFormParameters(
-  request: HttpRequest,
-): InspectionParameter<unknown, unknown>[] {
+function parseFormParameters(request: HttpRequest): InspectionParameter[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/x-www-form-urlencoded")) {
     return [];
@@ -99,7 +97,7 @@ function parseFormParameters(
   }
 
   const searchParams = new URLSearchParams(request.body.toString("utf-8"));
-  const params: InspectionParameter<unknown, unknown>[] = [];
+  const params: InspectionParameter[] = [];
 
   for (const [name, value] of searchParams) {
     params.push(

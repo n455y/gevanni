@@ -87,9 +87,10 @@ interface OrchestratorDeps {
 class Orchestrator {
   constructor(private deps: OrchestratorDeps) {}
 
-  async plan(
-    scenarios: Scenario[],
-  ): Promise<{ scanId: ScanId; definitions: Map<string, InspectorDefinition> }> {
+  async plan(scenarios: Scenario[]): Promise<{
+    scanId: ScanId;
+    definitions: Map<string, InspectorDefinition>;
+  }> {
     const { commandBus, eventBus, logger } = this.deps;
     const id = scanId();
     const now = isoNow();
@@ -110,22 +111,29 @@ class Orchestrator {
 
         // b. Dispatch ReplayCommand with empty instructions to get original request
         const rid = requestId();
-        const replayResult = (await commandBus.dispatch(new ReplayCommand(scenario, { instructions: [], proxyPort: planProxy.port, replayId: rid })) as Exchange[])[0];
+        const replayResult = (
+          (await commandBus.dispatch(
+            new ReplayCommand(scenario, {
+              instructions: [],
+              proxyPort: planProxy.port,
+              replayId: rid,
+            }),
+          )) as Exchange[]
+        )[0];
 
         // b. Broadcast ParseRequestCommand to collect all InspectionParameters
-        const parseResults: InspectionParameter<unknown, unknown>[][] = await commandBus.broadcast(
-          new ParseRequestCommand(replayResult.request),
-        );
-        const parameters: InspectionParameter<unknown, unknown>[] = parseResults.flat();
+        const parseResults: InspectionParameter[][] =
+          await commandBus.broadcast(
+            new ParseRequestCommand(replayResult.request),
+          );
+        const parameters: InspectionParameter[] = parseResults.flat();
         logger.debug(
           `Found ${parameters.length} inspection parameters for ${scenario.name}`,
         );
 
         // c. Broadcast CreateInspectorsCommand to collect all InspectorDefinitions
         const definitionResults: InspectorDefinition[][] =
-          await commandBus.broadcast(
-            new CreateInspectorsCommand(parameters),
-          );
+          await commandBus.broadcast(new CreateInspectorsCommand(parameters));
         const definitions: InspectorDefinition[] = definitionResults.flat();
 
         // d. For each definition, create a Job
@@ -138,7 +146,7 @@ class Orchestrator {
             scenarioId: scenario.id,
             requestId: rid,
             signatureName: def.signatureName,
-            parameters: def.parameterIndices.map((i) => parameters[i]!),
+            parameter: def.parameter,
             status: "pending" as JobStatus,
             finding: null,
             error: null,
@@ -176,7 +184,9 @@ class Orchestrator {
     // 3. Emit events
     eventBus.publish("scan:started", { scanId: id });
 
-    logger.info(`Plan phase complete: ${allJobs.length} jobs created for scan ${id}`);
+    logger.info(
+      `Plan phase complete: ${allJobs.length} jobs created for scan ${id}`,
+    );
 
     return { scanId: id, definitions: definitionMap };
   }
@@ -231,21 +241,25 @@ class Orchestrator {
         // Get inspector definition
         const def = definitions.get(job.id as string);
         if (!def) {
-          throw new Error(`No inspector definition found for job ${job.id as string}`);
+          throw new Error(
+            `No inspector definition found for job ${job.id as string}`,
+          );
         }
 
         // Create replay function
-        const replay = async (
-          instructions: TamperInstruction[],
-        ) => {
+        const replay = async (instructions: TamperInstruction[]) => {
           const scenario: Scenario = await commandBus.dispatch(
             new LoadScenarioCommand(job.scenarioId),
           );
           const proxy = await startTamperProxy(instructions, commandBus);
           try {
-            const [exchange] = await commandBus.dispatch(
-              new ReplayCommand(scenario, { instructions, proxyPort: proxy.port, replayId: job.id as string }),
-            ) as Exchange[];
+            const [exchange] = (await commandBus.dispatch(
+              new ReplayCommand(scenario, {
+                instructions,
+                proxyPort: proxy.port,
+                replayId: job.id as string,
+              }),
+            )) as Exchange[];
             return exchange;
           } finally {
             proxy.close();
@@ -253,13 +267,13 @@ class Orchestrator {
         };
 
         // Run inspection
-        const finding: Finding = await commandBus.dispatch(
+        const finding: Finding = (await commandBus.dispatch(
           new RunInspectionCommand({
             signatureName: def.signatureName,
-            parameters: job.parameters,
+            parameter: job.parameter,
             replay,
           }),
-        ) as Finding;
+        )) as Finding;
 
         // Update job with finding
         const completedNow = isoNow();
@@ -277,7 +291,9 @@ class Orchestrator {
 
         completedCount++;
       } catch (err) {
-        const errorMessage = (err instanceof Error ? err.message : String(err)) as ErrorMessage;
+        const errorMessage = (
+          err instanceof Error ? err.message : String(err)
+        ) as ErrorMessage;
         const errorNow = isoNow();
 
         try {
@@ -340,17 +356,12 @@ class Orchestrator {
     );
 
     // 3. Broadcast GenerateReportCommand
-    await commandBus.broadcast(
-      new GenerateReportCommand({ scanState, jobs }),
-    );
+    await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs }));
 
     logger.info(`Report phase complete for scan ${scanId as string}`);
   }
 
-  async resume(
-    scanIdOrLatest?: ScanId,
-    concurrency?: number,
-  ): Promise<void> {
+  async resume(scanIdOrLatest?: ScanId, concurrency?: number): Promise<void> {
     const { commandBus, logger } = this.deps;
 
     // 1. Resolve scan ID
@@ -385,7 +396,7 @@ class Orchestrator {
     for (const job of pendingJobs) {
       definitionMap.set(job.id as string, {
         signatureName: job.signatureName,
-        parameterIndices: job.parameters.map((_, i) => i),
+        parameter: job.parameter,
       });
     }
 

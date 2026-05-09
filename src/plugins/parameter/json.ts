@@ -128,9 +128,7 @@ class JsonTamperPlugin implements Plugin {
   }
 }
 
-function parseJsonParameters(
-  request: HttpRequest,
-): InspectionParameter<unknown, unknown>[] {
+function parseJsonParameters(request: HttpRequest): InspectionParameter[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/json")) {
     return [];
@@ -147,7 +145,7 @@ function parseJsonParameters(
     return [];
   }
 
-  const params: InspectionParameter<unknown, unknown>[] = [];
+  const params: InspectionParameter[] = [];
   extractJsonParams(parsed, [], params);
   return params;
 }
@@ -155,7 +153,7 @@ function parseJsonParameters(
 function extractJsonParams(
   value: JsonValue,
   path: string[],
-  params: InspectionParameter<unknown, unknown>[],
+  params: InspectionParameter[],
 ): void {
   if (
     value === null ||

@@ -12,6 +12,7 @@ import type {
   ErrorMessage,
   IsoDateTime,
 } from "./branded.js";
+import { SerializableBase, SerializableValue } from "./serializable.js";
 
 // --- Scenario ---
 interface Scenario {
@@ -21,32 +22,61 @@ interface Scenario {
   source: unknown;
 }
 
-// --- InspectionParameter ---
-abstract class InspectionParameter<L, V> {
-  constructor(
-    readonly location: L,
-    readonly originalValue: V,
-    readonly allowedTampers: TamperMethod[],
-  ) {}
-
-  abstract createInstruction(
-    payload: Payload,
-    method: TamperMethod,
-  ): TamperInstruction;
-}
-
 // --- JSON types ---
 type JsonPrimitive = string | number | boolean | null;
 type JsonArray = JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
+// --- InspectionParameter ---
+class InspectionParameter<
+  L extends SerializableValue = SerializableValue,
+  V extends SerializableValue = SerializableValue,
+> extends SerializableBase<{
+  location: L;
+  originalValue: V;
+  allowedTampers: TamperMethod[];
+}> {
+  constructor(
+    readonly location: L,
+    readonly originalValue: V,
+    readonly allowedTampers: TamperMethod[],
+  ) {
+    super();
+  }
+  serializeParams() {
+    return {
+      location: this.location,
+      originalValue: this.originalValue,
+      allowedTampers: this.allowedTampers,
+    };
+  }
+  static deserializeParams<
+    L extends SerializableValue,
+    V extends SerializableValue,
+  >(serialized: {
+    location: L;
+    originalValue: V;
+    allowedTampers: TamperMethod[];
+  }) {
+    return new this(
+      serialized.location,
+      serialized.originalValue,
+      serialized.allowedTampers,
+    );
+  }
+
+  createInstruction(
+    _payload: Payload,
+    _method: TamperMethod,
+  ): TamperInstruction {
+    throw new Error("Not implemented");
+  }
+}
+
 // --- TamperInstruction ---
 abstract class TamperInstruction<
-  P extends InspectionParameter<unknown, unknown> = InspectionParameter<
-    unknown,
-    unknown
-  >,
+  P extends InspectionParameter = InspectionParameter,
 > {
   constructor(
     readonly parameter: P,
@@ -91,7 +121,7 @@ interface Job {
   scenarioId: ScenarioId;
   requestId: RequestId;
   signatureName: string;
-  parameters: InspectionParameter<unknown, unknown>[];
+  parameter: InspectionParameter;
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;

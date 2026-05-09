@@ -4,6 +4,8 @@ import type { InspectorDefinition } from "../core/inspector.js";
 
 class CreateInspectorsCommand extends BroadcastCommand<InspectorDefinition[]> {
   readonly type = "createInspectors";
-  constructor(readonly parameters: InspectionParameter<unknown, unknown>[]) { super(); }
+  constructor(readonly parameters: InspectionParameter[]) {
+    super();
+  }
 }
 export { CreateInspectorsCommand };

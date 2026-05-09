@@ -4,7 +4,12 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { ReflectedXssPlugin } from "./reflected-xss.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import { RunInspectionCommand } from "../../commands/run-inspection.js";
-import type { InspectionParameter, HttpRequest, JsonPrimitive, Finding } from "../../types/models.js";
+import type {
+  InspectionParameter,
+  HttpRequest,
+  JsonPrimitive,
+  Finding,
+} from "../../types/models.js";
 import { QueryParameter } from "../parameter/query.js";
 import { FormParameter } from "../parameter/form.js";
 import { JsonPrimitiveParameter } from "../parameter/json.js";
@@ -18,19 +23,24 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function makeQueryParam(name: string, value: string): InspectionParameter<unknown, unknown> {
+function makeQueryParam(name: string, value: string): InspectionParameter {
   return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
-function makeJsonPrimitiveParam(path: string[], value: unknown): InspectionParameter<unknown, unknown> {
-  return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [ReplaceValue]);
+function makeJsonPrimitiveParam(
+  path: string[],
+  value: unknown,
+): InspectionParameter {
+  return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [
+    ReplaceValue,
+  ]);
 }
 
-function makeFormParam(name: string, value: string): InspectionParameter<unknown, unknown> {
+function makeFormParam(name: string, value: string): InspectionParameter {
   return new FormParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
-function makeHeaderParam(name: string, value: string): InspectionParameter<unknown, unknown> {
+function makeHeaderParam(name: string, value: string): InspectionParameter {
   return new HeaderParameter({ name }, value, [ReplaceValue]);
 }
 
@@ -63,7 +73,7 @@ describe("ReflectedXssPlugin", () => {
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
     expect(definitions[0].signatureName).toBe("reflected-xss");
-    expect(definitions[0].parameterIndices).toEqual([0]);
+    expect(definitions[0].parameter).toEqual(params[0]);
   });
 
   it("creates definitions for form parameters", async () => {
@@ -81,7 +91,7 @@ describe("ReflectedXssPlugin", () => {
 
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
-    expect(definitions[0].parameterIndices).toEqual([0]);
+    expect(definitions[0].parameter).toEqual(params[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -115,14 +125,14 @@ describe("ReflectedXssPlugin", () => {
       response: {
         statusCode: 200,
         headers: {},
-        body: Buffer.from('some response with <script>alert(1)</script> in it'),
+        body: Buffer.from("some response with <script>alert(1)</script> in it"),
       },
     });
 
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "reflected-xss",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -153,7 +163,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "reflected-xss",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -183,7 +193,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "reflected-xss",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );

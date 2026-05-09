@@ -130,9 +130,7 @@ class GraphQLTamperPlugin implements Plugin {
   }
 }
 
-function parseGraphQLParameters(
-  request: HttpRequest,
-): InspectionParameter<unknown, unknown>[] {
+function parseGraphQLParameters(request: HttpRequest): InspectionParameter[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/json")) {
     return [];
@@ -157,7 +155,7 @@ function parseGraphQLParameters(
     return [];
   }
 
-  const params: InspectionParameter<unknown, unknown>[] = [];
+  const params: InspectionParameter[] = [];
 
   params.push(
     new GraphQLQueryParameter({ field: "query" }, parsed.query, [
@@ -194,7 +192,7 @@ function parseGraphQLParameters(
 function extractVariableParams(
   obj: JsonObject,
   path: string[],
-  params: InspectionParameter<unknown, unknown>[],
+  params: InspectionParameter[],
 ): void {
   for (const [key, value] of Object.entries(obj)) {
     const currentPath = [...path, key];

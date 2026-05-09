@@ -74,10 +74,8 @@ class HeaderTamperPlugin implements Plugin {
   }
 }
 
-function parseHeaderParameters(
-  request: HttpRequest,
-): InspectionParameter<unknown, unknown>[] {
-  const params: InspectionParameter<unknown, unknown>[] = [];
+function parseHeaderParameters(request: HttpRequest): InspectionParameter[] {
+  const params: InspectionParameter[] = [];
 
   for (const [name, value] of Object.entries(request.headers)) {
     params.push(

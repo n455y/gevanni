@@ -4,7 +4,12 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { SqliErrorPlugin, SQL_ERROR_PATTERNS } from "./sqli-error.js";
 import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
 import { RunInspectionCommand } from "../../commands/run-inspection.js";
-import type { InspectionParameter, HttpRequest, JsonPrimitive, Finding } from "../../types/models.js";
+import type {
+  InspectionParameter,
+  HttpRequest,
+  JsonPrimitive,
+  Finding,
+} from "../../types/models.js";
 import { QueryParameter } from "../parameter/query.js";
 import { JsonPrimitiveParameter } from "../parameter/json.js";
 import { HeaderParameter } from "../parameter/header.js";
@@ -17,15 +22,20 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function makeQueryParam(name: string, value: string): InspectionParameter<unknown, unknown> {
+function makeQueryParam(name: string, value: string): InspectionParameter {
   return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
-function makeJsonPrimitiveParam(path: string[], value: unknown): InspectionParameter<unknown, unknown> {
-  return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [ReplaceValue]);
+function makeJsonPrimitiveParam(
+  path: string[],
+  value: unknown,
+): InspectionParameter {
+  return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [
+    ReplaceValue,
+  ]);
 }
 
-function makeHeaderParam(name: string, value: string): InspectionParameter<unknown, unknown> {
+function makeHeaderParam(name: string, value: string): InspectionParameter {
   return new HeaderParameter({ name }, value, [ReplaceValue]);
 }
 
@@ -58,7 +68,7 @@ describe("SqliErrorPlugin", () => {
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
     expect(definitions[0].signatureName).toBe("sqli-error");
-    expect(definitions[0].parameterIndices).toEqual([0]);
+    expect(definitions[0].parameter).toEqual(params[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -96,14 +106,16 @@ describe("SqliErrorPlugin", () => {
       response: {
         statusCode: 500,
         headers: {},
-        body: Buffer.from("You have an error in your SQL syntax. MySQL server version 5.7"),
+        body: Buffer.from(
+          "You have an error in your SQL syntax. MySQL server version 5.7",
+        ),
       },
     });
 
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "sqli-error",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -133,7 +145,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "sqli-error",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -163,7 +175,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "sqli-error",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -185,14 +197,16 @@ describe("SqliErrorPlugin", () => {
       response: {
         statusCode: 500,
         headers: {},
-        body: Buffer.from("Microsoft OLE DB Provider for ODBC SQL Server error"),
+        body: Buffer.from(
+          "Microsoft OLE DB Provider for ODBC SQL Server error",
+        ),
       },
     });
 
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "sqli-error",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -221,7 +235,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "sqli-error",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -250,7 +264,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "sqli-error",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -280,7 +294,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunInspectionCommand({
         signatureName: "sqli-error",
-        parameters: [param],
+        parameter: param,
         replay: mockReplay,
       }),
     );
@@ -290,10 +304,22 @@ describe("SqliErrorPlugin", () => {
 
   it("includes all required SQL error patterns", () => {
     expect(SQL_ERROR_PATTERNS).toHaveLength(5);
-    expect(SQL_ERROR_PATTERNS[0].test("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version")).toBe(true);
-    expect(SQL_ERROR_PATTERNS[1].test("PostgreSQL ERROR: syntax error")).toBe(true);
+    expect(
+      SQL_ERROR_PATTERNS[0].test(
+        "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version",
+      ),
+    ).toBe(true);
+    expect(SQL_ERROR_PATTERNS[1].test("PostgreSQL ERROR: syntax error")).toBe(
+      true,
+    );
     expect(SQL_ERROR_PATTERNS[2].test("ORA-12345")).toBe(true);
-    expect(SQL_ERROR_PATTERNS[3].test("Microsoft OLE DB Provider for ODBC SQL Server error")).toBe(true);
-    expect(SQL_ERROR_PATTERNS[4].test('SQLITE_ERROR: near "OR": syntax error')).toBe(true);
+    expect(
+      SQL_ERROR_PATTERNS[3].test(
+        "Microsoft OLE DB Provider for ODBC SQL Server error",
+      ),
+    ).toBe(true);
+    expect(
+      SQL_ERROR_PATTERNS[4].test('SQLITE_ERROR: near "OR": syntax error'),
+    ).toBe(true);
   });
 });
