@@ -30,9 +30,9 @@ class InMemoryCommandBus implements CommandBus {
   private singleHandlers = new Map<string, AnyHandler>();
   private multiHandlers = new Map<string, AnyHandler[]>();
 
-  register(
-    commandClass: new (...args: any[]) => any,
-    handler: AnyHandler,
+  register<T extends Command<any>>(
+    commandClass: new (...args: any[]) => T,
+    handler: HandlerFor<T>,
   ): void {
     const key = commandClass.name;
 

@@ -78,7 +78,7 @@ class JsonParserPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ParseRequestCommand,
-      async (cmd: ParseRequestCommand) => {
+      async (cmd) => {
         return parseJsonParameters(cmd.request);
       },
     );
@@ -91,10 +91,7 @@ class JsonTamperPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ApplyTamperCommand,
-      async (
-        cmd: ApplyTamperCommand,
-        request: HttpRequest,
-      ): Promise<HttpRequest> => {
+      async (cmd, request) => {
         const jsonInstructions = cmd.instructions.filter(isJsonInstruction);
 
         if (jsonInstructions.length === 0) {

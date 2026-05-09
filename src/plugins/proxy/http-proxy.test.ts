@@ -28,13 +28,13 @@ beforeEach(async () => {
 
   testExchanges.clear();
 
-  commandBus.register(SaveExchangeCommand, async (cmd: SaveExchangeCommand) => {
+  commandBus.register(SaveExchangeCommand, async (cmd) => {
     const existing = testExchanges.get(cmd.replayId) ?? [];
     existing.push(cmd.exchange);
     testExchanges.set(cmd.replayId, existing);
   });
 
-  commandBus.register(LoadExchangesCommand, async (cmd: LoadExchangesCommand) => {
+  commandBus.register(LoadExchangesCommand, async (cmd) => {
     return testExchanges.get(cmd.replayId) ?? [];
   });
 
@@ -93,7 +93,7 @@ describe("HttpProxyPlugin", () => {
     // Register a no-op ApplyTamperCommand handler
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      async (_cmd, request) => request,
     );
 
     const request = makeRequest(`http://127.0.0.1:${serverPort}/test`);
@@ -125,7 +125,7 @@ describe("HttpProxyPlugin", () => {
     // Register a tamper handler that modifies the URL
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => ({
+      async (_cmd, request) => ({
         ...request,
         url: request.url.replace("/original", "/modified"),
       }),
@@ -156,7 +156,7 @@ describe("HttpProxyPlugin", () => {
 
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      async (_cmd, request) => request,
     );
 
     const request: HttpRequest = {
@@ -191,7 +191,7 @@ describe("HttpProxyPlugin", () => {
 
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      async (_cmd, request) => request,
     );
 
     const request = makeRequest(`http://127.0.0.1:${serverPort}/test`);
@@ -216,7 +216,7 @@ describe("HttpProxyPlugin", () => {
 
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => ({
+      async (_cmd, request) => ({
         ...request,
         headers: { ...request.headers, "x-tampered": "true" },
       }),
@@ -239,7 +239,7 @@ describe("startTamperProxy", () => {
 
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      async (_cmd, request) => request,
     );
 
     const response = await new Promise<{ statusCode: number; body: string }>((resolve, reject) => {
@@ -283,7 +283,7 @@ describe("startTamperProxy", () => {
 
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => {
+      async (_cmd, request) => {
         const url = new URL(request.url);
         const searchParams = new URLSearchParams(url.search);
         for (const instr of _cmd.instructions) {
@@ -334,7 +334,7 @@ describe("startTamperProxy", () => {
 
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      async (_cmd, request) => request,
     );
 
     const response = await new Promise<{ statusCode: number; body: string }>(
@@ -384,7 +384,7 @@ describe("startTamperProxy", () => {
 
     commandBus.register(
       ApplyTamperCommand,
-      async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+      async (_cmd, request) => request,
     );
 
     const response = await new Promise<{ statusCode: number; body: string }>(
@@ -475,7 +475,7 @@ describe("startTamperProxy", () => {
 
       commandBus.register(
         ApplyTamperCommand,
-        async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+        async (_cmd, request) => request,
       );
 
       const agent = new HttpsProxyAgent(`http://127.0.0.1:${proxy.port}`);
@@ -520,7 +520,7 @@ describe("startTamperProxy", () => {
 
       commandBus.register(
         ApplyTamperCommand,
-        async (_cmd: ApplyTamperCommand, request: HttpRequest) => request,
+        async (_cmd, request) => request,
       );
 
       const agent = new HttpsProxyAgent(`http://127.0.0.1:${proxy.port}`);

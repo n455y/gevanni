@@ -18,7 +18,7 @@ class SqliErrorPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       CreateInspectorsCommand,
-      async (cmd: CreateInspectorsCommand) => {
+      async (cmd) => {
         return cmd.parameters
           .filter((param) => param.allowedTampers.includes(AppendValue))
           .map((param) => ({
@@ -30,7 +30,7 @@ class SqliErrorPlugin implements Plugin {
 
     context.commandBus.register(
       RunInspectionCommand,
-      async (cmd: RunInspectionCommand) => {
+      async (cmd) => {
         const { signatureName, parameter, replay } = cmd.payload;
         if (signatureName !== "sqli-error") {
           throw new Error(`Unknown signature: ${signatureName}`);

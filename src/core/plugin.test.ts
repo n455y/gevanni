@@ -32,7 +32,7 @@ describe("PluginRegistryImpl", () => {
       name: "json-parser",
       async init(ctx: PluginContext) {
         initSpy(ctx);
-        ctx.commandBus.register(GreetCommand, async (cmd: GreetCommand) =>
+        ctx.commandBus.register(GreetCommand, async (cmd) =>
           `Hello, ${cmd.name}!`,
         );
       },

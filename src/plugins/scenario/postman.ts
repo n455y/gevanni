@@ -109,7 +109,7 @@ class PostmanPlugin implements Plugin {
 
   async init(context: PluginContext): Promise<void> {
     const { commandBus } = context;
-    context.commandBus.register(ReplayCommand, async (cmd: ReplayCommand) => {
+    context.commandBus.register(ReplayCommand, async (cmd) => {
       const { scenario, config } = cmd;
       await runNewman(scenario, config.proxyPort, config.replayId);
       const exchanges = await commandBus.dispatch<Exchange[]>(

@@ -39,7 +39,7 @@ describe("InMemoryCommandBus", () => {
   describe("dispatch (SingleCommand)", () => {
     it("executes a single handler and returns its result", async () => {
       const bus = new InMemoryCommandBus();
-      bus.register(EchoCommand, async (cmd: EchoCommand) => cmd.message);
+      bus.register(EchoCommand, async (cmd) => cmd.message);
       const result = await bus.dispatch(new EchoCommand("hello"));
       expect(result).toBe("hello");
     });
@@ -61,7 +61,7 @@ describe("InMemoryCommandBus", () => {
 
     it("passes command instance to handler", async () => {
       const bus = new InMemoryCommandBus();
-      bus.register(AddCommand, async (cmd: AddCommand) => cmd.a + cmd.b);
+      bus.register(AddCommand, async (cmd) => cmd.a + cmd.b);
       const result = await bus.dispatch(new AddCommand(3, 7));
       expect(result).toBe(10);
     });
@@ -70,8 +70,8 @@ describe("InMemoryCommandBus", () => {
   describe("broadcast (BroadcastCommand)", () => {
     it("executes all registered handlers and returns results array", async () => {
       const bus = new InMemoryCommandBus();
-      bus.register(CollectCommand, async (cmd: CollectCommand) => [cmd.input + "-a"]);
-      bus.register(CollectCommand, async (cmd: CollectCommand) => [cmd.input + "-b"]);
+      bus.register(CollectCommand, async (cmd) => [cmd.input + "-a"]);
+      bus.register(CollectCommand, async (cmd) => [cmd.input + "-b"]);
       const results = await bus.broadcast(new CollectCommand("test"));
       expect(results).toEqual([["test-a"], ["test-b"]]);
     });
@@ -139,11 +139,11 @@ describe("InMemoryCommandBus", () => {
 describe("InMemoryCommandBus edge cases", () => {
   it("broadcast executes handlers in parallel", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(CollectCommand, async (cmd: CollectCommand) => {
+    bus.register(CollectCommand, async (cmd) => {
       await new Promise((resolve) => setTimeout(resolve, 50));
       return [cmd.input + "-slow"];
     });
-    bus.register(CollectCommand, async (cmd: CollectCommand) => {
+    bus.register(CollectCommand, async (cmd) => {
       return [cmd.input + "-fast"];
     });
     const results = await bus.broadcast(new CollectCommand("test"));

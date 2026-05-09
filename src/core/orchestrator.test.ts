@@ -85,6 +85,7 @@ describe("Orchestrator", () => {
     it("creates jobs and definitions for scenarios", async () => {
       commandBus.register(ReplayCommand, async () => [
         {
+          id: "ex-1" as Brand<string, "ExchangeId">,
           request: mockRequest,
           response: mockResponse,
         },
@@ -101,7 +102,7 @@ describe("Orchestrator", () => {
       ]);
 
       const savedJobs: Job[] = [];
-      commandBus.register(SaveJobCommand, async (cmd: SaveJobCommand) => {
+      commandBus.register(SaveJobCommand, async (cmd) => {
         savedJobs.push(cmd.job);
       });
 
@@ -144,6 +145,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(ReplayCommand, async () => [
         {
+          id: "ex-1" as Brand<string, "ExchangeId">,
           request: mockRequest,
           response: mockResponse,
         },
@@ -159,7 +161,7 @@ describe("Orchestrator", () => {
       ]);
 
       const savedJobs: Job[] = [];
-      commandBus.register(SaveJobCommand, async (cmd: SaveJobCommand) => {
+      commandBus.register(SaveJobCommand, async (cmd) => {
         savedJobs.push(cmd.job);
       });
       commandBus.register(SaveScenarioCommand, async () => {});
@@ -188,6 +190,7 @@ describe("Orchestrator", () => {
     it("saves scan state with planning status", async () => {
       commandBus.register(ReplayCommand, async () => [
         {
+          id: "ex-1" as Brand<string, "ExchangeId">,
           request: mockRequest,
           response: mockResponse,
         },
@@ -237,7 +240,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadPendingJobsCommand, async () => [mockJob]);
-      commandBus.register(UpdateJobCommand, async (_cmd: UpdateJobCommand) => {
+      commandBus.register(UpdateJobCommand, async (_cmd) => {
         updateCalls.push(_cmd.updates);
       });
       commandBus.register(LoadScenarioCommand, async () => ({
@@ -252,6 +255,7 @@ describe("Orchestrator", () => {
       }));
       commandBus.register(ReplayCommand, async () => [
         {
+          id: "ex-1" as Brand<string, "ExchangeId">,
           request: mockRequest,
           response: mockResponse,
         },
@@ -307,7 +311,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadPendingJobsCommand, async () => [mockJob]);
-      commandBus.register(UpdateJobCommand, async (_cmd: UpdateJobCommand) => {
+      commandBus.register(UpdateJobCommand, async (_cmd) => {
         updateCalls.push(_cmd.updates);
       });
       commandBus.register(LoadScenarioCommand, async () => ({
@@ -322,6 +326,7 @@ describe("Orchestrator", () => {
       }));
       commandBus.register(ReplayCommand, async () => [
         {
+          id: "ex-1" as Brand<string, "ExchangeId">,
           request: mockRequest,
           response: mockResponse,
         },
@@ -399,7 +404,7 @@ describe("Orchestrator", () => {
       let reportPayload: { scanState: ScanState; jobs: Job[] } | null = null;
       commandBus.register(
         GenerateReportCommand,
-        async (cmd: GenerateReportCommand) => {
+        async (cmd) => {
           reportPayload = cmd.payload;
         },
       );

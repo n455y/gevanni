@@ -28,7 +28,7 @@ class HeaderParserPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ParseRequestCommand,
-      async (cmd: ParseRequestCommand) => {
+      async (cmd) => {
         return parseHeaderParameters(cmd.request);
       },
     );
@@ -41,10 +41,7 @@ class HeaderTamperPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ApplyTamperCommand,
-      async (
-        cmd: ApplyTamperCommand,
-        request: HttpRequest,
-      ): Promise<HttpRequest> => {
+      async (cmd, request) => {
         const headerInstructions = cmd.instructions.filter(
           (instr): instr is HeaderTamperInstruction =>
             instr instanceof HeaderTamperInstruction,

@@ -264,7 +264,7 @@ class HttpProxyPlugin implements Plugin {
 
     context.commandBus.register(
       InterceptCommand,
-      async (cmd: InterceptCommand) => {
+      async (cmd) => {
         // 1. Apply tamper via pipeline
         const modifiedRequest = await context.commandBus.pipe(
           new ApplyTamperCommand(cmd.request, cmd.instructions),

@@ -22,13 +22,13 @@ beforeEach(async () => {
   commandBus = new InMemoryCommandBus();
   exchangeStore = new Map();
 
-  commandBus.register(SaveExchangeCommand, async (cmd: SaveExchangeCommand) => {
+  commandBus.register(SaveExchangeCommand, async (cmd) => {
     const list = exchangeStore.get(cmd.replayId) ?? [];
     list.push(cmd.exchange);
     exchangeStore.set(cmd.replayId, list);
   });
 
-  commandBus.register(LoadExchangesCommand, async (cmd: LoadExchangesCommand) => {
+  commandBus.register(LoadExchangesCommand, async (cmd) => {
     return exchangeStore.get(cmd.replayId) ?? [];
   });
 

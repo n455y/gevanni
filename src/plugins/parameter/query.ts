@@ -28,7 +28,7 @@ class QueryParserPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ParseRequestCommand,
-      async (cmd: ParseRequestCommand) => {
+      async (cmd) => {
         return parseQueryParameters(cmd.request);
       },
     );
@@ -41,10 +41,7 @@ class QueryTamperPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ApplyTamperCommand,
-      async (
-        cmd: ApplyTamperCommand,
-        request: HttpRequest,
-      ): Promise<HttpRequest> => {
+      async (cmd, request) => {
         const queryInstructions = cmd.instructions.filter(
           (instr): instr is QueryTamperInstruction =>
             instr instanceof QueryTamperInstruction,

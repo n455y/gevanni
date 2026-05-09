@@ -58,7 +58,7 @@ class GraphQLParserPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ParseRequestCommand,
-      async (cmd: ParseRequestCommand) => {
+      async (cmd) => {
         return parseGraphQLParameters(cmd.request);
       },
     );
@@ -71,10 +71,7 @@ class GraphQLTamperPlugin implements Plugin {
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
       ApplyTamperCommand,
-      async (
-        cmd: ApplyTamperCommand,
-        request: HttpRequest,
-      ): Promise<HttpRequest> => {
+      async (cmd, request) => {
         const graphqlInstructions =
           cmd.instructions.filter(isGraphQLInstruction);
 
