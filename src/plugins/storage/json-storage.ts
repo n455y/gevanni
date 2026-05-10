@@ -5,7 +5,6 @@ import type { CommandBus } from "../../core/command-bus.ts";
 import {
   serializeJob,
   deserializeJob,
-  type Job,
   type ScanState,
   type Scenario,
   type Exchange,
@@ -89,7 +88,7 @@ class JsonStoragePlugin implements Plugin {
 
     // --- SaveJobCommand ---
     bus.register(SaveJobCommand, async (cmd) => {
-      const path = jobsPath(cmd.job.scenarioId as unknown as ScanId);
+      const path = jobsPath(cmd.job.scanId);
       await this.withFileLock(path, async () => {
         const jobs: SerializedJob[] = (await readJsonFile<SerializedJob[]>(path)) ?? [];
         jobs.push(serializeJob(cmd.job));
@@ -99,77 +98,37 @@ class JsonStoragePlugin implements Plugin {
 
     // --- LoadJobCommand ---
     bus.register(LoadJobCommand, async (cmd) => {
-      let found: Job | null = null;
-
-      try {
-        const entries = await fs.readdir(this.outputDir, {
-          withFileTypes: true,
-        });
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          const path = join(this.outputDir, entry.name, "jobs.json");
-          const jobs = await readJsonFile<SerializedJob[]>(path);
-          if (jobs) {
-            const match = jobs.find((j) => j.id === cmd.id);
-            if (match) {
-              found = deserializeJob(match);
-              break;
-            }
-          }
+      const entries = await fs.readdir(this.outputDir, {
+        withFileTypes: true,
+      });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const path = join(this.outputDir, entry.name, "jobs.json");
+        const jobs = await readJsonFile<SerializedJob[]>(path);
+        if (jobs) {
+          const match = jobs.find((j) => j.id === cmd.id);
+          if (match) return deserializeJob(match);
         }
-      } catch {
-        // outputDir may not exist yet
       }
-
-      return found;
+      return null;
     });
 
     // --- LoadJobsByScanIdCommand ---
     bus.register(LoadJobsByScanIdCommand, async (cmd) => {
-      const allJobs: Job[] = [];
-      try {
-        const entries = await fs.readdir(this.outputDir, {
-          withFileTypes: true,
-        });
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          const path = join(this.outputDir, entry.name, "jobs.json");
-          const jobs = await readJsonFile<SerializedJob[]>(path);
-          if (jobs) {
-            allJobs.push(
-              ...jobs
-                .filter((j) => j.scanId === cmd.scanId)
-                .map(deserializeJob),
-            );
-          }
-        }
-      } catch {
-        // outputDir may not exist yet
-      }
-      return allJobs;
+      const path = jobsPath(cmd.scanId);
+      const jobs = await readJsonFile<SerializedJob[]>(path);
+      if (!jobs) return [];
+      return jobs.map(deserializeJob);
     });
 
     // --- LoadPendingJobsCommand ---
     bus.register(LoadPendingJobsCommand, async (cmd) => {
-      const allJobs: Job[] = [];
-      try {
-        const entries = await fs.readdir(this.outputDir, {
-          withFileTypes: true,
-        });
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          const path = join(this.outputDir, entry.name, "jobs.json");
-          const jobs = await readJsonFile<SerializedJob[]>(path);
-          if (jobs) {
-            allJobs.push(...jobs.map(deserializeJob));
-          }
-        }
-      } catch {
-        // outputDir may not exist yet
-      }
-      return allJobs.filter(
-        (j) => j.status === ("pending" as JobStatus) && j.scanId === cmd.scanId,
-      );
+      const path = jobsPath(cmd.scanId);
+      const jobs = await readJsonFile<SerializedJob[]>(path);
+      if (!jobs) return [];
+      return jobs
+        .map(deserializeJob)
+        .filter((j) => j.status === ("pending" as JobStatus));
     });
 
     // --- UpdateJobCommand ---
