@@ -28,8 +28,8 @@ type JsonArray = JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
-// --- AuditTarget ---
-class AuditTarget<
+// --- AuditParameter ---
+class AuditParameter<
   L extends SerializableValue = SerializableValue,
   V extends SerializableValue = SerializableValue,
 > extends SerializableBase<{
@@ -37,7 +37,7 @@ class AuditTarget<
   originalValue: V;
   allowedMutations: MutationType[];
 }> {
-  static base = "audit-target";
+  static base = "audit-parameter";
   readonly location: L;
   readonly originalValue: V;
   readonly allowedMutations: MutationType[];
@@ -83,17 +83,17 @@ class AuditTarget<
 
 // --- AuditMutation ---
 abstract class AuditMutation<
-  P extends AuditTarget = AuditTarget,
+  P extends AuditParameter = AuditParameter,
 > {
-  readonly target: P;
+  readonly parameter: P;
   readonly payload: Payload;
   readonly method: MutationType;
   constructor(
-    target: P,
+    parameter: P,
     payload: Payload,
     method: MutationType,
   ) {
-    this.target = target;
+    this.parameter = parameter;
     this.payload = payload;
     this.method = method;
   }
@@ -135,7 +135,7 @@ interface Job {
   scenarioId: ScenarioId;
   requestId: RequestId;
   signatureName: string;
-  target: AuditTarget;
+  parameter: AuditParameter;
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
@@ -180,4 +180,4 @@ export type {
   PluginConfig,
 };
 
-export { AuditTarget, AuditMutation };
+export { AuditParameter, AuditMutation };

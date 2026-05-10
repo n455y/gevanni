@@ -5,14 +5,14 @@ import {
   PrependValue,
 } from "../../types/branded.ts";
 import type { Payload } from "../../types/branded.ts";
-import { AuditTarget, AuditMutation } from "../../types/models.ts";
+import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class HeaderParameter extends AuditTarget<{ name: string }, string> {
+class HeaderParameter extends AuditParameter<{ name: string }, string> {
   static kind = "header";
   createMutation(
     payload: Payload,
@@ -57,10 +57,10 @@ class HeaderMutationPlugin implements Plugin {
         const headers = { ...request.headers };
 
         for (const instr of headerMutations) {
-          const targetName = instr.target.location.name;
-          const current = headers[targetName] ?? "";
+          const parameterName = instr.parameter.location.name;
+          const current = headers[parameterName] ?? "";
           const payload = instr.payload as string;
-          headers[targetName] = applyMutation(current, payload, instr.method);
+          headers[parameterName] = applyMutation(current, payload, instr.method);
         }
 
         return {
@@ -74,8 +74,8 @@ class HeaderMutationPlugin implements Plugin {
   }
 }
 
-function parseHeaderParameters(request: HttpRequest): AuditTarget[] {
-  const params: AuditTarget[] = [];
+function parseHeaderParameters(request: HttpRequest): AuditParameter[] {
+  const params: AuditParameter[] = [];
 
   for (const [name, value] of Object.entries(request.headers)) {
     params.push(

@@ -10,7 +10,7 @@ import {
   JsonArrayMutation,
 } from "./json.ts";
 import { QueryParameter } from "./query.ts";
-import type { HttpRequest, AuditTarget } from "../../types/models.ts";
+import type { HttpRequest, AuditParameter } from "../../types/models.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import type { Brand } from "../../types/branded.ts";
@@ -41,7 +41,7 @@ function makeJsonRequest(body: string): HttpRequest {
   };
 }
 
-function flatTargets(results: AuditTarget[][]): AnyJsonTarget[] {
+function flatTargets(results: AuditParameter[][]): AnyJsonTarget[] {
   return results.flat() as AnyJsonTarget[];
 }
 

@@ -287,8 +287,8 @@ describe("startMutationProxy", () => {
         const url = new URL(request.url);
         const searchParams = new URLSearchParams(url.search);
         for (const instr of _cmd.mutations) {
-          const paramName = (instr.target.location as { name: string }).name;
-          searchParams.set(paramName, instr.payload as string);
+          const parameterName = (instr.parameter.location as { name: string }).name;
+          searchParams.set(parameterName, instr.payload as string);
         }
         url.search = searchParams.toString();
         return { ...request, url: url.toString() };

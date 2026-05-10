@@ -5,14 +5,14 @@ import {
   PrependValue,
 } from "../../types/branded.ts";
 import type { Payload } from "../../types/branded.ts";
-import { AuditTarget, AuditMutation } from "../../types/models.ts";
+import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class QueryParameter extends AuditTarget<{ name: string }, string> {
+class QueryParameter extends AuditParameter<{ name: string }, string> {
   static kind = "query";
   createMutation(
     payload: Payload,
@@ -58,11 +58,11 @@ class QueryMutationPlugin implements Plugin {
         const searchParams = new URLSearchParams(url.search);
 
         for (const instr of queryMutations) {
-          const targetName = instr.target.location.name;
-          const current = searchParams.get(targetName) ?? "";
+          const parameterName = instr.parameter.location.name;
+          const current = searchParams.get(parameterName) ?? "";
           const payload = instr.payload as string;
           const modified = applyMutation(current, payload, instr.method);
-          searchParams.set(targetName, modified);
+          searchParams.set(parameterName, modified);
         }
 
         url.search = searchParams.toString();
@@ -78,9 +78,9 @@ class QueryMutationPlugin implements Plugin {
   }
 }
 
-function parseQueryParameters(request: HttpRequest): AuditTarget[] {
+function parseQueryParameters(request: HttpRequest): AuditParameter[] {
   const url = new URL(request.url);
-  const params: AuditTarget[] = [];
+  const params: AuditParameter[] = [];
 
   for (const [name, value] of url.searchParams) {
     params.push(

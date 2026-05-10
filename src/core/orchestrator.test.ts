@@ -13,7 +13,7 @@ import type {
   ScanState,
   Scenario,
 } from "../types/models.ts";
-import type { AuditTarget } from "../types/models.ts";
+import type { AuditParameter } from "../types/models.ts";
 import type { Brand, JobStatus, ScanStatus } from "../types/branded.ts";
 import { ReplaceValue } from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";
@@ -48,7 +48,7 @@ const mockResponse: HttpResponse = {
   body: Buffer.from("ok"),
 };
 
-const mockTargets: AuditTarget[] = [
+const mockTargets: AuditParameter[] = [
   new QueryParameter({ name: "q" }, "hello", [ReplaceValue]),
 ];
 
@@ -95,7 +95,7 @@ describe("Orchestrator", () => {
 
       const mockItem: AuditItem = {
         signatureName: "mock-sig",
-        target: mockTargets[0],
+parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [
         mockItem,
@@ -154,7 +154,7 @@ describe("Orchestrator", () => {
 
       const mockItem: AuditItem = {
         signatureName: "mock-sig",
-        target: mockTargets[0],
+parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [
         mockItem,
@@ -221,7 +221,7 @@ describe("Orchestrator", () => {
         scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
         requestId: "req-1" as Brand<string, "RequestId">,
         signatureName: "mock-sig",
-        target: mockTargets[0],
+parameter: mockTargets[0],
         status: "pending" as JobStatus,
         finding: null,
         error: null,
@@ -232,7 +232,7 @@ describe("Orchestrator", () => {
       const items = new Map<string, AuditItem>();
       items.set("job-1", {
         signatureName: "mock-sig",
-        target: mockTargets[0],
+parameter: mockTargets[0],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -292,7 +292,7 @@ describe("Orchestrator", () => {
         scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
         requestId: "req-1" as Brand<string, "RequestId">,
         signatureName: "failing-sig",
-        target: mockTargets[0],
+parameter: mockTargets[0],
         status: "pending" as JobStatus,
         finding: null,
         error: null,
@@ -303,7 +303,7 @@ describe("Orchestrator", () => {
       const items = new Map<string, AuditItem>();
       items.set("job-err", {
         signatureName: "failing-sig",
-        target: mockTargets[0],
+parameter: mockTargets[0],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -389,7 +389,7 @@ describe("Orchestrator", () => {
           scenarioId: "sc-1" as Brand<string, "ScenarioId">,
           requestId: "req-1" as Brand<string, "RequestId">,
           signatureName: "reflected-xss",
-          target: mockTargets[0],
+parameter: mockTargets[0],
           status: "completed" as JobStatus,
           finding: mockFinding,
           error: null,

@@ -6,13 +6,13 @@ import {
 } from "../../types/branded.ts";
 import type { Payload } from "../../types/branded.ts";
 import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.ts";
-import { AuditTarget, AuditMutation } from "../../types/models.ts";
+import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class GraphQLQueryParameter extends AuditTarget<
+class GraphQLQueryParameter extends AuditParameter<
   { field: string },
   string
 > {
@@ -26,7 +26,7 @@ class GraphQLQueryParameter extends AuditTarget<
 }
 serializable(GraphQLQueryParameter);
 
-class GraphQLVariableParameter extends AuditTarget<
+class GraphQLVariableParameter extends AuditParameter<
   { path: string[] },
   JsonValue
 > {
@@ -98,7 +98,7 @@ class GraphQLMutationPlugin implements Plugin {
 
         for (const instr of graphqlMutations) {
           if (instr instanceof GraphQLQueryMutation) {
-            const field = instr.target.location.field;
+            const field = instr.parameter.location.field;
             if (
               typeof jsonBody === "object" &&
               jsonBody !== null &&
@@ -112,7 +112,7 @@ class GraphQLMutationPlugin implements Plugin {
               );
             }
           } else if (instr instanceof GraphQLVariableMutation) {
-            const path = instr.target.location.path;
+            const path = instr.parameter.location.path;
             jsonBody = applyAtPath(
               jsonBody,
               path,
@@ -133,7 +133,7 @@ class GraphQLMutationPlugin implements Plugin {
   }
 }
 
-function parseGraphQLParameters(request: HttpRequest): AuditTarget[] {
+function parseGraphQLParameters(request: HttpRequest): AuditParameter[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/json")) {
     return [];
@@ -158,7 +158,7 @@ function parseGraphQLParameters(request: HttpRequest): AuditTarget[] {
     return [];
   }
 
-  const params: AuditTarget[] = [];
+  const params: AuditParameter[] = [];
 
   params.push(
     new GraphQLQueryParameter({ field: "query" }, parsed.query, [
@@ -195,7 +195,7 @@ function parseGraphQLParameters(request: HttpRequest): AuditTarget[] {
 function extractVariableParams(
   obj: JsonObject,
   path: string[],
-  params: AuditTarget[],
+  params: AuditParameter[],
 ): void {
   for (const [key, value] of Object.entries(obj)) {
     const currentPath = [...path, key];

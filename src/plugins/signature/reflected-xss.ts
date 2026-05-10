@@ -11,11 +11,11 @@ class ReflectedXssPlugin implements Plugin {
     context.commandBus.register(
       CreateAuditItemsCommand,
       async (cmd) => {
-        return cmd.targets
-          .filter((target) => target.allowedMutations.includes(AppendValue))
-          .map((target) => ({
+        return cmd.parameters
+          .filter((parameter) => parameter.allowedMutations.includes(AppendValue))
+          .map((parameter) => ({
             signatureName: "reflected-xss",
-            target,
+            parameter,
           }));
       },
     );
@@ -23,13 +23,13 @@ class ReflectedXssPlugin implements Plugin {
     context.commandBus.register(
       RunAuditCommand,
       async (cmd) => {
-        const { signatureName, target, replay } = cmd.payload;
+        const { signatureName, parameter, replay } = cmd.context;
         if (signatureName !== "reflected-xss") {
           throw new Error(`Unknown signature: ${signatureName}`);
         }
 
         const payload = "<script>alert(1)</script>" as Payload;
-        const instruction = target.createMutation(payload, AppendValue);
+        const instruction = parameter.createMutation(payload, AppendValue);
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = body.includes(payload);

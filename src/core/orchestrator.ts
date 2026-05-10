@@ -12,7 +12,7 @@ import type {
   Job,
   ScanState,
   Scenario,
-  AuditTarget,
+  AuditParameter,
   Exchange,
   Finding,
   AuditMutation,
@@ -122,19 +122,19 @@ class Orchestrator {
           )) as Exchange[]
         )[0];
 
-        // b. Broadcast ParseRequestCommand to collect all AuditTargets
-        const parseResults: AuditTarget[][] =
+        // b. Broadcast ParseRequestCommand to collect all AuditParameters
+        const parseResults: AuditParameter[][] =
           await commandBus.broadcast(
             new ParseRequestCommand(replayResult.request),
           );
-        const targets: AuditTarget[] = parseResults.flat();
+        const parameters: AuditParameter[] = parseResults.flat();
         logger.debug(
-          `Found ${targets.length} audit targets for ${scenario.name}`,
+          `Found ${parameters.length} audit parameters for ${scenario.name}`,
         );
 
         // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
         const definitionResults: AuditItem[][] =
-          await commandBus.broadcast(new CreateAuditItemsCommand(targets));
+          await commandBus.broadcast(new CreateAuditItemsCommand(parameters));
         const items: AuditItem[] = definitionResults.flat();
 
         // d. For each definition, create a Job
@@ -147,7 +147,7 @@ class Orchestrator {
             scenarioId: scenario.id,
             requestId: rid,
             signatureName: item.signatureName,
-            target: item.target,
+            parameter: item.parameter,
             status: "pending" as JobStatus,
             finding: null,
             error: null,
@@ -271,7 +271,7 @@ class Orchestrator {
         const finding: Finding = (await commandBus.dispatch(
           new RunAuditCommand({
             signatureName: item.signatureName,
-            target: job.target,
+            parameter: job.parameter,
             replay,
           }),
         )) as Finding;
@@ -397,7 +397,7 @@ class Orchestrator {
     for (const job of pendingJobs) {
       itemMap.set(job.id as string, {
         signatureName: job.signatureName,
-        target: job.target,
+        parameter: job.parameter,
       });
     }
 

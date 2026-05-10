@@ -5,7 +5,7 @@ import { ReflectedXssPlugin } from "./reflected-xss.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type {
-  AuditTarget,
+  AuditParameter,
   HttpRequest,
   JsonPrimitive,
   Finding,
@@ -23,24 +23,24 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function makeQueryTarget(name: string, value: string): AuditTarget {
+function makeQueryParameter(name: string, value: string): AuditParameter {
   return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
 function makeJsonPrimitiveParam(
   path: string[],
   value: unknown,
-): AuditTarget {
+): AuditParameter {
   return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [
     ReplaceValue,
   ]);
 }
 
-function makeFormTarget(name: string, value: string): AuditTarget {
+function makeFormTarget(name: string, value: string): AuditParameter {
   return new FormParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
-function makeHeaderTarget(name: string, value: string): AuditTarget {
+function makeHeaderTarget(name: string, value: string): AuditParameter {
   return new HeaderParameter({ name }, value, [ReplaceValue]);
 }
 
@@ -61,7 +61,7 @@ describe("ReflectedXssPlugin", () => {
     });
 
     const targets = [
-      makeQueryTarget("q", "search"),
+      makeQueryParameter("q", "search"),
       makeJsonPrimitiveParam(["user", "name"], "test"),
     ];
 
@@ -73,7 +73,7 @@ describe("ReflectedXssPlugin", () => {
     const items = results[0];
     expect(items).toHaveLength(1);
     expect(items[0].signatureName).toBe("reflected-xss");
-    expect(items[0].target).toEqual(targets[0]);
+    expect(items[0].parameter).toEqual(targets[0]);
   });
 
   it("creates definitions for form parameters", async () => {
@@ -91,7 +91,7 @@ describe("ReflectedXssPlugin", () => {
 
     const items = results[0];
     expect(items).toHaveLength(1);
-    expect(items[0].target).toEqual(targets[0]);
+    expect(items[0].parameter).toEqual(targets[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -119,7 +119,7 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const target = makeQueryTarget("q", "search");
+    const parameter = makeQueryParameter("q", "search");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -132,7 +132,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        target,
+        parameter,
         replay: mockReplay,
       }),
     );
@@ -150,7 +150,7 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const target = makeQueryTarget("q", "search");
+    const parameter = makeQueryParameter("q", "search");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -163,7 +163,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        target,
+        parameter,
         replay: mockReplay,
       }),
     );
@@ -180,7 +180,7 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const target = makeQueryTarget("q", "search");
+    const parameter = makeQueryParameter("q", "search");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -193,7 +193,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        target,
+        parameter,
         replay: mockReplay,
       }),
     );

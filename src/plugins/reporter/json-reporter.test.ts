@@ -6,7 +6,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { JsonReporterPlugin } from "./json-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { AuditTarget, type Job, type ScanState } from "../../types/models.ts";
+import { AuditParameter, type Job, type ScanState } from "../../types/models.ts";
 import type {
   ScanId,
   JobId,
@@ -46,7 +46,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: asScenarioId("scan-1"),
     requestId: asRequestId("req-1"),
     signatureName: "reflected-xss",
-    target: new AuditTarget({ name: "" }, "", []),
+parameter: new AuditParameter({ name: "" }, "", []),
     status: asJobStatus("completed"),
     finding: null,
     error: null,

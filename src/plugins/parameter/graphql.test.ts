@@ -10,7 +10,7 @@ import {
 } from "./graphql.ts";
 import { QueryParameter } from "./query.ts";
 import type {
-  AuditTarget,
+  AuditParameter,
   HttpRequest,
   JsonValue,
 } from "../../types/models.ts";
@@ -41,7 +41,7 @@ function makeGraphQLRequest(body: string): HttpRequest {
   };
 }
 
-function flatTargets(results: AuditTarget[][]): AnyGraphQLTarget[] {
+function flatTargets(results: AuditParameter[][]): AnyGraphQLTarget[] {
   return results.flat() as AnyGraphQLTarget[];
 }
 

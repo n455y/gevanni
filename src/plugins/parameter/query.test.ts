@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { QueryParserPlugin, QueryMutationPlugin } from "./query.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import { AuditTarget, type HttpRequest } from "../../types/models.ts";
+import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { QueryParameter } from "./query.ts";
 import { JsonPrimitiveParameter } from "./json.ts";
 import { QueryMutation } from "./query.ts";
@@ -22,7 +22,7 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function flatParams(results: AuditTarget[][]): AuditTarget[] {
+function flatParams(results: AuditParameter[][]): AuditParameter[] {
   return results.flat();
 }
 

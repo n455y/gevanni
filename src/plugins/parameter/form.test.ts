@@ -4,7 +4,7 @@ import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { FormParserPlugin, FormMutationPlugin } from "./form.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import { AuditTarget, type HttpRequest } from "../../types/models.ts";
+import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { FormParameter } from "./form.ts";
 import { FormMutation } from "./form.ts";
 import type { Brand } from "../../types/branded.ts";
@@ -30,7 +30,7 @@ function makeFormRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: AuditTarget[][]): AuditTarget[] {
+function flatParams(results: AuditParameter[][]): AuditParameter[] {
   return results.flat();
 }
 

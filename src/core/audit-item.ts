@@ -1,8 +1,8 @@
-import type { AuditTarget } from "../types/models.ts";
+import type { AuditParameter } from "../types/models.ts";
 
 interface AuditItem {
   readonly signatureName: string;
-  readonly target: AuditTarget;
+  readonly parameter: AuditParameter;
 }
 
 export type { AuditItem };

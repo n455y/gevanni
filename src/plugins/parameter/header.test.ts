@@ -3,7 +3,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { HeaderParserPlugin } from "./header.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
-import { AuditTarget, type HttpRequest } from "../../types/models.ts";
+import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { HeaderParameter } from "./header.ts";
 import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.ts";
 
@@ -13,7 +13,7 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function flatTargets(results: AuditTarget[][]): AuditTarget[] {
+function flatTargets(results: AuditParameter[][]): AuditParameter[] {
   return results.flat();
 }
 

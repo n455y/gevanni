@@ -2,8 +2,8 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import type { Job, ScanState } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
-function formatTarget(job: Job): string {
-  const p = job.target;
+function formatParameter(job: Job): string {
+  const p = job.parameter;
   const loc =
     typeof p.location === "object" && p.location !== null
       ? JSON.stringify(p.location)
@@ -37,7 +37,7 @@ class ConsoleReporterPlugin implements Plugin {
           if (job.finding?.vulnerable) {
             vulnerable++;
             lines.push(`[VULNERABLE] ${job.signatureName}`);
-            lines.push(`  Target: ${formatTarget(job)}`);
+            lines.push(`  Target: ${formatParameter(job)}`);
             lines.push(
               `  Evidence: ${job.finding.evidence as string}`,
             );
@@ -48,7 +48,7 @@ class ConsoleReporterPlugin implements Plugin {
           } else {
             safe++;
             lines.push(`[SAFE] ${job.signatureName}`);
-            lines.push(`  Target: ${formatTarget(job)}`);
+            lines.push(`  Target: ${formatParameter(job)}`);
             lines.push("");
           }
         } else if (job.status === ("error" as Job["status"])) {

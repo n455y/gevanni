@@ -13,7 +13,7 @@ export type ScenarioType = Brand<string, "ScenarioType">;
 export const ScenarioType = (type: string) => type as ScenarioType;
 
 export type MutationType = Brand<string, "MutationType">;
-export const MutationType = (method: string) => method as MutationType;
+export const MutationType = (type: string) => type as MutationType;
 
 const ReplaceValue = MutationType("ReplaceValue");
 const AppendValue = MutationType("AppendValue");
@@ -49,8 +49,4 @@ export type {
   IsoDateTime,
 };
 
-export {
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
-};
+export { ReplaceValue, AppendValue, PrependValue };

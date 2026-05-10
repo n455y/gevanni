@@ -12,13 +12,13 @@ import type {
   JsonObject,
   JsonValue,
 } from "../../types/models.ts";
-import { AuditTarget, AuditMutation } from "../../types/models.ts";
+import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class JsonPrimitiveParameter extends AuditTarget<
+class JsonPrimitiveParameter extends AuditParameter<
   { path: string[] },
   JsonPrimitive
 > {
@@ -32,7 +32,7 @@ class JsonPrimitiveParameter extends AuditTarget<
 }
 serializable(JsonPrimitiveParameter);
 
-class JsonArrayParameter extends AuditTarget<
+class JsonArrayParameter extends AuditParameter<
   { path: string[] },
   JsonArray
 > {
@@ -46,7 +46,7 @@ class JsonArrayParameter extends AuditTarget<
 }
 serializable(JsonArrayParameter);
 
-class JsonObjectParameter extends AuditTarget<
+class JsonObjectParameter extends AuditParameter<
   { path: string[] },
   JsonObject
 > {
@@ -119,7 +119,7 @@ class JsonMutationPlugin implements Plugin {
         }
 
         for (const instr of jsonMutations) {
-          const path = instr.target.location.path;
+          const path = instr.parameter.location.path;
           jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
         }
 
@@ -134,7 +134,7 @@ class JsonMutationPlugin implements Plugin {
   }
 }
 
-function parseJsonParameters(request: HttpRequest): AuditTarget[] {
+function parseJsonParameters(request: HttpRequest): AuditParameter[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/json")) {
     return [];
@@ -151,7 +151,7 @@ function parseJsonParameters(request: HttpRequest): AuditTarget[] {
     return [];
   }
 
-  const params: AuditTarget[] = [];
+  const params: AuditParameter[] = [];
   extractJsonParams(parsed, [], params);
   return params;
 }
@@ -159,7 +159,7 @@ function parseJsonParameters(request: HttpRequest): AuditTarget[] {
 function extractJsonParams(
   value: JsonValue,
   path: string[],
-  params: AuditTarget[],
+  params: AuditParameter[],
 ): void {
   if (
     value === null ||

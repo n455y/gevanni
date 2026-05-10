@@ -1,15 +1,15 @@
 import { SingleCommand } from "../core/command.ts";
 import type {
-  AuditTarget,
+  AuditParameter,
   Finding,
   AuditMutation,
   HttpRequest,
   HttpResponse,
 } from "../types/models.ts";
 
-interface RunAuditPayload {
+interface RunAuditContext {
   signatureName: string;
-  target: AuditTarget;
+  parameter: AuditParameter;
   replay: (mutations: AuditMutation[]) => Promise<{
     request: HttpRequest;
     response: HttpResponse;
@@ -18,11 +18,11 @@ interface RunAuditPayload {
 
 class RunAuditCommand extends SingleCommand<Finding> {
   readonly type = "runAudit";
-  readonly payload: RunAuditPayload;
-  constructor(payload: RunAuditPayload) {
+  readonly context: RunAuditContext;
+  constructor(context: RunAuditContext) {
     super();
-    this.payload = payload;
+    this.context = context;
   }
 }
 
-export { RunAuditCommand, type RunAuditPayload };
+export { RunAuditCommand, type RunAuditContext };
