@@ -1,9 +1,4 @@
-import {
-  MutationType,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
-} from "../../types/branded.ts";
+import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
 import type { Payload } from "../../types/branded.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
@@ -14,10 +9,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 class FormParameter extends AuditParameter<{ name: string }, string> {
   static kind = "form";
-  createMutation(
-    payload: Payload,
-    method: MutationType,
-  ): FormMutation {
+  createMutation(payload: Payload, method: MutationType): FormMutation {
     return new FormMutation(this, payload, method);
   }
 }
@@ -52,10 +44,7 @@ class FormMutationPlugin implements Plugin {
       const formBody = new URLSearchParams(request.body.toString("utf-8"));
 
       const formMutations = cmd.mutations
-        .filter(
-          (instr): instr is FormMutation =>
-            instr instanceof FormMutation,
-        )
+        .filter((instr): instr is FormMutation => instr instanceof FormMutation)
         .filter((instr) => formBody.has(instr.parameter.location.name));
 
       if (formMutations.length === 0) {
@@ -96,9 +85,9 @@ function parseFormParameters(request: HttpRequest): AuditParameter[] {
   for (const [name, value] of searchParams) {
     params.push(
       new FormParameter({ name }, value, [
-        ReplaceValue,
-        AppendValue,
-        PrependValue,
+        BuiltinMutationType.ReplaceValue,
+        BuiltinMutationType.AppendValue,
+        BuiltinMutationType.PrependValue,
       ]),
     );
   }
@@ -112,20 +101,15 @@ function applyMutation(
   method: MutationType,
 ): string {
   switch (method) {
-    case ReplaceValue:
+    case BuiltinMutationType.ReplaceValue:
       return payload;
-    case AppendValue:
+    case BuiltinMutationType.AppendValue:
       return current + payload;
-    case PrependValue:
+    case BuiltinMutationType.PrependValue:
       return payload + current;
     default:
       return current;
   }
 }
 
-export {
-  FormParserPlugin,
-  FormMutationPlugin,
-  FormParameter,
-  FormMutation,
-};
+export { FormParserPlugin, FormMutationPlugin, FormParameter, FormMutation };

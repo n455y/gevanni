@@ -1,9 +1,4 @@
-import {
-  MutationType,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
-} from "../../types/branded.ts";
+import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
 import type { Payload } from "../../types/branded.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
@@ -14,10 +9,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 class HeaderParameter extends AuditParameter<{ name: string }, string> {
   static kind = "header";
-  createMutation(
-    payload: Payload,
-    method: MutationType,
-  ): HeaderMutation {
+  createMutation(payload: Payload, method: MutationType): HeaderMutation {
     return new HeaderMutation(this, payload, method);
   }
 }
@@ -29,12 +21,9 @@ class HeaderParserPlugin implements Plugin {
   readonly name = "header-parser";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ParseRequestCommand,
-      async (cmd) => {
-        return parseHeaderParameters(cmd.request);
-      },
-    );
+    context.commandBus.register(ParseRequestCommand, async (cmd) => {
+      return parseHeaderParameters(cmd.request);
+    });
   }
 }
 
@@ -42,35 +31,31 @@ class HeaderMutationPlugin implements Plugin {
   readonly name = "header-mutation";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ApplyMutationCommand,
-      async (cmd, request) => {
-        const headerMutations = cmd.mutations.filter(
-          (instr): instr is HeaderMutation =>
-            instr instanceof HeaderMutation,
-        );
+    context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {
+      const headerMutations = cmd.mutations.filter(
+        (instr): instr is HeaderMutation => instr instanceof HeaderMutation,
+      );
 
-        if (headerMutations.length === 0) {
-          return request;
-        }
+      if (headerMutations.length === 0) {
+        return request;
+      }
 
-        const headers = { ...request.headers };
+      const headers = { ...request.headers };
 
-        for (const instr of headerMutations) {
-          const parameterName = instr.parameter.location.name;
-          const current = headers[parameterName] ?? "";
-          const payload = instr.payload as string;
-          headers[parameterName] = applyMutation(current, payload, instr.method);
-        }
+      for (const instr of headerMutations) {
+        const parameterName = instr.parameter.location.name;
+        const current = headers[parameterName] ?? "";
+        const payload = instr.payload as string;
+        headers[parameterName] = applyMutation(current, payload, instr.method);
+      }
 
-        return {
-          method: request.method,
-          url: request.url,
-          headers,
-          body: request.body,
-        };
-      },
-    );
+      return {
+        method: request.method,
+        url: request.url,
+        headers,
+        body: request.body,
+      };
+    });
   }
 }
 
@@ -80,9 +65,9 @@ function parseHeaderParameters(request: HttpRequest): AuditParameter[] {
   for (const [name, value] of Object.entries(request.headers)) {
     params.push(
       new HeaderParameter({ name }, value, [
-        ReplaceValue,
-        AppendValue,
-        PrependValue,
+        BuiltinMutationType.ReplaceValue,
+        BuiltinMutationType.AppendValue,
+        BuiltinMutationType.PrependValue,
       ]),
     );
   }
@@ -96,11 +81,11 @@ function applyMutation(
   method: MutationType,
 ): string {
   switch (method) {
-    case ReplaceValue:
+    case BuiltinMutationType.ReplaceValue:
       return payload;
-    case PrependValue:
+    case BuiltinMutationType.PrependValue:
       return payload + current;
-    case AppendValue:
+    case BuiltinMutationType.AppendValue:
       return current + payload;
     default:
       return current;

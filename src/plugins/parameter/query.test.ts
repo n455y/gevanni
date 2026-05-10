@@ -8,13 +8,11 @@ import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { QueryParameter } from "./query.ts";
 import { JsonPrimitiveParameter } from "./json.ts";
 import { QueryMutation } from "./query.ts";
-import { Payload as toPayload } from "../../types/branded.ts";
 import {
-  MutationType,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
+  BuiltinMutationType,
+  Payload as toPayload,
 } from "../../types/branded.ts";
+import { MutationType } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 
@@ -34,9 +32,9 @@ function makeQueryInstruction(
 ): QueryMutation {
   return new QueryMutation(
     new QueryParameter({ name: paramName }, originalValue, [
-      ReplaceValue,
-      AppendValue,
-      PrependValue,
+      BuiltinMutationType.ReplaceValue,
+      BuiltinMutationType.AppendValue,
+      BuiltinMutationType.PrependValue,
     ]),
     toPayload(payload),
     method,
@@ -67,14 +65,14 @@ describe("QueryParserPlugin", () => {
     expect(targets).toEqual(
       expect.arrayContaining([
         new QueryParameter({ name: "foo" }, "bar", [
-          ReplaceValue,
-          AppendValue,
-          PrependValue,
+          BuiltinMutationType.ReplaceValue,
+          BuiltinMutationType.AppendValue,
+          BuiltinMutationType.PrependValue,
         ]),
         new QueryParameter({ name: "baz" }, "123", [
-          ReplaceValue,
-          AppendValue,
-          PrependValue,
+          BuiltinMutationType.ReplaceValue,
+          BuiltinMutationType.AppendValue,
+          BuiltinMutationType.PrependValue,
         ]),
       ]),
     );
@@ -145,7 +143,7 @@ describe("QueryMutationPlugin", () => {
       "foo",
       "bar",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -178,7 +176,7 @@ describe("QueryMutationPlugin", () => {
       "foo",
       "bar",
       "INJECTED",
-      AppendValue,
+      BuiltinMutationType.AppendValue,
     );
 
     const result = await commandBus.pipe(
@@ -208,7 +206,7 @@ describe("QueryMutationPlugin", () => {
       "foo",
       "bar",
       "INJECTED",
-      PrependValue,
+      BuiltinMutationType.PrependValue,
     );
 
     const result = await commandBus.pipe(
@@ -237,8 +235,12 @@ describe("QueryMutationPlugin", () => {
     const instruction = new JsonPrimitiveParameter(
       { path: ["user", "name"] },
       "test",
-      [ReplaceValue, AppendValue, PrependValue],
-    ).createMutation(toPayload("INJECTED"), ReplaceValue);
+      [
+        BuiltinMutationType.ReplaceValue,
+        BuiltinMutationType.AppendValue,
+        BuiltinMutationType.PrependValue,
+      ],
+    ).createMutation(toPayload("INJECTED"), BuiltinMutationType.ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -263,8 +265,8 @@ describe("QueryMutationPlugin", () => {
     };
 
     const mutations = [
-      makeQueryInstruction("foo", "bar", "X", ReplaceValue),
-      makeQueryInstruction("baz", "123", "Y", AppendValue),
+      makeQueryInstruction("foo", "bar", "X", BuiltinMutationType.ReplaceValue),
+      makeQueryInstruction("baz", "123", "Y", BuiltinMutationType.AppendValue),
     ];
 
     const result = await commandBus.pipe(

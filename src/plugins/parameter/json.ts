@@ -1,9 +1,4 @@
-import {
-  MutationType,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
-} from "../../types/branded.ts";
+import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
 import type { Payload } from "../../types/branded.ts";
 import type {
   HttpRequest,
@@ -32,15 +27,9 @@ class JsonPrimitiveParameter extends AuditParameter<
 }
 serializable(JsonPrimitiveParameter);
 
-class JsonArrayParameter extends AuditParameter<
-  { path: string[] },
-  JsonArray
-> {
+class JsonArrayParameter extends AuditParameter<{ path: string[] }, JsonArray> {
   static kind = "json-array";
-  createMutation(
-    payload: Payload,
-    method: MutationType,
-  ): JsonArrayMutation {
+  createMutation(payload: Payload, method: MutationType): JsonArrayMutation {
     return new JsonArrayMutation(this, payload, method);
   }
 }
@@ -51,10 +40,7 @@ class JsonObjectParameter extends AuditParameter<
   JsonObject
 > {
   static kind = "json-object";
-  createMutation(
-    payload: Payload,
-    method: MutationType,
-  ): JsonObjectMutation {
+  createMutation(payload: Payload, method: MutationType): JsonObjectMutation {
     return new JsonObjectMutation(this, payload, method);
   }
 }
@@ -69,11 +55,13 @@ type JsonMutation =
   | JsonArrayMutation
   | JsonObjectMutation;
 
-const ALLOWED_MUTATIONS = [ReplaceValue, AppendValue, PrependValue];
+const ALLOWED_MUTATIONS = [
+  BuiltinMutationType.ReplaceValue,
+  BuiltinMutationType.AppendValue,
+  BuiltinMutationType.PrependValue,
+];
 
-function isJsonMutation(
-  instr: AuditMutation,
-): instr is JsonMutation {
+function isJsonMutation(instr: AuditMutation): instr is JsonMutation {
   return (
     instr instanceof JsonPrimitiveMutation ||
     instr instanceof JsonArrayMutation ||
@@ -85,12 +73,9 @@ class JsonParserPlugin implements Plugin {
   readonly name = "json-parser";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ParseRequestCommand,
-      async (cmd) => {
-        return parseJsonParameters(cmd.request);
-      },
-    );
+    context.commandBus.register(ParseRequestCommand, async (cmd) => {
+      return parseJsonParameters(cmd.request);
+    });
   }
 }
 
@@ -98,39 +83,36 @@ class JsonMutationPlugin implements Plugin {
   readonly name = "json-mutation";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ApplyMutationCommand,
-      async (cmd, request) => {
-        const jsonMutations = cmd.mutations.filter(isJsonMutation);
+    context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {
+      const jsonMutations = cmd.mutations.filter(isJsonMutation);
 
-        if (jsonMutations.length === 0) {
-          return request;
-        }
+      if (jsonMutations.length === 0) {
+        return request;
+      }
 
-        if (!request.body) {
-          return request;
-        }
+      if (!request.body) {
+        return request;
+      }
 
-        let jsonBody: JsonValue;
-        try {
-          jsonBody = JSON.parse(request.body.toString("utf-8")) as JsonValue;
-        } catch {
-          return request;
-        }
+      let jsonBody: JsonValue;
+      try {
+        jsonBody = JSON.parse(request.body.toString("utf-8")) as JsonValue;
+      } catch {
+        return request;
+      }
 
-        for (const instr of jsonMutations) {
-          const path = instr.parameter.location.path;
-          jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
-        }
+      for (const instr of jsonMutations) {
+        const path = instr.parameter.location.path;
+        jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
+      }
 
-        return {
-          method: request.method,
-          url: request.url,
-          headers: request.headers,
-          body: Buffer.from(JSON.stringify(jsonBody), "utf-8"),
-        };
-      },
-    );
+      return {
+        method: request.method,
+        url: request.url,
+        headers: request.headers,
+        body: Buffer.from(JSON.stringify(jsonBody), "utf-8"),
+      };
+    });
   }
 }
 
@@ -171,13 +153,17 @@ function extractJsonParams(
       new JsonPrimitiveParameter({ path }, value, [...ALLOWED_MUTATIONS]),
     );
   } else if (Array.isArray(value)) {
-    params.push(new JsonArrayParameter({ path }, value, [...ALLOWED_MUTATIONS]));
+    params.push(
+      new JsonArrayParameter({ path }, value, [...ALLOWED_MUTATIONS]),
+    );
 
     for (let i = 0; i < value.length; i++) {
       extractJsonParams(value[i], [...path, String(i)], params);
     }
   } else if (typeof value === "object") {
-    params.push(new JsonObjectParameter({ path }, value, [...ALLOWED_MUTATIONS]));
+    params.push(
+      new JsonObjectParameter({ path }, value, [...ALLOWED_MUTATIONS]),
+    );
 
     for (const key of Object.keys(value)) {
       extractJsonParams(value[key], [...path, key], params);
@@ -229,11 +215,11 @@ function applyMutationValue(
   method: MutationType,
 ): JsonValue {
   switch (method) {
-    case ReplaceValue:
+    case BuiltinMutationType.ReplaceValue:
       return payload;
-    case AppendValue:
+    case BuiltinMutationType.AppendValue:
       return String(current) + payload;
-    case PrependValue:
+    case BuiltinMutationType.PrependValue:
       return payload + String(current);
     default:
       return current;

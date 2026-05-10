@@ -6,11 +6,18 @@ import { PostmanPlugin, PostmanScenarioType, runNewman } from "./postman.ts";
 import { startMutationProxy } from "../proxy/http-proxy.ts";
 import type { MutationProxy } from "../proxy/http-proxy.ts";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.ts";
-import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.ts";
+import {
+  LoadExchangesCommand,
+  SaveExchangeCommand,
+} from "../../commands/exchange.ts";
 import { QueryMutationPlugin, QueryMutation } from "../parameter/query.ts";
 import type { Scenario, Exchange } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import { ReplaceValue, ScenarioId, Payload as toPayload } from "../../types/branded.ts";
+import {
+  BuiltinMutationType,
+  ScenarioId,
+  Payload as toPayload,
+} from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
@@ -96,114 +103,140 @@ function makeScenario(overrides: {
 
 function makeTamperInstruction(): QueryMutation {
   return new QueryMutation(
-    new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
+    new QueryParameter({ name: "q" }, "original", [
+      BuiltinMutationType.ReplaceValue,
+    ]),
     toPayload("<script>"),
-    ReplaceValue,
+    BuiltinMutationType.ReplaceValue,
   );
 }
 
 describe("PostmanPlugin", () => {
-  it("sends request through proxy with empty mutations", { timeout: 30_000 }, async () => {
-    const plugin = new PostmanPlugin();
-    const proxy = await startMutationProxy([], commandBus);
+  it(
+    "sends request through proxy with empty mutations",
+    { timeout: 30_000 },
+    async () => {
+      const plugin = new PostmanPlugin();
+      const proxy = await startMutationProxy([], commandBus);
 
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      config: {},
-    });
+      await plugin.init({
+        commandBus,
+        eventBus: new InMemoryEventBus(),
+        config: {},
+      });
 
-    const scenario = makeScenario({ method: "GET" });
-    const config: ReplayConfig = { mutations: [], proxyPort: proxy.port, replayId: "test-plan" };
+      const scenario = makeScenario({ method: "GET" });
+      const config: ReplayConfig = {
+        mutations: [],
+        proxyPort: proxy.port,
+        replayId: "test-plan",
+      };
 
-    const results = await commandBus.dispatch<Exchange[]>(
-      new ReplayCommand(scenario, config),
-    );
-    const result = results[0];
+      const results = await commandBus.dispatch<Exchange[]>(
+        new ReplayCommand(scenario, config),
+      );
+      const result = results[0];
 
-    expect(result.request).toBeDefined();
-    expect(result.response).toBeDefined();
-    expect(result.response.statusCode).toBe(200);
-    expect(result.response.headers["x-test"]).toBe("ok");
+      expect(result.request).toBeDefined();
+      expect(result.response).toBeDefined();
+      expect(result.response.statusCode).toBe(200);
+      expect(result.response.headers["x-test"]).toBe("ok");
 
-    const body = JSON.parse(
-      (result.response.body as Buffer).toString("utf-8"),
-    );
-    expect(body.method).toBe("GET");
-    expect(body.url).toBe("/test");
+      const body = JSON.parse(
+        (result.response.body as Buffer).toString("utf-8"),
+      );
+      expect(body.method).toBe("GET");
+      expect(body.url).toBe("/test");
 
-    proxy.close();
-  });
+      proxy.close();
+    },
+  );
 
-  it("applies tamper via proxy when mutations are provided", { timeout: 30_000 }, async () => {
-    const plugin = new PostmanPlugin();
-    const queryTamper = new QueryMutationPlugin();
-    const mutations = [makeTamperInstruction()];
-    const proxy = await startMutationProxy(mutations, commandBus);
+  it(
+    "applies tamper via proxy when mutations are provided",
+    { timeout: 30_000 },
+    async () => {
+      const plugin = new PostmanPlugin();
+      const queryTamper = new QueryMutationPlugin();
+      const mutations = [makeTamperInstruction()];
+      const proxy = await startMutationProxy(mutations, commandBus);
 
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      config: {},
-    });
-    await queryTamper.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      config: {},
-    });
+      await plugin.init({
+        commandBus,
+        eventBus: new InMemoryEventBus(),
+        config: {},
+      });
+      await queryTamper.init({
+        commandBus,
+        eventBus: new InMemoryEventBus(),
+        config: {},
+      });
 
-    const scenario = makeScenario({
-      method: "GET",
-      url: `http://127.0.0.1:${serverPort}/test?q=original`,
-    });
-    const config: ReplayConfig = { mutations, proxyPort: proxy.port, replayId: "test-tamper" };
+      const scenario = makeScenario({
+        method: "GET",
+        url: `http://127.0.0.1:${serverPort}/test?q=original`,
+      });
+      const config: ReplayConfig = {
+        mutations,
+        proxyPort: proxy.port,
+        replayId: "test-tamper",
+      };
 
-    const results = await commandBus.dispatch<Exchange[]>(
-      new ReplayCommand(scenario, config),
-    );
-    const result = results[0];
+      const results = await commandBus.dispatch<Exchange[]>(
+        new ReplayCommand(scenario, config),
+      );
+      const result = results[0];
 
-    expect(result.response.statusCode).toBe(200);
+      expect(result.response.statusCode).toBe(200);
 
-    const body = JSON.parse(
-      (result.response.body as Buffer).toString("utf-8"),
-    );
-    expect(body.url).toBe("/test?q=%3Cscript%3E");
+      const body = JSON.parse(
+        (result.response.body as Buffer).toString("utf-8"),
+      );
+      expect(body.url).toBe("/test?q=%3Cscript%3E");
 
-    proxy.close();
-  });
+      proxy.close();
+    },
+  );
 
-  it("sends POST request with body from scenario source", { timeout: 30_000 }, async () => {
-    const plugin = new PostmanPlugin();
-    const proxy = await startMutationProxy([], commandBus);
+  it(
+    "sends POST request with body from scenario source",
+    { timeout: 30_000 },
+    async () => {
+      const plugin = new PostmanPlugin();
+      const proxy = await startMutationProxy([], commandBus);
 
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      config: {},
-    });
+      await plugin.init({
+        commandBus,
+        eventBus: new InMemoryEventBus(),
+        config: {},
+      });
 
-    const scenario = makeScenario({
-      method: "POST",
-      body: '{"key":"value"}',
-    });
-    const config: ReplayConfig = { mutations: [], proxyPort: proxy.port, replayId: "test-post" };
+      const scenario = makeScenario({
+        method: "POST",
+        body: '{"key":"value"}',
+      });
+      const config: ReplayConfig = {
+        mutations: [],
+        proxyPort: proxy.port,
+        replayId: "test-post",
+      };
 
-    const results = await commandBus.dispatch<Exchange[]>(
-      new ReplayCommand(scenario, config),
-    );
-    const result = results[0];
+      const results = await commandBus.dispatch<Exchange[]>(
+        new ReplayCommand(scenario, config),
+      );
+      const result = results[0];
 
-    expect(result.response.statusCode).toBe(200);
+      expect(result.response.statusCode).toBe(200);
 
-    const body = JSON.parse(
-      (result.response.body as Buffer).toString("utf-8"),
-    );
-    expect(body.method).toBe("POST");
-    expect(body.body).toBe('{"key":"value"}');
+      const body = JSON.parse(
+        (result.response.body as Buffer).toString("utf-8"),
+      );
+      expect(body.method).toBe("POST");
+      expect(body.body).toBe('{"key":"value"}');
 
-    proxy.close();
-  });
+      proxy.close();
+    },
+  );
 });
 
 describe("runNewman", () => {
@@ -217,27 +250,31 @@ describe("runNewman", () => {
     runNewmanProxy.close();
   });
 
-  it("executes a GET request and resolves without error", { timeout: 30_000 }, async () => {
-    const scenario: Scenario = {
-      id: ScenarioId("s1"),
-      name: "Test Newman GET",
-      type: PostmanScenarioType,
-      source: {
-        items: [
-          {
-            request: {
-              method: "GET",
-              url: { raw: `http://127.0.0.1:${serverPort}/test` },
+  it(
+    "executes a GET request and resolves without error",
+    { timeout: 30_000 },
+    async () => {
+      const scenario: Scenario = {
+        id: ScenarioId("s1"),
+        name: "Test Newman GET",
+        type: PostmanScenarioType,
+        source: {
+          items: [
+            {
+              request: {
+                method: "GET",
+                url: { raw: `http://127.0.0.1:${serverPort}/test` },
+              },
             },
-          },
-        ],
-      },
-    };
+          ],
+        },
+      };
 
-    await expect(
-      runNewman(scenario, runNewmanProxy.port, "test-replay-id"),
-    ).resolves.toBeUndefined();
-  });
+      await expect(
+        runNewman(scenario, runNewmanProxy.port, "test-replay-id"),
+      ).resolves.toBeUndefined();
+    },
+  );
 
   it("executes a POST request with body", { timeout: 30_000 }, async () => {
     const scenario: Scenario = {
@@ -265,52 +302,60 @@ describe("runNewman", () => {
 });
 
 describe("PostmanPlugin multi-request", () => {
-  it("sends multiple requests but only saves exchanges for the last item", { timeout: 30_000 }, async () => {
-    const plugin = new PostmanPlugin();
-    const proxy = await startMutationProxy([], commandBus);
+  it(
+    "sends multiple requests but only saves exchanges for the last item",
+    { timeout: 30_000 },
+    async () => {
+      const plugin = new PostmanPlugin();
+      const proxy = await startMutationProxy([], commandBus);
 
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      config: {},
-    });
+      await plugin.init({
+        commandBus,
+        eventBus: new InMemoryEventBus(),
+        config: {},
+      });
 
-    const scenario: Scenario = {
-      id: ScenarioId("multi-1"),
-      name: "Multi Request",
-      type: PostmanScenarioType,
-      source: {
-        items: [
-          {
-            request: {
-              method: "GET",
-              url: { raw: `http://127.0.0.1:${serverPort}/setup` },
+      const scenario: Scenario = {
+        id: ScenarioId("multi-1"),
+        name: "Multi Request",
+        type: PostmanScenarioType,
+        source: {
+          items: [
+            {
+              request: {
+                method: "GET",
+                url: { raw: `http://127.0.0.1:${serverPort}/setup` },
+              },
             },
-          },
-          {
-            request: {
-              method: "GET",
-              url: { raw: `http://127.0.0.1:${serverPort}/main` },
+            {
+              request: {
+                method: "GET",
+                url: { raw: `http://127.0.0.1:${serverPort}/main` },
+              },
             },
-          },
-        ],
-      },
-    };
+          ],
+        },
+      };
 
-    const config: ReplayConfig = { mutations: [], proxyPort: proxy.port, replayId: "test-multi" };
+      const config: ReplayConfig = {
+        mutations: [],
+        proxyPort: proxy.port,
+        replayId: "test-multi",
+      };
 
-    const results = await commandBus.dispatch<Exchange[]>(
-      new ReplayCommand(scenario, config),
-    );
+      const results = await commandBus.dispatch<Exchange[]>(
+        new ReplayCommand(scenario, config),
+      );
 
-    expect(results).toHaveLength(1);
-    expect(results[0].response.statusCode).toBe(200);
+      expect(results).toHaveLength(1);
+      expect(results[0].response.statusCode).toBe(200);
 
-    const body = JSON.parse(
-      (results[0].response.body as Buffer).toString("utf-8"),
-    );
-    expect(body.url).toBe("/main");
+      const body = JSON.parse(
+        (results[0].response.body as Buffer).toString("utf-8"),
+      );
+      expect(body.url).toBe("/main");
 
-    proxy.close();
-  });
+      proxy.close();
+    },
+  );
 });

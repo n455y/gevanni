@@ -1,9 +1,4 @@
-import {
-  MutationType,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
-} from "../../types/branded.ts";
+import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
 import type { Payload } from "../../types/branded.ts";
 import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
@@ -12,15 +7,9 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class GraphQLQueryParameter extends AuditParameter<
-  { field: string },
-  string
-> {
+class GraphQLQueryParameter extends AuditParameter<{ field: string }, string> {
   static kind = "graphql-query";
-  createMutation(
-    payload: Payload,
-    method: MutationType,
-  ): GraphQLQueryMutation {
+  createMutation(payload: Payload, method: MutationType): GraphQLQueryMutation {
     return new GraphQLQueryMutation(this, payload, method);
   }
 }
@@ -43,31 +32,28 @@ serializable(GraphQLVariableParameter);
 class GraphQLQueryMutation extends AuditMutation<GraphQLQueryParameter> {}
 class GraphQLVariableMutation extends AuditMutation<GraphQLVariableParameter> {}
 
-type GraphQLMutation =
-  | GraphQLQueryMutation
-  | GraphQLVariableMutation;
+type GraphQLMutation = GraphQLQueryMutation | GraphQLVariableMutation;
 
-function isGraphQLMutation(
-  instr: AuditMutation,
-): instr is GraphQLMutation {
+function isGraphQLMutation(instr: AuditMutation): instr is GraphQLMutation {
   return (
     instr instanceof GraphQLQueryMutation ||
     instr instanceof GraphQLVariableMutation
   );
 }
 
-const ALLOWED_MUTATIONS = [ReplaceValue, AppendValue, PrependValue];
+const ALLOWED_MUTATIONS = [
+  BuiltinMutationType.ReplaceValue,
+  BuiltinMutationType.AppendValue,
+  BuiltinMutationType.PrependValue,
+];
 
 class GraphQLParserPlugin implements Plugin {
   readonly name = "graphql-parser";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ParseRequestCommand,
-      async (cmd) => {
-        return parseGraphQLParameters(cmd.request);
-      },
-    );
+    context.commandBus.register(ParseRequestCommand, async (cmd) => {
+      return parseGraphQLParameters(cmd.request);
+    });
   }
 }
 
@@ -75,61 +61,57 @@ class GraphQLMutationPlugin implements Plugin {
   readonly name = "graphql-mutation";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      ApplyMutationCommand,
-      async (cmd, request) => {
-        const graphqlMutations =
-          cmd.mutations.filter(isGraphQLMutation);
+    context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {
+      const graphqlMutations = cmd.mutations.filter(isGraphQLMutation);
 
-        if (graphqlMutations.length === 0) {
-          return request;
-        }
+      if (graphqlMutations.length === 0) {
+        return request;
+      }
 
-        if (!request.body) {
-          return request;
-        }
+      if (!request.body) {
+        return request;
+      }
 
-        let jsonBody: JsonValue;
-        try {
-          jsonBody = JSON.parse(request.body.toString("utf-8")) as JsonValue;
-        } catch {
-          return request;
-        }
+      let jsonBody: JsonValue;
+      try {
+        jsonBody = JSON.parse(request.body.toString("utf-8")) as JsonValue;
+      } catch {
+        return request;
+      }
 
-        for (const instr of graphqlMutations) {
-          if (instr instanceof GraphQLQueryMutation) {
-            const field = instr.parameter.location.field;
-            if (
-              typeof jsonBody === "object" &&
-              jsonBody !== null &&
-              !Array.isArray(jsonBody) &&
-              field in jsonBody
-            ) {
-              (jsonBody as Record<string, JsonValue>)[field] = applyMutationValue(
-                (jsonBody as Record<string, JsonValue>)[field],
-                instr.payload as string,
-                instr.method,
-              );
-            }
-          } else if (instr instanceof GraphQLVariableMutation) {
-            const path = instr.parameter.location.path;
-            jsonBody = applyAtPath(
-              jsonBody,
-              path,
+      for (const instr of graphqlMutations) {
+        if (instr instanceof GraphQLQueryMutation) {
+          const field = instr.parameter.location.field;
+          if (
+            typeof jsonBody === "object" &&
+            jsonBody !== null &&
+            !Array.isArray(jsonBody) &&
+            field in jsonBody
+          ) {
+            (jsonBody as Record<string, JsonValue>)[field] = applyMutationValue(
+              (jsonBody as Record<string, JsonValue>)[field],
               instr.payload as string,
               instr.method,
             );
           }
+        } else if (instr instanceof GraphQLVariableMutation) {
+          const path = instr.parameter.location.path;
+          jsonBody = applyAtPath(
+            jsonBody,
+            path,
+            instr.payload as string,
+            instr.method,
+          );
         }
+      }
 
-        return {
-          method: request.method,
-          url: request.url,
-          headers: request.headers,
-          body: Buffer.from(JSON.stringify(jsonBody), "utf-8"),
-        };
-      },
-    );
+      return {
+        method: request.method,
+        url: request.url,
+        headers: request.headers,
+        body: Buffer.from(JSON.stringify(jsonBody), "utf-8"),
+      };
+    });
   }
 }
 
@@ -268,11 +250,11 @@ function applyMutationValue(
   method: MutationType,
 ): JsonValue {
   switch (method) {
-    case ReplaceValue:
+    case BuiltinMutationType.ReplaceValue:
       return payload;
-    case AppendValue:
+    case BuiltinMutationType.AppendValue:
       return String(current) + payload;
-    case PrependValue:
+    case BuiltinMutationType.PrependValue:
       return payload + String(current);
     default:
       return current;

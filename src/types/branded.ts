@@ -18,11 +18,7 @@ export const ScenarioType = (type: string) => type as ScenarioType;
 export type MutationType = Brand<string, "MutationType">;
 export const MutationType = (type: string) => type as MutationType;
 
-const ReplaceValue = MutationType("ReplaceValue");
-const AppendValue = MutationType("AppendValue");
-const PrependValue = MutationType("PrependValue");
-
-export const StandardMutationType = {
+export const BuiltinMutationType = {
   ReplaceValue: MutationType("ReplaceValue"),
   AppendValue: MutationType("AppendValue"),
   PrependValue: MutationType("PrependValue"),
@@ -59,7 +55,4 @@ export {
   ScanStatus,
   Payload,
   ErrorMessage,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
 };

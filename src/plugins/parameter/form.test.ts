@@ -7,13 +7,11 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { FormParameter } from "./form.ts";
 import { FormMutation } from "./form.ts";
-import { Payload as toPayload } from "../../types/branded.ts";
 import {
-  MutationType,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
+  BuiltinMutationType,
+  Payload as toPayload,
 } from "../../types/branded.ts";
+import { MutationType } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 
@@ -42,9 +40,9 @@ function makeFormInstruction(
 ): FormMutation {
   return new FormMutation(
     new FormParameter({ name: paramName }, originalValue, [
-      ReplaceValue,
-      AppendValue,
-      PrependValue,
+      BuiltinMutationType.ReplaceValue,
+      BuiltinMutationType.AppendValue,
+      BuiltinMutationType.PrependValue,
     ]),
     toPayload(payload),
     method,
@@ -69,14 +67,14 @@ describe("FormParserPlugin", () => {
     expect(targets).toEqual(
       expect.arrayContaining([
         new FormParameter({ name: "username" }, "admin", [
-          ReplaceValue,
-          AppendValue,
-          PrependValue,
+          BuiltinMutationType.ReplaceValue,
+          BuiltinMutationType.AppendValue,
+          BuiltinMutationType.PrependValue,
         ]),
         new FormParameter({ name: "password" }, "secret", [
-          ReplaceValue,
-          AppendValue,
-          PrependValue,
+          BuiltinMutationType.ReplaceValue,
+          BuiltinMutationType.AppendValue,
+          BuiltinMutationType.PrependValue,
         ]),
       ]),
     );
@@ -167,7 +165,7 @@ describe("FormMutationPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -196,7 +194,7 @@ describe("FormMutationPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      AppendValue,
+      BuiltinMutationType.AppendValue,
     );
 
     const result = await commandBus.pipe(
@@ -221,7 +219,7 @@ describe("FormMutationPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      PrependValue,
+      BuiltinMutationType.PrependValue,
     );
 
     const result = await commandBus.pipe(
@@ -252,7 +250,7 @@ describe("FormMutationPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -275,7 +273,7 @@ describe("FormMutationPlugin", () => {
       "nonexistent",
       "value",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -304,7 +302,7 @@ describe("FormMutationPlugin", () => {
       "redirect",
       "home",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -324,8 +322,18 @@ describe("FormMutationPlugin", () => {
 
     const request = makeFormRequest("username=admin&password=secret");
     const mutations = [
-      makeFormInstruction("username", "admin", "X", ReplaceValue),
-      makeFormInstruction("password", "secret", "Y", AppendValue),
+      makeFormInstruction(
+        "username",
+        "admin",
+        "X",
+        BuiltinMutationType.ReplaceValue,
+      ),
+      makeFormInstruction(
+        "password",
+        "secret",
+        "Y",
+        BuiltinMutationType.AppendValue,
+      ),
     ];
 
     const result = await commandBus.pipe(
@@ -357,7 +365,7 @@ describe("FormMutationPlugin", () => {
       "username",
       "admin",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(

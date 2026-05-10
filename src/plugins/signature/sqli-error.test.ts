@@ -13,7 +13,7 @@ import type {
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ReplaceValue, AppendValue } from "../../types/branded.ts";
+import { BuiltinMutationType } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
@@ -23,7 +23,10 @@ beforeEach(() => {
 });
 
 function makeQueryParameter(name: string, value: string): AuditParameter {
-  return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
+  return new QueryParameter({ name }, value, [
+    BuiltinMutationType.ReplaceValue,
+    BuiltinMutationType.AppendValue,
+  ]);
 }
 
 function makeJsonPrimitiveParam(
@@ -31,12 +34,14 @@ function makeJsonPrimitiveParam(
   value: unknown,
 ): AuditParameter {
   return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [
-    ReplaceValue,
+    BuiltinMutationType.ReplaceValue,
   ]);
 }
 
 function makeHeaderTarget(name: string, value: string): AuditParameter {
-  return new HeaderParameter({ name }, value, [ReplaceValue]);
+  return new HeaderParameter({ name }, value, [
+    BuiltinMutationType.ReplaceValue,
+  ]);
 }
 
 const mockRequest: HttpRequest = {
@@ -47,7 +52,7 @@ const mockRequest: HttpRequest = {
 };
 
 describe("SqliErrorPlugin", () => {
-  it("creates definitions only for parameters with AppendValue tamper", async () => {
+  it("creates definitions only for parameters with StandardMutationType.AppendValue tamper", async () => {
     const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,

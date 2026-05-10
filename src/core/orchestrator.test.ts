@@ -16,13 +16,13 @@ import type {
 } from "../types/models.ts";
 import type { AuditParameter } from "../types/models.ts";
 import {
+  BuiltinMutationType,
   ScanId,
   JobId,
   ExchangeId,
   ScenarioId,
   JobStatus,
   ScanStatus,
-  ReplaceValue,
 } from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";
 import {
@@ -57,13 +57,23 @@ const mockResponse: HttpResponse = {
 };
 
 const mockTargets: AuditParameter[] = [
-  new QueryParameter({ name: "q" }, "hello", [ReplaceValue]),
+  new QueryParameter({ name: "q" }, "hello", [
+    BuiltinMutationType.ReplaceValue,
+  ]),
 ];
 
-const mockExchange = { id: ExchangeId("ex-0"), request: mockRequest, response: mockResponse };
+const mockExchange = {
+  id: ExchangeId("ex-0"),
+  request: mockRequest,
+  response: mockResponse,
+};
 const mockFinding: Finding = {
   vulnerable: false,
-  evidence: { judgmentId: "mock-check", exchanges: [mockExchange], evidenceExchanges: [] },
+  evidence: {
+    judgmentId: "mock-check",
+    exchanges: [mockExchange],
+    evidenceExchanges: [],
+  },
   request: mockRequest,
   response: mockResponse,
 };
@@ -104,11 +114,9 @@ describe("Orchestrator", () => {
 
       const mockItem: AuditItem = {
         signatureName: "mock-sig",
-parameter: mockTargets[0],
+        parameter: mockTargets[0],
       };
-      commandBus.register(CreateAuditItemsCommand, async () => [
-        mockItem,
-      ]);
+      commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
 
       const savedJobs: Job[] = [];
       commandBus.register(SaveJobCommand, async (cmd) => {
@@ -163,11 +171,9 @@ parameter: mockTargets[0],
 
       const mockItem: AuditItem = {
         signatureName: "mock-sig",
-parameter: mockTargets[0],
+        parameter: mockTargets[0],
       };
-      commandBus.register(CreateAuditItemsCommand, async () => [
-        mockItem,
-      ]);
+      commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
 
       const savedJobs: Job[] = [];
       commandBus.register(SaveJobCommand, async (cmd) => {
@@ -229,7 +235,7 @@ parameter: mockTargets[0],
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: "mock-sig",
-parameter: mockTargets[0],
+        parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -240,7 +246,7 @@ parameter: mockTargets[0],
       const items = new Map<string, AuditItem>();
       items.set("job-1", {
         signatureName: "mock-sig",
-parameter: mockTargets[0],
+        parameter: mockTargets[0],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -299,7 +305,7 @@ parameter: mockTargets[0],
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: "failing-sig",
-parameter: mockTargets[0],
+        parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -310,7 +316,7 @@ parameter: mockTargets[0],
       const items = new Map<string, AuditItem>();
       items.set("job-err", {
         signatureName: "failing-sig",
-parameter: mockTargets[0],
+        parameter: mockTargets[0],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -395,7 +401,7 @@ parameter: mockTargets[0],
           scanId: ScanId("report-scan-id"),
           scenarioId: ScenarioId("sc-1"),
           signatureName: "reflected-xss",
-parameter: mockTargets[0],
+          parameter: mockTargets[0],
           status: JobStatus.Completed,
           finding: mockFinding,
           error: null,
@@ -408,12 +414,9 @@ parameter: mockTargets[0],
       commandBus.register(LoadJobsByScanIdCommand, async () => mockJobs);
 
       let reportPayload: { scanState: ScanState; jobs: Job[] } | null = null;
-      commandBus.register(
-        GenerateReportCommand,
-        async (cmd) => {
-          reportPayload = cmd.payload;
-        },
-      );
+      commandBus.register(GenerateReportCommand, async (cmd) => {
+        reportPayload = cmd.payload;
+      });
 
       const orchestrator = new Orchestrator({
         commandBus,

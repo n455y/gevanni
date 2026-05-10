@@ -12,9 +12,15 @@ import { startMutationProxy } from "./http-proxy.ts";
 import type { HttpRequest, HttpResponse } from "../../types/models.ts";
 import { AuditMutation } from "../../types/models.ts";
 import type { Exchange } from "../../types/models.ts";
-import { ReplaceValue, Payload as toPayload } from "../../types/branded.ts";
+import {
+  BuiltinMutationType,
+  Payload as toPayload,
+} from "../../types/branded.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.ts";
+import {
+  LoadExchangesCommand,
+  SaveExchangeCommand,
+} from "../../commands/exchange.ts";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
@@ -90,25 +96,21 @@ describe("HttpProxyPlugin", () => {
     });
 
     // Register a no-op ApplyMutationCommand handler
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => request,
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
 
     const request = makeRequest(`http://127.0.0.1:${serverPort}/test`);
 
-    const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new InterceptCommand(request, []),
-    );
+    const result = await commandBus.dispatch<{
+      request: HttpRequest;
+      response: HttpResponse;
+    }>(new InterceptCommand(request, []));
 
     expect(result.request).toBeDefined();
     expect(result.response).toBeDefined();
     expect(result.response.statusCode).toBe(200);
     expect(result.response.headers["x-test"]).toBe("ok");
 
-    const body = JSON.parse(
-      (result.response.body as Buffer).toString("utf-8"),
-    );
+    const body = JSON.parse((result.response.body as Buffer).toString("utf-8"));
     expect(body.method).toBe("GET");
     expect(body.url).toBe("/test");
   });
@@ -122,26 +124,20 @@ describe("HttpProxyPlugin", () => {
     });
 
     // Register a tamper handler that modifies the URL
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => ({
-        ...request,
-        url: request.url.replace("/original", "/modified"),
-      }),
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => ({
+      ...request,
+      url: request.url.replace("/original", "/modified"),
+    }));
 
-    const request = makeRequest(
-      `http://127.0.0.1:${serverPort}/original`,
-    );
+    const request = makeRequest(`http://127.0.0.1:${serverPort}/original`);
 
-    const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new InterceptCommand(request, []),
-    );
+    const result = await commandBus.dispatch<{
+      request: HttpRequest;
+      response: HttpResponse;
+    }>(new InterceptCommand(request, []));
 
     // The modified URL should have been sent
-    const body = JSON.parse(
-      (result.response.body as Buffer).toString("utf-8"),
-    );
+    const body = JSON.parse((result.response.body as Buffer).toString("utf-8"));
     expect(body.url).toBe("/modified");
   });
 
@@ -153,10 +149,7 @@ describe("HttpProxyPlugin", () => {
       config: {},
     });
 
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => request,
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
 
     const request: HttpRequest = {
       method: "POST",
@@ -165,15 +158,14 @@ describe("HttpProxyPlugin", () => {
       body: Buffer.from('{"key":"value"}', "utf-8"),
     };
 
-    const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new InterceptCommand(request, []),
-    );
+    const result = await commandBus.dispatch<{
+      request: HttpRequest;
+      response: HttpResponse;
+    }>(new InterceptCommand(request, []));
 
     expect(result.response.statusCode).toBe(200);
 
-    const body = JSON.parse(
-      (result.response.body as Buffer).toString("utf-8"),
-    );
+    const body = JSON.parse((result.response.body as Buffer).toString("utf-8"));
     expect(body.method).toBe("POST");
     expect(body.body).toBe('{"key":"value"}');
   });
@@ -188,20 +180,16 @@ describe("HttpProxyPlugin", () => {
       },
     });
 
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => request,
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
 
     const request = makeRequest(`http://127.0.0.1:${serverPort}/test`);
 
-    const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new InterceptCommand(request, []),
-    );
+    const result = await commandBus.dispatch<{
+      request: HttpRequest;
+      response: HttpResponse;
+    }>(new InterceptCommand(request, []));
 
-    const body = JSON.parse(
-      (result.response.body as Buffer).toString("utf-8"),
-    );
+    const body = JSON.parse((result.response.body as Buffer).toString("utf-8"));
     expect(body.headers["x-custom"]).toBe("injected");
   });
 
@@ -213,19 +201,17 @@ describe("HttpProxyPlugin", () => {
       config: {},
     });
 
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => ({
-        ...request,
-        headers: { ...request.headers, "x-tampered": "true" },
-      }),
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => ({
+      ...request,
+      headers: { ...request.headers, "x-tampered": "true" },
+    }));
 
     const request = makeRequest(`http://127.0.0.1:${serverPort}/test`);
 
-    const result = await commandBus.dispatch<{ request: HttpRequest; response: HttpResponse }>(
-      new InterceptCommand(request, []),
-    );
+    const result = await commandBus.dispatch<{
+      request: HttpRequest;
+      response: HttpResponse;
+    }>(new InterceptCommand(request, []));
 
     // The returned request should be the modified one from the tamper pipeline
     expect(result.request.headers["x-tampered"]).toBe("true");
@@ -236,34 +222,33 @@ describe("startMutationProxy", () => {
   it("starts a proxy that forwards requests via tamper pipeline", async () => {
     const proxy = await startMutationProxy([], commandBus);
 
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => request,
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
 
-    const response = await new Promise<{ statusCode: number; body: string }>((resolve, reject) => {
-      const req = http.request(
-        {
-          hostname: "127.0.0.1",
-          port: proxy.port,
-          method: "GET",
-          path: `http://127.0.0.1:${serverPort}/proxy-test`,
-          headers: { host: `127.0.0.1:${serverPort}` },
-        },
-        (res) => {
-          const chunks: Buffer[] = [];
-          res.on("data", (chunk: Buffer) => chunks.push(chunk));
-          res.on("end", () => {
-            resolve({
-              statusCode: res.statusCode ?? 0,
-              body: Buffer.concat(chunks).toString("utf-8"),
+    const response = await new Promise<{ statusCode: number; body: string }>(
+      (resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: "127.0.0.1",
+            port: proxy.port,
+            method: "GET",
+            path: `http://127.0.0.1:${serverPort}/proxy-test`,
+            headers: { host: `127.0.0.1:${serverPort}` },
+          },
+          (res) => {
+            const chunks: Buffer[] = [];
+            res.on("data", (chunk: Buffer) => chunks.push(chunk));
+            res.on("end", () => {
+              resolve({
+                statusCode: res.statusCode ?? 0,
+                body: Buffer.concat(chunks).toString("utf-8"),
+              });
             });
-          });
-        },
-      );
-      req.on("error", reject);
-      req.end();
-    });
+          },
+        );
+        req.on("error", reject);
+        req.end();
+      },
+    );
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
@@ -274,51 +259,56 @@ describe("startMutationProxy", () => {
 
   it("applies tamper mutations to requests passing through", async () => {
     const mutations: AuditMutation[] = [
-      new QueryParameter({ name: "q" }, "original", [ReplaceValue]).createMutation(
+      new QueryParameter({ name: "q" }, "original", [
+        BuiltinMutationType.ReplaceValue,
+      ]).createMutation(
         toPayload("<script>"),
-        ReplaceValue,
+        BuiltinMutationType.ReplaceValue,
       ),
     ];
 
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => {
-        const url = new URL(request.url);
-        const searchParams = new URLSearchParams(url.search);
-        for (const instr of _cmd.mutations) {
-          const parameterName = (instr.parameter.location as { name: string }).name;
-          searchParams.set(parameterName, instr.payload as string);
-        }
-        url.search = searchParams.toString();
-        return { ...request, url: url.toString() };
-      },
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => {
+      const url = new URL(request.url);
+      const searchParams = new URLSearchParams(url.search);
+      for (const instr of _cmd.mutations) {
+        const parameterName = (instr.parameter.location as { name: string })
+          .name;
+        searchParams.set(parameterName, instr.payload as string);
+      }
+      url.search = searchParams.toString();
+      return { ...request, url: url.toString() };
+    });
 
     const proxy = await startMutationProxy(mutations, commandBus);
 
-    const response = await new Promise<{ statusCode: number; body: string }>((resolve, reject) => {
-      const req = http.request(
-        {
-          hostname: "127.0.0.1",
-          port: proxy.port,
-          method: "GET",
-          path: `http://127.0.0.1:${serverPort}/test?q=original`,
-          headers: { host: `127.0.0.1:${serverPort}`, "x-gevanni-mutate": "true" },
-        },
-        (res) => {
-          const chunks: Buffer[] = [];
-          res.on("data", (chunk: Buffer) => chunks.push(chunk));
-          res.on("end", () => {
-            resolve({
-              statusCode: res.statusCode ?? 0,
-              body: Buffer.concat(chunks).toString("utf-8"),
+    const response = await new Promise<{ statusCode: number; body: string }>(
+      (resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: "127.0.0.1",
+            port: proxy.port,
+            method: "GET",
+            path: `http://127.0.0.1:${serverPort}/test?q=original`,
+            headers: {
+              host: `127.0.0.1:${serverPort}`,
+              "x-gevanni-mutate": "true",
+            },
+          },
+          (res) => {
+            const chunks: Buffer[] = [];
+            res.on("data", (chunk: Buffer) => chunks.push(chunk));
+            res.on("end", () => {
+              resolve({
+                statusCode: res.statusCode ?? 0,
+                body: Buffer.concat(chunks).toString("utf-8"),
+              });
             });
-          });
-        },
-      );
-      req.on("error", reject);
-      req.end();
-    });
+          },
+        );
+        req.on("error", reject);
+        req.end();
+      },
+    );
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
@@ -331,10 +321,7 @@ describe("startMutationProxy", () => {
     const replayId = "replay-test-001";
     const proxy = await startMutationProxy([], commandBus);
 
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => request,
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
 
     const response = await new Promise<{ statusCode: number; body: string }>(
       (resolve, reject) => {
@@ -381,10 +368,7 @@ describe("startMutationProxy", () => {
   it("does not save exchange when X-Gevanni-Exchange-Id header is absent", async () => {
     const proxy = await startMutationProxy([], commandBus);
 
-    commandBus.register(
-      ApplyMutationCommand,
-      async (_cmd, request) => request,
-    );
+    commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
 
     const response = await new Promise<{ statusCode: number; body: string }>(
       (resolve, reject) => {

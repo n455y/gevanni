@@ -16,13 +16,11 @@ import type {
 } from "../../types/models.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import { Payload as toPayload } from "../../types/branded.ts";
 import {
-  MutationType,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
+  BuiltinMutationType,
+  Payload as toPayload,
 } from "../../types/branded.ts";
+import { MutationType } from "../../types/branded.ts";
 
 type AnyGraphQLTarget = GraphQLQueryParameter | GraphQLVariableParameter;
 
@@ -52,9 +50,9 @@ function makeQueryInstruction(
 ): GraphQLQueryMutation {
   return new GraphQLQueryMutation(
     new GraphQLQueryParameter({ field }, "", [
-      ReplaceValue,
-      AppendValue,
-      PrependValue,
+      BuiltinMutationType.ReplaceValue,
+      BuiltinMutationType.AppendValue,
+      BuiltinMutationType.PrependValue,
     ]),
     toPayload(payload),
     method,
@@ -69,9 +67,9 @@ function makeVariableInstruction(
 ): GraphQLVariableMutation {
   return new GraphQLVariableMutation(
     new GraphQLVariableParameter({ path }, originalValue, [
-      ReplaceValue,
-      AppendValue,
-      PrependValue,
+      BuiltinMutationType.ReplaceValue,
+      BuiltinMutationType.AppendValue,
+      BuiltinMutationType.PrependValue,
     ]),
     toPayload(payload),
     method,
@@ -297,7 +295,11 @@ describe("GraphQLMutationPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{}}`,
     );
-    const instruction = makeQueryInstruction("query", "INJECTED", ReplaceValue);
+    const instruction = makeQueryInstruction(
+      "query",
+      "INJECTED",
+      BuiltinMutationType.ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -320,7 +322,11 @@ describe("GraphQLMutationPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{}}`,
     );
-    const instruction = makeQueryInstruction("query", "INJECTED", AppendValue);
+    const instruction = makeQueryInstruction(
+      "query",
+      "INJECTED",
+      BuiltinMutationType.AppendValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -341,7 +347,11 @@ describe("GraphQLMutationPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{}}`,
     );
-    const instruction = makeQueryInstruction("query", "INJECTED", PrependValue);
+    const instruction = makeQueryInstruction(
+      "query",
+      "INJECTED",
+      BuiltinMutationType.PrependValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -366,7 +376,7 @@ describe("GraphQLMutationPlugin", () => {
       ["variables", "id"],
       "123",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -392,7 +402,7 @@ describe("GraphQLMutationPlugin", () => {
       ["variables", "id"],
       "123",
       "INJECTED",
-      AppendValue,
+      BuiltinMutationType.AppendValue,
     );
 
     const result = await commandBus.pipe(
@@ -418,7 +428,7 @@ describe("GraphQLMutationPlugin", () => {
       ["variables", "input", "name"],
       "test",
       "INJECTED",
-      ReplaceValue,
+      BuiltinMutationType.ReplaceValue,
     );
 
     const result = await commandBus.pipe(
@@ -442,10 +452,10 @@ describe("GraphQLMutationPlugin", () => {
       `{"query":"{ users { name } }","variables":{}}`,
     );
     const instruction = new QueryParameter({ name: "foo" }, "bar", [
-      ReplaceValue,
-      AppendValue,
-      PrependValue,
-    ]).createMutation(toPayload("INJECTED"), ReplaceValue);
+      BuiltinMutationType.ReplaceValue,
+      BuiltinMutationType.AppendValue,
+      BuiltinMutationType.PrependValue,
+    ]).createMutation(toPayload("INJECTED"), BuiltinMutationType.ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -469,7 +479,11 @@ describe("GraphQLMutationPlugin", () => {
       body: null,
     };
 
-    const instruction = makeQueryInstruction("query", "INJECTED", ReplaceValue);
+    const instruction = makeQueryInstruction(
+      "query",
+      "INJECTED",
+      BuiltinMutationType.ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -490,8 +504,18 @@ describe("GraphQLMutationPlugin", () => {
       `{"query":"{ users { name } }","variables":{"id":"123","name":"test"}}`,
     );
     const mutations = [
-      makeVariableInstruction(["variables", "id"], "123", "X", ReplaceValue),
-      makeVariableInstruction(["variables", "name"], "test", "Y", AppendValue),
+      makeVariableInstruction(
+        ["variables", "id"],
+        "123",
+        "X",
+        BuiltinMutationType.ReplaceValue,
+      ),
+      makeVariableInstruction(
+        ["variables", "name"],
+        "test",
+        "Y",
+        BuiltinMutationType.AppendValue,
+      ),
     ];
 
     const result = await commandBus.pipe(

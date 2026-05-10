@@ -5,7 +5,7 @@ import { HeaderParserPlugin } from "./header.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { HeaderParameter } from "./header.ts";
-import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.ts";
+import { BuiltinMutationType } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 
@@ -43,16 +43,16 @@ describe("HeaderParserPlugin", () => {
     expect(targets).toHaveLength(2);
     expect(targets).toEqual(
       expect.arrayContaining([
-        new HeaderParameter(
-          { name: "content-type" },
-          "application/json",
-          [ReplaceValue, AppendValue, PrependValue],
-        ),
-        new HeaderParameter(
-          { name: "x-custom" },
-          "value",
-          [ReplaceValue, AppendValue, PrependValue],
-        ),
+        new HeaderParameter({ name: "content-type" }, "application/json", [
+          BuiltinMutationType.ReplaceValue,
+          BuiltinMutationType.AppendValue,
+          BuiltinMutationType.PrependValue,
+        ]),
+        new HeaderParameter({ name: "x-custom" }, "value", [
+          BuiltinMutationType.ReplaceValue,
+          BuiltinMutationType.AppendValue,
+          BuiltinMutationType.PrependValue,
+        ]),
       ]),
     );
   });
