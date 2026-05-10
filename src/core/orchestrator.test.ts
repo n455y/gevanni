@@ -82,7 +82,7 @@ describe("Orchestrator", () => {
   });
 
   describe("plan phase", () => {
-    it("creates jobs and definitions for scenarios", async () => {
+    it("creates jobs and items for scenarios", async () => {
       commandBus.register(ReplayCommand, async () => [
         {
           id: "ex-1" as Brand<string, "ExchangeId">,
@@ -93,12 +93,12 @@ describe("Orchestrator", () => {
 
       commandBus.register(ParseRequestCommand, async () => mockTargets);
 
-      const mockDefinition: AuditItem = {
+      const mockItem: AuditItem = {
         signatureName: "mock-sig",
         target: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [
-        mockDefinition,
+        mockItem,
       ]);
 
       const savedJobs: Job[] = [];
@@ -125,7 +125,7 @@ describe("Orchestrator", () => {
       const result = await orchestrator.plan([]);
 
       expect(result.scanId).toBeDefined();
-      expect(result.definitions.size).toBe(0);
+      expect(result.items.size).toBe(0);
       expect(events).toContain("scan:started");
     });
 
@@ -152,12 +152,12 @@ describe("Orchestrator", () => {
       ]);
       commandBus.register(ParseRequestCommand, async () => mockTargets);
 
-      const mockDefinition: AuditItem = {
+      const mockItem: AuditItem = {
         signatureName: "mock-sig",
         target: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [
-        mockDefinition,
+        mockItem,
       ]);
 
       const savedJobs: Job[] = [];
@@ -183,7 +183,7 @@ describe("Orchestrator", () => {
       expect(savedJobs).toHaveLength(1);
       expect(savedJobs[0].scenarioId).toBe("sc-1");
       expect(savedJobs[0].signatureName).toBe("mock-sig");
-      expect(result.definitions.size).toBe(1);
+      expect(result.items.size).toBe(1);
       expect(events).toContain("plan:jobCreated");
     });
 
@@ -229,8 +229,8 @@ describe("Orchestrator", () => {
         updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
       };
 
-      const definitions = new Map<string, AuditItem>();
-      definitions.set("job-1", {
+      const items = new Map<string, AuditItem>();
+      items.set("job-1", {
         signatureName: "mock-sig",
         target: mockTargets[0],
       });
@@ -275,7 +275,7 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      await orchestrator.scan(scanId, definitions, 2);
+      await orchestrator.scan(scanId, items, 2);
 
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
       expect(updateCalls[0].status).toBe("running" as JobStatus);
@@ -300,8 +300,8 @@ describe("Orchestrator", () => {
         updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
       };
 
-      const definitions = new Map<string, AuditItem>();
-      definitions.set("job-err", {
+      const items = new Map<string, AuditItem>();
+      items.set("job-err", {
         signatureName: "failing-sig",
         target: mockTargets[0],
       });
@@ -345,7 +345,7 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      await orchestrator.scan(scanId, definitions, 2);
+      await orchestrator.scan(scanId, items, 2);
 
       expect(events).toContain("error");
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
@@ -355,7 +355,7 @@ describe("Orchestrator", () => {
 
     it("handles empty job list", async () => {
       const scanId = "test-scan-id" as Brand<string, "ScanId">;
-      const definitions = new Map<string, AuditItem>();
+      const items = new Map<string, AuditItem>();
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadPendingJobsCommand, async () => []);
@@ -366,7 +366,7 @@ describe("Orchestrator", () => {
         logger,
       });
 
-      await orchestrator.scan(scanId, definitions, 2);
+      await orchestrator.scan(scanId, items, 2);
 
       expect(logger.info).toHaveBeenCalledWith("No pending jobs to scan");
     });

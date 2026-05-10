@@ -7,14 +7,17 @@ import {
 import type { Payload } from "../../types/branded.js";
 import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.js";
 import { AuditTarget, AuditMutation } from "../../types/models.js";
+import { serializable } from "../../types/serializable.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
+@serializable
 class GraphQLQueryParameter extends AuditTarget<
   { field: string },
   string
 > {
+  static kind = "graphql-query";
   createMutation(
     payload: Payload,
     method: MutationType,
@@ -22,10 +25,12 @@ class GraphQLQueryParameter extends AuditTarget<
     return new GraphQLQueryMutation(this, payload, method);
   }
 }
+@serializable
 class GraphQLVariableParameter extends AuditTarget<
   { path: string[] },
   JsonValue
 > {
+  static kind = "graphql-variable";
   createMutation(
     payload: Payload,
     method: MutationType,

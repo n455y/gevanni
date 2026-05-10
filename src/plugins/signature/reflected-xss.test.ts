@@ -70,10 +70,10 @@ describe("ReflectedXssPlugin", () => {
     );
 
     expect(results).toHaveLength(1);
-    const definitions = results[0];
-    expect(definitions).toHaveLength(1);
-    expect(definitions[0].signatureName).toBe("reflected-xss");
-    expect(definitions[0].target).toEqual(targets[0]);
+    const items = results[0];
+    expect(items).toHaveLength(1);
+    expect(items[0].signatureName).toBe("reflected-xss");
+    expect(items[0].target).toEqual(targets[0]);
   });
 
   it("creates definitions for form parameters", async () => {
@@ -89,9 +89,9 @@ describe("ReflectedXssPlugin", () => {
       new CreateAuditItemsCommand(targets),
     );
 
-    const definitions = results[0];
-    expect(definitions).toHaveLength(1);
-    expect(definitions[0].target).toEqual(targets[0]);
+    const items = results[0];
+    expect(items).toHaveLength(1);
+    expect(items[0].target).toEqual(targets[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -107,8 +107,8 @@ describe("ReflectedXssPlugin", () => {
       new CreateAuditItemsCommand(targets),
     );
 
-    const definitions = results[0];
-    expect(definitions).toHaveLength(0);
+    const items = results[0];
+    expect(items).toHaveLength(0);
   });
 
   it("detects reflected payload in response body", async () => {

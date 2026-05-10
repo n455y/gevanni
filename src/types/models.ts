@@ -37,6 +37,7 @@ class AuditTarget<
   originalValue: V;
   allowedMutations: MutationType[];
 }> {
+  static base = "audit-target";
   constructor(
     readonly location: L,
     readonly originalValue: V,

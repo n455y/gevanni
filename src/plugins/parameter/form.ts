@@ -6,12 +6,15 @@ import {
 } from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
 import { AuditTarget, AuditMutation } from "../../types/models.js";
+import { serializable } from "../../types/serializable.js";
 import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
+@serializable
 class FormParameter extends AuditTarget<{ name: string }, string> {
+  static kind = "form";
   createMutation(
     payload: Payload,
     method: MutationType,

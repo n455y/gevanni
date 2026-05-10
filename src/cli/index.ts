@@ -96,8 +96,8 @@ program
       overrides,
     );
     const scenarios = await loadScenarios(loaders, config.scenarioSources);
-    const { scanId, definitions } = await orchestrator.plan(scenarios);
-    await orchestrator.scan(scanId, definitions, config.concurrency);
+    const { scanId, items } = await orchestrator.plan(scenarios);
+    await orchestrator.scan(scanId, items, config.concurrency);
     await orchestrator.report(scanId);
   });
 

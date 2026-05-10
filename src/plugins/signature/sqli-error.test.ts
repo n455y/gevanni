@@ -65,10 +65,10 @@ describe("SqliErrorPlugin", () => {
     );
 
     expect(results).toHaveLength(1);
-    const definitions = results[0];
-    expect(definitions).toHaveLength(1);
-    expect(definitions[0].signatureName).toBe("sqli-error");
-    expect(definitions[0].target).toEqual(targets[0]);
+    const items = results[0];
+    expect(items).toHaveLength(1);
+    expect(items[0].signatureName).toBe("sqli-error");
+    expect(items[0].target).toEqual(targets[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -88,8 +88,8 @@ describe("SqliErrorPlugin", () => {
       new CreateAuditItemsCommand(targets),
     );
 
-    const definitions = results[0];
-    expect(definitions).toHaveLength(0);
+    const items = results[0];
+    expect(items).toHaveLength(0);
   });
 
   it("detects MySQL SQL error in response body", async () => {

@@ -13,14 +13,17 @@ import type {
   JsonValue,
 } from "../../types/models.js";
 import { AuditTarget, AuditMutation } from "../../types/models.js";
+import { serializable } from "../../types/serializable.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
+@serializable
 class JsonPrimitiveParameter extends AuditTarget<
   { path: string[] },
   JsonPrimitive
 > {
+  static kind = "json-primitive";
   createMutation(
     payload: Payload,
     method: MutationType,
@@ -28,10 +31,12 @@ class JsonPrimitiveParameter extends AuditTarget<
     return new JsonPrimitiveMutation(this, payload, method);
   }
 }
+@serializable
 class JsonArrayParameter extends AuditTarget<
   { path: string[] },
   JsonArray
 > {
+  static kind = "json-array";
   createMutation(
     payload: Payload,
     method: MutationType,
@@ -39,10 +44,12 @@ class JsonArrayParameter extends AuditTarget<
     return new JsonArrayMutation(this, payload, method);
   }
 }
+@serializable
 class JsonObjectParameter extends AuditTarget<
   { path: string[] },
   JsonObject
 > {
+  static kind = "json-object";
   createMutation(
     payload: Payload,
     method: MutationType,

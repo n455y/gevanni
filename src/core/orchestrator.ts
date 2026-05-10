@@ -89,12 +89,12 @@ class Orchestrator {
 
   async plan(scenarios: Scenario[]): Promise<{
     scanId: ScanId;
-    definitions: Map<string, AuditItem>;
+    items: Map<string, AuditItem>;
   }> {
     const { commandBus, eventBus, logger } = this.deps;
     const id = scanId();
     const now = isoNow();
-    const definitionMap = new Map<string, AuditItem>();
+    const itemMap = new Map<string, AuditItem>();
 
     logger.info(`Loaded ${scenarios.length} scenarios`);
 
@@ -134,10 +134,10 @@ class Orchestrator {
         // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
         const definitionResults: AuditItem[][] =
           await commandBus.broadcast(new CreateAuditItemsCommand(targets));
-        const definitions: AuditItem[] = definitionResults.flat();
+        const items: AuditItem[] = definitionResults.flat();
 
         // d. For each definition, create a Job
-        for (const def of definitions) {
+        for (const item of items) {
           const jid = jobId();
           const rid = requestId();
           const job: Job = {
@@ -145,8 +145,8 @@ class Orchestrator {
             scanId: id,
             scenarioId: scenario.id,
             requestId: rid,
-            signatureName: def.signatureName,
-            target: def.target,
+            signatureName: item.signatureName,
+            target: item.target,
             status: "pending" as JobStatus,
             finding: null,
             error: null,
@@ -155,7 +155,7 @@ class Orchestrator {
           };
 
           allJobs.push(job);
-          definitionMap.set(jid, def);
+          itemMap.set(jid, item);
 
           // Save job via storage
           await commandBus.dispatch(new SaveJobCommand(job));
@@ -163,7 +163,7 @@ class Orchestrator {
           // Emit job created event
           eventBus.publish("plan:jobCreated", {
             jobId: jid,
-            signatureName: def.signatureName,
+            signatureName: item.signatureName,
             scenarioName: scenario.name,
           });
         }
@@ -188,12 +188,12 @@ class Orchestrator {
       `Plan phase complete: ${allJobs.length} jobs created for scan ${id}`,
     );
 
-    return { scanId: id, definitions: definitionMap };
+    return { scanId: id, items: itemMap };
   }
 
   async scan(
     scanId: ScanId,
-    definitions: Map<string, AuditItem>,
+    items: Map<string, AuditItem>,
     concurrency: number,
   ): Promise<void> {
     const { commandBus, eventBus, logger } = this.deps;
@@ -239,8 +239,8 @@ class Orchestrator {
         eventBus.publish("scan:jobStarted", { jobId: job.id });
 
         // Get audit item
-        const def = definitions.get(job.id as string);
-        if (!def) {
+        const item = items.get(job.id as string);
+        if (!item) {
           throw new Error(
             `No audit item found for job ${job.id as string}`,
           );
@@ -269,7 +269,7 @@ class Orchestrator {
         // Run audit
         const finding: Finding = (await commandBus.dispatch(
           new RunAuditCommand({
-            signatureName: def.signatureName,
+            signatureName: item.signatureName,
             target: job.target,
             replay,
           }),
@@ -390,18 +390,18 @@ class Orchestrator {
       return;
     }
 
-    // 3. Build definition map from pending jobs
-    const definitionMap = new Map<string, AuditItem>();
+    // 3. Build item map from pending jobs
+    const itemMap = new Map<string, AuditItem>();
 
     for (const job of pendingJobs) {
-      definitionMap.set(job.id as string, {
+      itemMap.set(job.id as string, {
         signatureName: job.signatureName,
         target: job.target,
       });
     }
 
     // 4. Run scan phase
-    await this.scan(sid, definitionMap, concurrency ?? 5);
+    await this.scan(sid, itemMap, concurrency ?? 5);
   }
 }
 

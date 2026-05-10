@@ -13,9 +13,7 @@ export function serializable<
   C extends new (...args: any[]) => T,
 >(
   cls: C & {
-    deserializeParams: (
-      serialized: ReturnType<InstanceType<C>["serializeParams"]>,
-    ) => InstanceType<C>;
+    deserializeParams: (serialized: any) => any;
   } & { base: string; kind: string },
 ) {
   registry.set(`${cls.base}/${cls.kind}`, cls);
