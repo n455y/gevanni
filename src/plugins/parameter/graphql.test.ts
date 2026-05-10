@@ -1,28 +1,28 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { InMemoryCommandBus } from "../../core/command-bus.js";
-import { InMemoryEventBus } from "../../core/event-bus.js";
-import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./graphql.js";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./graphql.ts";
 import {
   GraphQLQueryParameter,
   GraphQLVariableParameter,
   GraphQLQueryMutation,
   GraphQLVariableMutation,
-} from "./graphql.js";
-import { QueryParameter } from "./query.js";
+} from "./graphql.ts";
+import { QueryParameter } from "./query.ts";
 import type {
   AuditTarget,
   HttpRequest,
   JsonValue,
-} from "../../types/models.js";
-import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyMutationCommand } from "../../commands/mutation.js";
-import type { Brand } from "../../types/branded.js";
+} from "../../types/models.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import type { Brand } from "../../types/branded.ts";
 import {
   MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
-} from "../../types/branded.js";
+} from "../../types/branded.ts";
 
 type AnyGraphQLTarget = GraphQLQueryParameter | GraphQLVariableParameter;
 

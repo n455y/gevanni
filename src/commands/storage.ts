@@ -1,6 +1,6 @@
-import { SingleCommand } from "../core/command.js";
-import type { Job, ScanState, Scenario } from "../types/models.js";
-import type { JobId, ScanId, ScenarioId } from "../types/branded.js";
+import { SingleCommand } from "../core/command.ts";
+import type { Job, ScanState, Scenario } from "../types/models.ts";
+import type { JobId, ScanId, ScenarioId } from "../types/branded.ts";
 
 class SaveJobCommand extends SingleCommand<void> {
   readonly type = "saveJob";

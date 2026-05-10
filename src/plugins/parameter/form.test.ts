@@ -1,19 +1,19 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { InMemoryCommandBus } from "../../core/command-bus.js";
-import { InMemoryEventBus } from "../../core/event-bus.js";
-import { FormParserPlugin, FormMutationPlugin } from "./form.js";
-import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyMutationCommand } from "../../commands/mutation.js";
-import { AuditTarget, type HttpRequest } from "../../types/models.js";
-import { FormParameter } from "./form.js";
-import { FormMutation } from "./form.js";
-import type { Brand } from "../../types/branded.js";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { FormParserPlugin, FormMutationPlugin } from "./form.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import { AuditTarget, type HttpRequest } from "../../types/models.ts";
+import { FormParameter } from "./form.ts";
+import { FormMutation } from "./form.ts";
+import type { Brand } from "../../types/branded.ts";
 import {
   MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
-} from "../../types/branded.js";
+} from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 

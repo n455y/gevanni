@@ -1,5 +1,5 @@
-import { PipelineCommand } from "../core/command.js";
-import type { HttpRequest, AuditMutation } from "../types/models.js";
+import { PipelineCommand } from "../core/command.ts";
+import type { HttpRequest, AuditMutation } from "../types/models.ts";
 
 class ApplyMutationCommand extends PipelineCommand<HttpRequest> {
   readonly type = "applyMutation";

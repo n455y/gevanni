@@ -1,2 +1,2 @@
-export * from "./branded.js";
-export * from "./models.js";
+export * from "./branded.ts";
+export * from "./models.ts";

@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "path";
-import { PostmanLoaderPlugin } from "./postman-loader.js";
-import { PostmanScenarioType } from "../scenario/postman.js";
+import { PostmanLoaderPlugin } from "./postman-loader.ts";
+import { PostmanScenarioType } from "../scenario/postman.ts";
 
 describe("PostmanLoaderPlugin", () => {
   const loader = new PostmanLoaderPlugin();

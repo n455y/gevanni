@@ -1,14 +1,14 @@
 import { Command } from "commander";
-import { InMemoryCommandBus } from "../core/command-bus.js";
-import { InMemoryEventBus } from "../core/event-bus.js";
-import { PluginRegistryImpl } from "../core/plugin.js";
-import { createLogger } from "../core/logger.js";
-import { loadConfig } from "../config/loader.js";
-import { registerBuiltinPlugins } from "../builtin.js";
-import { Orchestrator } from "../core/orchestrator.js";
-import type { LogLevel } from "../core/logger.js";
-import type { ScenarioLoaderPlugin } from "../core/plugin.js";
-import type { Scenario } from "../types/models.js";
+import { InMemoryCommandBus } from "../core/command-bus.ts";
+import { InMemoryEventBus } from "../core/event-bus.ts";
+import { PluginRegistryImpl } from "../core/plugin.ts";
+import { createLogger } from "../core/logger.ts";
+import { loadConfig } from "../config/loader.ts";
+import { registerBuiltinPlugins } from "../builtin.ts";
+import { Orchestrator } from "../core/orchestrator.ts";
+import type { LogLevel } from "../core/logger.ts";
+import type { ScenarioLoaderPlugin } from "../core/plugin.ts";
+import type { Scenario } from "../types/models.ts";
 
 interface CliOptions {
   config?: string;

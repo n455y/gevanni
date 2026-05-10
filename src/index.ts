@@ -1,4 +1,4 @@
-export * from "./types/index.js";
+export * from "./types/index.ts";
 export {
   Command,
   SingleCommand,
@@ -15,5 +15,5 @@ export {
   type PluginContext,
   type PluginRegistry,
   type AuditItem,
-} from "./core/index.js";
-export * from "./commands/index.js";
+} from "./core/index.ts";
+export * from "./commands/index.ts";

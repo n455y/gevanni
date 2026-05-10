@@ -1,5 +1,5 @@
-import { SingleCommand } from "../core/command.js";
-import type { Scenario, AuditMutation, Exchange } from "../types/models.js";
+import { SingleCommand } from "../core/command.ts";
+import type { Scenario, AuditMutation, Exchange } from "../types/models.ts";
 
 interface ReplayConfig {
   mutations: AuditMutation[];
@@ -14,4 +14,4 @@ class ReplayCommand extends SingleCommand<Exchange[]> {
   constructor(scenario: Scenario, config: ReplayConfig) { super(); this.scenario = scenario; this.config = config; }
 }
 
-export { ReplayCommand, ReplayConfig };
+export { ReplayCommand, type ReplayConfig };

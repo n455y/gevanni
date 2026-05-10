@@ -1,20 +1,20 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { InMemoryCommandBus } from "../../core/command-bus.js";
-import { InMemoryEventBus } from "../../core/event-bus.js";
-import { QueryParserPlugin, QueryMutationPlugin } from "./query.js";
-import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyMutationCommand } from "../../commands/mutation.js";
-import { AuditTarget, type HttpRequest } from "../../types/models.js";
-import { QueryParameter } from "./query.js";
-import { JsonPrimitiveParameter } from "./json.js";
-import { QueryMutation } from "./query.js";
-import type { Brand } from "../../types/branded.js";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { QueryParserPlugin, QueryMutationPlugin } from "./query.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import { AuditTarget, type HttpRequest } from "../../types/models.ts";
+import { QueryParameter } from "./query.ts";
+import { JsonPrimitiveParameter } from "./json.ts";
+import { QueryMutation } from "./query.ts";
+import type { Brand } from "../../types/branded.ts";
 import {
   MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
-} from "../../types/branded.js";
+} from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 

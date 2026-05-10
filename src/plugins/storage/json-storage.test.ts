@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { InMemoryCommandBus } from "../../core/command-bus.js";
-import { InMemoryEventBus } from "../../core/event-bus.js";
-import { JsonStoragePlugin } from "./json-storage.js";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { JsonStoragePlugin } from "./json-storage.ts";
 import {
   SaveJobCommand,
   LoadJobCommand,
@@ -14,13 +14,13 @@ import {
   SaveScanStateCommand,
   LoadScanStateCommand,
   LoadScenarioCommand,
-} from "../../commands/storage.js";
+} from "../../commands/storage.ts";
 import {
   SaveExchangeCommand,
   LoadExchangesCommand,
-} from "../../commands/exchange.js";
-import { AuditTarget, type Job, type ScanState, type Scenario, type Exchange } from "../../types/models.js";
-import type { ExchangeId } from "../../types/branded.js";
+} from "../../commands/exchange.ts";
+import { AuditTarget, type Job, type ScanState, type Scenario, type Exchange } from "../../types/models.ts";
+import type { ExchangeId } from "../../types/branded.ts";
 import type {
   ScanId,
   JobId,
@@ -28,7 +28,7 @@ import type {
   JobStatus,
   ScanStatus,
   IsoDateTime,
-} from "../../types/branded.js";
+} from "../../types/branded.ts";
 
 // --- Branding helpers ---
 const asScanId = (s: string) => s as ScanId;

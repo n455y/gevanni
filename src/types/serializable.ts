@@ -1,4 +1,4 @@
-import type { JsonValue } from "./models.js";
+import type { JsonValue } from "./models.ts";
 
 export type SerializableValue = JsonValue;
 const registry = new Map<

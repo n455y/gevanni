@@ -1,11 +1,11 @@
-import { SingleCommand } from "../core/command.js";
+import { SingleCommand } from "../core/command.ts";
 import type {
   AuditTarget,
   Finding,
   AuditMutation,
   HttpRequest,
   HttpResponse,
-} from "../types/models.js";
+} from "../types/models.ts";
 
 interface RunAuditPayload {
   signatureName: string;

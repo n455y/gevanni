@@ -1,9 +1,9 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import type { Plugin, PluginContext } from "../../core/plugin.js";
-import type { CommandBus } from "../../core/command-bus.js";
-import type { Job, ScanState, Scenario, Exchange } from "../../types/models.js";
-import type { ScanId, JobStatus } from "../../types/branded.js";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { CommandBus } from "../../core/command-bus.ts";
+import type { Job, ScanState, Scenario, Exchange } from "../../types/models.ts";
+import type { ScanId, JobStatus } from "../../types/branded.ts";
 import {
   SaveJobCommand,
   LoadJobCommand,
@@ -14,11 +14,11 @@ import {
   LoadScanStateCommand,
   SaveScenarioCommand,
   LoadScenarioCommand,
-} from "../../commands/storage.js";
+} from "../../commands/storage.ts";
 import {
   SaveExchangeCommand,
   LoadExchangesCommand,
-} from "../../commands/exchange.js";
+} from "../../commands/exchange.ts";
 
 // --- Helpers ---
 

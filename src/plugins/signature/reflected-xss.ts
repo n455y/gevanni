@@ -1,8 +1,8 @@
-import type { Payload, Evidence } from "../../types/branded.js";
-import { AppendValue } from "../../types/branded.js";
-import type { Plugin, PluginContext } from "../../core/plugin.js";
-import { CreateAuditItemsCommand } from "../../commands/create-audit-items.js";
-import { RunAuditCommand } from "../../commands/run-audit.js";
+import type { Payload, Evidence } from "../../types/branded.ts";
+import { AppendValue } from "../../types/branded.ts";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
+import { RunAuditCommand } from "../../commands/run-audit.ts";
 
 class ReflectedXssPlugin implements Plugin {
   readonly name = "reflected-xss";

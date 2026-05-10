@@ -1,5 +1,5 @@
-import { SingleCommand } from "../core/command.js";
-import type { Exchange } from "../types/models.js";
+import { SingleCommand } from "../core/command.ts";
+import type { Exchange } from "../types/models.ts";
 
 class SaveExchangeCommand extends SingleCommand<void> {
   readonly type = "saveExchange";

@@ -1,5 +1,5 @@
-import { BroadcastCommand } from "../core/command.js";
-import type { HttpRequest, AuditTarget } from "../types/models.js";
+import { BroadcastCommand } from "../core/command.ts";
+import type { HttpRequest, AuditTarget } from "../types/models.ts";
 
 class ParseRequestCommand extends BroadcastCommand<AuditTarget[]> {
   readonly type = "parseRequest";

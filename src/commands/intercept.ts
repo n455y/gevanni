@@ -1,5 +1,5 @@
-import { SingleCommand } from "../core/command.js";
-import type { HttpRequest, AuditMutation, HttpResponse } from "../types/models.js";
+import { SingleCommand } from "../core/command.ts";
+import type { HttpRequest, AuditMutation, HttpResponse } from "../types/models.ts";
 
 class InterceptCommand extends SingleCommand<{ request: HttpRequest; response: HttpResponse }> {
   readonly type = "intercept";

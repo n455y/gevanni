@@ -5,7 +5,7 @@ import {
   type SingleCommand,
   type BroadcastCommand,
   type PipelineCommand,
-} from "./command.js";
+} from "./command.ts";
 
 type CommandResult<T> = T extends Command<infer R> ? R : never;
 

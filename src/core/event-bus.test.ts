@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { InMemoryEventBus } from "./event-bus.js";
+import { InMemoryEventBus } from "./event-bus.ts";
 
 describe("InMemoryEventBus", () => {
   it("delivers event to subscriber", () => {

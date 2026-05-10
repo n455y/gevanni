@@ -1,5 +1,5 @@
-import { BroadcastCommand } from "../core/command.js";
-import type { Job, ScanState } from "../types/models.js";
+import { BroadcastCommand } from "../core/command.ts";
+import type { Job, ScanState } from "../types/models.ts";
 
 class GenerateReportCommand extends BroadcastCommand<void> {
   readonly type = "generateReport";

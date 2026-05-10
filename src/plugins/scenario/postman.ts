@@ -1,9 +1,9 @@
-import type { Exchange, Scenario } from "../../types/models.js";
-import { ScenarioType } from "../../types/branded.js";
-import type { ExchangeId } from "../../types/branded.js";
-import type { Plugin, PluginContext } from "../../core/plugin.js";
-import { ReplayCommand } from "../../commands/replay.js";
-import { LoadExchangesCommand } from "../../commands/exchange.js";
+import type { Exchange, Scenario } from "../../types/models.ts";
+import { ScenarioType } from "../../types/branded.ts";
+import type { ExchangeId } from "../../types/branded.ts";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import { ReplayCommand } from "../../commands/replay.ts";
+import { LoadExchangesCommand } from "../../commands/exchange.ts";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { randomUUID } from "node:crypto";

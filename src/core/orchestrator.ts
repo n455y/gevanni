@@ -7,7 +7,7 @@ import type {
   ScanStatus,
   IsoDateTime,
   ErrorMessage,
-} from "../types/branded.js";
+} from "../types/branded.ts";
 import type {
   Job,
   ScanState,
@@ -16,11 +16,11 @@ import type {
   Exchange,
   Finding,
   AuditMutation,
-} from "../types/models.js";
-import type { CommandBus } from "./command-bus.js";
-import type { EventBus } from "./event-bus.js";
-import type { Logger } from "./logger.js";
-import type { AuditItem } from "./audit-item.js";
+} from "../types/models.ts";
+import type { CommandBus } from "./command-bus.ts";
+import type { EventBus } from "./event-bus.ts";
+import type { Logger } from "./logger.ts";
+import type { AuditItem } from "./audit-item.ts";
 import {
   ReplayCommand,
   ParseRequestCommand,
@@ -35,8 +35,8 @@ import {
   SaveScenarioCommand,
   LoadJobsByScanIdCommand,
   GenerateReportCommand,
-} from "../commands/index.js";
-import { startMutationProxy } from "../plugins/proxy/http-proxy.js";
+} from "../commands/index.ts";
+import { startMutationProxy } from "../plugins/proxy/http-proxy.ts";
 
 // --- Branded type helpers ---
 

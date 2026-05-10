@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { InMemoryCommandBus } from "../../core/command-bus.js";
-import { InMemoryEventBus } from "../../core/event-bus.js";
-import { JsonReporterPlugin } from "./json-reporter.js";
-import { GenerateReportCommand } from "../../commands/report.js";
-import { AuditTarget, type Job, type ScanState } from "../../types/models.js";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { JsonReporterPlugin } from "./json-reporter.ts";
+import { GenerateReportCommand } from "../../commands/report.ts";
+import { AuditTarget, type Job, type ScanState } from "../../types/models.ts";
 import type {
   ScanId,
   JobId,
@@ -16,7 +16,7 @@ import type {
   ScanStatus,
   IsoDateTime,
   Evidence,
-} from "../../types/branded.js";
+} from "../../types/branded.ts";
 
 // --- Branding helpers ---
 const asScanId = (s: string) => s as ScanId;

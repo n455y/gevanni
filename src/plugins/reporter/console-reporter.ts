@@ -1,6 +1,6 @@
-import type { Plugin, PluginContext } from "../../core/plugin.js";
-import type { Job, ScanState } from "../../types/models.js";
-import { GenerateReportCommand } from "../../commands/report.js";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { Job, ScanState } from "../../types/models.ts";
+import { GenerateReportCommand } from "../../commands/report.ts";
 
 function formatTarget(job: Job): string {
   const p = job.target;

@@ -3,8 +3,8 @@ import {
   SingleCommand,
   BroadcastCommand,
   PipelineCommand,
-} from "./command.js";
-import { InMemoryCommandBus } from "./command-bus.js";
+} from "./command.ts";
+import { InMemoryCommandBus } from "./command-bus.ts";
 
 class EchoCommand extends SingleCommand<string> {
   readonly type = "echo";

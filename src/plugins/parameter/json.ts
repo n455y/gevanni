@@ -3,20 +3,20 @@ import {
   ReplaceValue,
   AppendValue,
   PrependValue,
-} from "../../types/branded.js";
-import type { Payload } from "../../types/branded.js";
+} from "../../types/branded.ts";
+import type { Payload } from "../../types/branded.ts";
 import type {
   HttpRequest,
   JsonPrimitive,
   JsonArray,
   JsonObject,
   JsonValue,
-} from "../../types/models.js";
-import { AuditTarget, AuditMutation } from "../../types/models.js";
-import { serializable } from "../../types/serializable.js";
-import type { Plugin, PluginContext } from "../../core/plugin.js";
-import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyMutationCommand } from "../../commands/mutation.js";
+} from "../../types/models.ts";
+import { AuditTarget, AuditMutation } from "../../types/models.ts";
+import { serializable } from "../../types/serializable.ts";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 class JsonPrimitiveParameter extends AuditTarget<
   { path: string[] },

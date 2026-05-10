@@ -34,20 +34,23 @@ type Evidence = Brand<string, "Evidence">;
 type ErrorMessage = Brand<string, "ErrorMessage">;
 type IsoDateTime = Brand<string, "IsoDateTime">;
 
-export {
+export type {
   Brand,
   ScenarioId,
   JobId,
   RequestId,
   ScanId,
   ExchangeId,
-  ReplaceValue,
-  AppendValue,
-  PrependValue,
   JobStatus,
   ScanStatus,
   Payload,
   Evidence,
   ErrorMessage,
   IsoDateTime,
+};
+
+export {
+  ReplaceValue,
+  AppendValue,
+  PrependValue,
 };

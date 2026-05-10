@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { InMemoryCommandBus } from "../../core/command-bus.js";
-import { InMemoryEventBus } from "../../core/event-bus.js";
-import { HeaderParserPlugin } from "./header.js";
-import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { AuditTarget, type HttpRequest } from "../../types/models.js";
-import { HeaderParameter } from "./header.js";
-import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.js";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { HeaderParserPlugin } from "./header.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
+import { AuditTarget, type HttpRequest } from "../../types/models.ts";
+import { HeaderParameter } from "./header.ts";
+import { ReplaceValue, AppendValue, PrependValue } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 

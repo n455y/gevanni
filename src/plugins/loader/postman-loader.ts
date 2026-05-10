@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import crypto from "node:crypto";
-import type { Scenario } from "../../types/models.js";
-import { PostmanScenarioType } from "../scenario/postman.js";
-import type { ScenarioId } from "../../types/branded.js";
-import type { ScenarioLoaderPlugin, PluginContext } from "../../core/plugin.js";
+import type { Scenario } from "../../types/models.ts";
+import { PostmanScenarioType } from "../scenario/postman.ts";
+import type { ScenarioId } from "../../types/branded.ts";
+import type { ScenarioLoaderPlugin, PluginContext } from "../../core/plugin.ts";
 
 // --- Postman Collection types (v2.1 subset) ---
 

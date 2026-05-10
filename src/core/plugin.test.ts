@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { SingleCommand } from "./command.js";
-import { InMemoryCommandBus } from "./command-bus.js";
-import { InMemoryEventBus } from "./event-bus.js";
-import { PluginRegistryImpl, type Plugin, type PluginContext } from "./plugin.js";
+import { SingleCommand } from "./command.ts";
+import { InMemoryCommandBus } from "./command-bus.ts";
+import { InMemoryEventBus } from "./event-bus.ts";
+import { PluginRegistryImpl, type Plugin, type PluginContext } from "./plugin.ts";
 
 // Helper command for testing plugin command handler registration
 class GreetCommand extends SingleCommand<string> {

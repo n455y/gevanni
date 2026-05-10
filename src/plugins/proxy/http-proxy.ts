@@ -8,13 +8,13 @@ import type {
   HttpResponse,
   AuditMutation,
   Exchange,
-} from "../../types/models.js";
-import type { ExchangeId } from "../../types/branded.js";
-import type { Plugin, PluginContext } from "../../core/plugin.js";
-import type { CommandBus } from "../../core/command-bus.js";
-import { InterceptCommand } from "../../commands/intercept.js";
-import { ApplyMutationCommand } from "../../commands/mutation.js";
-import { SaveExchangeCommand } from "../../commands/exchange.js";
+} from "../../types/models.ts";
+import type { ExchangeId } from "../../types/branded.ts";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { CommandBus } from "../../core/command-bus.ts";
+import { InterceptCommand } from "../../commands/intercept.ts";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import { SaveExchangeCommand } from "../../commands/exchange.ts";
 
 function sendRequest(request: HttpRequest): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {

@@ -1,6 +1,6 @@
-import type { CommandBus } from "./command-bus.js";
-import type { EventBus } from "./event-bus.js";
-import type { Scenario } from "../types/models.js";
+import type { CommandBus } from "./command-bus.ts";
+import type { EventBus } from "./event-bus.ts";
+import type { Scenario } from "../types/models.ts";
 
 interface PluginContext {
   commandBus: CommandBus;

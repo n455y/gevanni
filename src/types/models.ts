@@ -1,4 +1,4 @@
-import { ScenarioType, MutationType } from "./branded.js";
+import { ScenarioType, MutationType } from "./branded.ts";
 import type {
   ScenarioId,
   JobId,
@@ -11,8 +11,8 @@ import type {
   Evidence,
   ErrorMessage,
   IsoDateTime,
-} from "./branded.js";
-import { SerializableBase, SerializableValue } from "./serializable.js";
+} from "./branded.ts";
+import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
 // --- Scenario ---
 interface Scenario {
@@ -38,12 +38,18 @@ class AuditTarget<
   allowedMutations: MutationType[];
 }> {
   static base = "audit-target";
+  readonly location: L;
+  readonly originalValue: V;
+  readonly allowedMutations: MutationType[];
   constructor(
-    readonly location: L,
-    readonly originalValue: V,
-    readonly allowedMutations: MutationType[],
+    location: L,
+    originalValue: V,
+    allowedMutations: MutationType[],
   ) {
     super();
+    this.location = location;
+    this.originalValue = originalValue;
+    this.allowedMutations = allowedMutations;
   }
   serializeParams() {
     return {
@@ -79,11 +85,18 @@ class AuditTarget<
 abstract class AuditMutation<
   P extends AuditTarget = AuditTarget,
 > {
+  readonly target: P;
+  readonly payload: Payload;
+  readonly method: MutationType;
   constructor(
-    readonly target: P,
-    readonly payload: Payload,
-    readonly method: MutationType,
-  ) {}
+    target: P,
+    payload: Payload,
+    method: MutationType,
+  ) {
+    this.target = target;
+    this.payload = payload;
+    this.method = method;
+  }
 }
 
 // --- HTTP ---

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { loadConfig } from "./loader.js";
+import { loadConfig } from "./loader.ts";
 
 describe("loadConfig", () => {
   let tmpDir: string;

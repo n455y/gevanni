@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { PluginConfig } from "../types/models.js";
-import type { LogLevel } from "../core/logger.js";
+import type { PluginConfig } from "../types/models.ts";
+import type { LogLevel } from "../core/logger.ts";
 
 interface ResolvedConfig {
   concurrency: number;

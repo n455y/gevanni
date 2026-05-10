@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PostmanScenarioType } from "../plugins/scenario/postman.js";
-import { InMemoryCommandBus } from "./command-bus.js";
-import { InMemoryEventBus } from "./event-bus.js";
-import { createLogger } from "./logger.js";
-import { Orchestrator } from "./orchestrator.js";
-import type { AuditItem } from "./audit-item.js";
+import { PostmanScenarioType } from "../plugins/scenario/postman.ts";
+import { InMemoryCommandBus } from "./command-bus.ts";
+import { InMemoryEventBus } from "./event-bus.ts";
+import { createLogger } from "./logger.ts";
+import { Orchestrator } from "./orchestrator.ts";
+import type { AuditItem } from "./audit-item.ts";
 import type {
   Finding,
   HttpRequest,
@@ -12,11 +12,11 @@ import type {
   Job,
   ScanState,
   Scenario,
-} from "../types/models.js";
-import type { AuditTarget } from "../types/models.js";
-import type { Brand, JobStatus, ScanStatus } from "../types/branded.js";
-import { ReplaceValue } from "../types/branded.js";
-import { QueryParameter } from "../plugins/parameter/query.js";
+} from "../types/models.ts";
+import type { AuditTarget } from "../types/models.ts";
+import type { Brand, JobStatus, ScanStatus } from "../types/branded.ts";
+import { ReplaceValue } from "../types/branded.ts";
+import { QueryParameter } from "../plugins/parameter/query.ts";
 import {
   ReplayCommand,
   ParseRequestCommand,
@@ -31,7 +31,7 @@ import {
   GenerateReportCommand,
   SaveScenarioCommand,
   LoadScenarioCommand,
-} from "../commands/index.js";
+} from "../commands/index.ts";
 
 // --- Mock data helpers ---
 

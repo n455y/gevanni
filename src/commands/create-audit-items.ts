@@ -1,6 +1,6 @@
-import { BroadcastCommand } from "../core/command.js";
-import type { AuditTarget } from "../types/models.js";
-import type { AuditItem } from "../core/audit-item.js";
+import { BroadcastCommand } from "../core/command.ts";
+import type { AuditTarget } from "../types/models.ts";
+import type { AuditItem } from "../core/audit-item.ts";
 
 class CreateAuditItemsCommand extends BroadcastCommand<AuditItem[]> {
   readonly type = "createAuditItems";

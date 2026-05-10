@@ -1,21 +1,21 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { InMemoryCommandBus } from "../../core/command-bus.js";
-import { InMemoryEventBus } from "../../core/event-bus.js";
-import { ReflectedXssPlugin } from "./reflected-xss.js";
-import { CreateAuditItemsCommand } from "../../commands/create-audit-items.js";
-import { RunAuditCommand } from "../../commands/run-audit.js";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { ReflectedXssPlugin } from "./reflected-xss.ts";
+import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
+import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type {
   AuditTarget,
   HttpRequest,
   JsonPrimitive,
   Finding,
-} from "../../types/models.js";
-import { QueryParameter } from "../parameter/query.js";
-import { FormParameter } from "../parameter/form.js";
-import { JsonPrimitiveParameter } from "../parameter/json.js";
-import { HeaderParameter } from "../parameter/header.js";
-import { ReplaceValue, AppendValue } from "../../types/branded.js";
-import type { AuditItem } from "../../core/audit-item.js";
+} from "../../types/models.ts";
+import { QueryParameter } from "../parameter/query.ts";
+import { FormParameter } from "../parameter/form.ts";
+import { JsonPrimitiveParameter } from "../parameter/json.ts";
+import { HeaderParameter } from "../parameter/header.ts";
+import { ReplaceValue, AppendValue } from "../../types/branded.ts";
+import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
 
