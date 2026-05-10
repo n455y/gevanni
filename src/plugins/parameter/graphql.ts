@@ -12,7 +12,6 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
-@serializable
 class GraphQLQueryParameter extends AuditTarget<
   { field: string },
   string
@@ -25,7 +24,8 @@ class GraphQLQueryParameter extends AuditTarget<
     return new GraphQLQueryMutation(this, payload, method);
   }
 }
-@serializable
+serializable(GraphQLQueryParameter);
+
 class GraphQLVariableParameter extends AuditTarget<
   { path: string[] },
   JsonValue
@@ -38,6 +38,7 @@ class GraphQLVariableParameter extends AuditTarget<
     return new GraphQLVariableMutation(this, payload, method);
   }
 }
+serializable(GraphQLVariableParameter);
 
 class GraphQLQueryMutation extends AuditMutation<GraphQLQueryParameter> {}
 class GraphQLVariableMutation extends AuditMutation<GraphQLVariableParameter> {}

@@ -12,7 +12,6 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
-@serializable
 class HeaderParameter extends AuditTarget<{ name: string }, string> {
   static kind = "header";
   createMutation(
@@ -22,6 +21,7 @@ class HeaderParameter extends AuditTarget<{ name: string }, string> {
     return new HeaderMutation(this, payload, method);
   }
 }
+serializable(HeaderParameter);
 
 class HeaderMutation extends AuditMutation<HeaderParameter> {}
 

@@ -18,7 +18,6 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
-@serializable
 class JsonPrimitiveParameter extends AuditTarget<
   { path: string[] },
   JsonPrimitive
@@ -31,7 +30,8 @@ class JsonPrimitiveParameter extends AuditTarget<
     return new JsonPrimitiveMutation(this, payload, method);
   }
 }
-@serializable
+serializable(JsonPrimitiveParameter);
+
 class JsonArrayParameter extends AuditTarget<
   { path: string[] },
   JsonArray
@@ -44,7 +44,8 @@ class JsonArrayParameter extends AuditTarget<
     return new JsonArrayMutation(this, payload, method);
   }
 }
-@serializable
+serializable(JsonArrayParameter);
+
 class JsonObjectParameter extends AuditTarget<
   { path: string[] },
   JsonObject
@@ -57,6 +58,7 @@ class JsonObjectParameter extends AuditTarget<
     return new JsonObjectMutation(this, payload, method);
   }
 }
+serializable(JsonObjectParameter);
 
 class JsonPrimitiveMutation extends AuditMutation<JsonPrimitiveParameter> {}
 class JsonArrayMutation extends AuditMutation<JsonArrayParameter> {}

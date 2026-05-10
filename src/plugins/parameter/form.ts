@@ -12,7 +12,6 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
-@serializable
 class FormParameter extends AuditTarget<{ name: string }, string> {
   static kind = "form";
   createMutation(
@@ -22,6 +21,7 @@ class FormParameter extends AuditTarget<{ name: string }, string> {
     return new FormMutation(this, payload, method);
   }
 }
+serializable(FormParameter);
 
 class FormMutation extends AuditMutation<FormParameter> {}
 

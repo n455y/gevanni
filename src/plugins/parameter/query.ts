@@ -12,7 +12,6 @@ import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyMutationCommand } from "../../commands/mutation.js";
 
-@serializable
 class QueryParameter extends AuditTarget<{ name: string }, string> {
   static kind = "query";
   createMutation(
@@ -22,6 +21,7 @@ class QueryParameter extends AuditTarget<{ name: string }, string> {
     return new QueryMutation(this, payload, method);
   }
 }
+serializable(QueryParameter);
 
 class QueryMutation extends AuditMutation<QueryParameter> {}
 
