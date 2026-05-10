@@ -22,7 +22,7 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function makeQueryParam(name: string, value: string): AuditTarget {
+function makeQueryTarget(name: string, value: string): AuditTarget {
   return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
@@ -35,7 +35,7 @@ function makeJsonPrimitiveParam(
   ]);
 }
 
-function makeHeaderParam(name: string, value: string): AuditTarget {
+function makeHeaderTarget(name: string, value: string): AuditTarget {
   return new HeaderParameter({ name }, value, [ReplaceValue]);
 }
 
@@ -55,20 +55,20 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const params = [
-      makeQueryParam("id", "1"),
+    const targets = [
+      makeQueryTarget("id", "1"),
       makeJsonPrimitiveParam(["user", "id"], 1),
     ];
 
     const results = await commandBus.broadcast<AuditItem[]>(
-      new CreateAuditItemsCommand(params),
+      new CreateAuditItemsCommand(targets),
     );
 
     expect(results).toHaveLength(1);
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
     expect(definitions[0].signatureName).toBe("sqli-error");
-    expect(definitions[0].target).toEqual(params[0]);
+    expect(definitions[0].target).toEqual(targets[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -79,13 +79,13 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const params = [
+    const targets = [
       makeJsonPrimitiveParam(["user", "id"], 1),
-      makeHeaderParam("Authorization", "Bearer token"),
+      makeHeaderTarget("Authorization", "Bearer token"),
     ];
 
     const results = await commandBus.broadcast<AuditItem[]>(
-      new CreateAuditItemsCommand(params),
+      new CreateAuditItemsCommand(targets),
     );
 
     const definitions = results[0];
@@ -100,7 +100,7 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("id", "1");
+    const target = makeQueryTarget("id", "1");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -115,7 +115,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        target: param,
+        target: target,
         replay: mockReplay,
       }),
     );
@@ -132,7 +132,7 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("id", "1");
+    const target = makeQueryTarget("id", "1");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -145,7 +145,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        target: param,
+        target: target,
         replay: mockReplay,
       }),
     );
@@ -162,7 +162,7 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("id", "1");
+    const target = makeQueryTarget("id", "1");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -175,7 +175,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        target: param,
+        target: target,
         replay: mockReplay,
       }),
     );
@@ -191,7 +191,7 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("id", "1");
+    const target = makeQueryTarget("id", "1");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -206,7 +206,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        target: param,
+        target: target,
         replay: mockReplay,
       }),
     );
@@ -222,7 +222,7 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("id", "1");
+    const target = makeQueryTarget("id", "1");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -235,7 +235,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        target: param,
+        target: target,
         replay: mockReplay,
       }),
     );
@@ -251,7 +251,7 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("id", "1");
+    const target = makeQueryTarget("id", "1");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -264,7 +264,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        target: param,
+        target: target,
         replay: mockReplay,
       }),
     );
@@ -281,7 +281,7 @@ describe("SqliErrorPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("id", "1");
+    const target = makeQueryTarget("id", "1");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -294,7 +294,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        target: param,
+        target: target,
         replay: mockReplay,
       }),
     );

@@ -55,11 +55,11 @@ class QueryMutationPlugin implements Plugin {
         const searchParams = new URLSearchParams(url.search);
 
         for (const instr of queryMutations) {
-          const paramName = instr.target.location.name;
-          const current = searchParams.get(paramName) ?? "";
+          const targetName = instr.target.location.name;
+          const current = searchParams.get(targetName) ?? "";
           const payload = instr.payload as string;
           const modified = applyMutation(current, payload, instr.method);
-          searchParams.set(paramName, modified);
+          searchParams.set(targetName, modified);
         }
 
         url.search = searchParams.toString();

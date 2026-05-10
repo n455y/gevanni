@@ -23,7 +23,7 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function makeQueryParam(name: string, value: string): AuditTarget {
+function makeQueryTarget(name: string, value: string): AuditTarget {
   return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
@@ -36,11 +36,11 @@ function makeJsonPrimitiveParam(
   ]);
 }
 
-function makeFormParam(name: string, value: string): AuditTarget {
+function makeFormTarget(name: string, value: string): AuditTarget {
   return new FormParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
-function makeHeaderParam(name: string, value: string): AuditTarget {
+function makeHeaderTarget(name: string, value: string): AuditTarget {
   return new HeaderParameter({ name }, value, [ReplaceValue]);
 }
 
@@ -60,20 +60,20 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const params = [
-      makeQueryParam("q", "search"),
+    const targets = [
+      makeQueryTarget("q", "search"),
       makeJsonPrimitiveParam(["user", "name"], "test"),
     ];
 
     const results = await commandBus.broadcast<AuditItem[]>(
-      new CreateAuditItemsCommand(params),
+      new CreateAuditItemsCommand(targets),
     );
 
     expect(results).toHaveLength(1);
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
     expect(definitions[0].signatureName).toBe("reflected-xss");
-    expect(definitions[0].target).toEqual(params[0]);
+    expect(definitions[0].target).toEqual(targets[0]);
   });
 
   it("creates definitions for form parameters", async () => {
@@ -84,14 +84,14 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const params = [makeFormParam("username", "admin")];
+    const targets = [makeFormTarget("username", "admin")];
     const results = await commandBus.broadcast<AuditItem[]>(
-      new CreateAuditItemsCommand(params),
+      new CreateAuditItemsCommand(targets),
     );
 
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
-    expect(definitions[0].target).toEqual(params[0]);
+    expect(definitions[0].target).toEqual(targets[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -102,9 +102,9 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const params = [makeHeaderParam("Authorization", "Bearer token")];
+    const targets = [makeHeaderTarget("Authorization", "Bearer token")];
     const results = await commandBus.broadcast<AuditItem[]>(
-      new CreateAuditItemsCommand(params),
+      new CreateAuditItemsCommand(targets),
     );
 
     const definitions = results[0];
@@ -119,7 +119,7 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("q", "search");
+    const target = makeQueryTarget("q", "search");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -132,7 +132,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        target: param,
+        target,
         replay: mockReplay,
       }),
     );
@@ -150,7 +150,7 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("q", "search");
+    const target = makeQueryTarget("q", "search");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -163,7 +163,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        target: param,
+        target,
         replay: mockReplay,
       }),
     );
@@ -180,7 +180,7 @@ describe("ReflectedXssPlugin", () => {
       config: {},
     });
 
-    const param = makeQueryParam("q", "search");
+    const target = makeQueryTarget("q", "search");
     const mockReplay = async () => ({
       request: mockRequest,
       response: {
@@ -193,7 +193,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        target: param,
+        target,
         replay: mockReplay,
       }),
     );

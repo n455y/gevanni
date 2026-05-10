@@ -24,7 +24,7 @@ import {
   PrependValue,
 } from "../../types/branded.js";
 
-type AnyGraphQLParam = GraphQLQueryParameter | GraphQLVariableParameter;
+type AnyGraphQLTarget = GraphQLQueryParameter | GraphQLVariableParameter;
 
 let commandBus: InMemoryCommandBus;
 
@@ -41,8 +41,8 @@ function makeGraphQLRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: AuditTarget[][]): AnyGraphQLParam[] {
-  return results.flat() as AnyGraphQLParam[];
+function flatTargets(results: AuditTarget[][]): AnyGraphQLTarget[] {
+  return results.flat() as AnyGraphQLTarget[];
 }
 
 function makeQueryInstruction(
@@ -90,13 +90,13 @@ describe("GraphQLParserPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"query GetUser($id: ID!){ user(id: $id){ name } }","variables":{"id":"123"}}`,
     );
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(2);
+    expect(targets).toHaveLength(2);
 
-    const queryParam = params.find(
+    const queryParam = targets.find(
       (p): p is GraphQLQueryParameter =>
         p instanceof GraphQLQueryParameter && p.location.field === "query",
     );
@@ -105,7 +105,7 @@ describe("GraphQLParserPlugin", () => {
       "query GetUser($id: ID!){ user(id: $id){ name } }",
     );
 
-    const varParam = params.find(
+    const varParam = targets.find(
       (p): p is GraphQLVariableParameter =>
         p instanceof GraphQLVariableParameter &&
         p.location.path.length === 2 &&
@@ -127,13 +127,13 @@ describe("GraphQLParserPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"mutation{ createUser(input: $input) { id } }","variables":{"input":{"name":"test","age":25}}}`,
     );
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(3);
+    expect(targets).toHaveLength(3);
 
-    const nameParam = params.find(
+    const nameParam = targets.find(
       (p): p is GraphQLVariableParameter =>
         p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.input.name",
@@ -141,7 +141,7 @@ describe("GraphQLParserPlugin", () => {
     expect(nameParam).toBeDefined();
     expect(nameParam!.originalValue).toBe("test");
 
-    const ageParam = params.find(
+    const ageParam = targets.find(
       (p): p is GraphQLVariableParameter =>
         p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.input.age",
@@ -161,13 +161,13 @@ describe("GraphQLParserPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"query A{ a } query B{ b }","operationName":"B"}`,
     );
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(2);
+    expect(targets).toHaveLength(2);
 
-    const opParam = params.find(
+    const opParam = targets.find(
       (p): p is GraphQLQueryParameter =>
         p instanceof GraphQLQueryParameter &&
         p.location.field === "operationName",
@@ -185,11 +185,11 @@ describe("GraphQLParserPlugin", () => {
     });
 
     const request = makeGraphQLRequest(`{"name":"test","age":25}`);
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("returns empty when content-type is not application/json", async () => {
@@ -206,11 +206,11 @@ describe("GraphQLParserPlugin", () => {
       headers: { "content-type": "text/plain" },
       body: Buffer.from(`{"query":"{ users { name } }"}`, "utf-8"),
     };
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("returns empty when body is null", async () => {
@@ -227,11 +227,11 @@ describe("GraphQLParserPlugin", () => {
       headers: { "content-type": "application/json" },
       body: null,
     };
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("returns empty for invalid JSON", async () => {
@@ -243,11 +243,11 @@ describe("GraphQLParserPlugin", () => {
     });
 
     const request = makeGraphQLRequest(`{invalid json}`);
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("parses GraphQL request with array variables", async () => {
@@ -261,13 +261,13 @@ describe("GraphQLParserPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"query($ids: [ID!]!){ users(ids: $ids){ name } }","variables":{"ids":["1","2"]}}`,
     );
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(3);
+    expect(targets).toHaveLength(3);
 
-    const id0 = params.find(
+    const id0 = targets.find(
       (p): p is GraphQLVariableParameter =>
         p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.ids.0",
@@ -275,7 +275,7 @@ describe("GraphQLParserPlugin", () => {
     expect(id0).toBeDefined();
     expect(id0!.originalValue).toBe("1");
 
-    const id1 = params.find(
+    const id1 = targets.find(
       (p): p is GraphQLVariableParameter =>
         p instanceof GraphQLVariableParameter &&
         p.location.path.join(".") === "variables.ids.1",

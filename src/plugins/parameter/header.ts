@@ -54,10 +54,10 @@ class HeaderMutationPlugin implements Plugin {
         const headers = { ...request.headers };
 
         for (const instr of headerMutations) {
-          const paramName = instr.target.location.name;
-          const current = headers[paramName] ?? "";
+          const targetName = instr.target.location.name;
+          const current = headers[targetName] ?? "";
           const payload = instr.payload as string;
-          headers[paramName] = applyMutation(current, payload, instr.method);
+          headers[targetName] = applyMutation(current, payload, instr.method);
         }
 
         return {

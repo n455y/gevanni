@@ -61,12 +61,12 @@ describe("FormParserPlugin", () => {
     });
 
     const request = makeFormRequest("username=admin&password=secret");
-    const params = flatParams(
+    const targets = flatParams(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(2);
-    expect(params).toEqual(
+    expect(targets).toHaveLength(2);
+    expect(targets).toEqual(
       expect.arrayContaining([
         new FormParameter({ name: "username" }, "admin", [
           ReplaceValue,
@@ -97,11 +97,11 @@ describe("FormParserPlugin", () => {
       body: Buffer.from("username=admin&password=secret", "utf-8"),
     };
 
-    const params = flatParams(
+    const targets = flatParams(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("returns empty array when body is null", async () => {
@@ -119,11 +119,11 @@ describe("FormParserPlugin", () => {
       body: null,
     };
 
-    const params = flatParams(
+    const targets = flatParams(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("handles content-type with charset parameter", async () => {
@@ -143,13 +143,13 @@ describe("FormParserPlugin", () => {
       body: Buffer.from("key=value", "utf-8"),
     };
 
-    const params = flatParams(
+    const targets = flatParams(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(1);
-    expect(params[0].location).toEqual({ name: "key" });
-    expect(params[0].originalValue).toBe("value");
+    expect(targets).toHaveLength(1);
+    expect(targets[0].location).toEqual({ name: "key" });
+    expect(targets[0].originalValue).toBe("value");
   });
 });
 
@@ -175,8 +175,8 @@ describe("FormMutationPlugin", () => {
     );
 
     const body = (result.body as Buffer).toString("utf-8");
-    const params = new URLSearchParams(body);
-    expect(params.get("username")).toBe("INJECTED");
+    const targets = new URLSearchParams(body);
+    expect(targets.get("username")).toBe("INJECTED");
     expect(result.url).toBe("http://example.com/login");
     expect(result.headers).toEqual({
       "content-type": "application/x-www-form-urlencoded",
@@ -204,8 +204,8 @@ describe("FormMutationPlugin", () => {
     );
 
     const body = (result.body as Buffer).toString("utf-8");
-    const params = new URLSearchParams(body);
-    expect(params.get("username")).toBe("adminINJECTED");
+    const targets = new URLSearchParams(body);
+    expect(targets.get("username")).toBe("adminINJECTED");
   });
 
   it("prepends payload to existing form parameter value", async () => {
@@ -229,8 +229,8 @@ describe("FormMutationPlugin", () => {
     );
 
     const body = (result.body as Buffer).toString("utf-8");
-    const params = new URLSearchParams(body);
-    expect(params.get("username")).toBe("INJECTEDadmin");
+    const targets = new URLSearchParams(body);
+    expect(targets.get("username")).toBe("INJECTEDadmin");
   });
 
   it("returns request unchanged when content-type is not form-urlencoded", async () => {
@@ -333,9 +333,9 @@ describe("FormMutationPlugin", () => {
     );
 
     const body = (result.body as Buffer).toString("utf-8");
-    const params = new URLSearchParams(body);
-    expect(params.get("username")).toBe("X");
-    expect(params.get("password")).toBe("secretY");
+    const targets = new URLSearchParams(body);
+    expect(targets.get("username")).toBe("X");
+    expect(targets.get("password")).toBe("secretY");
   });
 
   it("returns request unchanged when body is null", async () => {

@@ -13,7 +13,7 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function flatParams(results: AuditTarget[][]): AuditTarget[] {
+function flatTargets(results: AuditTarget[][]): AuditTarget[] {
   return results.flat();
 }
 
@@ -36,12 +36,12 @@ describe("HeaderParserPlugin", () => {
       body: null,
     };
 
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(2);
-    expect(params).toEqual(
+    expect(targets).toHaveLength(2);
+    expect(targets).toEqual(
       expect.arrayContaining([
         new HeaderParameter(
           { name: "content-type" },
@@ -72,10 +72,10 @@ describe("HeaderParserPlugin", () => {
       body: null,
     };
 
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 });

@@ -12,10 +12,10 @@ class ReflectedXssPlugin implements Plugin {
       CreateAuditItemsCommand,
       async (cmd) => {
         return cmd.targets
-          .filter((param) => param.allowedMutations.includes(AppendValue))
-          .map((param) => ({
+          .filter((target) => target.allowedMutations.includes(AppendValue))
+          .map((target) => ({
             signatureName: "reflected-xss",
-            target: param,
+            target,
           }));
       },
     );

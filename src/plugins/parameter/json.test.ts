@@ -21,7 +21,7 @@ import {
   PrependValue,
 } from "../../types/branded.js";
 
-type AnyJsonParam =
+type AnyJsonTarget =
   | JsonPrimitiveParameter
   | JsonArrayParameter
   | JsonObjectParameter;
@@ -41,8 +41,8 @@ function makeJsonRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: AuditTarget[][]): AnyJsonParam[] {
-  return results.flat() as AnyJsonParam[];
+function flatTargets(results: AuditTarget[][]): AnyJsonTarget[] {
+  return results.flat() as AnyJsonTarget[];
 }
 
 function makeJsonPrimitiveInstruction(
@@ -72,19 +72,19 @@ describe("JsonParserPlugin", () => {
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test","age":25}}`);
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(4);
+    expect(targets).toHaveLength(4);
 
-    const rootObj = params.find(
+    const rootObj = targets.find(
       (p): p is JsonObjectParameter =>
         p instanceof JsonObjectParameter && p.location.path.length === 0,
     );
     expect(rootObj).toBeDefined();
 
-    const userObj = params.find(
+    const userObj = targets.find(
       (p): p is JsonObjectParameter =>
         p instanceof JsonObjectParameter &&
         p.location.path.includes("user") &&
@@ -92,7 +92,7 @@ describe("JsonParserPlugin", () => {
     );
     expect(userObj).toBeDefined();
 
-    const nameParam = params.find(
+    const nameParam = targets.find(
       (p): p is JsonPrimitiveParameter =>
         p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
@@ -102,7 +102,7 @@ describe("JsonParserPlugin", () => {
     expect(nameParam).toBeDefined();
     expect(nameParam!.originalValue).toBe("test");
 
-    const ageParam = params.find(
+    const ageParam = targets.find(
       (p): p is JsonPrimitiveParameter =>
         p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
@@ -128,11 +128,11 @@ describe("JsonParserPlugin", () => {
       body: Buffer.from(`{"key":"value"}`, "utf-8"),
     };
 
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("returns empty array when body is null", async () => {
@@ -150,11 +150,11 @@ describe("JsonParserPlugin", () => {
       body: null,
     };
 
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("returns empty array for invalid JSON", async () => {
@@ -166,11 +166,11 @@ describe("JsonParserPlugin", () => {
     });
 
     const request = makeJsonRequest(`{invalid json}`);
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("parses JSON arrays with indexed paths", async () => {
@@ -182,13 +182,13 @@ describe("JsonParserPlugin", () => {
     });
 
     const request = makeJsonRequest(`{"items":["a","b"]}`);
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(4);
+    expect(targets).toHaveLength(4);
 
-    const arrayParam = params.find(
+    const arrayParam = targets.find(
       (p): p is JsonArrayParameter =>
         p instanceof JsonArrayParameter &&
         p.location.path.length === 1 &&
@@ -197,7 +197,7 @@ describe("JsonParserPlugin", () => {
     expect(arrayParam).toBeDefined();
     expect(arrayParam!.originalValue).toEqual(["a", "b"]);
 
-    const item0 = params.find(
+    const item0 = targets.find(
       (p): p is JsonPrimitiveParameter =>
         p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
@@ -207,7 +207,7 @@ describe("JsonParserPlugin", () => {
     expect(item0).toBeDefined();
     expect(item0!.originalValue).toBe("a");
 
-    const item1 = params.find(
+    const item1 = targets.find(
       (p): p is JsonPrimitiveParameter =>
         p instanceof JsonPrimitiveParameter &&
         p.location.path.length === 2 &&
@@ -227,19 +227,19 @@ describe("JsonParserPlugin", () => {
     });
 
     const request = makeJsonRequest(`{"active":true,"deleted":null}`);
-    const params = flatParams(
+    const targets = flatTargets(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(3);
+    expect(targets).toHaveLength(3);
 
-    const activeParam = params.find(
+    const activeParam = targets.find(
       (p): p is JsonPrimitiveParameter =>
         p instanceof JsonPrimitiveParameter && p.location.path[0] === "active",
     );
     expect(activeParam!.originalValue).toBe(true);
 
-    const deletedParam = params.find(
+    const deletedParam = targets.find(
       (p): p is JsonPrimitiveParameter =>
         p instanceof JsonPrimitiveParameter && p.location.path[0] === "deleted",
     );

@@ -60,11 +60,11 @@ class FormMutationPlugin implements Plugin {
       }
 
       for (const instr of formMutations) {
-        const paramName = instr.target.location.name;
-        const current = formBody.get(paramName) ?? "";
+        const targetName = instr.target.location.name;
+        const current = formBody.get(targetName) ?? "";
         const payload = instr.payload as string;
         const modified = applyMutation(current, payload, instr.method);
-        formBody.set(paramName, modified);
+        formBody.set(targetName, modified);
       }
 
       return {

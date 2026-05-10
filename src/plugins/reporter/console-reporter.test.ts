@@ -122,7 +122,7 @@ describe("ConsoleReporterPlugin", () => {
     const output = logSpy.mock.calls[0][0] as string;
 
     expect(output).toContain("[VULNERABLE] reflected-xss");
-    expect(output).toContain("Parameter:");
+    expect(output).toContain("Target:");
     expect(output).toContain("Evidence: XSS payload reflected in response body");
     expect(output).toContain("Request: GET https://example.com/search?q=%3Cscript%3E");
 
@@ -152,7 +152,7 @@ describe("ConsoleReporterPlugin", () => {
     const output = logSpy.mock.calls[0][0] as string;
 
     expect(output).toContain("[SAFE] sqli-error");
-    expect(output).toContain("Parameter:");
+    expect(output).toContain("Target:");
     expect(output).not.toContain("Evidence:");
     expect(output).not.toContain("Request: POST");
 

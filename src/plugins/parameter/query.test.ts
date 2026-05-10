@@ -59,12 +59,12 @@ describe("QueryParserPlugin", () => {
       body: null,
     };
 
-    const params = flatParams(
+    const targets = flatParams(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(2);
-    expect(params).toEqual(
+    expect(targets).toHaveLength(2);
+    expect(targets).toEqual(
       expect.arrayContaining([
         new QueryParameter({ name: "foo" }, "bar", [
           ReplaceValue,
@@ -95,11 +95,11 @@ describe("QueryParserPlugin", () => {
       body: null,
     };
 
-    const params = flatParams(
+    const targets = flatParams(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 
   it("returns empty array for empty query string", async () => {
@@ -117,11 +117,11 @@ describe("QueryParserPlugin", () => {
       body: null,
     };
 
-    const params = flatParams(
+    const targets = flatParams(
       await commandBus.broadcast(new ParseRequestCommand(request)),
     );
 
-    expect(params).toHaveLength(0);
+    expect(targets).toHaveLength(0);
   });
 });
 
