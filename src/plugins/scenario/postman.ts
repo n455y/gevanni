@@ -53,7 +53,7 @@ function runNewman(
       ...(isLast
         ? [
             { key: "X-Gevanni-Exchange-Id", value: randomUUID() as ExchangeId },
-            { key: "X-Gevanni-Tamper", value: "true" },
+            { key: "X-Gevanni-Mutate", value: "true" },
           ]
         : []),
     ];

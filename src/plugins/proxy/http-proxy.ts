@@ -13,7 +13,7 @@ import type { ExchangeId } from "../../types/branded.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import type { CommandBus } from "../../core/command-bus.js";
 import { InterceptCommand } from "../../commands/intercept.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 import { SaveExchangeCommand } from "../../commands/exchange.js";
 
 function sendRequest(request: HttpRequest): Promise<HttpResponse> {
@@ -66,7 +66,7 @@ function sendRequest(request: HttpRequest): Promise<HttpResponse> {
   });
 }
 
-// --- Tamper Proxy ---
+// --- Mutation Proxy ---
 
 interface MutationProxy {
   port: number;
@@ -74,7 +74,7 @@ interface MutationProxy {
 }
 
 async function startMutationProxy(
-  instructions: AuditMutation[],
+  mutations: AuditMutation[],
   commandBus: CommandBus,
 ): Promise<MutationProxy> {
   const notAfterDate = new Date();
@@ -112,8 +112,8 @@ async function startMutationProxy(
       const replayId = headers["x-gevanni-replay-id"];
       delete headers["x-gevanni-replay-id"];
 
-      const shouldTamper = headers["x-gevanni-tamper"] === "true";
-      delete headers["x-gevanni-tamper"];
+      const shouldMutate = headers["x-gevanni-mutate"] === "true";
+      delete headers["x-gevanni-mutate"];
 
       const url = isHttps ? `https://${req.headers.host}${req.url}` : req.url!;
 
@@ -124,13 +124,13 @@ async function startMutationProxy(
         body,
       };
 
-      const tampered = shouldTamper
+      const mutated = shouldMutate
         ? await commandBus.pipe<HttpRequest>(
-            new ApplyTamperCommand(httpRequest, instructions),
+            new ApplyMutationCommand(httpRequest, mutations),
           )
         : httpRequest;
 
-      const targetUrl = new URL(tampered.url);
+      const targetUrl = new URL(mutated.url);
       const targetIsHttps = targetUrl.protocol === "https:";
       const lib = targetIsHttps ? https : http;
       const proxyReq = lib.request(
@@ -138,8 +138,8 @@ async function startMutationProxy(
           hostname: targetUrl.hostname,
           port: targetUrl.port || (targetIsHttps ? 443 : 80),
           path: targetUrl.pathname + targetUrl.search,
-          method: tampered.method,
-          headers: { ...tampered.headers, host: targetUrl.host },
+          method: mutated.method,
+          headers: { ...mutated.headers, host: targetUrl.host },
           rejectUnauthorized: false,
           autoSelectFamily: false,
         } as https.RequestOptions,
@@ -162,7 +162,7 @@ async function startMutationProxy(
 
               const exchange: Exchange = {
                 id: exchangeId,
-                request: tampered,
+                request: mutated,
                 response: {
                   statusCode: proxyRes.statusCode ?? 0,
                   headers: responseHeaders,
@@ -196,8 +196,8 @@ async function startMutationProxy(
         res.end(`Proxy error: ${err.message}`);
       });
 
-      if (tampered.body) {
-        proxyReq.write(tampered.body);
+      if (mutated.body) {
+        proxyReq.write(mutated.body);
       }
       proxyReq.end();
     } catch (err) {
@@ -267,7 +267,7 @@ class HttpProxyPlugin implements Plugin {
       async (cmd) => {
         // 1. Apply tamper via pipeline
         const modifiedRequest = await context.commandBus.pipe(
-          new ApplyTamperCommand(cmd.request, cmd.instructions),
+          new ApplyMutationCommand(cmd.request, cmd.mutations),
         );
 
         // 2. Merge extra config headers

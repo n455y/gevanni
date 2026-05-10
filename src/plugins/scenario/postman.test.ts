@@ -7,7 +7,7 @@ import { startMutationProxy } from "../proxy/http-proxy.js";
 import type { MutationProxy } from "../proxy/http-proxy.js";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
-import { QueryTamperPlugin, QueryMutation } from "../parameter/query.js";
+import { QueryMutationPlugin, QueryMutation } from "../parameter/query.js";
 import type { Scenario, Exchange } from "../../types/models.js";
 import { QueryParameter } from "../parameter/query.js";
 import type { Brand } from "../../types/branded.js";
@@ -104,7 +104,7 @@ function makeTamperInstruction(): QueryMutation {
 }
 
 describe("PostmanPlugin", () => {
-  it("sends request through proxy with empty instructions", { timeout: 30_000 }, async () => {
+  it("sends request through proxy with empty mutations", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
     const proxy = await startMutationProxy([], commandBus);
 
@@ -115,7 +115,7 @@ describe("PostmanPlugin", () => {
     });
 
     const scenario = makeScenario({ method: "GET" });
-    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-plan" };
+    const config: ReplayConfig = { mutations: [], proxyPort: proxy.port, replayId: "test-plan" };
 
     const results = await commandBus.dispatch<Exchange[]>(
       new ReplayCommand(scenario, config),
@@ -136,11 +136,11 @@ describe("PostmanPlugin", () => {
     proxy.close();
   });
 
-  it("applies tamper via proxy when instructions are provided", { timeout: 30_000 }, async () => {
+  it("applies tamper via proxy when mutations are provided", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
-    const queryTamper = new QueryTamperPlugin();
-    const instructions = [makeTamperInstruction()];
-    const proxy = await startMutationProxy(instructions, commandBus);
+    const queryTamper = new QueryMutationPlugin();
+    const mutations = [makeTamperInstruction()];
+    const proxy = await startMutationProxy(mutations, commandBus);
 
     await plugin.init({
       commandBus,
@@ -157,7 +157,7 @@ describe("PostmanPlugin", () => {
       method: "GET",
       url: `http://127.0.0.1:${serverPort}/test?q=original`,
     });
-    const config: ReplayConfig = { instructions, proxyPort: proxy.port, replayId: "test-tamper" };
+    const config: ReplayConfig = { mutations, proxyPort: proxy.port, replayId: "test-tamper" };
 
     const results = await commandBus.dispatch<Exchange[]>(
       new ReplayCommand(scenario, config),
@@ -188,7 +188,7 @@ describe("PostmanPlugin", () => {
       method: "POST",
       body: '{"key":"value"}',
     });
-    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-post" };
+    const config: ReplayConfig = { mutations: [], proxyPort: proxy.port, replayId: "test-post" };
 
     const results = await commandBus.dispatch<Exchange[]>(
       new ReplayCommand(scenario, config),
@@ -298,7 +298,7 @@ describe("PostmanPlugin multi-request", () => {
       },
     };
 
-    const config: ReplayConfig = { instructions: [], proxyPort: proxy.port, replayId: "test-multi" };
+    const config: ReplayConfig = { mutations: [], proxyPort: proxy.port, replayId: "test-multi" };
 
     const results = await commandBus.dispatch<Exchange[]>(
       new ReplayCommand(scenario, config),

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { GraphQLParserPlugin, GraphQLTamperPlugin } from "./graphql.js";
+import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./graphql.js";
 import {
   GraphQLQueryParameter,
   GraphQLVariableParameter,
@@ -15,7 +15,7 @@ import type {
   JsonValue,
 } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 import type { Brand } from "../../types/branded.js";
 import {
   MutationType,
@@ -285,9 +285,9 @@ describe("GraphQLParserPlugin", () => {
   });
 });
 
-describe("GraphQLTamperPlugin", () => {
+describe("GraphQLMutationPlugin", () => {
   it("replaces query string", async () => {
-    const plugin = new GraphQLTamperPlugin();
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -300,7 +300,7 @@ describe("GraphQLTamperPlugin", () => {
     const instruction = makeQueryInstruction("query", "INJECTED", ReplaceValue);
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -310,7 +310,7 @@ describe("GraphQLTamperPlugin", () => {
   });
 
   it("appends payload to query string", async () => {
-    const plugin = new GraphQLTamperPlugin();
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -323,7 +323,7 @@ describe("GraphQLTamperPlugin", () => {
     const instruction = makeQueryInstruction("query", "INJECTED", AppendValue);
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -331,7 +331,7 @@ describe("GraphQLTamperPlugin", () => {
   });
 
   it("prepends payload to query string", async () => {
-    const plugin = new GraphQLTamperPlugin();
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -344,7 +344,7 @@ describe("GraphQLTamperPlugin", () => {
     const instruction = makeQueryInstruction("query", "INJECTED", PrependValue);
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -352,7 +352,7 @@ describe("GraphQLTamperPlugin", () => {
   });
 
   it("replaces variable value", async () => {
-    const plugin = new GraphQLTamperPlugin();
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -370,7 +370,7 @@ describe("GraphQLTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -378,7 +378,7 @@ describe("GraphQLTamperPlugin", () => {
   });
 
   it("appends payload to variable value", async () => {
-    const plugin = new GraphQLTamperPlugin();
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -396,7 +396,7 @@ describe("GraphQLTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -404,7 +404,7 @@ describe("GraphQLTamperPlugin", () => {
   });
 
   it("handles nested variable tampering", async () => {
-    const plugin = new GraphQLTamperPlugin();
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -422,7 +422,7 @@ describe("GraphQLTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -430,8 +430,8 @@ describe("GraphQLTamperPlugin", () => {
     expect(parsed.variables.input.email).toBe("a@b.com");
   });
 
-  it("returns request unchanged when no GraphQL instructions", async () => {
-    const plugin = new GraphQLTamperPlugin();
+  it("returns request unchanged when no GraphQL mutations", async () => {
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -448,14 +448,14 @@ describe("GraphQLTamperPlugin", () => {
     ]).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
   it("returns request unchanged when body is null", async () => {
-    const plugin = new GraphQLTamperPlugin();
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -472,14 +472,14 @@ describe("GraphQLTamperPlugin", () => {
     const instruction = makeQueryInstruction("query", "INJECTED", ReplaceValue);
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
-  it("handles multiple GraphQL instructions", async () => {
-    const plugin = new GraphQLTamperPlugin();
+  it("handles multiple GraphQL mutations", async () => {
+    const plugin = new GraphQLMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -489,13 +489,13 @@ describe("GraphQLTamperPlugin", () => {
     const request = makeGraphQLRequest(
       `{"query":"{ users { name } }","variables":{"id":"123","name":"test"}}`,
     );
-    const instructions = [
+    const mutations = [
       makeVariableInstruction(["variables", "id"], "123", "X", ReplaceValue),
       makeVariableInstruction(["variables", "name"], "test", "Y", AppendValue),
     ];
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, instructions),
+      new ApplyMutationCommand(request, mutations),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { FormParserPlugin, FormTamperPlugin } from "./form.js";
+import { FormParserPlugin, FormMutationPlugin } from "./form.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 import { AuditTarget, type HttpRequest } from "../../types/models.js";
 import { FormParameter } from "./form.js";
 import { FormMutation } from "./form.js";
@@ -153,9 +153,9 @@ describe("FormParserPlugin", () => {
   });
 });
 
-describe("FormTamperPlugin", () => {
+describe("FormMutationPlugin", () => {
   it("replaces form parameter value with payload", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -171,7 +171,7 @@ describe("FormTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const body = (result.body as Buffer).toString("utf-8");
@@ -184,7 +184,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("appends payload to existing form parameter value", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -200,7 +200,7 @@ describe("FormTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const body = (result.body as Buffer).toString("utf-8");
@@ -209,7 +209,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("prepends payload to existing form parameter value", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -225,7 +225,7 @@ describe("FormTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const body = (result.body as Buffer).toString("utf-8");
@@ -234,7 +234,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("returns request unchanged when content-type is not form-urlencoded", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -256,14 +256,14 @@ describe("FormTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
   it("returns request unchanged when instruction param is not in form body", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -279,14 +279,14 @@ describe("FormTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
   it("does not tamper query string URL parameters", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -308,14 +308,14 @@ describe("FormTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
   it("handles multiple form parameters", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -323,13 +323,13 @@ describe("FormTamperPlugin", () => {
     });
 
     const request = makeFormRequest("username=admin&password=secret");
-    const instructions = [
+    const mutations = [
       makeFormInstruction("username", "admin", "X", ReplaceValue),
       makeFormInstruction("password", "secret", "Y", AppendValue),
     ];
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, instructions),
+      new ApplyMutationCommand(request, mutations),
     );
 
     const body = (result.body as Buffer).toString("utf-8");
@@ -339,7 +339,7 @@ describe("FormTamperPlugin", () => {
   });
 
   it("returns request unchanged when body is null", async () => {
-    const plugin = new FormTamperPlugin();
+    const plugin = new FormMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -361,7 +361,7 @@ describe("FormTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);

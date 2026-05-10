@@ -9,7 +9,7 @@ import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 
 class FormParameter extends AuditTarget<{ name: string }, string> {
   createMutation(
@@ -32,11 +32,11 @@ class FormParserPlugin implements Plugin {
   }
 }
 
-class FormTamperPlugin implements Plugin {
-  readonly name = "form-tamper";
+class FormMutationPlugin implements Plugin {
+  readonly name = "form-mutation";
 
   async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(ApplyTamperCommand, async (cmd, request) => {
+    context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {
       const contentType = request.headers["content-type"] ?? "";
       if (!contentType.includes("application/x-www-form-urlencoded")) {
         return request;
@@ -48,22 +48,22 @@ class FormTamperPlugin implements Plugin {
 
       const formBody = new URLSearchParams(request.body.toString("utf-8"));
 
-      const formInstructions = cmd.instructions
+      const formMutations = cmd.mutations
         .filter(
           (instr): instr is FormMutation =>
             instr instanceof FormMutation,
         )
         .filter((instr) => formBody.has(instr.parameter.location.name));
 
-      if (formInstructions.length === 0) {
+      if (formMutations.length === 0) {
         return request;
       }
 
-      for (const instr of formInstructions) {
+      for (const instr of formMutations) {
         const paramName = instr.parameter.location.name;
         const current = formBody.get(paramName) ?? "";
         const payload = instr.payload as string;
-        const modified = applyTamper(current, payload, instr.method);
+        const modified = applyMutation(current, payload, instr.method);
         formBody.set(paramName, modified);
       }
 
@@ -103,7 +103,7 @@ function parseFormParameters(request: HttpRequest): AuditTarget[] {
   return params;
 }
 
-function applyTamper(
+function applyMutation(
   current: string,
   payload: string,
   method: MutationType,
@@ -122,7 +122,7 @@ function applyTamper(
 
 export {
   FormParserPlugin,
-  FormTamperPlugin,
+  FormMutationPlugin,
   FormParameter,
   FormMutation,
 };

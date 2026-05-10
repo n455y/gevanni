@@ -2,7 +2,7 @@ export * from "./parse-request.js";
 export * from "./create-audit-items.js";
 export * from "./replay.js";
 export * from "./intercept.js";
-export * from "./tamper.js";
+export * from "./mutation.js";
 export * from "./storage.js";
 export * from "./report.js";
 export * from "./exchange.js";

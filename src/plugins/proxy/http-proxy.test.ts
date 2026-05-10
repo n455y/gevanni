@@ -7,7 +7,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { HttpProxyPlugin } from "./http-proxy.js";
 import { InterceptCommand } from "../../commands/intercept.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 import { startMutationProxy } from "./http-proxy.js";
 import type { HttpRequest, HttpResponse } from "../../types/models.js";
 import { AuditMutation } from "../../types/models.js";
@@ -90,9 +90,9 @@ describe("HttpProxyPlugin", () => {
       config: {},
     });
 
-    // Register a no-op ApplyTamperCommand handler
+    // Register a no-op ApplyMutationCommand handler
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => request,
     );
 
@@ -114,7 +114,7 @@ describe("HttpProxyPlugin", () => {
     expect(body.url).toBe("/test");
   });
 
-  it("pipes through ApplyTamperCommand before sending", async () => {
+  it("pipes through ApplyMutationCommand before sending", async () => {
     const plugin = new HttpProxyPlugin();
     await plugin.init({
       commandBus,
@@ -124,7 +124,7 @@ describe("HttpProxyPlugin", () => {
 
     // Register a tamper handler that modifies the URL
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => ({
         ...request,
         url: request.url.replace("/original", "/modified"),
@@ -155,7 +155,7 @@ describe("HttpProxyPlugin", () => {
     });
 
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => request,
     );
 
@@ -190,7 +190,7 @@ describe("HttpProxyPlugin", () => {
     });
 
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => request,
     );
 
@@ -215,7 +215,7 @@ describe("HttpProxyPlugin", () => {
     });
 
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => ({
         ...request,
         headers: { ...request.headers, "x-tampered": "true" },
@@ -238,7 +238,7 @@ describe("startMutationProxy", () => {
     const proxy = await startMutationProxy([], commandBus);
 
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => request,
     );
 
@@ -273,8 +273,8 @@ describe("startMutationProxy", () => {
     proxy.close();
   });
 
-  it("applies tamper instructions to requests passing through", async () => {
-    const instructions: AuditMutation[] = [
+  it("applies tamper mutations to requests passing through", async () => {
+    const mutations: AuditMutation[] = [
       new QueryParameter({ name: "q" }, "original", [ReplaceValue]).createMutation(
         "<script>" as Brand<string, "Payload">,
         ReplaceValue,
@@ -282,11 +282,11 @@ describe("startMutationProxy", () => {
     ];
 
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => {
         const url = new URL(request.url);
         const searchParams = new URLSearchParams(url.search);
-        for (const instr of _cmd.instructions) {
+        for (const instr of _cmd.mutations) {
           const paramName = (instr.parameter.location as { name: string }).name;
           searchParams.set(paramName, instr.payload as string);
         }
@@ -295,7 +295,7 @@ describe("startMutationProxy", () => {
       },
     );
 
-    const proxy = await startMutationProxy(instructions, commandBus);
+    const proxy = await startMutationProxy(mutations, commandBus);
 
     const response = await new Promise<{ statusCode: number; body: string }>((resolve, reject) => {
       const req = http.request(
@@ -304,7 +304,7 @@ describe("startMutationProxy", () => {
           port: proxy.port,
           method: "GET",
           path: `http://127.0.0.1:${serverPort}/test?q=original`,
-          headers: { host: `127.0.0.1:${serverPort}`, "x-gevanni-tamper": "true" },
+          headers: { host: `127.0.0.1:${serverPort}`, "x-gevanni-mutate": "true" },
         },
         (res) => {
           const chunks: Buffer[] = [];
@@ -333,7 +333,7 @@ describe("startMutationProxy", () => {
     const proxy = await startMutationProxy([], commandBus);
 
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => request,
     );
 
@@ -383,7 +383,7 @@ describe("startMutationProxy", () => {
     const proxy = await startMutationProxy([], commandBus);
 
     commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (_cmd, request) => request,
     );
 
@@ -474,7 +474,7 @@ describe("startMutationProxy", () => {
       const proxy = await startMutationProxy([], commandBus);
 
       commandBus.register(
-        ApplyTamperCommand,
+        ApplyMutationCommand,
         async (_cmd, request) => request,
       );
 
@@ -519,7 +519,7 @@ describe("startMutationProxy", () => {
       const proxy = await startMutationProxy([], commandBus);
 
       commandBus.register(
-        ApplyTamperCommand,
+        ApplyMutationCommand,
         async (_cmd, request) => request,
       );
 

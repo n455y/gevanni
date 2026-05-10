@@ -9,7 +9,7 @@ import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 
 class QueryParameter extends AuditTarget<{ name: string }, string> {
   createMutation(
@@ -35,30 +35,30 @@ class QueryParserPlugin implements Plugin {
   }
 }
 
-class QueryTamperPlugin implements Plugin {
-  readonly name = "query-tamper";
+class QueryMutationPlugin implements Plugin {
+  readonly name = "query-mutation";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (cmd, request) => {
-        const queryInstructions = cmd.instructions.filter(
+        const queryMutations = cmd.mutations.filter(
           (instr): instr is QueryMutation =>
             instr instanceof QueryMutation,
         );
 
-        if (queryInstructions.length === 0) {
+        if (queryMutations.length === 0) {
           return request;
         }
 
         const url = new URL(request.url);
         const searchParams = new URLSearchParams(url.search);
 
-        for (const instr of queryInstructions) {
+        for (const instr of queryMutations) {
           const paramName = instr.parameter.location.name;
           const current = searchParams.get(paramName) ?? "";
           const payload = instr.payload as string;
-          const modified = applyTamper(current, payload, instr.method);
+          const modified = applyMutation(current, payload, instr.method);
           searchParams.set(paramName, modified);
         }
 
@@ -92,7 +92,7 @@ function parseQueryParameters(request: HttpRequest): AuditTarget[] {
   return params;
 }
 
-function applyTamper(
+function applyMutation(
   current: string,
   payload: string,
   method: MutationType,
@@ -111,7 +111,7 @@ function applyTamper(
 
 export {
   QueryParserPlugin,
-  QueryTamperPlugin,
+  QueryMutationPlugin,
   QueryParameter,
   QueryMutation,
 };

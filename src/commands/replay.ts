@@ -2,7 +2,7 @@ import { SingleCommand } from "../core/command.js";
 import type { Scenario, AuditMutation, Exchange } from "../types/models.js";
 
 interface ReplayConfig {
-  instructions: AuditMutation[];
+  mutations: AuditMutation[];
   proxyPort: number;
   replayId: string;
 }

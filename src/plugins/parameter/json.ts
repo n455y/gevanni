@@ -15,7 +15,7 @@ import type {
 import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 
 class JsonPrimitiveParameter extends AuditTarget<
   { path: string[] },
@@ -60,9 +60,9 @@ type JsonMutation =
   | JsonArrayMutation
   | JsonObjectMutation;
 
-const ALLOWED_TAMPERS = [ReplaceValue, AppendValue, PrependValue];
+const ALLOWED_MUTATIONS = [ReplaceValue, AppendValue, PrependValue];
 
-function isJsonInstruction(
+function isJsonMutation(
   instr: AuditMutation,
 ): instr is JsonMutation {
   return (
@@ -85,16 +85,16 @@ class JsonParserPlugin implements Plugin {
   }
 }
 
-class JsonTamperPlugin implements Plugin {
-  readonly name = "json-tamper";
+class JsonMutationPlugin implements Plugin {
+  readonly name = "json-mutation";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (cmd, request) => {
-        const jsonInstructions = cmd.instructions.filter(isJsonInstruction);
+        const jsonMutations = cmd.mutations.filter(isJsonMutation);
 
-        if (jsonInstructions.length === 0) {
+        if (jsonMutations.length === 0) {
           return request;
         }
 
@@ -109,7 +109,7 @@ class JsonTamperPlugin implements Plugin {
           return request;
         }
 
-        for (const instr of jsonInstructions) {
+        for (const instr of jsonMutations) {
           const path = instr.parameter.location.path;
           jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
         }
@@ -159,16 +159,16 @@ function extractJsonParams(
     typeof value === "boolean"
   ) {
     params.push(
-      new JsonPrimitiveParameter({ path }, value, [...ALLOWED_TAMPERS]),
+      new JsonPrimitiveParameter({ path }, value, [...ALLOWED_MUTATIONS]),
     );
   } else if (Array.isArray(value)) {
-    params.push(new JsonArrayParameter({ path }, value, [...ALLOWED_TAMPERS]));
+    params.push(new JsonArrayParameter({ path }, value, [...ALLOWED_MUTATIONS]));
 
     for (let i = 0; i < value.length; i++) {
       extractJsonParams(value[i], [...path, String(i)], params);
     }
   } else if (typeof value === "object") {
-    params.push(new JsonObjectParameter({ path }, value, [...ALLOWED_TAMPERS]));
+    params.push(new JsonObjectParameter({ path }, value, [...ALLOWED_MUTATIONS]));
 
     for (const key of Object.keys(value)) {
       extractJsonParams(value[key], [...path, key], params);
@@ -183,7 +183,7 @@ function applyAtPath(
   method: MutationType,
 ): JsonValue {
   if (path.length === 0) {
-    return applyTamperValue(root, payload, method);
+    return applyMutationValue(root, payload, method);
   }
 
   if (typeof root !== "object" || root === null) {
@@ -214,7 +214,7 @@ function applyAtPath(
   return copy;
 }
 
-function applyTamperValue(
+function applyMutationValue(
   current: JsonValue,
   payload: string,
   method: MutationType,
@@ -233,7 +233,7 @@ function applyTamperValue(
 
 export {
   JsonParserPlugin,
-  JsonTamperPlugin,
+  JsonMutationPlugin,
   JsonPrimitiveParameter,
   JsonArrayParameter,
   JsonObjectParameter,

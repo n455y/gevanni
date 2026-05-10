@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { QueryParserPlugin, QueryTamperPlugin } from "./query.js";
+import { QueryParserPlugin, QueryMutationPlugin } from "./query.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 import { AuditTarget, type HttpRequest } from "../../types/models.js";
 import { QueryParameter } from "./query.js";
 import { JsonPrimitiveParameter } from "./json.js";
@@ -125,9 +125,9 @@ describe("QueryParserPlugin", () => {
   });
 });
 
-describe("QueryTamperPlugin", () => {
+describe("QueryMutationPlugin", () => {
   it("replaces query parameter value with payload", async () => {
-    const plugin = new QueryTamperPlugin();
+    const plugin = new QueryMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -149,7 +149,7 @@ describe("QueryTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const resultUrl = new URL(result.url);
@@ -160,7 +160,7 @@ describe("QueryTamperPlugin", () => {
   });
 
   it("appends payload to existing query parameter value", async () => {
-    const plugin = new QueryTamperPlugin();
+    const plugin = new QueryMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -182,7 +182,7 @@ describe("QueryTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const resultUrl = new URL(result.url);
@@ -190,7 +190,7 @@ describe("QueryTamperPlugin", () => {
   });
 
   it("prepends payload to existing query parameter value", async () => {
-    const plugin = new QueryTamperPlugin();
+    const plugin = new QueryMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -212,15 +212,15 @@ describe("QueryTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const resultUrl = new URL(result.url);
     expect(resultUrl.searchParams.get("foo")).toBe("INJECTEDbar");
   });
 
-  it("returns request unchanged when no query instructions", async () => {
-    const plugin = new QueryTamperPlugin();
+  it("returns request unchanged when no query mutations", async () => {
+    const plugin = new QueryMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -241,14 +241,14 @@ describe("QueryTamperPlugin", () => {
     ).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
   it("handles multiple query parameters", async () => {
-    const plugin = new QueryTamperPlugin();
+    const plugin = new QueryMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -262,13 +262,13 @@ describe("QueryTamperPlugin", () => {
       body: null,
     };
 
-    const instructions = [
+    const mutations = [
       makeQueryInstruction("foo", "bar", "X", ReplaceValue),
       makeQueryInstruction("baz", "123", "Y", AppendValue),
     ];
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, instructions),
+      new ApplyMutationCommand(request, mutations),
     );
 
     const resultUrl = new URL(result.url);

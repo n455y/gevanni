@@ -9,7 +9,7 @@ import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 
 class HeaderParameter extends AuditTarget<{ name: string }, string> {
   createMutation(
@@ -35,29 +35,29 @@ class HeaderParserPlugin implements Plugin {
   }
 }
 
-class HeaderTamperPlugin implements Plugin {
-  readonly name = "header-tamper";
+class HeaderMutationPlugin implements Plugin {
+  readonly name = "header-mutation";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (cmd, request) => {
-        const headerInstructions = cmd.instructions.filter(
+        const headerMutations = cmd.mutations.filter(
           (instr): instr is HeaderMutation =>
             instr instanceof HeaderMutation,
         );
 
-        if (headerInstructions.length === 0) {
+        if (headerMutations.length === 0) {
           return request;
         }
 
         const headers = { ...request.headers };
 
-        for (const instr of headerInstructions) {
+        for (const instr of headerMutations) {
           const paramName = instr.parameter.location.name;
           const current = headers[paramName] ?? "";
           const payload = instr.payload as string;
-          headers[paramName] = applyTamper(current, payload, instr.method);
+          headers[paramName] = applyMutation(current, payload, instr.method);
         }
 
         return {
@@ -87,7 +87,7 @@ function parseHeaderParameters(request: HttpRequest): AuditTarget[] {
   return params;
 }
 
-function applyTamper(
+function applyMutation(
   current: string,
   payload: string,
   method: MutationType,
@@ -106,7 +106,7 @@ function applyTamper(
 
 export {
   HeaderParserPlugin,
-  HeaderTamperPlugin,
+  HeaderMutationPlugin,
   HeaderParameter,
   HeaderMutation,
 };

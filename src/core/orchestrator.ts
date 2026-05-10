@@ -109,12 +109,12 @@ class Orchestrator {
         // a. Save scenario for later retrieval during scan
         await commandBus.dispatch(new SaveScenarioCommand(scenario));
 
-        // b. Dispatch ReplayCommand with empty instructions to get original request
+        // b. Dispatch ReplayCommand with empty mutations to get original request
         const rid = requestId();
         const replayResult = (
           (await commandBus.dispatch(
             new ReplayCommand(scenario, {
-              instructions: [],
+              mutations: [],
               proxyPort: planProxy.port,
               replayId: rid,
             }),
@@ -128,7 +128,7 @@ class Orchestrator {
           );
         const parameters: AuditTarget[] = parseResults.flat();
         logger.debug(
-          `Found ${parameters.length} inspection parameters for ${scenario.name}`,
+          `Found ${parameters.length} audit targets for ${scenario.name}`,
         );
 
         // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
@@ -238,24 +238,24 @@ class Orchestrator {
         );
         eventBus.publish("scan:jobStarted", { jobId: job.id });
 
-        // Get inspector definition
+        // Get audit item
         const def = definitions.get(job.id as string);
         if (!def) {
           throw new Error(
-            `No inspector definition found for job ${job.id as string}`,
+            `No audit item found for job ${job.id as string}`,
           );
         }
 
         // Create replay function
-        const replay = async (instructions: AuditMutation[]) => {
+        const replay = async (mutations: AuditMutation[]) => {
           const scenario: Scenario = await commandBus.dispatch(
             new LoadScenarioCommand(job.scenarioId),
           );
-          const proxy = await startMutationProxy(instructions, commandBus);
+          const proxy = await startMutationProxy(mutations, commandBus);
           try {
             const [exchange] = (await commandBus.dispatch(
               new ReplayCommand(scenario, {
-                instructions,
+                mutations,
                 proxyPort: proxy.port,
                 replayId: job.id as string,
               }),
@@ -266,7 +266,7 @@ class Orchestrator {
           }
         };
 
-        // Run inspection
+        // Run audit
         const finding: Finding = (await commandBus.dispatch(
           new RunAuditCommand({
             signatureName: def.signatureName,

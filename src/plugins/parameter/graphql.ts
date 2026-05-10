@@ -9,7 +9,7 @@ import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.js";
 import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 
 class GraphQLQueryParameter extends AuditTarget<
   { field: string },
@@ -41,7 +41,7 @@ type GraphQLMutation =
   | GraphQLQueryMutation
   | GraphQLVariableMutation;
 
-function isGraphQLInstruction(
+function isGraphQLMutation(
   instr: AuditMutation,
 ): instr is GraphQLMutation {
   return (
@@ -50,7 +50,7 @@ function isGraphQLInstruction(
   );
 }
 
-const ALLOWED_TAMPERS = [ReplaceValue, AppendValue, PrependValue];
+const ALLOWED_MUTATIONS = [ReplaceValue, AppendValue, PrependValue];
 
 class GraphQLParserPlugin implements Plugin {
   readonly name = "graphql-parser";
@@ -65,17 +65,17 @@ class GraphQLParserPlugin implements Plugin {
   }
 }
 
-class GraphQLTamperPlugin implements Plugin {
-  readonly name = "graphql-tamper";
+class GraphQLMutationPlugin implements Plugin {
+  readonly name = "graphql-mutation";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
-      ApplyTamperCommand,
+      ApplyMutationCommand,
       async (cmd, request) => {
-        const graphqlInstructions =
-          cmd.instructions.filter(isGraphQLInstruction);
+        const graphqlMutations =
+          cmd.mutations.filter(isGraphQLMutation);
 
-        if (graphqlInstructions.length === 0) {
+        if (graphqlMutations.length === 0) {
           return request;
         }
 
@@ -90,7 +90,7 @@ class GraphQLTamperPlugin implements Plugin {
           return request;
         }
 
-        for (const instr of graphqlInstructions) {
+        for (const instr of graphqlMutations) {
           if (instr instanceof GraphQLQueryMutation) {
             const field = instr.parameter.location.field;
             if (
@@ -99,7 +99,7 @@ class GraphQLTamperPlugin implements Plugin {
               !Array.isArray(jsonBody) &&
               field in jsonBody
             ) {
-              (jsonBody as Record<string, JsonValue>)[field] = applyTamperValue(
+              (jsonBody as Record<string, JsonValue>)[field] = applyMutationValue(
                 (jsonBody as Record<string, JsonValue>)[field],
                 instr.payload as string,
                 instr.method,
@@ -156,7 +156,7 @@ function parseGraphQLParameters(request: HttpRequest): AuditTarget[] {
 
   params.push(
     new GraphQLQueryParameter({ field: "query" }, parsed.query, [
-      ...ALLOWED_TAMPERS,
+      ...ALLOWED_MUTATIONS,
     ]),
   );
 
@@ -165,7 +165,7 @@ function parseGraphQLParameters(request: HttpRequest): AuditTarget[] {
       new GraphQLQueryParameter(
         { field: "operationName" },
         parsed.operationName,
-        [...ALLOWED_TAMPERS],
+        [...ALLOWED_MUTATIONS],
       ),
     );
   }
@@ -201,7 +201,7 @@ function extractVariableParams(
     ) {
       params.push(
         new GraphQLVariableParameter({ path: currentPath }, value, [
-          ...ALLOWED_TAMPERS,
+          ...ALLOWED_MUTATIONS,
         ]),
       );
     } else if (Array.isArray(value)) {
@@ -225,7 +225,7 @@ function applyAtPath(
   method: MutationType,
 ): JsonValue {
   if (path.length === 0) {
-    return applyTamperValue(root, payload, method);
+    return applyMutationValue(root, payload, method);
   }
 
   if (typeof root !== "object" || root === null) {
@@ -256,7 +256,7 @@ function applyAtPath(
   return copy;
 }
 
-function applyTamperValue(
+function applyMutationValue(
   current: JsonValue,
   payload: string,
   method: MutationType,
@@ -275,7 +275,7 @@ function applyTamperValue(
 
 export {
   GraphQLParserPlugin,
-  GraphQLTamperPlugin,
+  GraphQLMutationPlugin,
   GraphQLQueryParameter,
   GraphQLVariableParameter,
   GraphQLQueryMutation,

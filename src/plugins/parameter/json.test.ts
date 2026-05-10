@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
-import { JsonParserPlugin, JsonTamperPlugin } from "./json.js";
+import { JsonParserPlugin, JsonMutationPlugin } from "./json.js";
 import {
   JsonPrimitiveParameter,
   JsonArrayParameter,
@@ -12,7 +12,7 @@ import {
 import { QueryParameter } from "./query.js";
 import type { HttpRequest, AuditTarget } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
-import { ApplyTamperCommand } from "../../commands/tamper.js";
+import { ApplyMutationCommand } from "../../commands/mutation.js";
 import type { Brand } from "../../types/branded.js";
 import {
   MutationType,
@@ -247,9 +247,9 @@ describe("JsonParserPlugin", () => {
   });
 });
 
-describe("JsonTamperPlugin", () => {
+describe("JsonMutationPlugin", () => {
   it("replaces nested JSON primitive value", async () => {
-    const plugin = new JsonTamperPlugin();
+    const plugin = new JsonMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -265,7 +265,7 @@ describe("JsonTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -275,7 +275,7 @@ describe("JsonTamperPlugin", () => {
   });
 
   it("appends payload to JSON primitive value", async () => {
-    const plugin = new JsonTamperPlugin();
+    const plugin = new JsonMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -291,7 +291,7 @@ describe("JsonTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -299,7 +299,7 @@ describe("JsonTamperPlugin", () => {
   });
 
   it("prepends payload to JSON primitive value", async () => {
-    const plugin = new JsonTamperPlugin();
+    const plugin = new JsonMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -315,15 +315,15 @@ describe("JsonTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
     expect(parsed.user.name).toBe("INJECTEDtest");
   });
 
-  it("returns request unchanged when no JSON instructions", async () => {
-    const plugin = new JsonTamperPlugin();
+  it("returns request unchanged when no JSON mutations", async () => {
+    const plugin = new JsonMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -338,14 +338,14 @@ describe("JsonTamperPlugin", () => {
     ]).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
   it("returns request unchanged when body is null", async () => {
-    const plugin = new JsonTamperPlugin();
+    const plugin = new JsonMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -367,14 +367,14 @@ describe("JsonTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     expect(result).toEqual(request);
   });
 
-  it("handles multiple JSON instructions", async () => {
-    const plugin = new JsonTamperPlugin();
+  it("handles multiple JSON mutations", async () => {
+    const plugin = new JsonMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -384,7 +384,7 @@ describe("JsonTamperPlugin", () => {
     const request = makeJsonRequest(
       `{"user":{"name":"test","email":"a@b.com"}}`,
     );
-    const instructions = [
+    const mutations = [
       makeJsonPrimitiveInstruction(["user", "name"], "test", "X", ReplaceValue),
       makeJsonPrimitiveInstruction(
         ["user", "email"],
@@ -395,7 +395,7 @@ describe("JsonTamperPlugin", () => {
     ];
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, instructions),
+      new ApplyMutationCommand(request, mutations),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
@@ -403,8 +403,8 @@ describe("JsonTamperPlugin", () => {
     expect(parsed.user.email).toBe("a@b.comY");
   });
 
-  it("handles jsonArray type instructions", async () => {
-    const plugin = new JsonTamperPlugin();
+  it("handles jsonArray type mutations", async () => {
+    const plugin = new JsonMutationPlugin();
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -424,7 +424,7 @@ describe("JsonTamperPlugin", () => {
     );
 
     const result = await commandBus.pipe(
-      new ApplyTamperCommand(request, [instruction]),
+      new ApplyMutationCommand(request, [instruction]),
     );
 
     const parsed = JSON.parse((result.body as Buffer).toString("utf-8"));
