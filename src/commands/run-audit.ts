@@ -18,8 +18,10 @@ interface RunAuditPayload {
 
 class RunAuditCommand extends SingleCommand<Finding> {
   readonly type = "runAudit";
-  constructor(readonly payload: RunAuditPayload) {
+  readonly payload: RunAuditPayload;
+  constructor(payload: RunAuditPayload) {
     super();
+    this.payload = payload;
   }
 }
 

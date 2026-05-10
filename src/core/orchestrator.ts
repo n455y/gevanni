@@ -85,7 +85,8 @@ interface OrchestratorDeps {
 }
 
 class Orchestrator {
-  constructor(private deps: OrchestratorDeps) {}
+  private deps: OrchestratorDeps;
+  constructor(deps: OrchestratorDeps) { this.deps = deps; }
 
   async plan(scenarios: Scenario[]): Promise<{
     scanId: ScanId;

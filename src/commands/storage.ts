@@ -4,39 +4,49 @@ import type { JobId, ScanId, ScenarioId } from "../types/branded.js";
 
 class SaveJobCommand extends SingleCommand<void> {
   readonly type = "saveJob";
-  constructor(readonly job: Job) { super(); }
+  readonly job: Job;
+  constructor(job: Job) { super(); this.job = job; }
 }
 class LoadJobCommand extends SingleCommand<Job | null> {
   readonly type = "loadJob";
-  constructor(readonly id: JobId) { super(); }
+  readonly id: JobId;
+  constructor(id: JobId) { super(); this.id = id; }
 }
 class LoadJobsByScanIdCommand extends SingleCommand<Job[]> {
   readonly type = "loadJobsByScanId";
-  constructor(readonly scanId: ScanId) { super(); }
+  readonly scanId: ScanId;
+  constructor(scanId: ScanId) { super(); this.scanId = scanId; }
 }
 class LoadPendingJobsCommand extends SingleCommand<Job[]> {
   readonly type = "loadPendingJobs";
-  constructor(readonly scanId: ScanId) { super(); }
+  readonly scanId: ScanId;
+  constructor(scanId: ScanId) { super(); this.scanId = scanId; }
 }
 class UpdateJobCommand extends SingleCommand<void> {
   readonly type = "updateJob";
-  constructor(readonly id: JobId, readonly updates: Partial<Job>) { super(); }
+  readonly id: JobId;
+  readonly updates: Partial<Job>;
+  constructor(id: JobId, updates: Partial<Job>) { super(); this.id = id; this.updates = updates; }
 }
 class SaveScanStateCommand extends SingleCommand<void> {
   readonly type = "saveScanState";
-  constructor(readonly state: ScanState) { super(); }
+  readonly state: ScanState;
+  constructor(state: ScanState) { super(); this.state = state; }
 }
 class LoadScanStateCommand extends SingleCommand<ScanState | null> {
   readonly type = "loadScanState";
-  constructor(readonly id: ScanId) { super(); }
+  readonly id: ScanId;
+  constructor(id: ScanId) { super(); this.id = id; }
 }
 class SaveScenarioCommand extends SingleCommand<void> {
   readonly type = "saveScenario";
-  constructor(readonly scenario: Scenario) { super(); }
+  readonly scenario: Scenario;
+  constructor(scenario: Scenario) { super(); this.scenario = scenario; }
 }
 class LoadScenarioCommand extends SingleCommand<Scenario> {
   readonly type = "loadScenario";
-  constructor(readonly id: ScenarioId) { super(); }
+  readonly id: ScenarioId;
+  constructor(id: ScenarioId) { super(); this.id = id; }
 }
 
 export { SaveJobCommand, LoadJobCommand, LoadJobsByScanIdCommand, LoadPendingJobsCommand, UpdateJobCommand, SaveScanStateCommand, LoadScanStateCommand, SaveScenarioCommand, LoadScenarioCommand };

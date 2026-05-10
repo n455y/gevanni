@@ -3,6 +3,8 @@ import type { HttpRequest, AuditMutation, HttpResponse } from "../types/models.j
 
 class InterceptCommand extends SingleCommand<{ request: HttpRequest; response: HttpResponse }> {
   readonly type = "intercept";
-  constructor(readonly request: HttpRequest, readonly mutations: AuditMutation[]) { super(); }
+  readonly request: HttpRequest;
+  readonly mutations: AuditMutation[];
+  constructor(request: HttpRequest, mutations: AuditMutation[]) { super(); this.request = request; this.mutations = mutations; }
 }
 export { InterceptCommand };

@@ -3,6 +3,7 @@ import type { Job, ScanState } from "../types/models.js";
 
 class GenerateReportCommand extends BroadcastCommand<void> {
   readonly type = "generateReport";
-  constructor(readonly payload: { scanState: ScanState; jobs: Job[] }) { super(); }
+  readonly payload: { scanState: ScanState; jobs: Job[] };
+  constructor(payload: { scanState: ScanState; jobs: Job[] }) { super(); this.payload = payload; }
 }
 export { GenerateReportCommand };

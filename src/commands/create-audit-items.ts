@@ -4,8 +4,10 @@ import type { AuditItem } from "../core/audit-item.js";
 
 class CreateAuditItemsCommand extends BroadcastCommand<AuditItem[]> {
   readonly type = "createAuditItems";
-  constructor(readonly targets: AuditTarget[]) {
+  readonly targets: AuditTarget[];
+  constructor(targets: AuditTarget[]) {
     super();
+    this.targets = targets;
   }
 }
 export { CreateAuditItemsCommand };
