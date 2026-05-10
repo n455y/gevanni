@@ -39,7 +39,7 @@ class ConsoleReporterPlugin implements Plugin {
             lines.push(`[VULNERABLE] ${job.signatureName}`);
             lines.push(`  Target: ${formatParameter(job)}`);
             lines.push(
-              `  Evidence: ${job.finding.evidence as string}`,
+              `  Evidence: ${job.finding.evidence.judgmentId} (${job.finding.evidence.evidenceExchanges.length} evidence exchanges)`,
             );
             lines.push(
               `  Request: ${job.finding.request.method} ${job.finding.request.url}`,

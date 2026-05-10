@@ -12,17 +12,16 @@ import {
   ScanId,
   JobId,
   ScenarioId,
-  RequestId,
   JobStatus,
   ScanStatus,
-  Evidence,
+  ExchangeId,
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
 function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   return {
     id: ScanId("scan-1"),
-    status: ScanStatus("scanning"),
+    status: ScanStatus.Scanning,
     startedAt: new Date("2025-01-01T00:00:00Z"),
     updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
@@ -34,10 +33,9 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    requestId: RequestId("req-1"),
     signatureName: "reflected-xss",
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: JobStatus("completed"),
+    status: JobStatus.Completed,
     finding: null,
     error: null,
     createdAt: new Date("2025-01-01T00:00:00Z"),
@@ -138,35 +136,35 @@ describe("JsonReporterPlugin", () => {
     const jobs: Job[] = [
       makeJob({
         id: JobId("j1"),
-        status: JobStatus("completed"),
+        status: JobStatus.Completed,
         finding: {
           vulnerable: true,
-          evidence: Evidence("XSS found"),
+          evidence: { judgmentId: "payload-reflection", exchanges: [], evidenceExchanges: [] },
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
         id: JobId("j2"),
-        status: JobStatus("completed"),
+        status: JobStatus.Completed,
         finding: {
           vulnerable: false,
-          evidence: Evidence(""),
+          evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
         id: JobId("j3"),
-        status: JobStatus("error"),
+        status: JobStatus.Error,
         error: "Connection refused" as any,
       }),
       makeJob({
         id: JobId("j4"),
-        status: JobStatus("completed"),
+        status: JobStatus.Completed,
         finding: {
           vulnerable: true,
-          evidence: Evidence("SQL error"),
+          evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
           request: { method: "POST", url: "https://example.com/api", headers: {}, body: null },
           response: { statusCode: 500, headers: {}, body: null },
         },

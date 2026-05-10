@@ -9,17 +9,16 @@ import {
   ScanId,
   JobId,
   ScenarioId,
-  RequestId,
   JobStatus,
   ScanStatus,
-  Evidence,
+  ExchangeId,
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
 function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   return {
     id: ScanId("scan-1"),
-    status: ScanStatus("scanning"),
+    status: ScanStatus.Scanning,
     startedAt: new Date("2025-01-01T00:00:00Z"),
     updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
@@ -31,10 +30,9 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    requestId: RequestId("req-1"),
     signatureName: "reflected-xss",
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: JobStatus("completed"),
+    status: JobStatus.Completed,
     finding: null,
     error: null,
     createdAt: new Date("2025-01-01T00:00:00Z"),
@@ -62,7 +60,7 @@ describe("ConsoleReporterPlugin", () => {
 
     const scanState = makeScanState({
       id: ScanId("scan-abc"),
-      status: ScanStatus("scanning"),
+      status: ScanStatus.Scanning,
       startedAt: new Date("2025-06-01T12:00:00Z"),
     });
 
@@ -86,11 +84,15 @@ describe("ConsoleReporterPlugin", () => {
     const vulnerableJob = makeJob({
       id: JobId("job-vuln"),
       signatureName: "reflected-xss",
-      status: JobStatus("completed"),
+      status: JobStatus.Completed,
 parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       finding: {
         vulnerable: true,
-        evidence: Evidence("XSS payload reflected in response body"),
+        evidence: {
+          judgmentId: "payload-reflection",
+          exchanges: [{ id: ExchangeId("ex-0"), request: { method: "GET", url: "https://example.com/search?q=%3Cscript%3E", headers: {}, body: null }, response: { statusCode: 200, headers: {}, body: null } }],
+          evidenceExchanges: [{ id: ExchangeId("ex-0"), request: { method: "GET", url: "https://example.com/search?q=%3Cscript%3E", headers: {}, body: null }, response: { statusCode: 200, headers: {}, body: null } }],
+        },
         request: {
           method: "GET",
           url: "https://example.com/search?q=%3Cscript%3E",
@@ -113,7 +115,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     expect(output).toContain("[VULNERABLE] reflected-xss");
     expect(output).toContain("Target:");
-    expect(output).toContain("Evidence: XSS payload reflected in response body");
+    expect(output).toContain("Evidence: payload-reflection (1 evidence exchanges)");
     expect(output).toContain("Request: GET https://example.com/search?q=%3Cscript%3E");
 
     logSpy.mockRestore();
@@ -126,10 +128,10 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const safeJob = makeJob({
       id: JobId("job-safe"),
       signatureName: "sqli-error",
-      status: JobStatus("completed"),
+      status: JobStatus.Completed,
       finding: {
         vulnerable: false,
-        evidence: Evidence(""),
+        evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
         request: { method: "POST", url: "https://example.com/login", headers: {}, body: null },
         response: { statusCode: 200, headers: {}, body: null },
       },
@@ -156,7 +158,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const errorJob = makeJob({
       id: JobId("job-err"),
       signatureName: "reflected-xss",
-      status: JobStatus("error"),
+      status: JobStatus.Error,
       finding: null,
       error: "Connection refused" as any,
     });
@@ -180,27 +182,27 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const jobs: Job[] = [
       makeJob({
         id: JobId("j1"),
-        status: JobStatus("completed"),
+        status: JobStatus.Completed,
         finding: {
           vulnerable: true,
-          evidence: Evidence("e1"),
+          evidence: { judgmentId: "payload-reflection", exchanges: [], evidenceExchanges: [] },
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
         id: JobId("j2"),
-        status: JobStatus("completed"),
+        status: JobStatus.Completed,
         finding: {
           vulnerable: false,
-          evidence: Evidence(""),
+          evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
         id: JobId("j3"),
-        status: JobStatus("error"),
+        status: JobStatus.Error,
         error: "timeout" as any,
       }),
     ];

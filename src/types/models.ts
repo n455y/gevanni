@@ -2,13 +2,11 @@ import { ScenarioType, MutationType } from "./branded.ts";
 import type {
   ScenarioId,
   JobId,
-  RequestId,
   ScanId,
   ExchangeId,
   JobStatus,
   ScanStatus,
   Payload,
-  Evidence,
   ErrorMessage,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
@@ -119,6 +117,13 @@ interface Exchange {
   response: HttpResponse;
 }
 
+// --- Evidence ---
+interface Evidence {
+  judgmentId: string;
+  exchanges: Exchange[];
+  evidenceExchanges: Exchange[];
+}
+
 // --- Finding ---
 interface Finding {
   vulnerable: boolean;
@@ -132,7 +137,6 @@ interface Job {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
-  requestId: RequestId;
   signatureName: string;
   parameter: AuditParameter;
   status: JobStatus;
@@ -193,7 +197,6 @@ interface SerializedJob {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
-  requestId: RequestId;
   signatureName: string;
   parameter: { base: string; kind: string; serialized: SerializableValue };
   status: JobStatus;
@@ -230,6 +233,7 @@ export type {
   HttpRequest,
   HttpResponse,
   Exchange,
+  Evidence,
   Finding,
   Job,
   ScanState,

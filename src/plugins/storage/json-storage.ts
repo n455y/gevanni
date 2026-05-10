@@ -131,7 +131,7 @@ class JsonStoragePlugin implements Plugin {
       if (!jobs) return [];
       return jobs
         .map(deserializeJob)
-        .filter((j) => j.status === JobStatus("pending"));
+        .filter((j) => j.status === JobStatus.Pending);
     });
 
     // --- UpdateJobCommand ---

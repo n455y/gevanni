@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import {
   ScanId,
   JobId,
-  RequestId,
   JobStatus,
   ScanStatus,
   ErrorMessage,
@@ -94,7 +93,7 @@ class Orchestrator {
         await commandBus.dispatch(new SaveScenarioCommand(scenario));
 
         // b. Dispatch ReplayCommand with empty mutations to get original request
-        const rid = RequestId(crypto.randomUUID());
+        const rid = crypto.randomUUID();
         const replayResult = (
           (await commandBus.dispatch(
             new ReplayCommand(scenario, {
@@ -123,15 +122,13 @@ class Orchestrator {
         // d. For each definition, create a Job
         for (const item of items) {
           const jid = JobId(crypto.randomUUID());
-          const rid = RequestId(crypto.randomUUID());
           const job: Job = {
             id: jid,
             scanId: id,
             scenarioId: scenario.id,
-            requestId: rid,
             signatureName: item.signatureName,
             parameter: item.parameter,
-            status: JobStatus("pending"),
+            status: JobStatus.Pending,
             finding: null,
             error: null,
             createdAt: now,
@@ -159,7 +156,7 @@ class Orchestrator {
     // 2. Save scan state
     const scanState: ScanState = {
       id,
-      status: ScanStatus("planning"),
+      status: ScanStatus.Planning,
       startedAt: now,
       updatedAt: now,
     };
@@ -187,7 +184,7 @@ class Orchestrator {
     await commandBus.dispatch(
       new SaveScanStateCommand({
         id: scanId,
-        status: ScanStatus("scanning"),
+        status: ScanStatus.Scanning,
         startedAt: now,
         updatedAt: now,
       }),
@@ -216,7 +213,7 @@ class Orchestrator {
         // Update job status to running
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
-            status: JobStatus("running"),
+            status: JobStatus.Running,
             updatedAt: new Date(),
           }),
         );
@@ -265,7 +262,7 @@ class Orchestrator {
         const completedNow = new Date();
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
-            status: JobStatus("completed"),
+            status: JobStatus.Completed,
             finding,
             updatedAt: completedNow,
           }),
@@ -285,7 +282,7 @@ class Orchestrator {
         try {
           await commandBus.dispatch(
             new UpdateJobCommand(job.id, {
-              status: JobStatus("error"),
+              status: JobStatus.Error,
               error: errorMessage,
               updatedAt: errorNow,
             }),
@@ -306,8 +303,8 @@ class Orchestrator {
     // 4. Update final scan state
     const finalStatus: ScanStatus =
       errorCount === jobs.length
-        ? ScanStatus("error")
-        : ScanStatus("completed");
+        ? ScanStatus.Error
+        : ScanStatus.Completed;
 
     await commandBus.dispatch(
       new SaveScanStateCommand({

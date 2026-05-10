@@ -122,7 +122,8 @@ describe("SqliErrorPlugin", () => {
     const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(true);
-    expect(finding.evidence).toContain("SQL error pattern detected");
+    expect(finding.evidence.judgmentId).toBe("sql-error-pattern");
+    expect(finding.evidence.evidenceExchanges).toHaveLength(1);
   });
 
   it("detects PostgreSQL SQL error in response body", async () => {
@@ -153,7 +154,7 @@ describe("SqliErrorPlugin", () => {
     const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(true);
-    expect(finding.evidence).toContain("SQL error pattern detected");
+    expect(finding.evidence.judgmentId).toBe("sql-error-pattern");
   });
 
   it("detects Oracle SQL error in response body", async () => {
@@ -276,7 +277,8 @@ describe("SqliErrorPlugin", () => {
     const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(false);
-    expect(finding.evidence).toContain("No SQL error pattern detected");
+    expect(finding.evidence.judgmentId).toBe("sql-error-pattern");
+    expect(finding.evidence.evidenceExchanges).toHaveLength(0);
   });
 
   it("handles null response body", async () => {

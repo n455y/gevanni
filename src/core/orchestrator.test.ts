@@ -6,6 +6,7 @@ import { createLogger } from "./logger.ts";
 import { Orchestrator } from "./orchestrator.ts";
 import type { AuditItem } from "./audit-item.ts";
 import type {
+  Evidence,
   Finding,
   HttpRequest,
   HttpResponse,
@@ -17,12 +18,10 @@ import type { AuditParameter } from "../types/models.ts";
 import {
   ScanId,
   JobId,
-  RequestId,
   ExchangeId,
   ScenarioId,
   JobStatus,
   ScanStatus,
-  Evidence,
   ReplaceValue,
 } from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";
@@ -61,9 +60,10 @@ const mockTargets: AuditParameter[] = [
   new QueryParameter({ name: "q" }, "hello", [ReplaceValue]),
 ];
 
+const mockExchange = { id: ExchangeId("ex-0"), request: mockRequest, response: mockResponse };
 const mockFinding: Finding = {
   vulnerable: false,
-  evidence: Evidence("No reflection found"),
+  evidence: { judgmentId: "mock-check", exchanges: [mockExchange], evidenceExchanges: [] },
   request: mockRequest,
   response: mockResponse,
 };
@@ -228,10 +228,9 @@ parameter: mockTargets[0],
         id: JobId("job-1"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
-        requestId: RequestId("req-1"),
         signatureName: "mock-sig",
 parameter: mockTargets[0],
-        status: JobStatus("pending"),
+        status: JobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -287,8 +286,8 @@ parameter: mockTargets[0],
       await orchestrator.scan(scanId, items, 2);
 
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      expect(updateCalls[0].status).toBe(JobStatus("running"));
-      expect(updateCalls[1].status).toBe(JobStatus("completed"));
+      expect(updateCalls[0].status).toBe(JobStatus.Running);
+      expect(updateCalls[1].status).toBe(JobStatus.Completed);
       expect(events).toContain("started");
       expect(events).toContain("completed");
     });
@@ -299,10 +298,9 @@ parameter: mockTargets[0],
         id: JobId("job-err"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
-        requestId: RequestId("req-1"),
         signatureName: "failing-sig",
 parameter: mockTargets[0],
-        status: JobStatus("pending"),
+        status: JobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -358,8 +356,8 @@ parameter: mockTargets[0],
 
       expect(events).toContain("error");
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      expect(updateCalls[0].status).toBe(JobStatus("running"));
-      expect(updateCalls[1].status).toBe(JobStatus("error"));
+      expect(updateCalls[0].status).toBe(JobStatus.Running);
+      expect(updateCalls[1].status).toBe(JobStatus.Error);
     });
 
     it("handles empty job list", async () => {
@@ -386,7 +384,7 @@ parameter: mockTargets[0],
       const scanId = ScanId("report-scan-id");
       const mockScanState: ScanState = {
         id: scanId,
-        status: ScanStatus("completed"),
+        status: ScanStatus.Completed,
         startedAt: new Date("2024-01-01T00:00:00.000Z"),
         updatedAt: new Date("2024-01-01T00:01:00.000Z"),
       };
@@ -396,10 +394,9 @@ parameter: mockTargets[0],
           id: JobId("job-1"),
           scanId: ScanId("report-scan-id"),
           scenarioId: ScenarioId("sc-1"),
-          requestId: RequestId("req-1"),
           signatureName: "reflected-xss",
 parameter: mockTargets[0],
-          status: JobStatus("completed"),
+          status: JobStatus.Completed,
           finding: mockFinding,
           error: null,
           createdAt: new Date("2024-01-01T00:00:00.000Z"),

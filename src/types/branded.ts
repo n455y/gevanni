@@ -5,8 +5,6 @@ type ScenarioId = Brand<string, "ScenarioId">;
 const ScenarioId = (id: string) => id as ScenarioId;
 type JobId = Brand<string, "JobId">;
 const JobId = (id: string) => id as JobId;
-type RequestId = Brand<string, "RequestId">;
-const RequestId = (id: string) => id as RequestId;
 type ScanId = Brand<string, "ScanId">;
 const ScanId = (id: string) => id as ScanId;
 type ExchangeId = Brand<string, "ExchangeId">;
@@ -24,24 +22,30 @@ const ReplaceValue = MutationType("ReplaceValue");
 const AppendValue = MutationType("AppendValue");
 const PrependValue = MutationType("PrependValue");
 
-type JobStatus = Brand<
-  "pending" | "running" | "completed" | "error",
-  "JobStatus"
->;
-const JobStatus = (status: "pending" | "running" | "completed" | "error") =>
-  status as JobStatus;
-type ScanStatus = Brand<
-  "planning" | "scanning" | "completed" | "error",
-  "ScanStatus"
->;
-const ScanStatus = (status: "planning" | "scanning" | "completed" | "error") =>
-  status as ScanStatus;
+export const StandardMutationType = {
+  ReplaceValue: MutationType("ReplaceValue"),
+  AppendValue: MutationType("AppendValue"),
+  PrependValue: MutationType("PrependValue"),
+} as const;
+
+const JobStatus = {
+  Pending: "pending",
+  Running: "running",
+  Completed: "completed",
+  Error: "error",
+} as const;
+type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
+const ScanStatus = {
+  Planning: "planning",
+  Scanning: "scanning",
+  Completed: "completed",
+  Error: "error",
+} as const;
+type ScanStatus = (typeof ScanStatus)[keyof typeof ScanStatus];
 
 // --- Semantic ---
 type Payload = Brand<string, "Payload">;
 const Payload = (value: string) => value as Payload;
-type Evidence = Brand<string, "Evidence">;
-const Evidence = (value: string) => value as Evidence;
 type ErrorMessage = Brand<string, "ErrorMessage">;
 const ErrorMessage = (value: string) => value as ErrorMessage;
 export type { Brand };
@@ -49,13 +53,11 @@ export type { Brand };
 export {
   ScenarioId,
   JobId,
-  RequestId,
   ScanId,
   ExchangeId,
   JobStatus,
   ScanStatus,
   Payload,
-  Evidence,
   ErrorMessage,
   ReplaceValue,
   AppendValue,

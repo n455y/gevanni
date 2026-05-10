@@ -1,7 +1,8 @@
-import { AppendValue, Payload as toPayload, Evidence as toEvidence } from "../../types/branded.ts";
+import { AppendValue, ExchangeId, Payload as toPayload } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
+import type { Evidence } from "../../types/models.ts";
 
 const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
@@ -40,11 +41,15 @@ class SqliErrorPlugin implements Plugin {
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));
+        const exchange = { id: ExchangeId("ex-0"), request, response };
+        const evidence: Evidence = {
+          judgmentId: "sql-error-pattern",
+          exchanges: [exchange],
+          evidenceExchanges: vulnerable ? [exchange] : [],
+        };
         return {
           vulnerable,
-          evidence: toEvidence(vulnerable
-            ? `SQL error pattern detected in response`
-            : `No SQL error pattern detected`),
+          evidence,
           request,
           response,
         };

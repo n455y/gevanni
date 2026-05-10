@@ -1,7 +1,8 @@
-import { AppendValue, Payload as toPayload, Evidence as toEvidence } from "../../types/branded.ts";
+import { AppendValue, ExchangeId, Payload as toPayload } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
+import type { Evidence } from "../../types/models.ts";
 
 class ReflectedXssPlugin implements Plugin {
   readonly name = "reflected-xss";
@@ -32,11 +33,15 @@ class ReflectedXssPlugin implements Plugin {
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = body.includes(payload);
+        const exchange = { id: ExchangeId("ex-0"), request, response };
+        const evidence: Evidence = {
+          judgmentId: "payload-reflection",
+          exchanges: [exchange],
+          evidenceExchanges: vulnerable ? [exchange] : [],
+        };
         return {
           vulnerable,
-          evidence: toEvidence(vulnerable
-            ? `Payload "${payload}" reflected in response body`
-            : `Payload not reflected`),
+          evidence,
           request,
           response,
         };

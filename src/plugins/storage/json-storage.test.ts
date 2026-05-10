@@ -36,10 +36,9 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    requestId: "req-1" as any,
     signatureName: "sig-1",
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: JobStatus("pending"),
+    status: JobStatus.Pending,
     finding: null,
     error: null,
     createdAt: new Date("2025-01-01T00:00:00Z"),
@@ -51,7 +50,7 @@ parameter: new QueryParameter({ name: "" }, "", []),
 function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   return {
     id: ScanId("scan-1"),
-    status: ScanStatus("scanning"),
+    status: ScanStatus.Scanning,
     startedAt: new Date("2025-01-01T00:00:00Z"),
     updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
@@ -168,19 +167,19 @@ describe("JsonStoragePlugin", () => {
         id: JobId("job-pending"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus("pending"),
+        status: JobStatus.Pending,
       });
       const completedJob = makeJob({
         id: JobId("job-completed"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus("completed"),
+        status: JobStatus.Completed,
       });
       const errorJob = makeJob({
         id: JobId("job-error"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus("error"),
+        status: JobStatus.Error,
       });
 
       await commandBus.dispatch(new SaveJobCommand(pendingJob));
@@ -200,7 +199,7 @@ describe("JsonStoragePlugin", () => {
         id: JobId("job-1"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus("completed"),
+        status: JobStatus.Completed,
       });
       await commandBus.dispatch(new SaveJobCommand(completedJob));
 
@@ -213,10 +212,10 @@ describe("JsonStoragePlugin", () => {
 
   describe("UpdateJobCommand", () => {
     it("updates job status", async () => {
-      const job = makeJob({ status: JobStatus("pending") });
+      const job = makeJob({ status: JobStatus.Pending });
       await commandBus.dispatch(new SaveJobCommand(job));
 
-      const newStatus = JobStatus("running");
+      const newStatus = JobStatus.Running;
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, { status: newStatus }),
       );
@@ -233,7 +232,7 @@ describe("JsonStoragePlugin", () => {
 
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, {
-          status: JobStatus("completed"),
+          status: JobStatus.Completed,
         }),
       );
 
@@ -241,14 +240,14 @@ describe("JsonStoragePlugin", () => {
         new LoadJobCommand(job.id),
       );
       expect(loaded!.signatureName).toBe("original");
-      expect(loaded!.status).toBe(JobStatus("completed"));
+      expect(loaded!.status).toBe(JobStatus.Completed);
     });
 
     it("throws when job not found", async () => {
       await expect(
         commandBus.dispatch(
           new UpdateJobCommand(JobId("nonexistent"), {
-            status: JobStatus("running"),
+            status: JobStatus.Running,
           }),
         ),
       ).rejects.toThrow("Job not found");
@@ -277,12 +276,12 @@ describe("JsonStoragePlugin", () => {
       // Create two scans: one completed, one in progress
       const completedScan = makeScanState({
         id: ScanId("scan-completed"),
-        status: ScanStatus("completed"),
+        status: ScanStatus.Completed,
         updatedAt: new Date("2025-01-02T00:00:00Z"),
       });
       const activeScan = makeScanState({
         id: ScanId("scan-active"),
-        status: ScanStatus("scanning"),
+        status: ScanStatus.Scanning,
         updatedAt: new Date("2025-01-01T00:00:00Z"),
       });
 
@@ -299,7 +298,7 @@ describe("JsonStoragePlugin", () => {
     it("returns null when all scans are completed and no scanId provided", async () => {
       const completedScan = makeScanState({
         id: ScanId("scan-done"),
-        status: ScanStatus("completed"),
+        status: ScanStatus.Completed,
       });
       await commandBus.dispatch(new SaveScanStateCommand(completedScan));
 
