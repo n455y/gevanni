@@ -1,5 +1,5 @@
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
@@ -12,63 +12,63 @@ import type {
   JsonObject,
   JsonValue,
 } from "../../types/models.js";
-import { InspectionParameter, TamperInstruction } from "../../types/models.js";
+import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class JsonPrimitiveParameter extends InspectionParameter<
+class JsonPrimitiveParameter extends AuditTarget<
   { path: string[] },
   JsonPrimitive
 > {
-  createInstruction(
+  createMutation(
     payload: Payload,
-    method: TamperMethod,
-  ): JsonPrimitiveTamperInstruction {
-    return new JsonPrimitiveTamperInstruction(this, payload, method);
+    method: MutationType,
+  ): JsonPrimitiveMutation {
+    return new JsonPrimitiveMutation(this, payload, method);
   }
 }
-class JsonArrayParameter extends InspectionParameter<
+class JsonArrayParameter extends AuditTarget<
   { path: string[] },
   JsonArray
 > {
-  createInstruction(
+  createMutation(
     payload: Payload,
-    method: TamperMethod,
-  ): JsonArrayTamperInstruction {
-    return new JsonArrayTamperInstruction(this, payload, method);
+    method: MutationType,
+  ): JsonArrayMutation {
+    return new JsonArrayMutation(this, payload, method);
   }
 }
-class JsonObjectParameter extends InspectionParameter<
+class JsonObjectParameter extends AuditTarget<
   { path: string[] },
   JsonObject
 > {
-  createInstruction(
+  createMutation(
     payload: Payload,
-    method: TamperMethod,
-  ): JsonObjectTamperInstruction {
-    return new JsonObjectTamperInstruction(this, payload, method);
+    method: MutationType,
+  ): JsonObjectMutation {
+    return new JsonObjectMutation(this, payload, method);
   }
 }
 
-class JsonPrimitiveTamperInstruction extends TamperInstruction<JsonPrimitiveParameter> {}
-class JsonArrayTamperInstruction extends TamperInstruction<JsonArrayParameter> {}
-class JsonObjectTamperInstruction extends TamperInstruction<JsonObjectParameter> {}
+class JsonPrimitiveMutation extends AuditMutation<JsonPrimitiveParameter> {}
+class JsonArrayMutation extends AuditMutation<JsonArrayParameter> {}
+class JsonObjectMutation extends AuditMutation<JsonObjectParameter> {}
 
-type JsonTamperInstruction =
-  | JsonPrimitiveTamperInstruction
-  | JsonArrayTamperInstruction
-  | JsonObjectTamperInstruction;
+type JsonMutation =
+  | JsonPrimitiveMutation
+  | JsonArrayMutation
+  | JsonObjectMutation;
 
 const ALLOWED_TAMPERS = [ReplaceValue, AppendValue, PrependValue];
 
 function isJsonInstruction(
-  instr: TamperInstruction,
-): instr is JsonTamperInstruction {
+  instr: AuditMutation,
+): instr is JsonMutation {
   return (
-    instr instanceof JsonPrimitiveTamperInstruction ||
-    instr instanceof JsonArrayTamperInstruction ||
-    instr instanceof JsonObjectTamperInstruction
+    instr instanceof JsonPrimitiveMutation ||
+    instr instanceof JsonArrayMutation ||
+    instr instanceof JsonObjectMutation
   );
 }
 
@@ -125,7 +125,7 @@ class JsonTamperPlugin implements Plugin {
   }
 }
 
-function parseJsonParameters(request: HttpRequest): InspectionParameter[] {
+function parseJsonParameters(request: HttpRequest): AuditTarget[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/json")) {
     return [];
@@ -142,7 +142,7 @@ function parseJsonParameters(request: HttpRequest): InspectionParameter[] {
     return [];
   }
 
-  const params: InspectionParameter[] = [];
+  const params: AuditTarget[] = [];
   extractJsonParams(parsed, [], params);
   return params;
 }
@@ -150,7 +150,7 @@ function parseJsonParameters(request: HttpRequest): InspectionParameter[] {
 function extractJsonParams(
   value: JsonValue,
   path: string[],
-  params: InspectionParameter[],
+  params: AuditTarget[],
 ): void {
   if (
     value === null ||
@@ -180,7 +180,7 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: string,
-  method: TamperMethod,
+  method: MutationType,
 ): JsonValue {
   if (path.length === 0) {
     return applyTamperValue(root, payload, method);
@@ -217,7 +217,7 @@ function applyAtPath(
 function applyTamperValue(
   current: JsonValue,
   payload: string,
-  method: TamperMethod,
+  method: MutationType,
 ): JsonValue {
   switch (method) {
     case ReplaceValue:
@@ -237,7 +237,7 @@ export {
   JsonPrimitiveParameter,
   JsonArrayParameter,
   JsonObjectParameter,
-  JsonPrimitiveTamperInstruction,
-  JsonArrayTamperInstruction,
-  JsonObjectTamperInstruction,
+  JsonPrimitiveMutation,
+  JsonArrayMutation,
+  JsonObjectMutation,
 };

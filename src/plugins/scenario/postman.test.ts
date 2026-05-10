@@ -3,11 +3,11 @@ import http from "node:http";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { PostmanPlugin, PostmanScenarioType, runNewman } from "./postman.js";
-import { startTamperProxy } from "../proxy/http-proxy.js";
-import type { TamperProxy } from "../proxy/http-proxy.js";
+import { startMutationProxy } from "../proxy/http-proxy.js";
+import type { MutationProxy } from "../proxy/http-proxy.js";
 import { ReplayCommand, type ReplayConfig } from "../../commands/replay.js";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.js";
-import { QueryTamperPlugin, QueryTamperInstruction } from "../parameter/query.js";
+import { QueryTamperPlugin, QueryMutation } from "../parameter/query.js";
 import type { Scenario, Exchange } from "../../types/models.js";
 import { QueryParameter } from "../parameter/query.js";
 import type { Brand } from "../../types/branded.js";
@@ -95,8 +95,8 @@ function makeScenario(overrides: {
   };
 }
 
-function makeTamperInstruction(): QueryTamperInstruction {
-  return new QueryTamperInstruction(
+function makeTamperInstruction(): QueryMutation {
+  return new QueryMutation(
     new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
     "<script>" as Brand<string, "Payload">,
     ReplaceValue,
@@ -106,7 +106,7 @@ function makeTamperInstruction(): QueryTamperInstruction {
 describe("PostmanPlugin", () => {
   it("sends request through proxy with empty instructions", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
-    const proxy = await startTamperProxy([], commandBus);
+    const proxy = await startMutationProxy([], commandBus);
 
     await plugin.init({
       commandBus,
@@ -140,7 +140,7 @@ describe("PostmanPlugin", () => {
     const plugin = new PostmanPlugin();
     const queryTamper = new QueryTamperPlugin();
     const instructions = [makeTamperInstruction()];
-    const proxy = await startTamperProxy(instructions, commandBus);
+    const proxy = await startMutationProxy(instructions, commandBus);
 
     await plugin.init({
       commandBus,
@@ -176,7 +176,7 @@ describe("PostmanPlugin", () => {
 
   it("sends POST request with body from scenario source", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
-    const proxy = await startTamperProxy([], commandBus);
+    const proxy = await startMutationProxy([], commandBus);
 
     await plugin.init({
       commandBus,
@@ -208,10 +208,10 @@ describe("PostmanPlugin", () => {
 });
 
 describe("runNewman", () => {
-  let runNewmanProxy: TamperProxy;
+  let runNewmanProxy: MutationProxy;
 
   beforeEach(async () => {
-    runNewmanProxy = await startTamperProxy([], commandBus);
+    runNewmanProxy = await startMutationProxy([], commandBus);
   });
 
   afterEach(() => {
@@ -268,7 +268,7 @@ describe("runNewman", () => {
 describe("PostmanPlugin multi-request", () => {
   it("sends multiple requests but only saves exchanges for the last item", { timeout: 30_000 }, async () => {
     const plugin = new PostmanPlugin();
-    const proxy = await startTamperProxy([], commandBus);
+    const proxy = await startMutationProxy([], commandBus);
 
     await plugin.init({
       commandBus,

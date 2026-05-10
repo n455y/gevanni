@@ -1,52 +1,52 @@
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
 } from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
 import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.js";
-import { InspectionParameter, TamperInstruction } from "../../types/models.js";
+import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class GraphQLQueryParameter extends InspectionParameter<
+class GraphQLQueryParameter extends AuditTarget<
   { field: string },
   string
 > {
-  createInstruction(
+  createMutation(
     payload: Payload,
-    method: TamperMethod,
-  ): GraphQLQueryTamperInstruction {
-    return new GraphQLQueryTamperInstruction(this, payload, method);
+    method: MutationType,
+  ): GraphQLQueryMutation {
+    return new GraphQLQueryMutation(this, payload, method);
   }
 }
-class GraphQLVariableParameter extends InspectionParameter<
+class GraphQLVariableParameter extends AuditTarget<
   { path: string[] },
   JsonValue
 > {
-  createInstruction(
+  createMutation(
     payload: Payload,
-    method: TamperMethod,
-  ): GraphQLVariableTamperInstruction {
-    return new GraphQLVariableTamperInstruction(this, payload, method);
+    method: MutationType,
+  ): GraphQLVariableMutation {
+    return new GraphQLVariableMutation(this, payload, method);
   }
 }
 
-class GraphQLQueryTamperInstruction extends TamperInstruction<GraphQLQueryParameter> {}
-class GraphQLVariableTamperInstruction extends TamperInstruction<GraphQLVariableParameter> {}
+class GraphQLQueryMutation extends AuditMutation<GraphQLQueryParameter> {}
+class GraphQLVariableMutation extends AuditMutation<GraphQLVariableParameter> {}
 
-type GraphQLTamperInstruction =
-  | GraphQLQueryTamperInstruction
-  | GraphQLVariableTamperInstruction;
+type GraphQLMutation =
+  | GraphQLQueryMutation
+  | GraphQLVariableMutation;
 
 function isGraphQLInstruction(
-  instr: TamperInstruction,
-): instr is GraphQLTamperInstruction {
+  instr: AuditMutation,
+): instr is GraphQLMutation {
   return (
-    instr instanceof GraphQLQueryTamperInstruction ||
-    instr instanceof GraphQLVariableTamperInstruction
+    instr instanceof GraphQLQueryMutation ||
+    instr instanceof GraphQLVariableMutation
   );
 }
 
@@ -91,7 +91,7 @@ class GraphQLTamperPlugin implements Plugin {
         }
 
         for (const instr of graphqlInstructions) {
-          if (instr instanceof GraphQLQueryTamperInstruction) {
+          if (instr instanceof GraphQLQueryMutation) {
             const field = instr.parameter.location.field;
             if (
               typeof jsonBody === "object" &&
@@ -105,7 +105,7 @@ class GraphQLTamperPlugin implements Plugin {
                 instr.method,
               );
             }
-          } else if (instr instanceof GraphQLVariableTamperInstruction) {
+          } else if (instr instanceof GraphQLVariableMutation) {
             const path = instr.parameter.location.path;
             jsonBody = applyAtPath(
               jsonBody,
@@ -127,7 +127,7 @@ class GraphQLTamperPlugin implements Plugin {
   }
 }
 
-function parseGraphQLParameters(request: HttpRequest): InspectionParameter[] {
+function parseGraphQLParameters(request: HttpRequest): AuditTarget[] {
   const contentType = request.headers["content-type"] ?? "";
   if (!contentType.includes("application/json")) {
     return [];
@@ -152,7 +152,7 @@ function parseGraphQLParameters(request: HttpRequest): InspectionParameter[] {
     return [];
   }
 
-  const params: InspectionParameter[] = [];
+  const params: AuditTarget[] = [];
 
   params.push(
     new GraphQLQueryParameter({ field: "query" }, parsed.query, [
@@ -189,7 +189,7 @@ function parseGraphQLParameters(request: HttpRequest): InspectionParameter[] {
 function extractVariableParams(
   obj: JsonObject,
   path: string[],
-  params: InspectionParameter[],
+  params: AuditTarget[],
 ): void {
   for (const [key, value] of Object.entries(obj)) {
     const currentPath = [...path, key];
@@ -222,7 +222,7 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: string,
-  method: TamperMethod,
+  method: MutationType,
 ): JsonValue {
   if (path.length === 0) {
     return applyTamperValue(root, payload, method);
@@ -259,7 +259,7 @@ function applyAtPath(
 function applyTamperValue(
   current: JsonValue,
   payload: string,
-  method: TamperMethod,
+  method: MutationType,
 ): JsonValue {
   switch (method) {
     case ReplaceValue:
@@ -278,6 +278,6 @@ export {
   GraphQLTamperPlugin,
   GraphQLQueryParameter,
   GraphQLVariableParameter,
-  GraphQLQueryTamperInstruction,
-  GraphQLVariableTamperInstruction,
+  GraphQLQueryMutation,
+  GraphQLVariableMutation,
 };

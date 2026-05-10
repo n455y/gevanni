@@ -1,18 +1,18 @@
 import type { Payload, Evidence } from "../../types/branded.js";
 import { AppendValue } from "../../types/branded.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
-import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
-import { RunInspectionCommand } from "../../commands/run-inspection.js";
+import { CreateAuditItemsCommand } from "../../commands/create-audit-items.js";
+import { RunAuditCommand } from "../../commands/run-audit.js";
 
 class ReflectedXssPlugin implements Plugin {
   readonly name = "reflected-xss";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
-      CreateInspectorsCommand,
+      CreateAuditItemsCommand,
       async (cmd) => {
         return cmd.parameters
-          .filter((param) => param.allowedTampers.includes(AppendValue))
+          .filter((param) => param.allowedMutations.includes(AppendValue))
           .map((param) => ({
             signatureName: "reflected-xss",
             parameter: param,
@@ -21,7 +21,7 @@ class ReflectedXssPlugin implements Plugin {
     );
 
     context.commandBus.register(
-      RunInspectionCommand,
+      RunAuditCommand,
       async (cmd) => {
         const { signatureName, parameter, replay } = cmd.payload;
         if (signatureName !== "reflected-xss") {
@@ -29,7 +29,7 @@ class ReflectedXssPlugin implements Plugin {
         }
 
         const payload = "<script>alert(1)</script>" as Payload;
-        const instruction = parameter.createInstruction(payload, AppendValue);
+        const instruction = parameter.createMutation(payload, AppendValue);
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = body.includes(payload);

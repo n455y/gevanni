@@ -5,12 +5,12 @@ import { GraphQLParserPlugin, GraphQLTamperPlugin } from "./graphql.js";
 import {
   GraphQLQueryParameter,
   GraphQLVariableParameter,
-  GraphQLQueryTamperInstruction,
-  GraphQLVariableTamperInstruction,
+  GraphQLQueryMutation,
+  GraphQLVariableMutation,
 } from "./graphql.js";
 import { QueryParameter } from "./query.js";
 import type {
-  InspectionParameter,
+  AuditTarget,
   HttpRequest,
   JsonValue,
 } from "../../types/models.js";
@@ -18,7 +18,7 @@ import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { Brand } from "../../types/branded.js";
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
@@ -41,16 +41,16 @@ function makeGraphQLRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: InspectionParameter[][]): AnyGraphQLParam[] {
+function flatParams(results: AuditTarget[][]): AnyGraphQLParam[] {
   return results.flat() as AnyGraphQLParam[];
 }
 
 function makeQueryInstruction(
   field: string,
   payload: string,
-  method: TamperMethod,
-): GraphQLQueryTamperInstruction {
-  return new GraphQLQueryTamperInstruction(
+  method: MutationType,
+): GraphQLQueryMutation {
+  return new GraphQLQueryMutation(
     new GraphQLQueryParameter({ field }, "", [
       ReplaceValue,
       AppendValue,
@@ -65,9 +65,9 @@ function makeVariableInstruction(
   path: string[],
   originalValue: JsonValue,
   payload: string,
-  method: TamperMethod,
-): GraphQLVariableTamperInstruction {
-  return new GraphQLVariableTamperInstruction(
+  method: MutationType,
+): GraphQLVariableMutation {
+  return new GraphQLVariableMutation(
     new GraphQLVariableParameter({ path }, originalValue, [
       ReplaceValue,
       AppendValue,
@@ -445,7 +445,7 @@ describe("GraphQLTamperPlugin", () => {
       ReplaceValue,
       AppendValue,
       PrependValue,
-    ]).createInstruction("INJECTED" as Brand<string, "Payload">, ReplaceValue);
+    ]).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),

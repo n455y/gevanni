@@ -6,7 +6,7 @@ import selfsigned from "selfsigned";
 import type {
   HttpRequest,
   HttpResponse,
-  TamperInstruction,
+  AuditMutation,
   Exchange,
 } from "../../types/models.js";
 import type { ExchangeId } from "../../types/branded.js";
@@ -68,15 +68,15 @@ function sendRequest(request: HttpRequest): Promise<HttpResponse> {
 
 // --- Tamper Proxy ---
 
-interface TamperProxy {
+interface MutationProxy {
   port: number;
   close: () => void;
 }
 
-async function startTamperProxy(
-  instructions: TamperInstruction[],
+async function startMutationProxy(
+  instructions: AuditMutation[],
   commandBus: CommandBus,
-): Promise<TamperProxy> {
+): Promise<MutationProxy> {
   const notAfterDate = new Date();
   notAfterDate.setFullYear(notAfterDate.getFullYear() + 10);
   const pems = await selfsigned.generate(
@@ -286,5 +286,5 @@ class HttpProxyPlugin implements Plugin {
   }
 }
 
-export { HttpProxyPlugin, sendRequest, startTamperProxy };
-export type { TamperProxy };
+export { HttpProxyPlugin, sendRequest, startMutationProxy };
+export type { MutationProxy };

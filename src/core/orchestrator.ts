@@ -12,20 +12,20 @@ import type {
   Job,
   ScanState,
   Scenario,
-  InspectionParameter,
+  AuditTarget,
   Exchange,
   Finding,
-  TamperInstruction,
+  AuditMutation,
 } from "../types/models.js";
 import type { CommandBus } from "./command-bus.js";
 import type { EventBus } from "./event-bus.js";
 import type { Logger } from "./logger.js";
-import type { InspectorDefinition } from "./inspector.js";
+import type { AuditItem } from "./audit-item.js";
 import {
   ReplayCommand,
   ParseRequestCommand,
-  CreateInspectorsCommand,
-  RunInspectionCommand,
+  CreateAuditItemsCommand,
+  RunAuditCommand,
   SaveJobCommand,
   LoadPendingJobsCommand,
   UpdateJobCommand,
@@ -36,7 +36,7 @@ import {
   LoadJobsByScanIdCommand,
   GenerateReportCommand,
 } from "../commands/index.js";
-import { startTamperProxy } from "../plugins/proxy/http-proxy.js";
+import { startMutationProxy } from "../plugins/proxy/http-proxy.js";
 
 // --- Branded type helpers ---
 
@@ -89,19 +89,19 @@ class Orchestrator {
 
   async plan(scenarios: Scenario[]): Promise<{
     scanId: ScanId;
-    definitions: Map<string, InspectorDefinition>;
+    definitions: Map<string, AuditItem>;
   }> {
     const { commandBus, eventBus, logger } = this.deps;
     const id = scanId();
     const now = isoNow();
-    const definitionMap = new Map<string, InspectorDefinition>();
+    const definitionMap = new Map<string, AuditItem>();
 
     logger.info(`Loaded ${scenarios.length} scenarios`);
 
     // 1. Process each scenario
     const allJobs: Job[] = [];
 
-    const planProxy = await startTamperProxy([], commandBus);
+    const planProxy = await startMutationProxy([], commandBus);
     try {
       for (const scenario of scenarios) {
         logger.debug(`Processing scenario: ${scenario.name}`);
@@ -121,20 +121,20 @@ class Orchestrator {
           )) as Exchange[]
         )[0];
 
-        // b. Broadcast ParseRequestCommand to collect all InspectionParameters
-        const parseResults: InspectionParameter[][] =
+        // b. Broadcast ParseRequestCommand to collect all AuditTargets
+        const parseResults: AuditTarget[][] =
           await commandBus.broadcast(
             new ParseRequestCommand(replayResult.request),
           );
-        const parameters: InspectionParameter[] = parseResults.flat();
+        const parameters: AuditTarget[] = parseResults.flat();
         logger.debug(
           `Found ${parameters.length} inspection parameters for ${scenario.name}`,
         );
 
-        // c. Broadcast CreateInspectorsCommand to collect all InspectorDefinitions
-        const definitionResults: InspectorDefinition[][] =
-          await commandBus.broadcast(new CreateInspectorsCommand(parameters));
-        const definitions: InspectorDefinition[] = definitionResults.flat();
+        // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
+        const definitionResults: AuditItem[][] =
+          await commandBus.broadcast(new CreateAuditItemsCommand(parameters));
+        const definitions: AuditItem[] = definitionResults.flat();
 
         // d. For each definition, create a Job
         for (const def of definitions) {
@@ -193,7 +193,7 @@ class Orchestrator {
 
   async scan(
     scanId: ScanId,
-    definitions: Map<string, InspectorDefinition>,
+    definitions: Map<string, AuditItem>,
     concurrency: number,
   ): Promise<void> {
     const { commandBus, eventBus, logger } = this.deps;
@@ -247,11 +247,11 @@ class Orchestrator {
         }
 
         // Create replay function
-        const replay = async (instructions: TamperInstruction[]) => {
+        const replay = async (instructions: AuditMutation[]) => {
           const scenario: Scenario = await commandBus.dispatch(
             new LoadScenarioCommand(job.scenarioId),
           );
-          const proxy = await startTamperProxy(instructions, commandBus);
+          const proxy = await startMutationProxy(instructions, commandBus);
           try {
             const [exchange] = (await commandBus.dispatch(
               new ReplayCommand(scenario, {
@@ -268,7 +268,7 @@ class Orchestrator {
 
         // Run inspection
         const finding: Finding = (await commandBus.dispatch(
-          new RunInspectionCommand({
+          new RunAuditCommand({
             signatureName: def.signatureName,
             parameter: job.parameter,
             replay,
@@ -391,7 +391,7 @@ class Orchestrator {
     }
 
     // 3. Build definition map from pending jobs
-    const definitionMap = new Map<string, InspectorDefinition>();
+    const definitionMap = new Map<string, AuditItem>();
 
     for (const job of pendingJobs) {
       definitionMap.set(job.id as string, {

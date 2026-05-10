@@ -19,7 +19,7 @@ import {
   SaveExchangeCommand,
   LoadExchangesCommand,
 } from "../../commands/exchange.js";
-import { InspectionParameter, type Job, type ScanState, type Scenario, type Exchange } from "../../types/models.js";
+import { AuditTarget, type Job, type ScanState, type Scenario, type Exchange } from "../../types/models.js";
 import type { ExchangeId } from "../../types/branded.js";
 import type {
   ScanId,
@@ -46,7 +46,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: asScenarioId("scan-1"),
     requestId: "req-1" as any,
     signatureName: "sig-1",
-    parameter: new InspectionParameter({ name: "" }, "", []),
+    parameter: new AuditTarget({ name: "" }, "", []),
     status: asJobStatus("pending"),
     finding: null,
     error: null,

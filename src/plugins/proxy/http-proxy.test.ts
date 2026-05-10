@@ -8,9 +8,9 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { HttpProxyPlugin } from "./http-proxy.js";
 import { InterceptCommand } from "../../commands/intercept.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import { startTamperProxy } from "./http-proxy.js";
+import { startMutationProxy } from "./http-proxy.js";
 import type { HttpRequest, HttpResponse } from "../../types/models.js";
-import { TamperInstruction } from "../../types/models.js";
+import { AuditMutation } from "../../types/models.js";
 import type { Exchange } from "../../types/models.js";
 import type { Brand } from "../../types/branded.js";
 import { ReplaceValue } from "../../types/branded.js";
@@ -233,9 +233,9 @@ describe("HttpProxyPlugin", () => {
   });
 });
 
-describe("startTamperProxy", () => {
+describe("startMutationProxy", () => {
   it("starts a proxy that forwards requests via tamper pipeline", async () => {
-    const proxy = await startTamperProxy([], commandBus);
+    const proxy = await startMutationProxy([], commandBus);
 
     commandBus.register(
       ApplyTamperCommand,
@@ -274,8 +274,8 @@ describe("startTamperProxy", () => {
   });
 
   it("applies tamper instructions to requests passing through", async () => {
-    const instructions: TamperInstruction[] = [
-      new QueryParameter({ name: "q" }, "original", [ReplaceValue]).createInstruction(
+    const instructions: AuditMutation[] = [
+      new QueryParameter({ name: "q" }, "original", [ReplaceValue]).createMutation(
         "<script>" as Brand<string, "Payload">,
         ReplaceValue,
       ),
@@ -295,7 +295,7 @@ describe("startTamperProxy", () => {
       },
     );
 
-    const proxy = await startTamperProxy(instructions, commandBus);
+    const proxy = await startMutationProxy(instructions, commandBus);
 
     const response = await new Promise<{ statusCode: number; body: string }>((resolve, reject) => {
       const req = http.request(
@@ -330,7 +330,7 @@ describe("startTamperProxy", () => {
 
   it("saves exchange when X-Gevanni-Exchange-Id header is present", async () => {
     const replayId = "replay-test-001";
-    const proxy = await startTamperProxy([], commandBus);
+    const proxy = await startMutationProxy([], commandBus);
 
     commandBus.register(
       ApplyTamperCommand,
@@ -380,7 +380,7 @@ describe("startTamperProxy", () => {
   });
 
   it("does not save exchange when X-Gevanni-Exchange-Id header is absent", async () => {
-    const proxy = await startTamperProxy([], commandBus);
+    const proxy = await startMutationProxy([], commandBus);
 
     commandBus.register(
       ApplyTamperCommand,
@@ -471,7 +471,7 @@ describe("startTamperProxy", () => {
     });
 
     it("intercepts HTTPS requests via CONNECT tunnel", async () => {
-      const proxy = await startTamperProxy([], commandBus);
+      const proxy = await startMutationProxy([], commandBus);
 
       commandBus.register(
         ApplyTamperCommand,
@@ -516,7 +516,7 @@ describe("startTamperProxy", () => {
 
     it("saves exchange for HTTPS requests", async () => {
       const replayId = "replay-https-001";
-      const proxy = await startTamperProxy([], commandBus);
+      const proxy = await startMutationProxy([], commandBus);
 
       commandBus.register(
         ApplyTamperCommand,

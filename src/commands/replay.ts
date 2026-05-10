@@ -1,8 +1,8 @@
 import { SingleCommand } from "../core/command.js";
-import type { Scenario, TamperInstruction, Exchange } from "../types/models.js";
+import type { Scenario, AuditMutation, Exchange } from "../types/models.js";
 
 interface ReplayConfig {
-  instructions: TamperInstruction[];
+  instructions: AuditMutation[];
   proxyPort: number;
   replayId: string;
 }

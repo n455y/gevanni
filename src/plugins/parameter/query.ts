@@ -1,26 +1,26 @@
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
 } from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
-import { InspectionParameter, TamperInstruction } from "../../types/models.js";
+import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class QueryParameter extends InspectionParameter<{ name: string }, string> {
-  createInstruction(
+class QueryParameter extends AuditTarget<{ name: string }, string> {
+  createMutation(
     payload: Payload,
-    method: TamperMethod,
-  ): QueryTamperInstruction {
-    return new QueryTamperInstruction(this, payload, method);
+    method: MutationType,
+  ): QueryMutation {
+    return new QueryMutation(this, payload, method);
   }
 }
 
-class QueryTamperInstruction extends TamperInstruction<QueryParameter> {}
+class QueryMutation extends AuditMutation<QueryParameter> {}
 
 class QueryParserPlugin implements Plugin {
   readonly name = "query-parser";
@@ -43,8 +43,8 @@ class QueryTamperPlugin implements Plugin {
       ApplyTamperCommand,
       async (cmd, request) => {
         const queryInstructions = cmd.instructions.filter(
-          (instr): instr is QueryTamperInstruction =>
-            instr instanceof QueryTamperInstruction,
+          (instr): instr is QueryMutation =>
+            instr instanceof QueryMutation,
         );
 
         if (queryInstructions.length === 0) {
@@ -75,9 +75,9 @@ class QueryTamperPlugin implements Plugin {
   }
 }
 
-function parseQueryParameters(request: HttpRequest): InspectionParameter[] {
+function parseQueryParameters(request: HttpRequest): AuditTarget[] {
   const url = new URL(request.url);
-  const params: InspectionParameter[] = [];
+  const params: AuditTarget[] = [];
 
   for (const [name, value] of url.searchParams) {
     params.push(
@@ -95,7 +95,7 @@ function parseQueryParameters(request: HttpRequest): InspectionParameter[] {
 function applyTamper(
   current: string,
   payload: string,
-  method: TamperMethod,
+  method: MutationType,
 ): string {
   switch (method) {
     case ReplaceValue:
@@ -113,5 +113,5 @@ export {
   QueryParserPlugin,
   QueryTamperPlugin,
   QueryParameter,
-  QueryTamperInstruction,
+  QueryMutation,
 };

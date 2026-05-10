@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { SqliErrorPlugin, SQL_ERROR_PATTERNS } from "./sqli-error.js";
-import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
-import { RunInspectionCommand } from "../../commands/run-inspection.js";
+import { CreateAuditItemsCommand } from "../../commands/create-audit-items.js";
+import { RunAuditCommand } from "../../commands/run-audit.js";
 import type {
-  InspectionParameter,
+  AuditTarget,
   HttpRequest,
   JsonPrimitive,
   Finding,
@@ -14,7 +14,7 @@ import { QueryParameter } from "../parameter/query.js";
 import { JsonPrimitiveParameter } from "../parameter/json.js";
 import { HeaderParameter } from "../parameter/header.js";
 import { ReplaceValue, AppendValue } from "../../types/branded.js";
-import type { InspectorDefinition } from "../../core/inspector.js";
+import type { AuditItem } from "../../core/audit-item.js";
 
 let commandBus: InMemoryCommandBus;
 
@@ -22,20 +22,20 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function makeQueryParam(name: string, value: string): InspectionParameter {
+function makeQueryParam(name: string, value: string): AuditTarget {
   return new QueryParameter({ name }, value, [ReplaceValue, AppendValue]);
 }
 
 function makeJsonPrimitiveParam(
   path: string[],
   value: unknown,
-): InspectionParameter {
+): AuditTarget {
   return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [
     ReplaceValue,
   ]);
 }
 
-function makeHeaderParam(name: string, value: string): InspectionParameter {
+function makeHeaderParam(name: string, value: string): AuditTarget {
   return new HeaderParameter({ name }, value, [ReplaceValue]);
 }
 
@@ -60,8 +60,8 @@ describe("SqliErrorPlugin", () => {
       makeJsonPrimitiveParam(["user", "id"], 1),
     ];
 
-    const results = await commandBus.broadcast<InspectorDefinition[]>(
-      new CreateInspectorsCommand(params),
+    const results = await commandBus.broadcast<AuditItem[]>(
+      new CreateAuditItemsCommand(params),
     );
 
     expect(results).toHaveLength(1);
@@ -84,8 +84,8 @@ describe("SqliErrorPlugin", () => {
       makeHeaderParam("Authorization", "Bearer token"),
     ];
 
-    const results = await commandBus.broadcast<InspectorDefinition[]>(
-      new CreateInspectorsCommand(params),
+    const results = await commandBus.broadcast<AuditItem[]>(
+      new CreateAuditItemsCommand(params),
     );
 
     const definitions = results[0];
@@ -113,7 +113,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const finding: Finding = await commandBus.dispatch(
-      new RunInspectionCommand({
+      new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: param,
         replay: mockReplay,
@@ -143,7 +143,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const finding: Finding = await commandBus.dispatch(
-      new RunInspectionCommand({
+      new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: param,
         replay: mockReplay,
@@ -173,7 +173,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const finding: Finding = await commandBus.dispatch(
-      new RunInspectionCommand({
+      new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: param,
         replay: mockReplay,
@@ -204,7 +204,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const finding: Finding = await commandBus.dispatch(
-      new RunInspectionCommand({
+      new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: param,
         replay: mockReplay,
@@ -233,7 +233,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const finding: Finding = await commandBus.dispatch(
-      new RunInspectionCommand({
+      new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: param,
         replay: mockReplay,
@@ -262,7 +262,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const finding: Finding = await commandBus.dispatch(
-      new RunInspectionCommand({
+      new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: param,
         replay: mockReplay,
@@ -292,7 +292,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const finding: Finding = await commandBus.dispatch(
-      new RunInspectionCommand({
+      new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: param,
         replay: mockReplay,

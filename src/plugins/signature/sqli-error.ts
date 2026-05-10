@@ -1,8 +1,8 @@
 import type { Payload, Evidence } from "../../types/branded.js";
 import { AppendValue } from "../../types/branded.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
-import { CreateInspectorsCommand } from "../../commands/create-inspectors.js";
-import { RunInspectionCommand } from "../../commands/run-inspection.js";
+import { CreateAuditItemsCommand } from "../../commands/create-audit-items.js";
+import { RunAuditCommand } from "../../commands/run-audit.js";
 
 const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
@@ -17,10 +17,10 @@ class SqliErrorPlugin implements Plugin {
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(
-      CreateInspectorsCommand,
+      CreateAuditItemsCommand,
       async (cmd) => {
         return cmd.parameters
-          .filter((param) => param.allowedTampers.includes(AppendValue))
+          .filter((param) => param.allowedMutations.includes(AppendValue))
           .map((param) => ({
             signatureName: "sqli-error",
             parameter: param,
@@ -29,7 +29,7 @@ class SqliErrorPlugin implements Plugin {
     );
 
     context.commandBus.register(
-      RunInspectionCommand,
+      RunAuditCommand,
       async (cmd) => {
         const { signatureName, parameter, replay } = cmd.payload;
         if (signatureName !== "sqli-error") {
@@ -37,7 +37,7 @@ class SqliErrorPlugin implements Plugin {
         }
 
         const payload = "' OR 1=1--" as Payload;
-        const instruction = parameter.createInstruction(payload, AppendValue);
+        const instruction = parameter.createMutation(payload, AppendValue);
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));

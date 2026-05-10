@@ -4,12 +4,12 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { FormParserPlugin, FormTamperPlugin } from "./form.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import { InspectionParameter, type HttpRequest } from "../../types/models.js";
+import { AuditTarget, type HttpRequest } from "../../types/models.js";
 import { FormParameter } from "./form.js";
-import { FormTamperInstruction } from "./form.js";
+import { FormMutation } from "./form.js";
 import type { Brand } from "../../types/branded.js";
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
@@ -30,7 +30,7 @@ function makeFormRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: InspectionParameter[][]): InspectionParameter[] {
+function flatParams(results: AuditTarget[][]): AuditTarget[] {
   return results.flat();
 }
 
@@ -38,9 +38,9 @@ function makeFormInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: TamperMethod,
-): FormTamperInstruction {
-  return new FormTamperInstruction(
+  method: MutationType,
+): FormMutation {
+  return new FormMutation(
     new FormParameter({ name: paramName }, originalValue, [
       ReplaceValue,
       AppendValue,

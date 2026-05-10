@@ -4,7 +4,7 @@ import { InMemoryCommandBus } from "./command-bus.js";
 import { InMemoryEventBus } from "./event-bus.js";
 import { createLogger } from "./logger.js";
 import { Orchestrator } from "./orchestrator.js";
-import type { InspectorDefinition } from "./inspector.js";
+import type { AuditItem } from "./audit-item.js";
 import type {
   Finding,
   HttpRequest,
@@ -13,15 +13,15 @@ import type {
   ScanState,
   Scenario,
 } from "../types/models.js";
-import type { InspectionParameter } from "../types/models.js";
+import type { AuditTarget } from "../types/models.js";
 import type { Brand, JobStatus, ScanStatus } from "../types/branded.js";
 import { ReplaceValue } from "../types/branded.js";
 import { QueryParameter } from "../plugins/parameter/query.js";
 import {
   ReplayCommand,
   ParseRequestCommand,
-  CreateInspectorsCommand,
-  RunInspectionCommand,
+  CreateAuditItemsCommand,
+  RunAuditCommand,
   SaveJobCommand,
   LoadPendingJobsCommand,
   UpdateJobCommand,
@@ -48,7 +48,7 @@ const mockResponse: HttpResponse = {
   body: Buffer.from("ok"),
 };
 
-const mockParameters: InspectionParameter[] = [
+const mockParameters: AuditTarget[] = [
   new QueryParameter({ name: "q" }, "hello", [ReplaceValue]),
 ];
 
@@ -93,11 +93,11 @@ describe("Orchestrator", () => {
 
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
-      const mockDefinition: InspectorDefinition = {
+      const mockDefinition: AuditItem = {
         signatureName: "mock-sig",
         parameter: mockParameters[0],
       };
-      commandBus.register(CreateInspectorsCommand, async () => [
+      commandBus.register(CreateAuditItemsCommand, async () => [
         mockDefinition,
       ]);
 
@@ -152,11 +152,11 @@ describe("Orchestrator", () => {
       ]);
       commandBus.register(ParseRequestCommand, async () => mockParameters);
 
-      const mockDefinition: InspectorDefinition = {
+      const mockDefinition: AuditItem = {
         signatureName: "mock-sig",
         parameter: mockParameters[0],
       };
-      commandBus.register(CreateInspectorsCommand, async () => [
+      commandBus.register(CreateAuditItemsCommand, async () => [
         mockDefinition,
       ]);
 
@@ -196,7 +196,7 @@ describe("Orchestrator", () => {
         },
       ]);
       commandBus.register(ParseRequestCommand, async () => []);
-      commandBus.register(CreateInspectorsCommand, async () => []);
+      commandBus.register(CreateAuditItemsCommand, async () => []);
       commandBus.register(SaveJobCommand, async () => {});
       commandBus.register(SaveScanStateCommand, async () => {});
 
@@ -229,7 +229,7 @@ describe("Orchestrator", () => {
         updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
       };
 
-      const definitions = new Map<string, InspectorDefinition>();
+      const definitions = new Map<string, AuditItem>();
       definitions.set("job-1", {
         signatureName: "mock-sig",
         parameter: mockParameters[0],
@@ -260,7 +260,7 @@ describe("Orchestrator", () => {
           response: mockResponse,
         },
       ]);
-      commandBus.register(RunInspectionCommand, async () => mockFinding);
+      commandBus.register(RunAuditCommand, async () => mockFinding);
 
       eventBus.subscribe("scan:jobStarted", () => {
         events.push("started");
@@ -300,7 +300,7 @@ describe("Orchestrator", () => {
         updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
       };
 
-      const definitions = new Map<string, InspectorDefinition>();
+      const definitions = new Map<string, AuditItem>();
       definitions.set("job-err", {
         signatureName: "failing-sig",
         parameter: mockParameters[0],
@@ -331,7 +331,7 @@ describe("Orchestrator", () => {
           response: mockResponse,
         },
       ]);
-      commandBus.register(RunInspectionCommand, async () => {
+      commandBus.register(RunAuditCommand, async () => {
         throw new Error("Inspection failed");
       });
 
@@ -355,7 +355,7 @@ describe("Orchestrator", () => {
 
     it("handles empty job list", async () => {
       const scanId = "test-scan-id" as Brand<string, "ScanId">;
-      const definitions = new Map<string, InspectorDefinition>();
+      const definitions = new Map<string, AuditItem>();
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadPendingJobsCommand, async () => []);

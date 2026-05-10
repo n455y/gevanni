@@ -1,26 +1,26 @@
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
 } from "../../types/branded.js";
 import type { Payload } from "../../types/branded.js";
-import { InspectionParameter, TamperInstruction } from "../../types/models.js";
+import { AuditTarget, AuditMutation } from "../../types/models.js";
 import type { HttpRequest } from "../../types/models.js";
 import type { Plugin, PluginContext } from "../../core/plugin.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 
-class HeaderParameter extends InspectionParameter<{ name: string }, string> {
-  createInstruction(
+class HeaderParameter extends AuditTarget<{ name: string }, string> {
+  createMutation(
     payload: Payload,
-    method: TamperMethod,
-  ): HeaderTamperInstruction {
-    return new HeaderTamperInstruction(this, payload, method);
+    method: MutationType,
+  ): HeaderMutation {
+    return new HeaderMutation(this, payload, method);
   }
 }
 
-class HeaderTamperInstruction extends TamperInstruction<HeaderParameter> {}
+class HeaderMutation extends AuditMutation<HeaderParameter> {}
 
 class HeaderParserPlugin implements Plugin {
   readonly name = "header-parser";
@@ -43,8 +43,8 @@ class HeaderTamperPlugin implements Plugin {
       ApplyTamperCommand,
       async (cmd, request) => {
         const headerInstructions = cmd.instructions.filter(
-          (instr): instr is HeaderTamperInstruction =>
-            instr instanceof HeaderTamperInstruction,
+          (instr): instr is HeaderMutation =>
+            instr instanceof HeaderMutation,
         );
 
         if (headerInstructions.length === 0) {
@@ -71,8 +71,8 @@ class HeaderTamperPlugin implements Plugin {
   }
 }
 
-function parseHeaderParameters(request: HttpRequest): InspectionParameter[] {
-  const params: InspectionParameter[] = [];
+function parseHeaderParameters(request: HttpRequest): AuditTarget[] {
+  const params: AuditTarget[] = [];
 
   for (const [name, value] of Object.entries(request.headers)) {
     params.push(
@@ -90,7 +90,7 @@ function parseHeaderParameters(request: HttpRequest): InspectionParameter[] {
 function applyTamper(
   current: string,
   payload: string,
-  method: TamperMethod,
+  method: MutationType,
 ): string {
   switch (method) {
     case ReplaceValue:
@@ -108,5 +108,5 @@ export {
   HeaderParserPlugin,
   HeaderTamperPlugin,
   HeaderParameter,
-  HeaderTamperInstruction,
+  HeaderMutation,
 };

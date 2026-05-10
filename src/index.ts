@@ -14,6 +14,6 @@ export {
   type Plugin,
   type PluginContext,
   type PluginRegistry,
-  type InspectorDefinition,
+  type AuditItem,
 } from "./core/index.js";
 export * from "./commands/index.js";

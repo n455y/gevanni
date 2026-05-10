@@ -4,13 +4,13 @@ import { InMemoryEventBus } from "../../core/event-bus.js";
 import { QueryParserPlugin, QueryTamperPlugin } from "./query.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
-import { InspectionParameter, type HttpRequest } from "../../types/models.js";
+import { AuditTarget, type HttpRequest } from "../../types/models.js";
 import { QueryParameter } from "./query.js";
 import { JsonPrimitiveParameter } from "./json.js";
-import { QueryTamperInstruction } from "./query.js";
+import { QueryMutation } from "./query.js";
 import type { Brand } from "../../types/branded.js";
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
@@ -22,7 +22,7 @@ beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
-function flatParams(results: InspectionParameter[][]): InspectionParameter[] {
+function flatParams(results: AuditTarget[][]): AuditTarget[] {
   return results.flat();
 }
 
@@ -30,9 +30,9 @@ function makeQueryInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: TamperMethod,
-): QueryTamperInstruction {
-  return new QueryTamperInstruction(
+  method: MutationType,
+): QueryMutation {
+  return new QueryMutation(
     new QueryParameter({ name: paramName }, originalValue, [
       ReplaceValue,
       AppendValue,
@@ -238,7 +238,7 @@ describe("QueryTamperPlugin", () => {
       { path: ["user", "name"] },
       "test",
       [ReplaceValue, AppendValue, PrependValue],
-    ).createInstruction("INJECTED" as Brand<string, "Payload">, ReplaceValue);
+    ).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),

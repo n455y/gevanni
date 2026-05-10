@@ -6,16 +6,16 @@ import {
   JsonPrimitiveParameter,
   JsonArrayParameter,
   JsonObjectParameter,
-  JsonPrimitiveTamperInstruction,
-  JsonArrayTamperInstruction,
+  JsonPrimitiveMutation,
+  JsonArrayMutation,
 } from "./json.js";
 import { QueryParameter } from "./query.js";
-import type { HttpRequest, InspectionParameter } from "../../types/models.js";
+import type { HttpRequest, AuditTarget } from "../../types/models.js";
 import { ParseRequestCommand } from "../../commands/parse-request.js";
 import { ApplyTamperCommand } from "../../commands/tamper.js";
 import type { Brand } from "../../types/branded.js";
 import {
-  TamperMethod,
+  MutationType,
   ReplaceValue,
   AppendValue,
   PrependValue,
@@ -41,7 +41,7 @@ function makeJsonRequest(body: string): HttpRequest {
   };
 }
 
-function flatParams(results: InspectionParameter[][]): AnyJsonParam[] {
+function flatParams(results: AuditTarget[][]): AnyJsonParam[] {
   return results.flat() as AnyJsonParam[];
 }
 
@@ -49,9 +49,9 @@ function makeJsonPrimitiveInstruction(
   path: string[],
   originalValue: unknown,
   payload: string,
-  method: TamperMethod,
-): JsonPrimitiveTamperInstruction {
-  return new JsonPrimitiveTamperInstruction(
+  method: MutationType,
+): JsonPrimitiveMutation {
+  return new JsonPrimitiveMutation(
     new JsonPrimitiveParameter(
       { path },
       originalValue as string | number | boolean | null,
@@ -335,7 +335,7 @@ describe("JsonTamperPlugin", () => {
       ReplaceValue,
       AppendValue,
       PrependValue,
-    ]).createInstruction("INJECTED" as Brand<string, "Payload">, ReplaceValue);
+    ]).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyTamperCommand(request, [instruction]),
@@ -413,7 +413,7 @@ describe("JsonTamperPlugin", () => {
 
     const request = makeJsonRequest(`{"items":["a","b"]}`);
 
-    const instruction = new JsonArrayTamperInstruction(
+    const instruction = new JsonArrayMutation(
       new JsonArrayParameter(
         { path: ["items"] },
         ["a", "b"],

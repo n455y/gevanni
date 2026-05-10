@@ -12,12 +12,12 @@ type ExchangeId = Brand<string, "ExchangeId">;
 export type ScenarioType = Brand<string, "ScenarioType">;
 export const ScenarioType = (type: string) => type as ScenarioType;
 
-export type TamperMethod = Brand<string, "TamperMethod">;
-export const TamperMethod = (method: string) => method as TamperMethod;
+export type MutationType = Brand<string, "MutationType">;
+export const MutationType = (method: string) => method as MutationType;
 
-const ReplaceValue = TamperMethod("ReplaceValue");
-const AppendValue = TamperMethod("AppendValue");
-const PrependValue = TamperMethod("PrependValue");
+const ReplaceValue = MutationType("ReplaceValue");
+const AppendValue = MutationType("AppendValue");
+const PrependValue = MutationType("PrependValue");
 
 type JobStatus = Brand<
   "pending" | "running" | "completed" | "error",

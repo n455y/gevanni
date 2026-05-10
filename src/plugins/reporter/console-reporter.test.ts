@@ -3,7 +3,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.js";
 import { InMemoryEventBus } from "../../core/event-bus.js";
 import { ConsoleReporterPlugin } from "./console-reporter.js";
 import { GenerateReportCommand } from "../../commands/report.js";
-import { InspectionParameter, type Job, type ScanState } from "../../types/models.js";
+import { AuditTarget, type Job, type ScanState } from "../../types/models.js";
 import type {
   ScanId,
   JobId,
@@ -43,7 +43,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: asScenarioId("scan-1"),
     requestId: asRequestId("req-1"),
     signatureName: "reflected-xss",
-    parameter: new InspectionParameter({ name: "" }, "", []),
+    parameter: new AuditTarget({ name: "" }, "", []),
     status: asJobStatus("completed"),
     finding: null,
     error: null,
@@ -97,7 +97,7 @@ describe("ConsoleReporterPlugin", () => {
       id: asJobId("job-vuln"),
       signatureName: "reflected-xss",
       status: asJobStatus("completed"),
-      parameter: new InspectionParameter({ name: "q" }, "<script>alert(1)</script>", []),
+      parameter: new AuditTarget({ name: "q" }, "<script>alert(1)</script>", []),
       finding: {
         vulnerable: true,
         evidence: asEvidence("XSS payload reflected in response body"),

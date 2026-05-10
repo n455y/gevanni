@@ -1,4 +1,4 @@
-import { ScenarioType, TamperMethod } from "./branded.js";
+import { ScenarioType, MutationType } from "./branded.js";
 import type {
   ScenarioId,
   JobId,
@@ -28,19 +28,19 @@ type JsonArray = JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
-// --- InspectionParameter ---
-class InspectionParameter<
+// --- AuditTarget ---
+class AuditTarget<
   L extends SerializableValue = SerializableValue,
   V extends SerializableValue = SerializableValue,
 > extends SerializableBase<{
   location: L;
   originalValue: V;
-  allowedTampers: TamperMethod[];
+  allowedMutations: MutationType[];
 }> {
   constructor(
     readonly location: L,
     readonly originalValue: V,
-    readonly allowedTampers: TamperMethod[],
+    readonly allowedMutations: MutationType[],
   ) {
     super();
   }
@@ -48,7 +48,7 @@ class InspectionParameter<
     return {
       location: this.location,
       originalValue: this.originalValue,
-      allowedTampers: this.allowedTampers,
+      allowedMutations: this.allowedMutations,
     };
   }
   static deserializeParams<
@@ -57,31 +57,31 @@ class InspectionParameter<
   >(serialized: {
     location: L;
     originalValue: V;
-    allowedTampers: TamperMethod[];
+    allowedMutations: MutationType[];
   }) {
     return new this(
       serialized.location,
       serialized.originalValue,
-      serialized.allowedTampers,
+      serialized.allowedMutations,
     );
   }
 
-  createInstruction(
+  createMutation(
     _payload: Payload,
-    _method: TamperMethod,
-  ): TamperInstruction {
+    _method: MutationType,
+  ): AuditMutation {
     throw new Error("Not implemented");
   }
 }
 
-// --- TamperInstruction ---
-abstract class TamperInstruction<
-  P extends InspectionParameter = InspectionParameter,
+// --- AuditMutation ---
+abstract class AuditMutation<
+  P extends AuditTarget = AuditTarget,
 > {
   constructor(
     readonly parameter: P,
     readonly payload: Payload,
-    readonly method: TamperMethod,
+    readonly method: MutationType,
   ) {}
 }
 
@@ -121,7 +121,7 @@ interface Job {
   scenarioId: ScenarioId;
   requestId: RequestId;
   signatureName: string;
-  parameter: InspectionParameter;
+  parameter: AuditTarget;
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
@@ -166,4 +166,4 @@ export type {
   PluginConfig,
 };
 
-export { InspectionParameter, TamperInstruction };
+export { AuditTarget, AuditMutation };

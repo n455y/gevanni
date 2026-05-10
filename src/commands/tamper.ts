@@ -1,10 +1,10 @@
 import { PipelineCommand } from "../core/command.js";
-import type { HttpRequest, TamperInstruction } from "../types/models.js";
+import type { HttpRequest, AuditMutation } from "../types/models.js";
 
 class ApplyTamperCommand extends PipelineCommand<HttpRequest> {
   readonly type = "applyTamper";
   readonly initial: HttpRequest;
-  constructor(readonly request: HttpRequest, readonly instructions: TamperInstruction[]) {
+  constructor(readonly request: HttpRequest, readonly instructions: AuditMutation[]) {
     super();
     this.initial = request;
   }
