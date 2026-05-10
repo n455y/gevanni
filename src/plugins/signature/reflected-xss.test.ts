@@ -73,7 +73,7 @@ describe("ReflectedXssPlugin", () => {
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
     expect(definitions[0].signatureName).toBe("reflected-xss");
-    expect(definitions[0].parameter).toEqual(params[0]);
+    expect(definitions[0].target).toEqual(params[0]);
   });
 
   it("creates definitions for form parameters", async () => {
@@ -91,7 +91,7 @@ describe("ReflectedXssPlugin", () => {
 
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
-    expect(definitions[0].parameter).toEqual(params[0]);
+    expect(definitions[0].target).toEqual(params[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -132,7 +132,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -163,7 +163,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -193,7 +193,7 @@ describe("ReflectedXssPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "reflected-xss",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );

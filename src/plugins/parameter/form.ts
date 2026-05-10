@@ -53,14 +53,14 @@ class FormMutationPlugin implements Plugin {
           (instr): instr is FormMutation =>
             instr instanceof FormMutation,
         )
-        .filter((instr) => formBody.has(instr.parameter.location.name));
+        .filter((instr) => formBody.has(instr.target.location.name));
 
       if (formMutations.length === 0) {
         return request;
       }
 
       for (const instr of formMutations) {
-        const paramName = instr.parameter.location.name;
+        const paramName = instr.target.location.name;
         const current = formBody.get(paramName) ?? "";
         const payload = instr.payload as string;
         const modified = applyMutation(current, payload, instr.method);

@@ -46,7 +46,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: asScenarioId("scan-1"),
     requestId: asRequestId("req-1"),
     signatureName: "reflected-xss",
-    parameter: new AuditTarget({ name: "" }, "", []),
+    target: new AuditTarget({ name: "" }, "", []),
     status: asJobStatus("completed"),
     finding: null,
     error: null,

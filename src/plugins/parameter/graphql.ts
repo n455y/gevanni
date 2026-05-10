@@ -92,7 +92,7 @@ class GraphQLMutationPlugin implements Plugin {
 
         for (const instr of graphqlMutations) {
           if (instr instanceof GraphQLQueryMutation) {
-            const field = instr.parameter.location.field;
+            const field = instr.target.location.field;
             if (
               typeof jsonBody === "object" &&
               jsonBody !== null &&
@@ -106,7 +106,7 @@ class GraphQLMutationPlugin implements Plugin {
               );
             }
           } else if (instr instanceof GraphQLVariableMutation) {
-            const path = instr.parameter.location.path;
+            const path = instr.target.location.path;
             jsonBody = applyAtPath(
               jsonBody,
               path,

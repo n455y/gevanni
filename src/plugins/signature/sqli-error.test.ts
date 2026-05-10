@@ -68,7 +68,7 @@ describe("SqliErrorPlugin", () => {
     const definitions = results[0];
     expect(definitions).toHaveLength(1);
     expect(definitions[0].signatureName).toBe("sqli-error");
-    expect(definitions[0].parameter).toEqual(params[0]);
+    expect(definitions[0].target).toEqual(params[0]);
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -115,7 +115,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -145,7 +145,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -175,7 +175,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -206,7 +206,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -235,7 +235,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -264,7 +264,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );
@@ -294,7 +294,7 @@ describe("SqliErrorPlugin", () => {
     const finding: Finding = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "sqli-error",
-        parameter: param,
+        target: param,
         replay: mockReplay,
       }),
     );

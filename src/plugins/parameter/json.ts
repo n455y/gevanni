@@ -110,7 +110,7 @@ class JsonMutationPlugin implements Plugin {
         }
 
         for (const instr of jsonMutations) {
-          const path = instr.parameter.location.path;
+          const path = instr.target.location.path;
           jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
         }
 

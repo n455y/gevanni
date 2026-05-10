@@ -9,8 +9,8 @@ import type {
 
 interface RunAuditPayload {
   signatureName: string;
-  parameter: AuditTarget;
-  replay: (instructions: AuditMutation[]) => Promise<{
+  target: AuditTarget;
+  replay: (mutations: AuditMutation[]) => Promise<{
     request: HttpRequest;
     response: HttpResponse;
   }>;

@@ -126,14 +126,14 @@ class Orchestrator {
           await commandBus.broadcast(
             new ParseRequestCommand(replayResult.request),
           );
-        const parameters: AuditTarget[] = parseResults.flat();
+        const targets: AuditTarget[] = parseResults.flat();
         logger.debug(
-          `Found ${parameters.length} audit targets for ${scenario.name}`,
+          `Found ${targets.length} audit targets for ${scenario.name}`,
         );
 
         // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
         const definitionResults: AuditItem[][] =
-          await commandBus.broadcast(new CreateAuditItemsCommand(parameters));
+          await commandBus.broadcast(new CreateAuditItemsCommand(targets));
         const definitions: AuditItem[] = definitionResults.flat();
 
         // d. For each definition, create a Job
@@ -146,7 +146,7 @@ class Orchestrator {
             scenarioId: scenario.id,
             requestId: rid,
             signatureName: def.signatureName,
-            parameter: def.parameter,
+            target: def.target,
             status: "pending" as JobStatus,
             finding: null,
             error: null,
@@ -270,7 +270,7 @@ class Orchestrator {
         const finding: Finding = (await commandBus.dispatch(
           new RunAuditCommand({
             signatureName: def.signatureName,
-            parameter: job.parameter,
+            target: job.target,
             replay,
           }),
         )) as Finding;
@@ -396,7 +396,7 @@ class Orchestrator {
     for (const job of pendingJobs) {
       definitionMap.set(job.id as string, {
         signatureName: job.signatureName,
-        parameter: job.parameter,
+        target: job.target,
       });
     }
 

@@ -79,7 +79,7 @@ abstract class AuditMutation<
   P extends AuditTarget = AuditTarget,
 > {
   constructor(
-    readonly parameter: P,
+    readonly target: P,
     readonly payload: Payload,
     readonly method: MutationType,
   ) {}
@@ -121,7 +121,7 @@ interface Job {
   scenarioId: ScenarioId;
   requestId: RequestId;
   signatureName: string;
-  parameter: AuditTarget;
+  target: AuditTarget;
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;

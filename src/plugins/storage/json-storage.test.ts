@@ -46,7 +46,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: asScenarioId("scan-1"),
     requestId: "req-1" as any,
     signatureName: "sig-1",
-    parameter: new AuditTarget({ name: "" }, "", []),
+    target: new AuditTarget({ name: "" }, "", []),
     status: asJobStatus("pending"),
     finding: null,
     error: null,
