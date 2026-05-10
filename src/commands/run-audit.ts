@@ -1,4 +1,4 @@
-import { SingleCommand } from "../core/command.ts";
+import { BroadcastCommand } from "../core/command.ts";
 import type {
   AuditParameter,
   Finding,
@@ -16,7 +16,7 @@ interface RunAuditContext {
   }>;
 }
 
-class RunAuditCommand extends SingleCommand<Finding> {
+class RunAuditCommand extends BroadcastCommand<Finding | null> {
   readonly type = "runAudit";
   readonly context: RunAuditContext;
   constructor(context: RunAuditContext) {

@@ -268,13 +268,17 @@ class Orchestrator {
         };
 
         // Run audit
-        const finding: Finding = (await commandBus.dispatch(
+        const results = await commandBus.broadcast(
           new RunAuditCommand({
             signatureName: item.signatureName,
             parameter: job.parameter,
             replay,
           }),
-        )) as Finding;
+        );
+        const finding = results.find((r): r is Finding => r !== null);
+        if (!finding) {
+          throw new Error(`No handler for signature: ${item.signatureName}`);
+        }
 
         // Update job with finding
         const completedNow = isoNow();

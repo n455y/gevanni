@@ -25,7 +25,7 @@ class ReflectedXssPlugin implements Plugin {
       async (cmd) => {
         const { signatureName, parameter, replay } = cmd.context;
         if (signatureName !== "reflected-xss") {
-          throw new Error(`Unknown signature: ${signatureName}`);
+          return null;
         }
 
         const payload = "<script>alert(1)</script>" as Payload;

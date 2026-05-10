@@ -33,7 +33,7 @@ class SqliErrorPlugin implements Plugin {
       async (cmd) => {
         const { signatureName, parameter, replay } = cmd.context;
         if (signatureName !== "sqli-error") {
-          throw new Error(`Unknown signature: ${signatureName}`);
+          return null;
         }
 
         const payload = "' OR 1=1--" as Payload;

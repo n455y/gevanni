@@ -112,13 +112,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: parameter,
         replay: mockReplay,
       }),
     );
+    const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence).toContain("SQL error pattern detected");
@@ -142,13 +143,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: parameter,
         replay: mockReplay,
       }),
     );
+    const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence).toContain("SQL error pattern detected");
@@ -172,13 +174,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: parameter,
         replay: mockReplay,
       }),
     );
+    const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -203,13 +206,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: parameter,
         replay: mockReplay,
       }),
     );
+    const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -232,13 +236,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: parameter,
         replay: mockReplay,
       }),
     );
+    const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -261,13 +266,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: parameter,
         replay: mockReplay,
       }),
     );
+    const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence).toContain("No SQL error pattern detected");
@@ -291,13 +297,14 @@ describe("SqliErrorPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "sqli-error",
         parameter: parameter,
         replay: mockReplay,
       }),
     );
+    const finding = findings[0] as Finding;
 
     expect(finding.vulnerable).toBe(false);
   });

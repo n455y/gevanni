@@ -129,7 +129,7 @@ describe("ReflectedXssPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "reflected-xss",
         parameter,
@@ -137,6 +137,7 @@ describe("ReflectedXssPlugin", () => {
       }),
     );
 
+    const finding = findings[0] as Finding;
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence).toContain("reflected in response body");
     expect(finding.request).toEqual(mockRequest);
@@ -160,7 +161,7 @@ describe("ReflectedXssPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "reflected-xss",
         parameter,
@@ -168,6 +169,7 @@ describe("ReflectedXssPlugin", () => {
       }),
     );
 
+    const finding = findings[0] as Finding;
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence).toContain("not reflected");
   });
@@ -190,7 +192,7 @@ describe("ReflectedXssPlugin", () => {
       },
     });
 
-    const finding: Finding = await commandBus.dispatch(
+    const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "reflected-xss",
         parameter,
@@ -198,6 +200,7 @@ describe("ReflectedXssPlugin", () => {
       }),
     );
 
+    const finding = findings[0] as Finding;
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence).toContain("not reflected");
   });
