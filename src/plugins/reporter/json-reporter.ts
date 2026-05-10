@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
-import type { Job, ScanState } from "../../types/models.ts";
+import { serializeJob, type Job, type ScanState, type SerializedJob } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
 interface JsonReporterConfig {
@@ -17,7 +17,7 @@ interface ReportSummary {
 
 interface Report {
   scanState: ScanState;
-  jobs: Job[];
+  jobs: SerializedJob[];
   summary: ReportSummary;
 }
 
@@ -61,7 +61,7 @@ class JsonReporterPlugin implements Plugin {
 
       const report: Report = {
         scanState,
-        jobs,
+        jobs: jobs.map(serializeJob),
         summary,
       };
 

@@ -2,7 +2,15 @@ import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
-import type { Job, ScanState, Scenario, Exchange } from "../../types/models.ts";
+import {
+  serializeJob,
+  deserializeJob,
+  type Job,
+  type ScanState,
+  type Scenario,
+  type Exchange,
+  type SerializedJob,
+} from "../../types/models.ts";
 import type { ScanId, JobStatus } from "../../types/branded.ts";
 import {
   SaveJobCommand,
@@ -83,8 +91,8 @@ class JsonStoragePlugin implements Plugin {
     bus.register(SaveJobCommand, async (cmd) => {
       const path = jobsPath(cmd.job.scenarioId as unknown as ScanId);
       await this.withFileLock(path, async () => {
-        const jobs: Job[] = (await readJsonFile<Job[]>(path)) ?? [];
-        jobs.push(cmd.job);
+        const jobs: SerializedJob[] = (await readJsonFile<SerializedJob[]>(path)) ?? [];
+        jobs.push(serializeJob(cmd.job));
         await writeJsonFile(path, jobs);
       });
     });
@@ -100,10 +108,13 @@ class JsonStoragePlugin implements Plugin {
         for (const entry of entries) {
           if (!entry.isDirectory()) continue;
           const path = join(this.outputDir, entry.name, "jobs.json");
-          const jobs = await readJsonFile<Job[]>(path);
+          const jobs = await readJsonFile<SerializedJob[]>(path);
           if (jobs) {
-            found = jobs.find((j) => j.id === cmd.id) ?? null;
-            if (found) break;
+            const match = jobs.find((j) => j.id === cmd.id);
+            if (match) {
+              found = deserializeJob(match);
+              break;
+            }
           }
         }
       } catch {
@@ -123,9 +134,13 @@ class JsonStoragePlugin implements Plugin {
         for (const entry of entries) {
           if (!entry.isDirectory()) continue;
           const path = join(this.outputDir, entry.name, "jobs.json");
-          const jobs = await readJsonFile<Job[]>(path);
+          const jobs = await readJsonFile<SerializedJob[]>(path);
           if (jobs) {
-            allJobs.push(...jobs.filter((j) => j.scanId === cmd.scanId));
+            allJobs.push(
+              ...jobs
+                .filter((j) => j.scanId === cmd.scanId)
+                .map(deserializeJob),
+            );
           }
         }
       } catch {
@@ -144,9 +159,9 @@ class JsonStoragePlugin implements Plugin {
         for (const entry of entries) {
           if (!entry.isDirectory()) continue;
           const path = join(this.outputDir, entry.name, "jobs.json");
-          const jobs = await readJsonFile<Job[]>(path);
+          const jobs = await readJsonFile<SerializedJob[]>(path);
           if (jobs) {
-            allJobs.push(...jobs);
+            allJobs.push(...jobs.map(deserializeJob));
           }
         }
       } catch {
@@ -169,11 +184,12 @@ class JsonStoragePlugin implements Plugin {
           if (!entry.isDirectory()) continue;
           const filePath = join(this.outputDir, entry.name, "jobs.json");
           await this.withFileLock(filePath, async () => {
-            const jobs = await readJsonFile<Job[]>(filePath);
+            const jobs = await readJsonFile<SerializedJob[]>(filePath);
             if (!jobs) return;
             const idx = jobs.findIndex((j) => j.id === cmd.id);
             if (idx !== -1) {
-              jobs[idx] = { ...jobs[idx], ...cmd.updates, id: jobs[idx].id };
+              const { parameter: _, ...rest } = cmd.updates;
+              jobs[idx] = { ...jobs[idx], ...rest, id: jobs[idx].id };
               await writeJsonFile(filePath, jobs);
               updated = true;
             }

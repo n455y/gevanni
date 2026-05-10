@@ -164,6 +164,30 @@ interface PluginConfig {
   options: Record<string, unknown>;
 }
 
+// --- Serialized Job ---
+
+interface SerializedJob {
+  id: JobId;
+  scanId: ScanId;
+  scenarioId: ScenarioId;
+  requestId: RequestId;
+  signatureName: string;
+  parameter: { base: string; kind: string; serialized: SerializableValue };
+  status: JobStatus;
+  finding: Finding | null;
+  error: ErrorMessage | null;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}
+
+function serializeJob(job: Job): SerializedJob {
+  return { ...job, parameter: job.parameter.serialize() };
+}
+
+function deserializeJob(data: SerializedJob): Job {
+  return { ...data, parameter: AuditParameter.deserialize(data.parameter) };
+}
+
 export type {
   Scenario,
   JsonPrimitive,
@@ -178,6 +202,7 @@ export type {
   ScanState,
   ScanConfig,
   PluginConfig,
+  SerializedJob,
 };
 
-export { AuditParameter, AuditMutation };
+export { AuditParameter, AuditMutation, serializeJob, deserializeJob };

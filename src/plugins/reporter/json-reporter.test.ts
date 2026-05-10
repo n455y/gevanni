@@ -6,7 +6,8 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { JsonReporterPlugin } from "./json-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { AuditParameter, type Job, type ScanState } from "../../types/models.ts";
+import { serializeJob, type Job, type ScanState } from "../../types/models.ts";
+import { QueryParameter } from "../parameter/query.ts";
 import type {
   ScanId,
   JobId,
@@ -46,7 +47,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: asScenarioId("scan-1"),
     requestId: asRequestId("req-1"),
     signatureName: "reflected-xss",
-parameter: new AuditParameter({ name: "" }, "", []),
+parameter: new QueryParameter({ name: "" }, "", []),
     status: asJobStatus("completed"),
     finding: null,
     error: null,
@@ -98,7 +99,7 @@ describe("JsonReporterPlugin", () => {
     const report = JSON.parse(raw);
 
     expect(report.scanState).toEqual(scanState);
-    expect(report.jobs).toEqual(jobs);
+    expect(report.jobs).toEqual(jobs.map(serializeJob));
     expect(report.summary).toEqual({
       total: 1,
       vulnerable: 0,
