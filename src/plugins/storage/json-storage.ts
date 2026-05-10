@@ -5,12 +5,15 @@ import type { CommandBus } from "../../core/command-bus.ts";
 import {
   serializeJob,
   deserializeJob,
+  serializeScanState,
+  deserializeScanState,
   type ScanState,
   type Scenario,
   type Exchange,
   type SerializedJob,
+  type SerializedScanState,
 } from "../../types/models.ts";
-import type { ScanId, JobStatus } from "../../types/branded.ts";
+import { ScanId, JobStatus } from "../../types/branded.ts";
 import {
   SaveJobCommand,
   LoadJobCommand,
@@ -128,7 +131,7 @@ class JsonStoragePlugin implements Plugin {
       if (!jobs) return [];
       return jobs
         .map(deserializeJob)
-        .filter((j) => j.status === ("pending" as JobStatus));
+        .filter((j) => j.status === JobStatus("pending"));
     });
 
     // --- UpdateJobCommand ---
@@ -147,8 +150,14 @@ class JsonStoragePlugin implements Plugin {
             if (!jobs) return;
             const idx = jobs.findIndex((j) => j.id === cmd.id);
             if (idx !== -1) {
-              const { parameter: _, ...rest } = cmd.updates;
-              jobs[idx] = { ...jobs[idx], ...rest, id: jobs[idx].id };
+              const { parameter: _, updatedAt, createdAt, ...rest } = cmd.updates;
+              jobs[idx] = {
+                ...jobs[idx],
+                ...rest,
+                ...(updatedAt != null ? { updatedAt: updatedAt.getTime() } : {}),
+                ...(createdAt != null ? { createdAt: createdAt.getTime() } : {}),
+                id: jobs[idx].id,
+              };
               await writeJsonFile(filePath, jobs);
               updated = true;
             }
@@ -166,13 +175,14 @@ class JsonStoragePlugin implements Plugin {
 
     // --- SaveScanStateCommand ---
     bus.register(SaveScanStateCommand, async (cmd) => {
-      await writeJsonFile(statePath(cmd.state.id), cmd.state);
+      await writeJsonFile(statePath(cmd.state.id), serializeScanState(cmd.state));
     });
 
     // --- LoadScanStateCommand ---
     bus.register(LoadScanStateCommand, async (cmd) => {
       if (cmd.id) {
-        return readJsonFile<ScanState>(statePath(cmd.id));
+        const data = await readJsonFile<SerializedScanState>(statePath(cmd.id));
+        return data ? deserializeScanState(data) : null;
       }
 
       try {
@@ -182,15 +192,17 @@ class JsonStoragePlugin implements Plugin {
         let latest: ScanState | null = null;
         for (const entry of entries) {
           if (!entry.isDirectory()) continue;
-          const state = await readJsonFile<ScanState>(
+          const data = await readJsonFile<SerializedScanState>(
             join(this.outputDir, entry.name, "state.json"),
           );
-          if (
-            state &&
-            state.status !== ("completed" as ScanState["status"])
-          ) {
-            if (!latest || state.updatedAt > latest.updatedAt) {
-              latest = state;
+          if (data) {
+            const state = deserializeScanState(data);
+            if (
+              state.status !== ("completed" as ScanState["status"])
+            ) {
+              if (!latest || state.updatedAt > latest.updatedAt) {
+                latest = state;
+              }
             }
           }
         }
@@ -202,7 +214,7 @@ class JsonStoragePlugin implements Plugin {
 
     // --- SaveScenarioCommand ---
     bus.register(SaveScenarioCommand, async (cmd) => {
-      await writeJsonFile(scenarioPath(cmd.scenario.id as unknown as ScanId), cmd.scenario);
+      await writeJsonFile(scenarioPath(ScanId(cmd.scenario.id as string)), cmd.scenario);
     });
 
     // --- LoadScenarioCommand ---

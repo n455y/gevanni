@@ -7,7 +7,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { FormParameter } from "./form.ts";
 import { FormMutation } from "./form.ts";
-import type { Brand } from "../../types/branded.ts";
+import { Payload as toPayload } from "../../types/branded.ts";
 import {
   MutationType,
   ReplaceValue,
@@ -46,7 +46,7 @@ function makeFormInstruction(
       AppendValue,
       PrependValue,
     ]),
-    payload as Brand<string, "Payload">,
+    toPayload(payload),
     method,
   );
 }

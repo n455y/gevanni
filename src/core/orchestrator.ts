@@ -1,11 +1,10 @@
 import crypto from "node:crypto";
-import type {
+import {
   ScanId,
   JobId,
   RequestId,
   JobStatus,
   ScanStatus,
-  IsoDateTime,
   ErrorMessage,
 } from "../types/branded.ts";
 import type {
@@ -38,24 +37,6 @@ import {
 } from "../commands/index.ts";
 import { startMutationProxy } from "../plugins/proxy/http-proxy.ts";
 
-// --- Branded type helpers ---
-
-function scanId(value?: string): ScanId {
-  return (value ?? crypto.randomUUID()) as ScanId;
-}
-
-function jobId(): JobId {
-  return crypto.randomUUID() as JobId;
-}
-
-function requestId(): RequestId {
-  return crypto.randomUUID() as RequestId;
-}
-
-function isoNow(): IsoDateTime {
-  return new Date().toISOString() as IsoDateTime;
-}
-
 // --- Worker pool ---
 
 async function runWithConcurrency<T>(
@@ -86,15 +67,17 @@ interface OrchestratorDeps {
 
 class Orchestrator {
   private deps: OrchestratorDeps;
-  constructor(deps: OrchestratorDeps) { this.deps = deps; }
+  constructor(deps: OrchestratorDeps) {
+    this.deps = deps;
+  }
 
   async plan(scenarios: Scenario[]): Promise<{
     scanId: ScanId;
     items: Map<string, AuditItem>;
   }> {
     const { commandBus, eventBus, logger } = this.deps;
-    const id = scanId();
-    const now = isoNow();
+    const id = ScanId(crypto.randomUUID());
+    const now = new Date();
     const itemMap = new Map<string, AuditItem>();
 
     logger.info(`Loaded ${scenarios.length} scenarios`);
@@ -111,7 +94,7 @@ class Orchestrator {
         await commandBus.dispatch(new SaveScenarioCommand(scenario));
 
         // b. Dispatch ReplayCommand with empty mutations to get original request
-        const rid = requestId();
+        const rid = RequestId(crypto.randomUUID());
         const replayResult = (
           (await commandBus.dispatch(
             new ReplayCommand(scenario, {
@@ -123,24 +106,24 @@ class Orchestrator {
         )[0];
 
         // b. Broadcast ParseRequestCommand to collect all AuditParameters
-        const parseResults: AuditParameter[][] =
-          await commandBus.broadcast(
-            new ParseRequestCommand(replayResult.request),
-          );
+        const parseResults: AuditParameter[][] = await commandBus.broadcast(
+          new ParseRequestCommand(replayResult.request),
+        );
         const parameters: AuditParameter[] = parseResults.flat();
         logger.debug(
           `Found ${parameters.length} audit parameters for ${scenario.name}`,
         );
 
         // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
-        const definitionResults: AuditItem[][] =
-          await commandBus.broadcast(new CreateAuditItemsCommand(parameters));
+        const definitionResults: AuditItem[][] = await commandBus.broadcast(
+          new CreateAuditItemsCommand(parameters),
+        );
         const items: AuditItem[] = definitionResults.flat();
 
         // d. For each definition, create a Job
         for (const item of items) {
-          const jid = jobId();
-          const rid = requestId();
+          const jid = JobId(crypto.randomUUID());
+          const rid = RequestId(crypto.randomUUID());
           const job: Job = {
             id: jid,
             scanId: id,
@@ -148,7 +131,7 @@ class Orchestrator {
             requestId: rid,
             signatureName: item.signatureName,
             parameter: item.parameter,
-            status: "pending" as JobStatus,
+            status: JobStatus("pending"),
             finding: null,
             error: null,
             createdAt: now,
@@ -176,7 +159,7 @@ class Orchestrator {
     // 2. Save scan state
     const scanState: ScanState = {
       id,
-      status: "planning" as ScanStatus,
+      status: ScanStatus("planning"),
       startedAt: now,
       updatedAt: now,
     };
@@ -198,13 +181,13 @@ class Orchestrator {
     concurrency: number,
   ): Promise<void> {
     const { commandBus, eventBus, logger } = this.deps;
-    const now = isoNow();
+    const now = new Date();
 
     // 1. Update ScanState to "scanning"
     await commandBus.dispatch(
       new SaveScanStateCommand({
         id: scanId,
-        status: "scanning" as ScanStatus,
+        status: ScanStatus("scanning"),
         startedAt: now,
         updatedAt: now,
       }),
@@ -233,18 +216,16 @@ class Orchestrator {
         // Update job status to running
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
-            status: "running" as JobStatus,
-            updatedAt: isoNow(),
+            status: JobStatus("running"),
+            updatedAt: new Date(),
           }),
         );
         eventBus.publish("scan:jobStarted", { jobId: job.id });
 
         // Get audit item
-        const item = items.get(job.id as string);
+        const item = items.get(job.id);
         if (!item) {
-          throw new Error(
-            `No audit item found for job ${job.id as string}`,
-          );
+          throw new Error(`No audit item found for job ${job.id}`);
         }
 
         // Create replay function
@@ -254,13 +235,13 @@ class Orchestrator {
           );
           const proxy = await startMutationProxy(mutations, commandBus);
           try {
-            const [exchange] = (await commandBus.dispatch(
+            const [exchange] = await commandBus.dispatch(
               new ReplayCommand(scenario, {
                 mutations,
                 proxyPort: proxy.port,
-                replayId: job.id as string,
+                replayId: job.id,
               }),
-            )) as Exchange[];
+            );
             return exchange;
           } finally {
             proxy.close();
@@ -281,10 +262,10 @@ class Orchestrator {
         }
 
         // Update job with finding
-        const completedNow = isoNow();
+        const completedNow = new Date();
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
-            status: "completed" as JobStatus,
+            status: JobStatus("completed"),
             finding,
             updatedAt: completedNow,
           }),
@@ -296,15 +277,15 @@ class Orchestrator {
 
         completedCount++;
       } catch (err) {
-        const errorMessage = (
-          err instanceof Error ? err.message : String(err)
-        ) as ErrorMessage;
-        const errorNow = isoNow();
+        const errorMessage = ErrorMessage(
+          err instanceof Error ? err.message : String(err),
+        );
+        const errorNow = new Date();
 
         try {
           await commandBus.dispatch(
             new UpdateJobCommand(job.id, {
-              status: "error" as JobStatus,
+              status: JobStatus("error"),
               error: errorMessage,
               updatedAt: errorNow,
             }),
@@ -325,15 +306,15 @@ class Orchestrator {
     // 4. Update final scan state
     const finalStatus: ScanStatus =
       errorCount === jobs.length
-        ? ("error" as ScanStatus)
-        : ("completed" as ScanStatus);
+        ? ScanStatus("error")
+        : ScanStatus("completed");
 
     await commandBus.dispatch(
       new SaveScanStateCommand({
         id: scanId,
         status: finalStatus,
         startedAt: now,
-        updatedAt: isoNow(),
+        updatedAt: new Date(),
       }),
     );
 
@@ -351,7 +332,7 @@ class Orchestrator {
     );
 
     if (!scanState) {
-      logger.warn(`No scan state found for ${scanId as string}`);
+      logger.warn(`No scan state found for ${scanId}`);
       return;
     }
 
@@ -363,7 +344,7 @@ class Orchestrator {
     // 3. Broadcast GenerateReportCommand
     await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs }));
 
-    logger.info(`Report phase complete for scan ${scanId as string}`);
+    logger.info(`Report phase complete for scan ${scanId}`);
   }
 
   async resume(scanIdOrLatest?: ScanId, concurrency?: number): Promise<void> {
@@ -375,7 +356,7 @@ class Orchestrator {
       sid = scanIdOrLatest;
     } else {
       const latestState: ScanState | null = await commandBus.dispatch(
-        new LoadScanStateCommand("" as ScanId),
+        new LoadScanStateCommand(ScanId("")),
       );
       if (!latestState) {
         throw new Error("No incomplete scan found to resume");
@@ -383,7 +364,7 @@ class Orchestrator {
       sid = latestState.id;
     }
 
-    logger.info(`Resuming scan ${sid as string}`);
+    logger.info(`Resuming scan ${sid}`);
 
     // 2. Load pending jobs
     const pendingJobs: Job[] = await commandBus.dispatch(
@@ -399,7 +380,7 @@ class Orchestrator {
     const itemMap = new Map<string, AuditItem>();
 
     for (const job of pendingJobs) {
-      itemMap.set(job.id as string, {
+      itemMap.set(job.id, {
         signatureName: job.signatureName,
         parameter: job.parameter,
       });

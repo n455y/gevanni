@@ -12,8 +12,7 @@ import { startMutationProxy } from "./http-proxy.ts";
 import type { HttpRequest, HttpResponse } from "../../types/models.ts";
 import { AuditMutation } from "../../types/models.ts";
 import type { Exchange } from "../../types/models.ts";
-import type { Brand } from "../../types/branded.ts";
-import { ReplaceValue } from "../../types/branded.ts";
+import { ReplaceValue, Payload as toPayload } from "../../types/branded.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchange.ts";
 
@@ -276,7 +275,7 @@ describe("startMutationProxy", () => {
   it("applies tamper mutations to requests passing through", async () => {
     const mutations: AuditMutation[] = [
       new QueryParameter({ name: "q" }, "original", [ReplaceValue]).createMutation(
-        "<script>" as Brand<string, "Payload">,
+        toPayload("<script>"),
         ReplaceValue,
       ),
     ];

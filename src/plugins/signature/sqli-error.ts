@@ -1,5 +1,4 @@
-import type { Payload, Evidence } from "../../types/branded.ts";
-import { AppendValue } from "../../types/branded.ts";
+import { AppendValue, Payload as toPayload, Evidence as toEvidence } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
@@ -36,16 +35,16 @@ class SqliErrorPlugin implements Plugin {
           return null;
         }
 
-        const payload = "' OR 1=1--" as Payload;
+        const payload = toPayload("' OR 1=1--");
         const instruction = parameter.createMutation(payload, AppendValue);
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));
         return {
           vulnerable,
-          evidence: (vulnerable
+          evidence: toEvidence(vulnerable
             ? `SQL error pattern detected in response`
-            : `No SQL error pattern detected`) as Evidence,
+            : `No SQL error pattern detected`),
           request,
           response,
         };

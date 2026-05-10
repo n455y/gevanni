@@ -10,7 +10,6 @@ import type {
   Payload,
   Evidence,
   ErrorMessage,
-  IsoDateTime,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
@@ -139,16 +138,40 @@ interface Job {
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
-  createdAt: IsoDateTime;
-  updatedAt: IsoDateTime;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // --- ScanState ---
 interface ScanState {
   id: ScanId;
   status: ScanStatus;
-  startedAt: IsoDateTime;
-  updatedAt: IsoDateTime;
+  startedAt: Date;
+  updatedAt: Date;
+}
+
+// --- SerializedScanState ---
+interface SerializedScanState {
+  id: ScanId;
+  status: ScanStatus;
+  startedAt: number;
+  updatedAt: number;
+}
+
+function serializeScanState(state: ScanState): SerializedScanState {
+  return {
+    ...state,
+    startedAt: state.startedAt.getTime(),
+    updatedAt: state.updatedAt.getTime(),
+  };
+}
+
+function deserializeScanState(data: SerializedScanState): ScanState {
+  return {
+    ...data,
+    startedAt: new Date(data.startedAt),
+    updatedAt: new Date(data.updatedAt),
+  };
 }
 
 // --- ScanConfig ---
@@ -176,16 +199,26 @@ interface SerializedJob {
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
-  createdAt: IsoDateTime;
-  updatedAt: IsoDateTime;
+  createdAt: number;
+  updatedAt: number;
 }
 
 function serializeJob(job: Job): SerializedJob {
-  return { ...job, parameter: job.parameter.serialize() };
+  return {
+    ...job,
+    parameter: job.parameter.serialize(),
+    createdAt: job.createdAt.getTime(),
+    updatedAt: job.updatedAt.getTime(),
+  };
 }
 
 function deserializeJob(data: SerializedJob): Job {
-  return { ...data, parameter: AuditParameter.deserialize(data.parameter) };
+  return {
+    ...data,
+    parameter: AuditParameter.deserialize(data.parameter),
+    createdAt: new Date(data.createdAt),
+    updatedAt: new Date(data.updatedAt),
+  };
 }
 
 export type {
@@ -203,6 +236,7 @@ export type {
   ScanConfig,
   PluginConfig,
   SerializedJob,
+  SerializedScanState,
 };
 
-export { AuditParameter, AuditMutation, serializeJob, deserializeJob };
+export { AuditParameter, AuditMutation, serializeJob, deserializeJob, serializeScanState, deserializeScanState };

@@ -10,8 +10,7 @@ import { LoadExchangesCommand, SaveExchangeCommand } from "../../commands/exchan
 import { QueryMutationPlugin, QueryMutation } from "../parameter/query.ts";
 import type { Scenario, Exchange } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import type { Brand } from "../../types/branded.ts";
-import { ReplaceValue } from "../../types/branded.ts";
+import { ReplaceValue, ScenarioId, Payload as toPayload } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
@@ -77,7 +76,7 @@ function makeScenario(overrides: {
   const body = overrides.body;
 
   return {
-    id: "test-scenario-1" as Brand<string, "ScenarioId">,
+    id: ScenarioId("test-scenario-1"),
     name: "Test Scenario",
     type: PostmanScenarioType,
     source: {
@@ -98,7 +97,7 @@ function makeScenario(overrides: {
 function makeTamperInstruction(): QueryMutation {
   return new QueryMutation(
     new QueryParameter({ name: "q" }, "original", [ReplaceValue]),
-    "<script>" as Brand<string, "Payload">,
+    toPayload("<script>"),
     ReplaceValue,
   );
 }
@@ -220,7 +219,7 @@ describe("runNewman", () => {
 
   it("executes a GET request and resolves without error", { timeout: 30_000 }, async () => {
     const scenario: Scenario = {
-      id: "s1" as Brand<string, "ScenarioId">,
+      id: ScenarioId("s1"),
       name: "Test Newman GET",
       type: PostmanScenarioType,
       source: {
@@ -242,7 +241,7 @@ describe("runNewman", () => {
 
   it("executes a POST request with body", { timeout: 30_000 }, async () => {
     const scenario: Scenario = {
-      id: "s2" as Brand<string, "ScenarioId">,
+      id: ScenarioId("s2"),
       name: "Test Newman POST",
       type: PostmanScenarioType,
       source: {
@@ -277,7 +276,7 @@ describe("PostmanPlugin multi-request", () => {
     });
 
     const scenario: Scenario = {
-      id: "multi-1" as Brand<string, "ScenarioId">,
+      id: ScenarioId("multi-1"),
       name: "Multi Request",
       type: PostmanScenarioType,
       source: {

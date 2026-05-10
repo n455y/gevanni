@@ -14,8 +14,17 @@ import type {
   Scenario,
 } from "../types/models.ts";
 import type { AuditParameter } from "../types/models.ts";
-import type { Brand, JobStatus, ScanStatus } from "../types/branded.ts";
-import { ReplaceValue } from "../types/branded.ts";
+import {
+  ScanId,
+  JobId,
+  RequestId,
+  ExchangeId,
+  ScenarioId,
+  JobStatus,
+  ScanStatus,
+  Evidence,
+  ReplaceValue,
+} from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";
 import {
   ReplayCommand,
@@ -54,7 +63,7 @@ const mockTargets: AuditParameter[] = [
 
 const mockFinding: Finding = {
   vulnerable: false,
-  evidence: "No reflection found" as Brand<string, "Evidence">,
+  evidence: Evidence("No reflection found"),
   request: mockRequest,
   response: mockResponse,
 };
@@ -85,7 +94,7 @@ describe("Orchestrator", () => {
     it("creates jobs and items for scenarios", async () => {
       commandBus.register(ReplayCommand, async () => [
         {
-          id: "ex-1" as Brand<string, "ExchangeId">,
+          id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
         },
@@ -131,7 +140,7 @@ parameter: mockTargets[0],
 
     it("processes provided scenarios and creates jobs", async () => {
       const mockScenario: Scenario = {
-        id: "sc-1" as Brand<string, "ScenarioId">,
+        id: ScenarioId("sc-1"),
         name: "Test Scenario",
         type: PostmanScenarioType,
         source: {
@@ -145,7 +154,7 @@ parameter: mockTargets[0],
 
       commandBus.register(ReplayCommand, async () => [
         {
-          id: "ex-1" as Brand<string, "ExchangeId">,
+          id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
         },
@@ -190,7 +199,7 @@ parameter: mockTargets[0],
     it("saves scan state with planning status", async () => {
       commandBus.register(ReplayCommand, async () => [
         {
-          id: "ex-1" as Brand<string, "ExchangeId">,
+          id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
         },
@@ -214,19 +223,19 @@ parameter: mockTargets[0],
 
   describe("scan phase", () => {
     it("runs jobs and updates their status", async () => {
-      const scanId = "test-scan-id" as Brand<string, "ScanId">;
+      const scanId = ScanId("test-scan-id");
       const mockJob: Job = {
-        id: "job-1" as Brand<string, "JobId">,
-        scanId: "test-scan-id" as Brand<string, "ScanId">,
-        scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
-        requestId: "req-1" as Brand<string, "RequestId">,
+        id: JobId("job-1"),
+        scanId: ScanId("test-scan-id"),
+        scenarioId: ScenarioId("scenario-1"),
+        requestId: RequestId("req-1"),
         signatureName: "mock-sig",
 parameter: mockTargets[0],
-        status: "pending" as JobStatus,
+        status: JobStatus("pending"),
         finding: null,
         error: null,
-        createdAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
-        updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const items = new Map<string, AuditItem>();
@@ -255,7 +264,7 @@ parameter: mockTargets[0],
       }));
       commandBus.register(ReplayCommand, async () => [
         {
-          id: "ex-1" as Brand<string, "ExchangeId">,
+          id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
         },
@@ -278,26 +287,26 @@ parameter: mockTargets[0],
       await orchestrator.scan(scanId, items, 2);
 
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      expect(updateCalls[0].status).toBe("running" as JobStatus);
-      expect(updateCalls[1].status).toBe("completed" as JobStatus);
+      expect(updateCalls[0].status).toBe(JobStatus("running"));
+      expect(updateCalls[1].status).toBe(JobStatus("completed"));
       expect(events).toContain("started");
       expect(events).toContain("completed");
     });
 
     it("handles job errors gracefully", async () => {
-      const scanId = "test-scan-id" as Brand<string, "ScanId">;
+      const scanId = ScanId("test-scan-id");
       const mockJob: Job = {
-        id: "job-err" as Brand<string, "JobId">,
-        scanId: "test-scan-id" as Brand<string, "ScanId">,
-        scenarioId: "scenario-1" as Brand<string, "ScenarioId">,
-        requestId: "req-1" as Brand<string, "RequestId">,
+        id: JobId("job-err"),
+        scanId: ScanId("test-scan-id"),
+        scenarioId: ScenarioId("scenario-1"),
+        requestId: RequestId("req-1"),
         signatureName: "failing-sig",
 parameter: mockTargets[0],
-        status: "pending" as JobStatus,
+        status: JobStatus("pending"),
         finding: null,
         error: null,
-        createdAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
-        updatedAt: new Date().toISOString() as Brand<string, "IsoDateTime">,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const items = new Map<string, AuditItem>();
@@ -326,7 +335,7 @@ parameter: mockTargets[0],
       }));
       commandBus.register(ReplayCommand, async () => [
         {
-          id: "ex-1" as Brand<string, "ExchangeId">,
+          id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
         },
@@ -349,12 +358,12 @@ parameter: mockTargets[0],
 
       expect(events).toContain("error");
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      expect(updateCalls[0].status).toBe("running" as JobStatus);
-      expect(updateCalls[1].status).toBe("error" as JobStatus);
+      expect(updateCalls[0].status).toBe(JobStatus("running"));
+      expect(updateCalls[1].status).toBe(JobStatus("error"));
     });
 
     it("handles empty job list", async () => {
-      const scanId = "test-scan-id" as Brand<string, "ScanId">;
+      const scanId = ScanId("test-scan-id");
       const items = new Map<string, AuditItem>();
 
       commandBus.register(SaveScanStateCommand, async () => {});
@@ -374,27 +383,27 @@ parameter: mockTargets[0],
 
   describe("report phase", () => {
     it("broadcasts GenerateReportCommand with scan state and jobs", async () => {
-      const scanId = "report-scan-id" as Brand<string, "ScanId">;
+      const scanId = ScanId("report-scan-id");
       const mockScanState: ScanState = {
         id: scanId,
-        status: "completed" as ScanStatus,
-        startedAt: "2024-01-01T00:00:00.000Z" as Brand<string, "IsoDateTime">,
-        updatedAt: "2024-01-01T00:01:00.000Z" as Brand<string, "IsoDateTime">,
+        status: ScanStatus("completed"),
+        startedAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:01:00.000Z"),
       };
 
       const mockJobs: Job[] = [
         {
-          id: "job-1" as Brand<string, "JobId">,
-          scanId: "report-scan-id" as Brand<string, "ScanId">,
-          scenarioId: "sc-1" as Brand<string, "ScenarioId">,
-          requestId: "req-1" as Brand<string, "RequestId">,
+          id: JobId("job-1"),
+          scanId: ScanId("report-scan-id"),
+          scenarioId: ScenarioId("sc-1"),
+          requestId: RequestId("req-1"),
           signatureName: "reflected-xss",
 parameter: mockTargets[0],
-          status: "completed" as JobStatus,
+          status: JobStatus("completed"),
           finding: mockFinding,
           error: null,
-          createdAt: "2024-01-01T00:00:00.000Z" as Brand<string, "IsoDateTime">,
-          updatedAt: "2024-01-01T00:00:01.000Z" as Brand<string, "IsoDateTime">,
+          createdAt: new Date("2024-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2024-01-01T00:00:01.000Z"),
         },
       ];
 
@@ -423,7 +432,7 @@ parameter: mockTargets[0],
     });
 
     it("warns when scan state not found", async () => {
-      const scanId = "missing-scan" as Brand<string, "ScanId">;
+      const scanId = ScanId("missing-scan");
 
       commandBus.register(LoadScanStateCommand, async () => null);
 
@@ -436,7 +445,7 @@ parameter: mockTargets[0],
       await orchestrator.report(scanId);
 
       expect(logger.warn).toHaveBeenCalledWith(
-        `No scan state found for ${scanId as string}`,
+        `No scan state found for ${scanId}`,
       );
     });
   });

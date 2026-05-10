@@ -6,6 +6,7 @@ import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
 import { registerBuiltinPlugins } from "../builtin.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
+import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
 import type { ScenarioLoaderPlugin } from "../core/plugin.ts";
 import type { Scenario } from "../types/models.ts";
@@ -130,7 +131,7 @@ program
       opts.config,
       buildOverrides(opts),
     );
-    await orchestrator.resume(scanId as any, config.concurrency);
+    await orchestrator.resume(scanId ? ScanId(scanId) : undefined, config.concurrency);
   });
 
 // report command
@@ -145,7 +146,7 @@ program
       opts.config,
       buildOverrides(opts),
     );
-    await orchestrator.report(scanId as any);
+    await orchestrator.report(ScanId(scanId!));
   });
 
 // plugins command

@@ -5,51 +5,40 @@ import { ConsoleReporterPlugin } from "./console-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 import { type Job, type ScanState } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import type {
+import {
   ScanId,
   JobId,
   ScenarioId,
   RequestId,
   JobStatus,
   ScanStatus,
-  IsoDateTime,
   Evidence,
 } from "../../types/branded.ts";
-
-// --- Branding helpers ---
-const asScanId = (s: string) => s as ScanId;
-const asJobId = (s: string) => s as JobId;
-const asScenarioId = (s: string) => s as ScenarioId;
-const asRequestId = (s: string) => s as RequestId;
-const asJobStatus = (s: string) => s as JobStatus;
-const asScanStatus = (s: string) => s as ScanStatus;
-const asIsoDateTime = (s: string) => s as IsoDateTime;
-const asEvidence = (s: string) => s as Evidence;
 
 // --- Fixture factories ---
 function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   return {
-    id: asScanId("scan-1"),
-    status: asScanStatus("scanning"),
-    startedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
-    updatedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
+    id: ScanId("scan-1"),
+    status: ScanStatus("scanning"),
+    startedAt: new Date("2025-01-01T00:00:00Z"),
+    updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
   };
 }
 
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
-    id: asJobId("job-1"),
-    scanId: asScanId("test-scan-id"),
-    scenarioId: asScenarioId("scan-1"),
-    requestId: asRequestId("req-1"),
+    id: JobId("job-1"),
+    scanId: ScanId("test-scan-id"),
+    scenarioId: ScenarioId("scan-1"),
+    requestId: RequestId("req-1"),
     signatureName: "reflected-xss",
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: asJobStatus("completed"),
+    status: JobStatus("completed"),
     finding: null,
     error: null,
-    createdAt: asIsoDateTime("2025-01-01T00:00:00Z"),
-    updatedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
+    createdAt: new Date("2025-01-01T00:00:00Z"),
+    updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
   };
 }
@@ -72,9 +61,9 @@ describe("ConsoleReporterPlugin", () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     const scanState = makeScanState({
-      id: asScanId("scan-abc"),
-      status: asScanStatus("scanning"),
-      startedAt: asIsoDateTime("2025-06-01T12:00:00Z"),
+      id: ScanId("scan-abc"),
+      status: ScanStatus("scanning"),
+      startedAt: new Date("2025-06-01T12:00:00Z"),
     });
 
     await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs: [] }));
@@ -85,7 +74,7 @@ describe("ConsoleReporterPlugin", () => {
     expect(output).toContain("=== Gevanni Scan Report ===");
     expect(output).toContain("Scan ID: scan-abc");
     expect(output).toContain("Status: scanning");
-    expect(output).toContain("Started: 2025-06-01T12:00:00Z");
+    expect(output).toContain("Started: 2025-06-01T12:00:00.000Z");
 
     logSpy.mockRestore();
   });
@@ -95,13 +84,13 @@ describe("ConsoleReporterPlugin", () => {
 
     const scanState = makeScanState();
     const vulnerableJob = makeJob({
-      id: asJobId("job-vuln"),
+      id: JobId("job-vuln"),
       signatureName: "reflected-xss",
-      status: asJobStatus("completed"),
+      status: JobStatus("completed"),
 parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       finding: {
         vulnerable: true,
-        evidence: asEvidence("XSS payload reflected in response body"),
+        evidence: Evidence("XSS payload reflected in response body"),
         request: {
           method: "GET",
           url: "https://example.com/search?q=%3Cscript%3E",
@@ -135,12 +124,12 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     const scanState = makeScanState();
     const safeJob = makeJob({
-      id: asJobId("job-safe"),
+      id: JobId("job-safe"),
       signatureName: "sqli-error",
-      status: asJobStatus("completed"),
+      status: JobStatus("completed"),
       finding: {
         vulnerable: false,
-        evidence: asEvidence(""),
+        evidence: Evidence(""),
         request: { method: "POST", url: "https://example.com/login", headers: {}, body: null },
         response: { statusCode: 200, headers: {}, body: null },
       },
@@ -165,9 +154,9 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     const scanState = makeScanState();
     const errorJob = makeJob({
-      id: asJobId("job-err"),
+      id: JobId("job-err"),
       signatureName: "reflected-xss",
-      status: asJobStatus("error"),
+      status: JobStatus("error"),
       finding: null,
       error: "Connection refused" as any,
     });
@@ -190,28 +179,28 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const scanState = makeScanState();
     const jobs: Job[] = [
       makeJob({
-        id: asJobId("j1"),
-        status: asJobStatus("completed"),
+        id: JobId("j1"),
+        status: JobStatus("completed"),
         finding: {
           vulnerable: true,
-          evidence: asEvidence("e1"),
+          evidence: Evidence("e1"),
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
-        id: asJobId("j2"),
-        status: asJobStatus("completed"),
+        id: JobId("j2"),
+        status: JobStatus("completed"),
         finding: {
           vulnerable: false,
-          evidence: asEvidence(""),
+          evidence: Evidence(""),
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
-        id: asJobId("j3"),
-        status: asJobStatus("error"),
+        id: JobId("j3"),
+        status: JobStatus("error"),
         error: "timeout" as any,
       }),
     ];

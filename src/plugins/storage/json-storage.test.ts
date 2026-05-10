@@ -21,55 +21,46 @@ import {
 } from "../../commands/exchange.ts";
 import { type Job, type ScanState, type Scenario, type Exchange } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import type { ExchangeId } from "../../types/branded.ts";
-import type {
+import {
   ScanId,
   JobId,
   ScenarioId,
   JobStatus,
   ScanStatus,
-  IsoDateTime,
+  ExchangeId,
 } from "../../types/branded.ts";
-
-// --- Branding helpers ---
-const asScanId = (s: string) => s as ScanId;
-const asJobId = (s: string) => s as JobId;
-const asScenarioId = (s: string) => s as ScenarioId;
-const asJobStatus = (s: string) => s as JobStatus;
-const asScanStatus = (s: string) => s as ScanStatus;
-const asIsoDateTime = (s: string) => s as IsoDateTime;
 
 // --- Fixture factories ---
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
-    id: asJobId("job-1"),
-    scanId: asScanId("test-scan-id"),
-    scenarioId: asScenarioId("scan-1"),
+    id: JobId("job-1"),
+    scanId: ScanId("test-scan-id"),
+    scenarioId: ScenarioId("scan-1"),
     requestId: "req-1" as any,
     signatureName: "sig-1",
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: asJobStatus("pending"),
+    status: JobStatus("pending"),
     finding: null,
     error: null,
-    createdAt: asIsoDateTime("2025-01-01T00:00:00Z"),
-    updatedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
+    createdAt: new Date("2025-01-01T00:00:00Z"),
+    updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
   };
 }
 
 function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   return {
-    id: asScanId("scan-1"),
-    status: asScanStatus("scanning"),
-    startedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
-    updatedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
+    id: ScanId("scan-1"),
+    status: ScanStatus("scanning"),
+    startedAt: new Date("2025-01-01T00:00:00Z"),
+    updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
   };
 }
 
 function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
   return {
-    id: asScenarioId("scenario-1"),
+    id: ScenarioId("scenario-1"),
     name: "Test Scenario",
     type: "xss" as any,
     source: null,
@@ -114,23 +105,23 @@ describe("JsonStoragePlugin", () => {
 
     it("returns null when job does not exist", async () => {
       const result: Job | null = await commandBus.dispatch(
-        new LoadJobCommand(asJobId("nonexistent")),
+        new LoadJobCommand(JobId("nonexistent")),
       );
       expect(result).toBeNull();
     });
 
     it("saves multiple jobs and retrieves each", async () => {
-      const job1 = makeJob({ id: asJobId("job-1") });
-      const job2 = makeJob({ id: asJobId("job-2"), signatureName: "sig-2" });
+      const job1 = makeJob({ id: JobId("job-1") });
+      const job2 = makeJob({ id: JobId("job-2"), signatureName: "sig-2" });
 
       await commandBus.dispatch(new SaveJobCommand(job1));
       await commandBus.dispatch(new SaveJobCommand(job2));
 
       const loaded1: Job | null = await commandBus.dispatch(
-        new LoadJobCommand(asJobId("job-1")),
+        new LoadJobCommand(JobId("job-1")),
       );
       const loaded2: Job | null = await commandBus.dispatch(
-        new LoadJobCommand(asJobId("job-2")),
+        new LoadJobCommand(JobId("job-2")),
       );
 
       expect(loaded1).toEqual(job1);
@@ -140,16 +131,16 @@ describe("JsonStoragePlugin", () => {
 
   describe("LoadJobsByScanIdCommand", () => {
     it("returns all jobs for a given scan", async () => {
-      const scanId = asScanId("scan-1");
+      const scanId = ScanId("scan-1");
       const job1 = makeJob({
-        id: asJobId("job-1"),
-        scanId: asScanId("scan-1"),
-        scenarioId: asScenarioId("scan-1"),
+        id: JobId("job-1"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
       });
       const job2 = makeJob({
-        id: asJobId("job-2"),
-        scanId: asScanId("scan-1"),
-        scenarioId: asScenarioId("scan-1"),
+        id: JobId("job-2"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
       });
 
       await commandBus.dispatch(new SaveJobCommand(job1));
@@ -164,7 +155,7 @@ describe("JsonStoragePlugin", () => {
 
     it("returns empty array when no jobs exist for scan", async () => {
       const jobs: Job[] = await commandBus.dispatch(
-        new LoadJobsByScanIdCommand(asScanId("empty-scan")),
+        new LoadJobsByScanIdCommand(ScanId("empty-scan")),
       );
       expect(jobs).toEqual([]);
     });
@@ -172,24 +163,24 @@ describe("JsonStoragePlugin", () => {
 
   describe("LoadPendingJobsCommand", () => {
     it("returns only pending jobs", async () => {
-      const scanId = asScanId("scan-1");
+      const scanId = ScanId("scan-1");
       const pendingJob = makeJob({
-        id: asJobId("job-pending"),
-        scanId: asScanId("scan-1"),
-        scenarioId: asScenarioId("scan-1"),
-        status: asJobStatus("pending"),
+        id: JobId("job-pending"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus("pending"),
       });
       const completedJob = makeJob({
-        id: asJobId("job-completed"),
-        scanId: asScanId("scan-1"),
-        scenarioId: asScenarioId("scan-1"),
-        status: asJobStatus("completed"),
+        id: JobId("job-completed"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus("completed"),
       });
       const errorJob = makeJob({
-        id: asJobId("job-error"),
-        scanId: asScanId("scan-1"),
-        scenarioId: asScenarioId("scan-1"),
-        status: asJobStatus("error"),
+        id: JobId("job-error"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus("error"),
       });
 
       await commandBus.dispatch(new SaveJobCommand(pendingJob));
@@ -200,16 +191,16 @@ describe("JsonStoragePlugin", () => {
         new LoadPendingJobsCommand(scanId),
       );
       expect(pending).toHaveLength(1);
-      expect(pending[0].id).toBe(asJobId("job-pending"));
+      expect(pending[0].id).toBe(JobId("job-pending"));
     });
 
     it("returns empty array when no pending jobs exist", async () => {
-      const scanId = asScanId("scan-1");
+      const scanId = ScanId("scan-1");
       const completedJob = makeJob({
-        id: asJobId("job-1"),
-        scanId: asScanId("scan-1"),
-        scenarioId: asScenarioId("scan-1"),
-        status: asJobStatus("completed"),
+        id: JobId("job-1"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus("completed"),
       });
       await commandBus.dispatch(new SaveJobCommand(completedJob));
 
@@ -222,10 +213,10 @@ describe("JsonStoragePlugin", () => {
 
   describe("UpdateJobCommand", () => {
     it("updates job status", async () => {
-      const job = makeJob({ status: asJobStatus("pending") });
+      const job = makeJob({ status: JobStatus("pending") });
       await commandBus.dispatch(new SaveJobCommand(job));
 
-      const newStatus = asJobStatus("running");
+      const newStatus = JobStatus("running");
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, { status: newStatus }),
       );
@@ -242,7 +233,7 @@ describe("JsonStoragePlugin", () => {
 
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, {
-          status: asJobStatus("completed"),
+          status: JobStatus("completed"),
         }),
       );
 
@@ -250,14 +241,14 @@ describe("JsonStoragePlugin", () => {
         new LoadJobCommand(job.id),
       );
       expect(loaded!.signatureName).toBe("original");
-      expect(loaded!.status).toBe(asJobStatus("completed"));
+      expect(loaded!.status).toBe(JobStatus("completed"));
     });
 
     it("throws when job not found", async () => {
       await expect(
         commandBus.dispatch(
-          new UpdateJobCommand(asJobId("nonexistent"), {
-            status: asJobStatus("running"),
+          new UpdateJobCommand(JobId("nonexistent"), {
+            status: JobStatus("running"),
           }),
         ),
       ).rejects.toThrow("Job not found");
@@ -277,7 +268,7 @@ describe("JsonStoragePlugin", () => {
 
     it("returns null when state does not exist", async () => {
       const loaded: ScanState | null = await commandBus.dispatch(
-        new LoadScanStateCommand(asScanId("nonexistent")),
+        new LoadScanStateCommand(ScanId("nonexistent")),
       );
       expect(loaded).toBeNull();
     });
@@ -285,35 +276,35 @@ describe("JsonStoragePlugin", () => {
     it("returns latest incomplete scan when no scanId provided", async () => {
       // Create two scans: one completed, one in progress
       const completedScan = makeScanState({
-        id: asScanId("scan-completed"),
-        status: asScanStatus("completed"),
-        updatedAt: asIsoDateTime("2025-01-02T00:00:00Z"),
+        id: ScanId("scan-completed"),
+        status: ScanStatus("completed"),
+        updatedAt: new Date("2025-01-02T00:00:00Z"),
       });
       const activeScan = makeScanState({
-        id: asScanId("scan-active"),
-        status: asScanStatus("scanning"),
-        updatedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
+        id: ScanId("scan-active"),
+        status: ScanStatus("scanning"),
+        updatedAt: new Date("2025-01-01T00:00:00Z"),
       });
 
       await commandBus.dispatch(new SaveScanStateCommand(completedScan));
       await commandBus.dispatch(new SaveScanStateCommand(activeScan));
 
       const loaded: ScanState | null = await commandBus.dispatch(
-        new LoadScanStateCommand("" as ScanId),
+        new LoadScanStateCommand(ScanId("")),
       );
       expect(loaded).not.toBeNull();
-      expect(loaded!.id).toBe(asScanId("scan-active"));
+      expect(loaded!.id).toBe(ScanId("scan-active"));
     });
 
     it("returns null when all scans are completed and no scanId provided", async () => {
       const completedScan = makeScanState({
-        id: asScanId("scan-done"),
-        status: asScanStatus("completed"),
+        id: ScanId("scan-done"),
+        status: ScanStatus("completed"),
       });
       await commandBus.dispatch(new SaveScanStateCommand(completedScan));
 
       const loaded: ScanState | null = await commandBus.dispatch(
-        new LoadScanStateCommand("" as ScanId),
+        new LoadScanStateCommand(ScanId("")),
       );
       expect(loaded).toBeNull();
     });
@@ -321,7 +312,7 @@ describe("JsonStoragePlugin", () => {
 
   describe("LoadScenarioCommand", () => {
     it("retrieves a saved scenario", async () => {
-      const scenario = makeScenario({ id: asScenarioId("scenario-1") });
+      const scenario = makeScenario({ id: ScenarioId("scenario-1") });
 
       // Write scenario.json directly since there is no SaveScenarioCommand
       const scenarioPath = join(tempDir, "scan-1", "scenario.json");
@@ -329,7 +320,7 @@ describe("JsonStoragePlugin", () => {
       await fs.writeFile(scenarioPath, JSON.stringify(scenario, null, 2));
 
       const loaded: Scenario = await commandBus.dispatch(
-        new LoadScenarioCommand(asScenarioId("scenario-1")),
+        new LoadScenarioCommand(ScenarioId("scenario-1")),
       );
       expect(loaded).toEqual(scenario);
     });
@@ -337,7 +328,7 @@ describe("JsonStoragePlugin", () => {
     it("throws when scenario not found", async () => {
       await expect(
         commandBus.dispatch(
-          new LoadScenarioCommand(asScenarioId("nonexistent")),
+          new LoadScenarioCommand(ScenarioId("nonexistent")),
         ),
       ).rejects.toThrow("Scenario not found");
     });
@@ -345,7 +336,7 @@ describe("JsonStoragePlugin", () => {
 
   describe("SaveExchangeCommand / LoadExchangesCommand", () => {
     const exchange: Exchange = {
-      id: "exchange-001" as ExchangeId,
+      id: ExchangeId("exchange-001"),
       request: {
         method: "GET",
         url: "http://example.com/test",
@@ -381,7 +372,7 @@ describe("JsonStoragePlugin", () => {
       const replayId = "test-replay-002";
       await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
       const exchange2: Exchange = {
-        id: "exchange-002" as ExchangeId,
+        id: ExchangeId("exchange-002"),
         request: {
           method: "POST",
           url: "http://example.com/submit",

@@ -13,7 +13,7 @@ import { QueryParameter } from "./query.ts";
 import type { HttpRequest, AuditParameter } from "../../types/models.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import type { Brand } from "../../types/branded.ts";
+import { Payload as toPayload } from "../../types/branded.ts";
 import {
   MutationType,
   ReplaceValue,
@@ -57,7 +57,7 @@ function makeJsonPrimitiveInstruction(
       originalValue as string | number | boolean | null,
       [ReplaceValue, AppendValue, PrependValue],
     ),
-    payload as Brand<string, "Payload">,
+    toPayload(payload),
     method,
   );
 }
@@ -335,7 +335,7 @@ describe("JsonMutationPlugin", () => {
       ReplaceValue,
       AppendValue,
       PrependValue,
-    ]).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
+    ]).createMutation(toPayload("INJECTED"), ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -419,7 +419,7 @@ describe("JsonMutationPlugin", () => {
         ["a", "b"],
         [ReplaceValue, AppendValue, PrependValue],
       ),
-      "INJECTED" as Brand<string, "Payload">,
+      toPayload("INJECTED"),
       ReplaceValue,
     );
 

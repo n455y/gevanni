@@ -1,5 +1,4 @@
-import type { Payload, Evidence } from "../../types/branded.ts";
-import { AppendValue } from "../../types/branded.ts";
+import { AppendValue, Payload as toPayload, Evidence as toEvidence } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
@@ -28,16 +27,16 @@ class ReflectedXssPlugin implements Plugin {
           return null;
         }
 
-        const payload = "<script>alert(1)</script>" as Payload;
+        const payload = toPayload("<script>alert(1)</script>");
         const instruction = parameter.createMutation(payload, AppendValue);
         const { request, response } = await replay([instruction]);
         const body = response.body?.toString() ?? "";
         const vulnerable = body.includes(payload);
         return {
           vulnerable,
-          evidence: (vulnerable
+          evidence: toEvidence(vulnerable
             ? `Payload "${payload}" reflected in response body`
-            : `Payload not reflected`) as Evidence,
+            : `Payload not reflected`),
           request,
           response,
         };

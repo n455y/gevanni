@@ -1,6 +1,6 @@
 import type { Exchange, Scenario } from "../../types/models.ts";
 import { ScenarioType } from "../../types/branded.ts";
-import type { ExchangeId } from "../../types/branded.ts";
+import { ExchangeId } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ReplayCommand } from "../../commands/replay.ts";
 import { LoadExchangesCommand } from "../../commands/exchange.ts";
@@ -52,7 +52,7 @@ function runNewman(
       { key: "X-Gevanni-Replay-Id", value: replayId },
       ...(isLast
         ? [
-            { key: "X-Gevanni-Exchange-Id", value: randomUUID() as ExchangeId },
+            { key: "X-Gevanni-Exchange-Id", value: ExchangeId(randomUUID()) },
             { key: "X-Gevanni-Mutate", value: "true" },
           ]
         : []),

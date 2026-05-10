@@ -1,5 +1,5 @@
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
-import type { Job, ScanState } from "../../types/models.ts";
+import type { Job } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
 function formatParameter(job: Job): string {
@@ -23,7 +23,7 @@ class ConsoleReporterPlugin implements Plugin {
       lines.push("=== Gevanni Scan Report ===");
       lines.push(`Scan ID: ${scanState.id as string}`);
       lines.push(`Status: ${scanState.status as string}`);
-      lines.push(`Started: ${scanState.startedAt as string}`);
+      lines.push(`Started: ${scanState.startedAt.toISOString()}`);
       lines.push("");
       lines.push("--- Findings ---");
       lines.push("");

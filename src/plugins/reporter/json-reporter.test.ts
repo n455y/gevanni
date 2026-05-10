@@ -6,53 +6,42 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { JsonReporterPlugin } from "./json-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { serializeJob, type Job, type ScanState } from "../../types/models.ts";
+import { serializeJob, serializeScanState, type Job, type ScanState } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import type {
+import {
   ScanId,
   JobId,
   ScenarioId,
   RequestId,
   JobStatus,
   ScanStatus,
-  IsoDateTime,
   Evidence,
 } from "../../types/branded.ts";
-
-// --- Branding helpers ---
-const asScanId = (s: string) => s as ScanId;
-const asJobId = (s: string) => s as JobId;
-const asScenarioId = (s: string) => s as ScenarioId;
-const asRequestId = (s: string) => s as RequestId;
-const asJobStatus = (s: string) => s as JobStatus;
-const asScanStatus = (s: string) => s as ScanStatus;
-const asIsoDateTime = (s: string) => s as IsoDateTime;
-const asEvidence = (s: string) => s as Evidence;
 
 // --- Fixture factories ---
 function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   return {
-    id: asScanId("scan-1"),
-    status: asScanStatus("scanning"),
-    startedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
-    updatedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
+    id: ScanId("scan-1"),
+    status: ScanStatus("scanning"),
+    startedAt: new Date("2025-01-01T00:00:00Z"),
+    updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
   };
 }
 
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
-    id: asJobId("job-1"),
-    scanId: asScanId("test-scan-id"),
-    scenarioId: asScenarioId("scan-1"),
-    requestId: asRequestId("req-1"),
+    id: JobId("job-1"),
+    scanId: ScanId("test-scan-id"),
+    scenarioId: ScenarioId("scan-1"),
+    requestId: RequestId("req-1"),
     signatureName: "reflected-xss",
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: asJobStatus("completed"),
+    status: JobStatus("completed"),
     finding: null,
     error: null,
-    createdAt: asIsoDateTime("2025-01-01T00:00:00Z"),
-    updatedAt: asIsoDateTime("2025-01-01T00:00:00Z"),
+    createdAt: new Date("2025-01-01T00:00:00Z"),
+    updatedAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
   };
 }
@@ -85,10 +74,10 @@ describe("JsonReporterPlugin", () => {
     });
 
     const scanState = makeScanState({
-      id: asScanId("scan-abc"),
+      id: ScanId("scan-abc"),
     });
     const jobs: Job[] = [
-      makeJob({ id: asJobId("job-1") }),
+      makeJob({ id: JobId("job-1") }),
     ];
 
     await commandBus.broadcast(
@@ -98,7 +87,7 @@ describe("JsonReporterPlugin", () => {
     const raw = await fs.readFile(outputPath, "utf-8");
     const report = JSON.parse(raw);
 
-    expect(report.scanState).toEqual(scanState);
+    expect(report.scanState).toEqual(serializeScanState(scanState));
     expect(report.jobs).toEqual(jobs.map(serializeJob));
     expect(report.summary).toEqual({
       total: 1,
@@ -117,7 +106,7 @@ describe("JsonReporterPlugin", () => {
     });
 
     const scanState = makeScanState({
-      id: asScanId("scan-auto"),
+      id: ScanId("scan-auto"),
     });
 
     await commandBus.broadcast(
@@ -128,7 +117,7 @@ describe("JsonReporterPlugin", () => {
     const raw = await fs.readFile(expectedPath, "utf-8");
     const report = JSON.parse(raw);
 
-    expect(report.scanState.id).toBe("scan-auto" as ScanId);
+    expect(report.scanState.id).toBe(ScanId("scan-auto"));
     expect(report.summary.total).toBe(0);
 
     // Cleanup
@@ -148,36 +137,36 @@ describe("JsonReporterPlugin", () => {
     const scanState = makeScanState();
     const jobs: Job[] = [
       makeJob({
-        id: asJobId("j1"),
-        status: asJobStatus("completed"),
+        id: JobId("j1"),
+        status: JobStatus("completed"),
         finding: {
           vulnerable: true,
-          evidence: asEvidence("XSS found"),
+          evidence: Evidence("XSS found"),
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
-        id: asJobId("j2"),
-        status: asJobStatus("completed"),
+        id: JobId("j2"),
+        status: JobStatus("completed"),
         finding: {
           vulnerable: false,
-          evidence: asEvidence(""),
+          evidence: Evidence(""),
           request: { method: "GET", url: "https://example.com", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
       makeJob({
-        id: asJobId("j3"),
-        status: asJobStatus("error"),
+        id: JobId("j3"),
+        status: JobStatus("error"),
         error: "Connection refused" as any,
       }),
       makeJob({
-        id: asJobId("j4"),
-        status: asJobStatus("completed"),
+        id: JobId("j4"),
+        status: JobStatus("completed"),
         finding: {
           vulnerable: true,
-          evidence: asEvidence("SQL error"),
+          evidence: Evidence("SQL error"),
           request: { method: "POST", url: "https://example.com/api", headers: {}, body: null },
           response: { statusCode: 500, headers: {}, body: null },
         },
@@ -218,7 +207,7 @@ describe("JsonReporterPlugin", () => {
     const raw = await fs.readFile(outputPath, "utf-8");
     const report = JSON.parse(raw);
 
-    expect(report.scanState).toEqual(scanState);
+    expect(report.scanState).toEqual(serializeScanState(scanState));
     expect(report.jobs).toEqual([]);
     expect(report.summary).toEqual({
       total: 0,

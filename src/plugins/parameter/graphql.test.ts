@@ -16,7 +16,7 @@ import type {
 } from "../../types/models.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import type { Brand } from "../../types/branded.ts";
+import { Payload as toPayload } from "../../types/branded.ts";
 import {
   MutationType,
   ReplaceValue,
@@ -56,7 +56,7 @@ function makeQueryInstruction(
       AppendValue,
       PrependValue,
     ]),
-    payload as Brand<string, "Payload">,
+    toPayload(payload),
     method,
   );
 }
@@ -73,7 +73,7 @@ function makeVariableInstruction(
       AppendValue,
       PrependValue,
     ]),
-    payload as Brand<string, "Payload">,
+    toPayload(payload),
     method,
   );
 }
@@ -445,7 +445,7 @@ describe("GraphQLMutationPlugin", () => {
       ReplaceValue,
       AppendValue,
       PrependValue,
-    ]).createMutation("INJECTED" as Brand<string, "Payload">, ReplaceValue);
+    ]).createMutation(toPayload("INJECTED"), ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
