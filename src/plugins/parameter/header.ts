@@ -1,5 +1,9 @@
 import { BuiltinMutationType } from "../../types/branded.ts";
-import type { AnyMutationType, Payload } from "../../types/branded.ts";
+import type {
+  AnyMutationType,
+  MutationType,
+  Payload,
+} from "../../types/branded.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
@@ -9,7 +13,10 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 export class HeaderParameter extends AuditParameter<{ name: string }, string> {
   static kind = "header";
-  createMutation(payload: Payload, method: AnyMutationType): HeaderMutation {
+  createMutation<P extends Payload>(
+    payload: P,
+    method: MutationType<P>,
+  ): HeaderMutation {
     return new HeaderMutation(this, payload, method);
   }
 }

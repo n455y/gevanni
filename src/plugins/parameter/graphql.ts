@@ -1,5 +1,9 @@
 import { BuiltinMutationType } from "../../types/branded.ts";
-import type { AnyMutationType, Payload } from "../../types/branded.ts";
+import type {
+  AnyMutationType,
+  MutationType,
+  Payload,
+} from "../../types/branded.ts";
 import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
@@ -7,9 +11,15 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-export class GraphQLQueryParameter extends AuditParameter<{ field: string }, string> {
+export class GraphQLQueryParameter extends AuditParameter<
+  { field: string },
+  string
+> {
   static kind = "graphql-query";
-  createMutation(payload: Payload, method: AnyMutationType): GraphQLQueryMutation {
+  createMutation<P extends Payload>(
+    payload: P,
+    method: MutationType<P>,
+  ): GraphQLQueryMutation {
     return new GraphQLQueryMutation(this, payload, method);
   }
 }
@@ -96,12 +106,7 @@ export class GraphQLMutationPlugin implements Plugin {
           }
         } else if (instr instanceof GraphQLVariableMutation) {
           const path = instr.parameter.location.path;
-          jsonBody = applyAtPath(
-            jsonBody,
-            path,
-            instr.payload,
-            instr.method,
-          );
+          jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
         }
       }
 

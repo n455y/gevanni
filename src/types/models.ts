@@ -9,6 +9,7 @@ import type {
   ScanStatus,
   Payload,
   ErrorMessage,
+  MutationType,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
@@ -71,26 +72,20 @@ export class AuditParameter<
     );
   }
 
-  createMutation(
-    _payload: Payload,
-    _method: AnyMutationType,
+  createMutation<P extends Payload>(
+    _payload: P,
+    _method: MutationType<P>,
   ): AuditMutation {
     throw new Error("Not implemented");
   }
 }
 
 // --- AuditMutation ---
-export abstract class AuditMutation<
-  P extends AuditParameter = AuditParameter,
-> {
+export abstract class AuditMutation<P extends AuditParameter = AuditParameter> {
   readonly parameter: P;
   readonly payload: Payload;
   readonly method: AnyMutationType;
-  constructor(
-    parameter: P,
-    payload: Payload,
-    method: AnyMutationType,
-  ) {
+  constructor(parameter: P, payload: Payload, method: AnyMutationType) {
     this.parameter = parameter;
     this.payload = payload;
     this.method = method;

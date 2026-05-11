@@ -1,5 +1,9 @@
 import { BuiltinMutationType } from "../../types/branded.ts";
-import type { AnyMutationType, Payload } from "../../types/branded.ts";
+import type {
+  AnyMutationType,
+  MutationType,
+  Payload,
+} from "../../types/branded.ts";
 import type {
   HttpRequest,
   JsonPrimitive,
@@ -18,18 +22,24 @@ export class JsonPrimitiveParameter extends AuditParameter<
   JsonPrimitive
 > {
   static kind = "json-primitive";
-  createMutation(
-    payload: Payload,
-    method: AnyMutationType,
+  createMutation<P extends Payload>(
+    payload: P,
+    method: MutationType<P>,
   ): JsonPrimitiveMutation {
     return new JsonPrimitiveMutation(this, payload, method);
   }
 }
 serializable(JsonPrimitiveParameter);
 
-export class JsonArrayParameter extends AuditParameter<{ path: string[] }, JsonArray> {
+export class JsonArrayParameter extends AuditParameter<
+  { path: string[] },
+  JsonArray
+> {
   static kind = "json-array";
-  createMutation(payload: Payload, method: AnyMutationType): JsonArrayMutation {
+  createMutation<P extends Payload>(
+    payload: P,
+    method: MutationType<P>,
+  ): JsonArrayMutation {
     return new JsonArrayMutation(this, payload, method);
   }
 }
@@ -40,7 +50,10 @@ export class JsonObjectParameter extends AuditParameter<
   JsonObject
 > {
   static kind = "json-object";
-  createMutation(payload: Payload, method: AnyMutationType): JsonObjectMutation {
+  createMutation<P extends Payload>(
+    payload: P,
+    method: MutationType<P>,
+  ): JsonObjectMutation {
     return new JsonObjectMutation(this, payload, method);
   }
 }

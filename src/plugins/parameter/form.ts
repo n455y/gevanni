@@ -1,5 +1,9 @@
 import { BuiltinMutationType } from "../../types/branded.ts";
-import type { AnyMutationType, Payload } from "../../types/branded.ts";
+import type {
+  AnyMutationType,
+  MutationType,
+  Payload,
+} from "../../types/branded.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
@@ -9,7 +13,10 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 export class FormParameter extends AuditParameter<{ name: string }, string> {
   static kind = "form";
-  createMutation(payload: Payload, method: AnyMutationType): FormMutation {
+  createMutation<P extends Payload>(
+    payload: P,
+    method: MutationType<P>,
+  ): FormMutation {
     return new FormMutation(this, payload, method);
   }
 }
