@@ -8,11 +8,8 @@ import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { QueryParameter } from "./query.ts";
 import { JsonPrimitiveParameter } from "./json.ts";
 import { QueryMutation } from "./query.ts";
-import {
-  BuiltinMutationType,
-  Payload as toPayload,
-} from "../../types/branded.ts";
-import { MutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, Payload } from "../../types/branded.ts";
+import type { AnyMutationType } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 
@@ -28,7 +25,7 @@ function makeQueryInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: MutationType,
+  method: AnyMutationType,
 ): QueryMutation {
   return new QueryMutation(
     new QueryParameter({ name: paramName }, originalValue, [
@@ -36,7 +33,7 @@ function makeQueryInstruction(
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
     ]),
-    toPayload(payload),
+    Payload.string(payload),
     method,
   );
 }
@@ -240,7 +237,7 @@ describe("QueryMutationPlugin", () => {
         BuiltinMutationType.AppendValue,
         BuiltinMutationType.PrependValue,
       ],
-    ).createMutation(toPayload("INJECTED"), BuiltinMutationType.ReplaceValue);
+    ).createMutation(Payload.string("INJECTED"), BuiltinMutationType.ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),

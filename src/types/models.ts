@@ -1,5 +1,6 @@
-import { ScenarioType, MutationType } from "./branded.ts";
+import { ScenarioType } from "./branded.ts";
 import type {
+  AnyMutationType,
   ScenarioId,
   JobId,
   ScanId,
@@ -32,16 +33,16 @@ class AuditParameter<
 > extends SerializableBase<{
   location: L;
   originalValue: V;
-  allowedMutations: MutationType[];
+  allowedMutations: AnyMutationType[];
 }> {
   static base = "audit-parameter";
   readonly location: L;
   readonly originalValue: V;
-  readonly allowedMutations: MutationType[];
+  readonly allowedMutations: AnyMutationType[];
   constructor(
     location: L,
     originalValue: V,
-    allowedMutations: MutationType[],
+    allowedMutations: AnyMutationType[],
   ) {
     super();
     this.location = location;
@@ -61,7 +62,7 @@ class AuditParameter<
   >(serialized: {
     location: L;
     originalValue: V;
-    allowedMutations: MutationType[];
+    allowedMutations: AnyMutationType[];
   }) {
     return new this(
       serialized.location,
@@ -72,7 +73,7 @@ class AuditParameter<
 
   createMutation(
     _payload: Payload,
-    _method: MutationType,
+    _method: AnyMutationType,
   ): AuditMutation {
     throw new Error("Not implemented");
   }
@@ -84,11 +85,11 @@ abstract class AuditMutation<
 > {
   readonly parameter: P;
   readonly payload: Payload;
-  readonly method: MutationType;
+  readonly method: AnyMutationType;
   constructor(
     parameter: P,
     payload: Payload,
-    method: MutationType,
+    method: AnyMutationType,
   ) {
     this.parameter = parameter;
     this.payload = payload;

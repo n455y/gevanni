@@ -1,7 +1,7 @@
 import {
   BuiltinMutationType,
   ExchangeId,
-  Payload as toPayload,
+  Payload,
 } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
@@ -37,7 +37,7 @@ class SqliErrorPlugin implements Plugin {
         return null;
       }
 
-      const payload = toPayload("' OR 1=1--");
+      const payload = Payload.string("' OR 1=1--");
       const instruction = parameter.createMutation(
         payload,
         BuiltinMutationType.AppendValue,

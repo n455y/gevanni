@@ -1,5 +1,5 @@
-import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
-import type { Payload } from "../../types/branded.ts";
+import { BuiltinMutationType } from "../../types/branded.ts";
+import type { AnyMutationType, Payload } from "../../types/branded.ts";
 import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
@@ -9,7 +9,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 class GraphQLQueryParameter extends AuditParameter<{ field: string }, string> {
   static kind = "graphql-query";
-  createMutation(payload: Payload, method: MutationType): GraphQLQueryMutation {
+  createMutation(payload: Payload, method: AnyMutationType): GraphQLQueryMutation {
     return new GraphQLQueryMutation(this, payload, method);
   }
 }
@@ -22,7 +22,7 @@ class GraphQLVariableParameter extends AuditParameter<
   static kind = "graphql-variable";
   createMutation(
     payload: Payload,
-    method: MutationType,
+    method: AnyMutationType,
   ): GraphQLVariableMutation {
     return new GraphQLVariableMutation(this, payload, method);
   }
@@ -90,7 +90,7 @@ class GraphQLMutationPlugin implements Plugin {
           ) {
             (jsonBody as Record<string, JsonValue>)[field] = applyMutationValue(
               (jsonBody as Record<string, JsonValue>)[field],
-              instr.payload as string,
+              instr.payload,
               instr.method,
             );
           }
@@ -99,7 +99,7 @@ class GraphQLMutationPlugin implements Plugin {
           jsonBody = applyAtPath(
             jsonBody,
             path,
-            instr.payload as string,
+            instr.payload,
             instr.method,
           );
         }
@@ -209,8 +209,8 @@ function extractVariableParams(
 function applyAtPath(
   root: JsonValue,
   path: string[],
-  payload: string,
-  method: MutationType,
+  payload: Payload,
+  method: AnyMutationType,
 ): JsonValue {
   if (path.length === 0) {
     return applyMutationValue(root, payload, method);
@@ -246,16 +246,16 @@ function applyAtPath(
 
 function applyMutationValue(
   current: JsonValue,
-  payload: string,
-  method: MutationType,
+  payload: Payload,
+  method: AnyMutationType,
 ): JsonValue {
   switch (method) {
     case BuiltinMutationType.ReplaceValue:
       return payload;
     case BuiltinMutationType.AppendValue:
-      return String(current) + payload;
+      return String(current) + String(payload);
     case BuiltinMutationType.PrependValue:
-      return payload + String(current);
+      return String(payload) + String(current);
     default:
       return current;
   }

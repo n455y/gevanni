@@ -1,5 +1,5 @@
-import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
-import type { Payload } from "../../types/branded.ts";
+import { BuiltinMutationType } from "../../types/branded.ts";
+import type { AnyMutationType, Payload } from "../../types/branded.ts";
 import type {
   HttpRequest,
   JsonPrimitive,
@@ -20,7 +20,7 @@ class JsonPrimitiveParameter extends AuditParameter<
   static kind = "json-primitive";
   createMutation(
     payload: Payload,
-    method: MutationType,
+    method: AnyMutationType,
   ): JsonPrimitiveMutation {
     return new JsonPrimitiveMutation(this, payload, method);
   }
@@ -29,7 +29,7 @@ serializable(JsonPrimitiveParameter);
 
 class JsonArrayParameter extends AuditParameter<{ path: string[] }, JsonArray> {
   static kind = "json-array";
-  createMutation(payload: Payload, method: MutationType): JsonArrayMutation {
+  createMutation(payload: Payload, method: AnyMutationType): JsonArrayMutation {
     return new JsonArrayMutation(this, payload, method);
   }
 }
@@ -40,7 +40,7 @@ class JsonObjectParameter extends AuditParameter<
   JsonObject
 > {
   static kind = "json-object";
-  createMutation(payload: Payload, method: MutationType): JsonObjectMutation {
+  createMutation(payload: Payload, method: AnyMutationType): JsonObjectMutation {
     return new JsonObjectMutation(this, payload, method);
   }
 }
@@ -174,8 +174,8 @@ function extractJsonParams(
 function applyAtPath(
   root: JsonValue,
   path: string[],
-  payload: string,
-  method: MutationType,
+  payload: Payload,
+  method: AnyMutationType,
 ): JsonValue {
   if (path.length === 0) {
     return applyMutationValue(root, payload, method);
@@ -211,16 +211,16 @@ function applyAtPath(
 
 function applyMutationValue(
   current: JsonValue,
-  payload: string,
-  method: MutationType,
+  payload: Payload,
+  method: AnyMutationType,
 ): JsonValue {
   switch (method) {
     case BuiltinMutationType.ReplaceValue:
       return payload;
     case BuiltinMutationType.AppendValue:
-      return String(current) + payload;
+      return String(current) + String(payload);
     case BuiltinMutationType.PrependValue:
-      return payload + String(current);
+      return String(payload) + String(current);
     default:
       return current;
   }

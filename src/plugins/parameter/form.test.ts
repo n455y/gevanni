@@ -7,11 +7,8 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import { FormParameter } from "./form.ts";
 import { FormMutation } from "./form.ts";
-import {
-  BuiltinMutationType,
-  Payload as toPayload,
-} from "../../types/branded.ts";
-import { MutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, Payload } from "../../types/branded.ts";
+import type { AnyMutationType } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 
@@ -36,7 +33,7 @@ function makeFormInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: MutationType,
+  method: AnyMutationType,
 ): FormMutation {
   return new FormMutation(
     new FormParameter({ name: paramName }, originalValue, [
@@ -44,7 +41,7 @@ function makeFormInstruction(
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
     ]),
-    toPayload(payload),
+    Payload.string(payload),
     method,
   );
 }

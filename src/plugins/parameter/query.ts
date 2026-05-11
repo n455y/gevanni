@@ -1,5 +1,5 @@
-import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
-import type { Payload } from "../../types/branded.ts";
+import { BuiltinMutationType } from "../../types/branded.ts";
+import type { AnyMutationType, Payload } from "../../types/branded.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
@@ -9,7 +9,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 class QueryParameter extends AuditParameter<{ name: string }, string> {
   static kind = "query";
-  createMutation(payload: Payload, method: MutationType): QueryMutation {
+  createMutation(payload: Payload, method: AnyMutationType): QueryMutation {
     return new QueryMutation(this, payload, method);
   }
 }
@@ -83,7 +83,7 @@ function parseQueryParameters(request: HttpRequest): AuditParameter[] {
 function applyMutation(
   current: string,
   payload: string,
-  method: MutationType,
+  method: AnyMutationType,
 ): string {
   switch (method) {
     case BuiltinMutationType.ReplaceValue:

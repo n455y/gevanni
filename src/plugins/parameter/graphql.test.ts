@@ -16,11 +16,8 @@ import type {
 } from "../../types/models.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import {
-  BuiltinMutationType,
-  Payload as toPayload,
-} from "../../types/branded.ts";
-import { MutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, Payload } from "../../types/branded.ts";
+import type { AnyMutationType } from "../../types/branded.ts";
 
 type AnyGraphQLTarget = GraphQLQueryParameter | GraphQLVariableParameter;
 
@@ -46,7 +43,7 @@ function flatTargets(results: AuditParameter[][]): AnyGraphQLTarget[] {
 function makeQueryInstruction(
   field: string,
   payload: string,
-  method: MutationType,
+  method: AnyMutationType,
 ): GraphQLQueryMutation {
   return new GraphQLQueryMutation(
     new GraphQLQueryParameter({ field }, "", [
@@ -54,7 +51,7 @@ function makeQueryInstruction(
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
     ]),
-    toPayload(payload),
+    Payload.string(payload),
     method,
   );
 }
@@ -63,7 +60,7 @@ function makeVariableInstruction(
   path: string[],
   originalValue: JsonValue,
   payload: string,
-  method: MutationType,
+  method: AnyMutationType,
 ): GraphQLVariableMutation {
   return new GraphQLVariableMutation(
     new GraphQLVariableParameter({ path }, originalValue, [
@@ -71,7 +68,7 @@ function makeVariableInstruction(
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
     ]),
-    toPayload(payload),
+    Payload.string(payload),
     method,
   );
 }
@@ -455,7 +452,7 @@ describe("GraphQLMutationPlugin", () => {
       BuiltinMutationType.ReplaceValue,
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
-    ]).createMutation(toPayload("INJECTED"), BuiltinMutationType.ReplaceValue);
+    ]).createMutation(Payload.string("INJECTED"), BuiltinMutationType.ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),

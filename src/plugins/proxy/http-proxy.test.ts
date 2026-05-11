@@ -12,10 +12,7 @@ import { startMutationProxy } from "./http-proxy.ts";
 import type { HttpRequest, HttpResponse } from "../../types/models.ts";
 import { AuditMutation } from "../../types/models.ts";
 import type { Exchange } from "../../types/models.ts";
-import {
-  BuiltinMutationType,
-  Payload as toPayload,
-} from "../../types/branded.ts";
+import { BuiltinMutationType, Payload } from "../../types/branded.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   LoadExchangesCommand,
@@ -262,7 +259,7 @@ describe("startMutationProxy", () => {
       new QueryParameter({ name: "q" }, "original", [
         BuiltinMutationType.ReplaceValue,
       ]).createMutation(
-        toPayload("<script>"),
+        Payload.string("<script>"),
         BuiltinMutationType.ReplaceValue,
       ),
     ];

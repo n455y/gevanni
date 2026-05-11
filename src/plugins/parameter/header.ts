@@ -1,5 +1,5 @@
-import { BuiltinMutationType, MutationType } from "../../types/branded.ts";
-import type { Payload } from "../../types/branded.ts";
+import { BuiltinMutationType } from "../../types/branded.ts";
+import type { AnyMutationType, Payload } from "../../types/branded.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
@@ -9,7 +9,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
 class HeaderParameter extends AuditParameter<{ name: string }, string> {
   static kind = "header";
-  createMutation(payload: Payload, method: MutationType): HeaderMutation {
+  createMutation(payload: Payload, method: AnyMutationType): HeaderMutation {
     return new HeaderMutation(this, payload, method);
   }
 }
@@ -78,7 +78,7 @@ function parseHeaderParameters(request: HttpRequest): AuditParameter[] {
 function applyMutation(
   current: string,
   payload: string,
-  method: MutationType,
+  method: AnyMutationType,
 ): string {
   switch (method) {
     case BuiltinMutationType.ReplaceValue:

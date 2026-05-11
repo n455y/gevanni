@@ -13,11 +13,7 @@ import {
 import { QueryMutationPlugin, QueryMutation } from "../parameter/query.ts";
 import type { Scenario, Exchange } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import {
-  BuiltinMutationType,
-  ScenarioId,
-  Payload as toPayload,
-} from "../../types/branded.ts";
+import { BuiltinMutationType, ScenarioId, Payload } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
@@ -106,7 +102,7 @@ function makeTamperInstruction(): QueryMutation {
     new QueryParameter({ name: "q" }, "original", [
       BuiltinMutationType.ReplaceValue,
     ]),
-    toPayload("<script>"),
+    Payload.string("<script>"),
     BuiltinMutationType.ReplaceValue,
   );
 }

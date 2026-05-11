@@ -13,11 +13,8 @@ import { QueryParameter } from "./query.ts";
 import type { HttpRequest, AuditParameter } from "../../types/models.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import {
-  BuiltinMutationType,
-  Payload as toPayload,
-} from "../../types/branded.ts";
-import { MutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, Payload } from "../../types/branded.ts";
+import type { AnyMutationType } from "../../types/branded.ts";
 
 type AnyJsonTarget =
   | JsonPrimitiveParameter
@@ -47,7 +44,7 @@ function makeJsonPrimitiveInstruction(
   path: string[],
   originalValue: unknown,
   payload: string,
-  method: MutationType,
+  method: AnyMutationType,
 ): JsonPrimitiveMutation {
   return new JsonPrimitiveMutation(
     new JsonPrimitiveParameter(
@@ -59,7 +56,7 @@ function makeJsonPrimitiveInstruction(
         BuiltinMutationType.PrependValue,
       ],
     ),
-    toPayload(payload),
+    Payload.string(payload),
     method,
   );
 }
@@ -337,7 +334,7 @@ describe("JsonMutationPlugin", () => {
       BuiltinMutationType.ReplaceValue,
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
-    ]).createMutation(toPayload("INJECTED"), BuiltinMutationType.ReplaceValue);
+    ]).createMutation(Payload.string("INJECTED"), BuiltinMutationType.ReplaceValue);
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -430,7 +427,7 @@ describe("JsonMutationPlugin", () => {
           BuiltinMutationType.PrependValue,
         ],
       ),
-      toPayload("INJECTED"),
+      Payload.string("INJECTED"),
       BuiltinMutationType.ReplaceValue,
     );
 
