@@ -16,10 +16,10 @@ export type ScenarioType = Brand<string, "ScenarioType">;
 export const ScenarioType = (type: string) => type as ScenarioType;
 
 // --- Payload ---
-export type StringPayload = Brand<string, "StringPayload">;
-export type NumberPayload = Brand<number, "NumberPayload">;
-export type BooleanPayload = Brand<boolean, "BooleanPayload">;
-export type NullPayload = Brand<null, "NullPayload">;
+type StringPayload = Brand<string, "StringPayload">;
+type NumberPayload = Brand<number, "NumberPayload">;
+type BooleanPayload = Brand<boolean, "BooleanPayload">;
+type NullPayload = Brand<null, "NullPayload">;
 
 export const Payload = {
   string: (v: string) => v as StringPayload,
@@ -29,6 +29,12 @@ export const Payload = {
 } as const;
 
 export type Payload = StringPayload | NumberPayload | BooleanPayload | NullPayload;
+export namespace Payload {
+  export type String = StringPayload;
+  export type Number = NumberPayload;
+  export type Boolean = BooleanPayload;
+  export type Null = NullPayload;
+}
 
 // --- MutationType ---
 export type AnyMutationType = string & { readonly __brand: "MutationType" };
