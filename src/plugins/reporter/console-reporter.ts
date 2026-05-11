@@ -11,7 +11,7 @@ function formatParameter(job: Job): string {
   return `${p.constructor.name} ${loc} = ${String(p.originalValue)}`;
 }
 
-class ConsoleReporterPlugin implements Plugin {
+export class ConsoleReporterPlugin implements Plugin {
   readonly name = "console-reporter";
 
   async init(ctx: PluginContext): Promise<void> {
@@ -71,5 +71,3 @@ class ConsoleReporterPlugin implements Plugin {
     });
   }
 }
-
-export { ConsoleReporterPlugin };

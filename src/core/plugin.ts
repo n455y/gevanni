@@ -2,29 +2,29 @@ import type { CommandBus } from "./command-bus.ts";
 import type { EventBus } from "./event-bus.ts";
 import type { Scenario } from "../types/models.ts";
 
-interface PluginContext {
+export interface PluginContext {
   commandBus: CommandBus;
   eventBus: EventBus;
   config: Record<string, unknown>;
 }
 
-interface Plugin {
+export interface Plugin {
   readonly name: string;
   init(context: PluginContext): Promise<void>;
   destroy?(): Promise<void>;
 }
 
-interface ScenarioLoaderPlugin extends Plugin {
+export interface ScenarioLoaderPlugin extends Plugin {
   load(source: unknown): Promise<Scenario[]>;
 }
 
-interface PluginConfig {
+export interface PluginConfig {
   type: string;
   name: string;
   options: Record<string, unknown>;
 }
 
-interface PluginRegistry {
+export interface PluginRegistry {
   register(type: string, name: string, factory: () => Plugin): void;
   initializeAll(deps: {
     commandBus: CommandBus;
@@ -34,7 +34,7 @@ interface PluginRegistry {
   destroyAll(plugins: Plugin[]): Promise<void>;
 }
 
-class PluginRegistryImpl implements PluginRegistry {
+export class PluginRegistryImpl implements PluginRegistry {
   private factories = new Map<string, () => Plugin>();
 
   register(type: string, name: string, factory: () => Plugin): void {
@@ -75,12 +75,3 @@ class PluginRegistryImpl implements PluginRegistry {
     }
   }
 }
-
-export {
-  PluginRegistryImpl,
-  type Plugin,
-  type PluginContext,
-  type PluginConfig,
-  type PluginRegistry,
-  type ScenarioLoaderPlugin,
-};

@@ -1,9 +1,9 @@
-interface EventBus {
+export interface EventBus {
   publish<T>(event: string, data: T): void;
   subscribe<T>(event: string, handler: (data: T) => void | Promise<void>): void;
 }
 
-class InMemoryEventBus implements EventBus {
+export class InMemoryEventBus implements EventBus {
   private subscribers = new Map<string, Array<(data: any) => void | Promise<void>>>();
 
   subscribe<T>(event: string, handler: (data: T) => void | Promise<void>): void {
@@ -25,5 +25,3 @@ class InMemoryEventBus implements EventBus {
     }
   }
 }
-
-export { InMemoryEventBus, type EventBus };

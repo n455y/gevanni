@@ -7,7 +7,7 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class GraphQLQueryParameter extends AuditParameter<{ field: string }, string> {
+export class GraphQLQueryParameter extends AuditParameter<{ field: string }, string> {
   static kind = "graphql-query";
   createMutation(payload: Payload, method: AnyMutationType): GraphQLQueryMutation {
     return new GraphQLQueryMutation(this, payload, method);
@@ -15,7 +15,7 @@ class GraphQLQueryParameter extends AuditParameter<{ field: string }, string> {
 }
 serializable(GraphQLQueryParameter);
 
-class GraphQLVariableParameter extends AuditParameter<
+export class GraphQLVariableParameter extends AuditParameter<
   { path: string[] },
   JsonValue
 > {
@@ -29,8 +29,8 @@ class GraphQLVariableParameter extends AuditParameter<
 }
 serializable(GraphQLVariableParameter);
 
-class GraphQLQueryMutation extends AuditMutation<GraphQLQueryParameter> {}
-class GraphQLVariableMutation extends AuditMutation<GraphQLVariableParameter> {}
+export class GraphQLQueryMutation extends AuditMutation<GraphQLQueryParameter> {}
+export class GraphQLVariableMutation extends AuditMutation<GraphQLVariableParameter> {}
 
 type GraphQLMutation = GraphQLQueryMutation | GraphQLVariableMutation;
 
@@ -47,7 +47,7 @@ const ALLOWED_MUTATIONS = [
   BuiltinMutationType.PrependValue,
 ];
 
-class GraphQLParserPlugin implements Plugin {
+export class GraphQLParserPlugin implements Plugin {
   readonly name = "graphql-parser";
 
   async init(context: PluginContext): Promise<void> {
@@ -57,7 +57,7 @@ class GraphQLParserPlugin implements Plugin {
   }
 }
 
-class GraphQLMutationPlugin implements Plugin {
+export class GraphQLMutationPlugin implements Plugin {
   readonly name = "graphql-mutation";
 
   async init(context: PluginContext): Promise<void> {
@@ -260,12 +260,3 @@ function applyMutationValue(
       return current;
   }
 }
-
-export {
-  GraphQLParserPlugin,
-  GraphQLMutationPlugin,
-  GraphQLQueryParameter,
-  GraphQLVariableParameter,
-  GraphQLQueryMutation,
-  GraphQLVariableMutation,
-};

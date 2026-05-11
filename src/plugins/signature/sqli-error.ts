@@ -8,7 +8,7 @@ import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type { Evidence } from "../../types/models.ts";
 
-const SQL_ERROR_PATTERNS: RegExp[] = [
+export const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
   /PostgreSQL.*ERROR/i,
   /ORA-\d{5}/i,
@@ -16,7 +16,7 @@ const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQLITE_ERROR/i,
 ];
 
-class SqliErrorPlugin implements Plugin {
+export class SqliErrorPlugin implements Plugin {
   readonly name = "sqli-error";
 
   async init(context: PluginContext): Promise<void> {
@@ -60,5 +60,3 @@ class SqliErrorPlugin implements Plugin {
     });
   }
 }
-
-export { SqliErrorPlugin, SQL_ERROR_PATTERNS };

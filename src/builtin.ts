@@ -13,7 +13,7 @@ import { ConsoleReporterPlugin } from "./plugins/reporter/console-reporter.ts";
 import { JsonReporterPlugin } from "./plugins/reporter/json-reporter.ts";
 import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./plugins/parameter/graphql.ts";
 
-function registerBuiltinPlugins(registry: PluginRegistry): void {
+export function registerBuiltinPlugins(registry: PluginRegistry): void {
   registry.register("scenarioReplayer", "postman", () => new PostmanPlugin());
   registry.register(
     "scenarioLoader",
@@ -49,5 +49,3 @@ function registerBuiltinPlugins(registry: PluginRegistry): void {
     () => new JsonReporterPlugin(),
   );
 }
-
-export { registerBuiltinPlugins };

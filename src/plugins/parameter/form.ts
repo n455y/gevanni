@@ -7,7 +7,7 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class FormParameter extends AuditParameter<{ name: string }, string> {
+export class FormParameter extends AuditParameter<{ name: string }, string> {
   static kind = "form";
   createMutation(payload: Payload, method: AnyMutationType): FormMutation {
     return new FormMutation(this, payload, method);
@@ -15,9 +15,9 @@ class FormParameter extends AuditParameter<{ name: string }, string> {
 }
 serializable(FormParameter);
 
-class FormMutation extends AuditMutation<FormParameter> {}
+export class FormMutation extends AuditMutation<FormParameter> {}
 
-class FormParserPlugin implements Plugin {
+export class FormParserPlugin implements Plugin {
   readonly name = "form-parser";
 
   async init(context: PluginContext): Promise<void> {
@@ -27,7 +27,7 @@ class FormParserPlugin implements Plugin {
   }
 }
 
-class FormMutationPlugin implements Plugin {
+export class FormMutationPlugin implements Plugin {
   readonly name = "form-mutation";
 
   async init(context: PluginContext): Promise<void> {
@@ -111,5 +111,3 @@ function applyMutation(
       return current;
   }
 }
-
-export { FormParserPlugin, FormMutationPlugin, FormParameter, FormMutation };

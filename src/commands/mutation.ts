@@ -1,7 +1,7 @@
 import { PipelineCommand } from "../core/command.ts";
 import type { HttpRequest, AuditMutation } from "../types/models.ts";
 
-class ApplyMutationCommand extends PipelineCommand<HttpRequest> {
+export class ApplyMutationCommand extends PipelineCommand<HttpRequest> {
   readonly type = "applyMutation";
   readonly initial: HttpRequest;
   readonly request: HttpRequest;
@@ -13,4 +13,3 @@ class ApplyMutationCommand extends PipelineCommand<HttpRequest> {
     this.initial = request;
   }
 }
-export { ApplyMutationCommand };

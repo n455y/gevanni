@@ -44,7 +44,7 @@ function isPostmanCollection(data: unknown): data is PostmanCollection {
 
 // --- Plugin ---
 
-class PostmanLoaderPlugin implements ScenarioLoaderPlugin {
+export class PostmanLoaderPlugin implements ScenarioLoaderPlugin {
   readonly name = "postman-loader";
 
   async init(_context: PluginContext): Promise<void> {}
@@ -79,5 +79,3 @@ class PostmanLoaderPlugin implements ScenarioLoaderPlugin {
     }));
   }
 }
-
-export { PostmanLoaderPlugin };

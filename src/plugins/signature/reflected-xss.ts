@@ -8,7 +8,7 @@ import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type { Evidence } from "../../types/models.ts";
 
-class ReflectedXssPlugin implements Plugin {
+export class ReflectedXssPlugin implements Plugin {
   readonly name = "reflected-xss";
 
   async init(context: PluginContext): Promise<void> {
@@ -52,5 +52,3 @@ class ReflectedXssPlugin implements Plugin {
     });
   }
 }
-
-export { ReflectedXssPlugin };

@@ -3,14 +3,14 @@ import path from "node:path";
 import type { PluginConfig } from "../types/models.ts";
 import type { LogLevel } from "../core/logger.ts";
 
-interface ResolvedConfig {
+export interface ResolvedConfig {
   concurrency: number;
   plugins: PluginConfig[];
   scenarioSources: unknown[];
   logLevel: LogLevel;
 }
 
-interface RawConfig {
+export interface RawConfig {
   concurrency?: number;
   plugins?: PluginConfig[];
   scenarioSources?: unknown[];
@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: ResolvedConfig = {
   scenarioSources: [],
 };
 
-function loadConfig(
+export function loadConfig(
   configPath?: string,
   cliOverrides?: Partial<ResolvedConfig>,
 ): ResolvedConfig {
@@ -51,5 +51,3 @@ function loadConfig(
 
   return resolved;
 }
-
-export { loadConfig, type ResolvedConfig, type RawConfig };

@@ -57,7 +57,7 @@ interface JsonStorageConfig {
   outputDir?: string;
 }
 
-class JsonStoragePlugin implements Plugin {
+export class JsonStoragePlugin implements Plugin {
   readonly name = "json-storage";
   private outputDir = "./gevanni-results";
   private fileLocks = new Map<string, Promise<void>>();
@@ -262,5 +262,3 @@ class JsonStoragePlugin implements Plugin {
     await ensureDir(this.outputDir);
   }
 }
-
-export { JsonStoragePlugin };

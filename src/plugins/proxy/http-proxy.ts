@@ -16,7 +16,7 @@ import { InterceptCommand } from "../../commands/intercept.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { SaveExchangeCommand } from "../../commands/exchange.ts";
 
-function sendRequest(request: HttpRequest): Promise<HttpResponse> {
+export function sendRequest(request: HttpRequest): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(request.url);
     const isHttps = parsedUrl.protocol === "https:";
@@ -68,12 +68,12 @@ function sendRequest(request: HttpRequest): Promise<HttpResponse> {
 
 // --- Mutation Proxy ---
 
-interface MutationProxy {
+export interface MutationProxy {
   port: number;
   close: () => void;
 }
 
-async function startMutationProxy(
+export async function startMutationProxy(
   mutations: AuditMutation[],
   commandBus: CommandBus,
 ): Promise<MutationProxy> {
@@ -252,7 +252,7 @@ async function startMutationProxy(
   });
 }
 
-class HttpProxyPlugin implements Plugin {
+export class HttpProxyPlugin implements Plugin {
   readonly name = "http-proxy";
   private extraHeaders: Record<string, string> = {};
 
@@ -285,6 +285,3 @@ class HttpProxyPlugin implements Plugin {
     );
   }
 }
-
-export { HttpProxyPlugin, sendRequest, startMutationProxy };
-export type { MutationProxy };

@@ -38,7 +38,7 @@ import { startMutationProxy } from "../plugins/proxy/http-proxy.ts";
 
 // --- Worker pool ---
 
-async function runWithConcurrency<T>(
+export async function runWithConcurrency<T>(
   items: T[],
   concurrency: number,
   fn: (item: T) => Promise<void>,
@@ -58,13 +58,13 @@ async function runWithConcurrency<T>(
 
 // --- Orchestrator ---
 
-interface OrchestratorDeps {
+export interface OrchestratorDeps {
   commandBus: CommandBus;
   eventBus: EventBus;
   logger: Logger;
 }
 
-class Orchestrator {
+export class Orchestrator {
   private deps: OrchestratorDeps;
   constructor(deps: OrchestratorDeps) {
     this.deps = deps;
@@ -387,5 +387,3 @@ class Orchestrator {
     await this.scan(sid, itemMap, concurrency ?? 5);
   }
 }
-
-export { Orchestrator, type OrchestratorDeps, runWithConcurrency };

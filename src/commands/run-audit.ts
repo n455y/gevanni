@@ -7,7 +7,7 @@ import type {
   HttpResponse,
 } from "../types/models.ts";
 
-interface RunAuditContext {
+export interface RunAuditContext {
   signatureName: string;
   parameter: AuditParameter;
   replay: (mutations: AuditMutation[]) => Promise<{
@@ -16,7 +16,7 @@ interface RunAuditContext {
   }>;
 }
 
-class RunAuditCommand extends BroadcastCommand<Finding | null> {
+export class RunAuditCommand extends BroadcastCommand<Finding | null> {
   readonly type = "runAudit";
   readonly context: RunAuditContext;
   constructor(context: RunAuditContext) {
@@ -24,5 +24,3 @@ class RunAuditCommand extends BroadcastCommand<Finding | null> {
     this.context = context;
   }
 }
-
-export { RunAuditCommand, type RunAuditContext };

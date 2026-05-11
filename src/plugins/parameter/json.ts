@@ -13,7 +13,7 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class JsonPrimitiveParameter extends AuditParameter<
+export class JsonPrimitiveParameter extends AuditParameter<
   { path: string[] },
   JsonPrimitive
 > {
@@ -27,7 +27,7 @@ class JsonPrimitiveParameter extends AuditParameter<
 }
 serializable(JsonPrimitiveParameter);
 
-class JsonArrayParameter extends AuditParameter<{ path: string[] }, JsonArray> {
+export class JsonArrayParameter extends AuditParameter<{ path: string[] }, JsonArray> {
   static kind = "json-array";
   createMutation(payload: Payload, method: AnyMutationType): JsonArrayMutation {
     return new JsonArrayMutation(this, payload, method);
@@ -35,7 +35,7 @@ class JsonArrayParameter extends AuditParameter<{ path: string[] }, JsonArray> {
 }
 serializable(JsonArrayParameter);
 
-class JsonObjectParameter extends AuditParameter<
+export class JsonObjectParameter extends AuditParameter<
   { path: string[] },
   JsonObject
 > {
@@ -46,9 +46,9 @@ class JsonObjectParameter extends AuditParameter<
 }
 serializable(JsonObjectParameter);
 
-class JsonPrimitiveMutation extends AuditMutation<JsonPrimitiveParameter> {}
-class JsonArrayMutation extends AuditMutation<JsonArrayParameter> {}
-class JsonObjectMutation extends AuditMutation<JsonObjectParameter> {}
+export class JsonPrimitiveMutation extends AuditMutation<JsonPrimitiveParameter> {}
+export class JsonArrayMutation extends AuditMutation<JsonArrayParameter> {}
+export class JsonObjectMutation extends AuditMutation<JsonObjectParameter> {}
 
 type JsonMutation =
   | JsonPrimitiveMutation
@@ -69,7 +69,7 @@ function isJsonMutation(instr: AuditMutation): instr is JsonMutation {
   );
 }
 
-class JsonParserPlugin implements Plugin {
+export class JsonParserPlugin implements Plugin {
   readonly name = "json-parser";
 
   async init(context: PluginContext): Promise<void> {
@@ -79,7 +79,7 @@ class JsonParserPlugin implements Plugin {
   }
 }
 
-class JsonMutationPlugin implements Plugin {
+export class JsonMutationPlugin implements Plugin {
   readonly name = "json-mutation";
 
   async init(context: PluginContext): Promise<void> {
@@ -225,14 +225,3 @@ function applyMutationValue(
       return current;
   }
 }
-
-export {
-  JsonParserPlugin,
-  JsonMutationPlugin,
-  JsonPrimitiveParameter,
-  JsonArrayParameter,
-  JsonObjectParameter,
-  JsonPrimitiveMutation,
-  JsonArrayMutation,
-  JsonObjectMutation,
-};

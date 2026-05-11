@@ -13,7 +13,7 @@ type HandlerFor<T extends Command<any>> = T extends PipelineCommand<any>
   ? PipelineHandler<T, CommandResult<T>>
   : CommandHandler<T, CommandResult<T>>;
 
-interface CommandBus {
+export interface CommandBus {
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
     handler: HandlerFor<T>,
@@ -26,7 +26,7 @@ interface CommandBus {
 
 type AnyHandler = CommandHandler<any, any> | PipelineHandler<any, any>;
 
-class InMemoryCommandBus implements CommandBus {
+export class InMemoryCommandBus implements CommandBus {
   private singleHandlers = new Map<string, AnyHandler>();
   private multiHandlers = new Map<string, AnyHandler[]>();
 
@@ -83,5 +83,3 @@ class InMemoryCommandBus implements CommandBus {
     return accumulator;
   }
 }
-
-export { InMemoryCommandBus, type CommandBus };

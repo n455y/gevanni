@@ -7,7 +7,7 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class QueryParameter extends AuditParameter<{ name: string }, string> {
+export class QueryParameter extends AuditParameter<{ name: string }, string> {
   static kind = "query";
   createMutation(payload: Payload, method: AnyMutationType): QueryMutation {
     return new QueryMutation(this, payload, method);
@@ -15,9 +15,9 @@ class QueryParameter extends AuditParameter<{ name: string }, string> {
 }
 serializable(QueryParameter);
 
-class QueryMutation extends AuditMutation<QueryParameter> {}
+export class QueryMutation extends AuditMutation<QueryParameter> {}
 
-class QueryParserPlugin implements Plugin {
+export class QueryParserPlugin implements Plugin {
   readonly name = "query-parser";
 
   async init(context: PluginContext): Promise<void> {
@@ -27,7 +27,7 @@ class QueryParserPlugin implements Plugin {
   }
 }
 
-class QueryMutationPlugin implements Plugin {
+export class QueryMutationPlugin implements Plugin {
   readonly name = "query-mutation";
 
   async init(context: PluginContext): Promise<void> {
@@ -96,10 +96,3 @@ function applyMutation(
       return current;
   }
 }
-
-export {
-  QueryParserPlugin,
-  QueryMutationPlugin,
-  QueryParameter,
-  QueryMutation,
-};

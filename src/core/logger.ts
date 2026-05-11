@@ -1,6 +1,6 @@
-type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
-interface Logger {
+export interface Logger {
   debug(msg: string): void;
   info(msg: string): void;
   warn(msg: string): void;
@@ -14,7 +14,7 @@ const LEVEL_ORDER: Record<LogLevel, number> = {
   error: 3,
 };
 
-function createLogger(level: LogLevel = "info"): Logger {
+export function createLogger(level: LogLevel = "info"): Logger {
   const currentLevel = LEVEL_ORDER[level];
 
   function write(msgLevel: LogLevel, msg: string): void {
@@ -30,5 +30,3 @@ function createLogger(level: LogLevel = "info"): Logger {
     error: (msg) => write("error", msg),
   };
 }
-
-export { createLogger, type Logger, type LogLevel };

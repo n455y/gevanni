@@ -13,7 +13,7 @@ import type {
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
 // --- Scenario ---
-interface Scenario {
+export interface Scenario {
   id: ScenarioId;
   name: string;
   type: ScenarioType;
@@ -21,13 +21,13 @@ interface Scenario {
 }
 
 // --- JSON types ---
-type JsonPrimitive = string | number | boolean | null;
-type JsonArray = JsonValue[];
-type JsonObject = { [key: string]: JsonValue };
-type JsonValue = JsonPrimitive | JsonArray | JsonObject;
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonArray = JsonValue[];
+export type JsonObject = { [key: string]: JsonValue };
+export type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
 // --- AuditParameter ---
-class AuditParameter<
+export class AuditParameter<
   L extends SerializableValue = SerializableValue,
   V extends SerializableValue = SerializableValue,
 > extends SerializableBase<{
@@ -80,7 +80,7 @@ class AuditParameter<
 }
 
 // --- AuditMutation ---
-abstract class AuditMutation<
+export abstract class AuditMutation<
   P extends AuditParameter = AuditParameter,
 > {
   readonly parameter: P;
@@ -98,35 +98,35 @@ abstract class AuditMutation<
 }
 
 // --- HTTP ---
-interface HttpRequest {
+export interface HttpRequest {
   method: string;
   url: string;
   headers: Record<string, string>;
   body: Buffer | null;
 }
 
-interface HttpResponse {
+export interface HttpResponse {
   statusCode: number;
   headers: Record<string, string>;
   body: Buffer | null;
 }
 
 // --- Exchange ---
-interface Exchange {
+export interface Exchange {
   id: ExchangeId;
   request: HttpRequest;
   response: HttpResponse;
 }
 
 // --- Evidence ---
-interface Evidence {
+export interface Evidence {
   judgmentId: string;
   exchanges: Exchange[];
   evidenceExchanges: Exchange[];
 }
 
 // --- Finding ---
-interface Finding {
+export interface Finding {
   vulnerable: boolean;
   evidence: Evidence;
   request: HttpRequest;
@@ -134,7 +134,7 @@ interface Finding {
 }
 
 // --- Job ---
-interface Job {
+export interface Job {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
@@ -148,7 +148,7 @@ interface Job {
 }
 
 // --- ScanState ---
-interface ScanState {
+export interface ScanState {
   id: ScanId;
   status: ScanStatus;
   startedAt: Date;
@@ -156,14 +156,14 @@ interface ScanState {
 }
 
 // --- SerializedScanState ---
-interface SerializedScanState {
+export interface SerializedScanState {
   id: ScanId;
   status: ScanStatus;
   startedAt: number;
   updatedAt: number;
 }
 
-function serializeScanState(state: ScanState): SerializedScanState {
+export function serializeScanState(state: ScanState): SerializedScanState {
   return {
     ...state,
     startedAt: state.startedAt.getTime(),
@@ -171,7 +171,7 @@ function serializeScanState(state: ScanState): SerializedScanState {
   };
 }
 
-function deserializeScanState(data: SerializedScanState): ScanState {
+export function deserializeScanState(data: SerializedScanState): ScanState {
   return {
     ...data,
     startedAt: new Date(data.startedAt),
@@ -180,13 +180,13 @@ function deserializeScanState(data: SerializedScanState): ScanState {
 }
 
 // --- ScanConfig ---
-interface ScanConfig {
+export interface ScanConfig {
   concurrency: number;
   plugins: PluginConfig[];
   scenarioSources: unknown[];
 }
 
-interface PluginConfig {
+export interface PluginConfig {
   type: string;
   name: string;
   options: Record<string, unknown>;
@@ -194,7 +194,7 @@ interface PluginConfig {
 
 // --- Serialized Job ---
 
-interface SerializedJob {
+export interface SerializedJob {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
@@ -207,7 +207,7 @@ interface SerializedJob {
   updatedAt: number;
 }
 
-function serializeJob(job: Job): SerializedJob {
+export function serializeJob(job: Job): SerializedJob {
   return {
     ...job,
     parameter: job.parameter.serialize(),
@@ -216,7 +216,7 @@ function serializeJob(job: Job): SerializedJob {
   };
 }
 
-function deserializeJob(data: SerializedJob): Job {
+export function deserializeJob(data: SerializedJob): Job {
   return {
     ...data,
     parameter: AuditParameter.deserialize(data.parameter),
@@ -224,24 +224,3 @@ function deserializeJob(data: SerializedJob): Job {
     updatedAt: new Date(data.updatedAt),
   };
 }
-
-export type {
-  Scenario,
-  JsonPrimitive,
-  JsonArray,
-  JsonObject,
-  JsonValue,
-  HttpRequest,
-  HttpResponse,
-  Exchange,
-  Evidence,
-  Finding,
-  Job,
-  ScanState,
-  ScanConfig,
-  PluginConfig,
-  SerializedJob,
-  SerializedScanState,
-};
-
-export { AuditParameter, AuditMutation, serializeJob, deserializeJob, serializeScanState, deserializeScanState };

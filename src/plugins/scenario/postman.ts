@@ -11,30 +11,30 @@ import newman from "newman";
 
 // --- Postman Collection types (v2.1 subset) ---
 
-interface PostmanHeader {
+export interface PostmanHeader {
   key: string;
   value: string;
 }
 
-interface PostmanBody {
+export interface PostmanBody {
   mode?: string;
   raw?: string;
 }
 
-interface PostmanRequest {
+export interface PostmanRequest {
   method: string;
   url: { raw: string } | string;
   header?: PostmanHeader[];
   body?: PostmanBody;
 }
 
-interface PostmanItem {
+export interface PostmanItem {
   request: PostmanRequest;
 }
 
 // --- Newman Runner ---
 
-function runNewman(
+export function runNewman(
   scenario: Scenario,
   proxyPort: number,
   replayId: string,
@@ -104,7 +104,7 @@ function runNewman(
 
 // --- Plugin ---
 
-class PostmanPlugin implements Plugin {
+export class PostmanPlugin implements Plugin {
   readonly name = "postman";
 
   async init(context: PluginContext): Promise<void> {
@@ -126,6 +126,3 @@ class PostmanPlugin implements Plugin {
 }
 
 export const PostmanScenarioType = ScenarioType("postman");
-
-export { PostmanPlugin, runNewman };
-export type { PostmanHeader, PostmanBody, PostmanRequest, PostmanItem };

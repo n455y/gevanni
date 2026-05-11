@@ -46,7 +46,7 @@ function computeSummary(jobs: Job[]): ReportSummary {
   };
 }
 
-class JsonReporterPlugin implements Plugin {
+export class JsonReporterPlugin implements Plugin {
   readonly name = "json-reporter";
   private outputPath: string | undefined;
 
@@ -79,5 +79,3 @@ class JsonReporterPlugin implements Plugin {
     });
   }
 }
-
-export { JsonReporterPlugin };

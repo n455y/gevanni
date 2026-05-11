@@ -7,7 +7,7 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
-class HeaderParameter extends AuditParameter<{ name: string }, string> {
+export class HeaderParameter extends AuditParameter<{ name: string }, string> {
   static kind = "header";
   createMutation(payload: Payload, method: AnyMutationType): HeaderMutation {
     return new HeaderMutation(this, payload, method);
@@ -15,9 +15,9 @@ class HeaderParameter extends AuditParameter<{ name: string }, string> {
 }
 serializable(HeaderParameter);
 
-class HeaderMutation extends AuditMutation<HeaderParameter> {}
+export class HeaderMutation extends AuditMutation<HeaderParameter> {}
 
-class HeaderParserPlugin implements Plugin {
+export class HeaderParserPlugin implements Plugin {
   readonly name = "header-parser";
 
   async init(context: PluginContext): Promise<void> {
@@ -27,7 +27,7 @@ class HeaderParserPlugin implements Plugin {
   }
 }
 
-class HeaderMutationPlugin implements Plugin {
+export class HeaderMutationPlugin implements Plugin {
   readonly name = "header-mutation";
 
   async init(context: PluginContext): Promise<void> {
@@ -91,10 +91,3 @@ function applyMutation(
       return current;
   }
 }
-
-export {
-  HeaderParserPlugin,
-  HeaderMutationPlugin,
-  HeaderParameter,
-  HeaderMutation,
-};
