@@ -1,20 +1,21 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { JsonParserPlugin, JsonMutationPlugin } from "./json.ts";
+import type { AnyMutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
+import type { AuditParameter, HttpRequest } from "../../types/models.ts";
 import {
-  JsonPrimitiveParameter,
-  JsonArrayParameter,
-  JsonObjectParameter,
-  JsonPrimitiveMutation,
   JsonArrayMutation,
+  JsonArrayParameter,
+  JsonMutationPlugin,
+  JsonObjectParameter,
+  JsonParserPlugin,
+  JsonPrimitiveMutation,
+  JsonPrimitiveParameter,
 } from "./json.ts";
 import { QueryParameter } from "./query.ts";
-import type { HttpRequest, AuditParameter } from "../../types/models.ts";
-import { ParseRequestCommand } from "../../commands/parse-request.ts";
-import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import { BuiltinMutationType, Payload } from "../../types/branded.ts";
-import type { AnyMutationType } from "../../types/branded.ts";
 
 type AnyJsonTarget =
   | JsonPrimitiveParameter
@@ -56,7 +57,7 @@ function makeJsonPrimitiveInstruction(
         BuiltinMutationType.PrependValue,
       ],
     ),
-    Payload.string(payload),
+    BuiltinPayload.String(payload),
     method,
   );
 }
@@ -334,7 +335,10 @@ describe("JsonMutationPlugin", () => {
       BuiltinMutationType.ReplaceValue,
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
-    ]).createMutation(Payload.string("INJECTED"), BuiltinMutationType.ReplaceValue);
+    ]).createMutation(
+      BuiltinPayload.String("INJECTED"),
+      BuiltinMutationType.ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),
@@ -427,7 +431,7 @@ describe("JsonMutationPlugin", () => {
           BuiltinMutationType.PrependValue,
         ],
       ),
-      Payload.string("INJECTED"),
+      BuiltinPayload.String("INJECTED"),
       BuiltinMutationType.ReplaceValue,
     );
 

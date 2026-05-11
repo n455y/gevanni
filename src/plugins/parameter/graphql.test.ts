@@ -1,23 +1,24 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./graphql.ts";
-import {
-  GraphQLQueryParameter,
-  GraphQLVariableParameter,
-  GraphQLQueryMutation,
-  GraphQLVariableMutation,
-} from "./graphql.ts";
-import { QueryParameter } from "./query.ts";
+import type { AnyMutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
 import type {
   AuditParameter,
   HttpRequest,
   JsonValue,
 } from "../../types/models.ts";
-import { ParseRequestCommand } from "../../commands/parse-request.ts";
-import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import { BuiltinMutationType, Payload } from "../../types/branded.ts";
-import type { AnyMutationType } from "../../types/branded.ts";
+import {
+  GraphQLMutationPlugin,
+  GraphQLParserPlugin,
+  GraphQLQueryMutation,
+  GraphQLQueryParameter,
+  GraphQLVariableMutation,
+  GraphQLVariableParameter,
+} from "./graphql.ts";
+import { QueryParameter } from "./query.ts";
 
 type AnyGraphQLTarget = GraphQLQueryParameter | GraphQLVariableParameter;
 
@@ -51,7 +52,7 @@ function makeQueryInstruction(
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
     ]),
-    Payload.string(payload),
+    BuiltinPayload.String(payload),
     method,
   );
 }
@@ -68,7 +69,7 @@ function makeVariableInstruction(
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
     ]),
-    Payload.string(payload),
+    BuiltinPayload.String(payload),
     method,
   );
 }
@@ -452,7 +453,10 @@ describe("GraphQLMutationPlugin", () => {
       BuiltinMutationType.ReplaceValue,
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
-    ]).createMutation(Payload.string("INJECTED"), BuiltinMutationType.ReplaceValue);
+    ]).createMutation(
+      BuiltinPayload.String("INJECTED"),
+      BuiltinMutationType.ReplaceValue,
+    );
 
     const result = await commandBus.pipe(
       new ApplyMutationCommand(request, [instruction]),

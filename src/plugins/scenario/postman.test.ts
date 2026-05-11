@@ -1,19 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import http from "node:http";
-import { InMemoryCommandBus } from "../../core/command-bus.ts";
-import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { PostmanPlugin, PostmanScenarioType, runNewman } from "./postman.ts";
-import { startMutationProxy } from "../proxy/http-proxy.ts";
-import type { MutationProxy } from "../proxy/http-proxy.ts";
-import { ReplayCommand, type ReplayConfig } from "../../commands/replay.ts";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   LoadExchangesCommand,
   SaveExchangeCommand,
 } from "../../commands/exchange.ts";
-import { QueryMutationPlugin, QueryMutation } from "../parameter/query.ts";
-import type { Scenario, Exchange } from "../../types/models.ts";
-import { QueryParameter } from "../parameter/query.ts";
-import { BuiltinMutationType, ScenarioId, Payload } from "../../types/branded.ts";
+import { ReplayCommand, type ReplayConfig } from "../../commands/replay.ts";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import {
+  BuiltinMutationType,
+  BuiltinPayload,
+  ScenarioId,
+} from "../../types/branded.ts";
+import type { Exchange, Scenario } from "../../types/models.ts";
+import {
+  QueryMutation,
+  QueryMutationPlugin,
+  QueryParameter,
+} from "../parameter/query.ts";
+import type { MutationProxy } from "../proxy/http-proxy.ts";
+import { startMutationProxy } from "../proxy/http-proxy.ts";
+import { PostmanPlugin, PostmanScenarioType, runNewman } from "./postman.ts";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
@@ -102,7 +109,7 @@ function makeTamperInstruction(): QueryMutation {
     new QueryParameter({ name: "q" }, "original", [
       BuiltinMutationType.ReplaceValue,
     ]),
-    Payload.string("<script>"),
+    BuiltinPayload.String("<script>"),
     BuiltinMutationType.ReplaceValue,
   );
 }

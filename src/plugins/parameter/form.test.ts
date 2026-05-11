@@ -1,14 +1,17 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { FormParserPlugin, FormMutationPlugin } from "./form.ts";
-import { ParseRequestCommand } from "../../commands/parse-request.ts";
-import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import { AuditParameter, type HttpRequest } from "../../types/models.ts";
-import { FormParameter } from "./form.ts";
-import { FormMutation } from "./form.ts";
-import { BuiltinMutationType, Payload } from "../../types/branded.ts";
 import type { AnyMutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
+import { AuditParameter, type HttpRequest } from "../../types/models.ts";
+import {
+  FormMutation,
+  FormMutationPlugin,
+  FormParameter,
+  FormParserPlugin,
+} from "./form.ts";
 
 let commandBus: InMemoryCommandBus;
 
@@ -41,7 +44,7 @@ function makeFormInstruction(
       BuiltinMutationType.AppendValue,
       BuiltinMutationType.PrependValue,
     ]),
-    Payload.string(payload),
+    BuiltinPayload.String(payload),
     method,
   );
 }

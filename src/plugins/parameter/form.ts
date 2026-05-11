@@ -61,7 +61,7 @@ export class FormMutationPlugin implements Plugin {
       for (const instr of formMutations) {
         const parameterName = instr.parameter.location.name;
         const current = formBody.get(parameterName) ?? "";
-        const payload = instr.payload as string;
+        const payload = String(instr.payload);
         const modified = applyMutation(current, payload, instr.method);
         formBody.set(parameterName, modified);
       }

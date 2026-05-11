@@ -52,7 +52,7 @@ export class HeaderMutationPlugin implements Plugin {
       for (const instr of headerMutations) {
         const parameterName = instr.parameter.location.name;
         const current = headers[parameterName] ?? "";
-        const payload = instr.payload as string;
+        const payload = String(instr.payload);
         headers[parameterName] = applyMutation(current, payload, instr.method);
       }
 

@@ -1,23 +1,25 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import http from "node:http";
 import https from "node:https";
 import selfsigned from "selfsigned";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import { InMemoryCommandBus } from "../../core/command-bus.ts";
-import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { HttpProxyPlugin } from "./http-proxy.ts";
-import { InterceptCommand } from "../../commands/intercept.ts";
-import { ApplyMutationCommand } from "../../commands/mutation.ts";
-import { startMutationProxy } from "./http-proxy.ts";
-import type { HttpRequest, HttpResponse } from "../../types/models.ts";
-import { AuditMutation } from "../../types/models.ts";
-import type { Exchange } from "../../types/models.ts";
-import { BuiltinMutationType, Payload } from "../../types/branded.ts";
-import { QueryParameter } from "../parameter/query.ts";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   LoadExchangesCommand,
   SaveExchangeCommand,
 } from "../../commands/exchange.ts";
+import { InterceptCommand } from "../../commands/intercept.ts";
+import { ApplyMutationCommand } from "../../commands/mutation.ts";
+import { InMemoryCommandBus } from "../../core/command-bus.ts";
+import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
+import type {
+  Exchange,
+  HttpRequest,
+  HttpResponse,
+} from "../../types/models.ts";
+import { AuditMutation } from "../../types/models.ts";
+import { QueryParameter } from "../parameter/query.ts";
+import { HttpProxyPlugin, startMutationProxy } from "./http-proxy.ts";
 
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
@@ -259,7 +261,7 @@ describe("startMutationProxy", () => {
       new QueryParameter({ name: "q" }, "original", [
         BuiltinMutationType.ReplaceValue,
       ]).createMutation(
-        Payload.string("<script>"),
+        BuiltinPayload.String("<script>"),
         BuiltinMutationType.ReplaceValue,
       ),
     ];
@@ -270,7 +272,7 @@ describe("startMutationProxy", () => {
       for (const instr of _cmd.mutations) {
         const parameterName = (instr.parameter.location as { name: string })
           .name;
-        searchParams.set(parameterName, instr.payload as string);
+        searchParams.set(parameterName, String(instr.payload));
       }
       url.search = searchParams.toString();
       return { ...request, url: url.toString() };

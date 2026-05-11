@@ -256,7 +256,7 @@ function applyMutationValue(
 ): JsonValue {
   switch (method) {
     case BuiltinMutationType.ReplaceValue:
-      return payload;
+      return payload as unknown as JsonValue;
     case BuiltinMutationType.AppendValue:
       return String(current) + String(payload);
     case BuiltinMutationType.PrependValue:

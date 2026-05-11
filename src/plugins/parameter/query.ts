@@ -53,7 +53,7 @@ export class QueryMutationPlugin implements Plugin {
       for (const instr of queryMutations) {
         const parameterName = instr.parameter.location.name;
         const current = searchParams.get(parameterName) ?? "";
-        const payload = instr.payload as string;
+        const payload = String(instr.payload);
         const modified = applyMutation(current, payload, instr.method);
         searchParams.set(parameterName, modified);
       }

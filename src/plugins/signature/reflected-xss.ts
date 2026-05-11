@@ -1,11 +1,11 @@
-import {
-  BuiltinMutationType,
-  ExchangeId,
-  Payload,
-} from "../../types/branded.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import {
+  BuiltinMutationType,
+  BuiltinPayload,
+  ExchangeId,
+} from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 
 export class ReflectedXssPlugin implements Plugin {
@@ -29,7 +29,7 @@ export class ReflectedXssPlugin implements Plugin {
         return null;
       }
 
-      const payload = Payload.string("<script>alert(1)</script>");
+      const payload = BuiltinPayload.String("<script>alert(1)</script>");
       const instruction = parameter.createMutation(
         payload,
         BuiltinMutationType.AppendValue,

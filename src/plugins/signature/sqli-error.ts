@@ -1,11 +1,11 @@
-import {
-  BuiltinMutationType,
-  ExchangeId,
-  Payload,
-} from "../../types/branded.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
+import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import {
+  BuiltinMutationType,
+  BuiltinPayload,
+  ExchangeId,
+} from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 
 export const SQL_ERROR_PATTERNS: RegExp[] = [
@@ -37,7 +37,7 @@ export class SqliErrorPlugin implements Plugin {
         return null;
       }
 
-      const payload = Payload.string("' OR 1=1--");
+      const payload = BuiltinPayload.String("' OR 1=1--");
       const instruction = parameter.createMutation(
         payload,
         BuiltinMutationType.AppendValue,
