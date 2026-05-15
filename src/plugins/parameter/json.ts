@@ -23,9 +23,9 @@ export class JsonPrimitiveParameter extends AuditParameter<
   static kind = "json-primitive";
   createMutation<P extends Payload>(
     payload: P,
-    method: MutationType<P>,
+    mutationType: MutationType<P>,
   ): JsonPrimitiveMutation {
-    return new JsonPrimitiveMutation(this, payload, method);
+    return new JsonPrimitiveMutation(this, payload, mutationType);
   }
 }
 serializable(JsonPrimitiveParameter);
@@ -37,9 +37,9 @@ export class JsonArrayParameter extends AuditParameter<
   static kind = "json-array";
   createMutation<P extends Payload>(
     payload: P,
-    method: MutationType<P>,
+    mutationType: MutationType<P>,
   ): JsonArrayMutation {
-    return new JsonArrayMutation(this, payload, method);
+    return new JsonArrayMutation(this, payload, mutationType);
   }
 }
 serializable(JsonArrayParameter);
@@ -51,9 +51,9 @@ export class JsonObjectParameter extends AuditParameter<
   static kind = "json-object";
   createMutation<P extends Payload>(
     payload: P,
-    method: MutationType<P>,
+    mutationType: MutationType<P>,
   ): JsonObjectMutation {
-    return new JsonObjectMutation(this, payload, method);
+    return new JsonObjectMutation(this, payload, mutationType);
   }
 }
 serializable(JsonObjectParameter);
@@ -115,7 +115,7 @@ export class JsonMutationPlugin implements Plugin {
 
       for (const instr of jsonMutations) {
         const path = instr.parameter.location.path;
-        jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
+        jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.mutationType);
       }
 
       return {
@@ -187,10 +187,10 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: Payload,
-  method: MutationType,
+  mutationType: MutationType,
 ): JsonValue {
   if (path.length === 0) {
-    return applyMutationValue(root, payload, method);
+    return applyMutationValue(root, payload, mutationType);
   }
 
   if (typeof root !== "object" || root === null) {
@@ -203,7 +203,7 @@ function applyAtPath(
       return root;
     }
     const copy = [...root];
-    copy[index] = applyAtPath(copy[index], path.slice(1), payload, method);
+    copy[index] = applyAtPath(copy[index], path.slice(1), payload, mutationType);
     return copy;
   }
 
@@ -216,7 +216,7 @@ function applyAtPath(
     copy[key] as JsonValue,
     path.slice(1),
     payload,
-    method,
+    mutationType,
   );
   return copy;
 }
@@ -224,9 +224,9 @@ function applyAtPath(
 function applyMutationValue(
   current: JsonValue,
   payload: Payload,
-  method: MutationType,
+  mutationType: MutationType,
 ): JsonValue {
-  switch (method) {
+  switch (mutationType) {
     case BuiltinMutationType.ReplaceValue:
       return payload as unknown as JsonValue;
     case BuiltinMutationType.AppendValue:

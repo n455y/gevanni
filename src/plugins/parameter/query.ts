@@ -14,9 +14,9 @@ export class QueryParameter extends AuditParameter<{ name: string }, string> {
   static kind = "query";
   createMutation<P extends Payload>(
     payload: P,
-    method: MutationType<P>,
+    mutationType: MutationType<P>,
   ): QueryMutation {
-    return new QueryMutation(this, payload, method);
+    return new QueryMutation(this, payload, mutationType);
   }
 }
 serializable(QueryParameter);
@@ -53,7 +53,7 @@ export class QueryMutationPlugin implements Plugin {
         const parameterName = instr.parameter.location.name;
         const current = searchParams.get(parameterName) ?? "";
         const payload = String(instr.payload);
-        const modified = applyMutation(current, payload, instr.method);
+        const modified = applyMutation(current, payload, instr.mutationType);
         searchParams.set(parameterName, modified);
       }
 
@@ -89,9 +89,9 @@ function parseQueryParameters(request: HttpRequest): AuditParameter[] {
 function applyMutation(
   current: string,
   payload: string,
-  method: MutationType,
+  mutationType: MutationType,
 ): string {
-  switch (method) {
+  switch (mutationType) {
     case BuiltinMutationType.ReplaceValue:
       return payload;
     case BuiltinMutationType.AppendValue:

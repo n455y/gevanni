@@ -14,9 +14,9 @@ export class FormParameter extends AuditParameter<{ name: string }, string> {
   static kind = "form";
   createMutation<P extends Payload>(
     payload: P,
-    method: MutationType<P>,
+    mutationType: MutationType<P>,
   ): FormMutation {
-    return new FormMutation(this, payload, method);
+    return new FormMutation(this, payload, mutationType);
   }
 }
 serializable(FormParameter);
@@ -61,7 +61,7 @@ export class FormMutationPlugin implements Plugin {
         const parameterName = instr.parameter.location.name;
         const current = formBody.get(parameterName) ?? "";
         const payload = String(instr.payload);
-        const modified = applyMutation(current, payload, instr.method);
+        const modified = applyMutation(current, payload, instr.mutationType);
         formBody.set(parameterName, modified);
       }
 
@@ -104,9 +104,9 @@ function parseFormParameters(request: HttpRequest): AuditParameter[] {
 function applyMutation(
   current: string,
   payload: string,
-  method: MutationType,
+  mutationType: MutationType,
 ): string {
-  switch (method) {
+  switch (mutationType) {
     case BuiltinMutationType.ReplaceValue:
       return payload;
     case BuiltinMutationType.AppendValue:

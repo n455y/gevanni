@@ -17,9 +17,9 @@ export class GraphQLQueryParameter extends AuditParameter<
   static kind = "graphql-query";
   createMutation<P extends Payload>(
     payload: P,
-    method: MutationType<P>,
+    mutationType: MutationType<P>,
   ): GraphQLQueryMutation {
-    return new GraphQLQueryMutation(this, payload, method);
+    return new GraphQLQueryMutation(this, payload, mutationType);
   }
 }
 serializable(GraphQLQueryParameter);
@@ -31,9 +31,9 @@ export class GraphQLVariableParameter extends AuditParameter<
   static kind = "graphql-variable";
   createMutation(
     payload: Payload,
-    method: MutationType,
+    mutationType: MutationType,
   ): GraphQLVariableMutation {
-    return new GraphQLVariableMutation(this, payload, method);
+    return new GraphQLVariableMutation(this, payload, mutationType);
   }
 }
 serializable(GraphQLVariableParameter);
@@ -100,12 +100,12 @@ export class GraphQLMutationPlugin implements Plugin {
             (jsonBody as Record<string, JsonValue>)[field] = applyMutationValue(
               (jsonBody as Record<string, JsonValue>)[field],
               instr.payload,
-              instr.method,
+              instr.mutationType,
             );
           }
         } else if (instr instanceof GraphQLVariableMutation) {
           const path = instr.parameter.location.path;
-          jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.method);
+          jsonBody = applyAtPath(jsonBody, path, instr.payload, instr.mutationType);
         }
       }
 
@@ -214,10 +214,10 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: Payload,
-  method: MutationType,
+  mutationType: MutationType,
 ): JsonValue {
   if (path.length === 0) {
-    return applyMutationValue(root, payload, method);
+    return applyMutationValue(root, payload, mutationType);
   }
 
   if (typeof root !== "object" || root === null) {
@@ -230,7 +230,7 @@ function applyAtPath(
       return root;
     }
     const copy = [...root];
-    copy[index] = applyAtPath(copy[index], path.slice(1), payload, method);
+    copy[index] = applyAtPath(copy[index], path.slice(1), payload, mutationType);
     return copy;
   }
 
@@ -243,7 +243,7 @@ function applyAtPath(
     copy[key] as JsonValue,
     path.slice(1),
     payload,
-    method,
+    mutationType,
   );
   return copy;
 }
@@ -251,9 +251,9 @@ function applyAtPath(
 function applyMutationValue(
   current: JsonValue,
   payload: Payload,
-  method: MutationType,
+  mutationType: MutationType,
 ): JsonValue {
-  switch (method) {
+  switch (mutationType) {
     case BuiltinMutationType.ReplaceValue:
       return payload as unknown as JsonValue;
     case BuiltinMutationType.AppendValue:

@@ -73,7 +73,7 @@ export class AuditParameter<
 
   createMutation<P extends Payload>(
     _payload: P,
-    _method: MutationType<P>,
+    _mutationType: MutationType<P>,
   ): AuditMutation {
     throw new Error("Not implemented");
   }
@@ -83,11 +83,11 @@ export class AuditParameter<
 export abstract class AuditMutation<P extends AuditParameter = AuditParameter> {
   readonly parameter: P;
   readonly payload: Payload;
-  readonly method: MutationType;
-  constructor(parameter: P, payload: Payload, method: MutationType) {
+  readonly mutationType: MutationType;
+  constructor(parameter: P, payload: Payload, mutationType: MutationType) {
     this.parameter = parameter;
     this.payload = payload;
-    this.method = method;
+    this.mutationType = mutationType;
   }
 }
 

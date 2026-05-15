@@ -14,9 +14,9 @@ export class HeaderParameter extends AuditParameter<{ name: string }, string> {
   static kind = "header";
   createMutation<P extends Payload>(
     payload: P,
-    method: MutationType<P>,
+    mutationType: MutationType<P>,
   ): HeaderMutation {
-    return new HeaderMutation(this, payload, method);
+    return new HeaderMutation(this, payload, mutationType);
   }
 }
 serializable(HeaderParameter);
@@ -52,7 +52,7 @@ export class HeaderMutationPlugin implements Plugin {
         const parameterName = instr.parameter.location.name;
         const current = headers[parameterName] ?? "";
         const payload = String(instr.payload);
-        headers[parameterName] = applyMutation(current, payload, instr.method);
+        headers[parameterName] = applyMutation(current, payload, instr.mutationType);
       }
 
       return {
@@ -84,9 +84,9 @@ function parseHeaderParameters(request: HttpRequest): AuditParameter[] {
 function applyMutation(
   current: string,
   payload: string,
-  method: MutationType,
+  mutationType: MutationType,
 ): string {
-  switch (method) {
+  switch (mutationType) {
     case BuiltinMutationType.ReplaceValue:
       return payload;
     case BuiltinMutationType.PrependValue:
