@@ -3,7 +3,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import type { AnyMutationType } from "../../types/branded.ts";
+import type { MutationType } from "../../types/branded.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
 import type {
   AuditParameter,
@@ -44,7 +44,7 @@ function flatTargets(results: AuditParameter[][]): AnyGraphQLTarget[] {
 function makeQueryInstruction(
   field: string,
   payload: string,
-  method: AnyMutationType,
+  method: MutationType,
 ): GraphQLQueryMutation {
   return new GraphQLQueryMutation(
     new GraphQLQueryParameter({ field }, "", [
@@ -61,7 +61,7 @@ function makeVariableInstruction(
   path: string[],
   originalValue: JsonValue,
   payload: string,
-  method: AnyMutationType,
+  method: MutationType,
 ): GraphQLVariableMutation {
   return new GraphQLVariableMutation(
     new GraphQLVariableParameter({ path }, originalValue, [

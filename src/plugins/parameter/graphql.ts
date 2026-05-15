@@ -1,6 +1,5 @@
 import { BuiltinMutationType } from "../../types/branded.ts";
 import type {
-  AnyMutationType,
   MutationType,
   Payload,
 } from "../../types/branded.ts";
@@ -32,7 +31,7 @@ export class GraphQLVariableParameter extends AuditParameter<
   static kind = "graphql-variable";
   createMutation(
     payload: Payload,
-    method: AnyMutationType,
+    method: MutationType,
   ): GraphQLVariableMutation {
     return new GraphQLVariableMutation(this, payload, method);
   }
@@ -215,7 +214,7 @@ function applyAtPath(
   root: JsonValue,
   path: string[],
   payload: Payload,
-  method: AnyMutationType,
+  method: MutationType,
 ): JsonValue {
   if (path.length === 0) {
     return applyMutationValue(root, payload, method);
@@ -252,7 +251,7 @@ function applyAtPath(
 function applyMutationValue(
   current: JsonValue,
   payload: Payload,
-  method: AnyMutationType,
+  method: MutationType,
 ): JsonValue {
   switch (method) {
     case BuiltinMutationType.ReplaceValue:

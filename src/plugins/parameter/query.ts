@@ -1,6 +1,5 @@
 import { BuiltinMutationType } from "../../types/branded.ts";
 import type {
-  AnyMutationType,
   MutationType,
   Payload,
 } from "../../types/branded.ts";
@@ -90,7 +89,7 @@ function parseQueryParameters(request: HttpRequest): AuditParameter[] {
 function applyMutation(
   current: string,
   payload: string,
-  method: AnyMutationType,
+  method: MutationType,
 ): string {
   switch (method) {
     case BuiltinMutationType.ReplaceValue:

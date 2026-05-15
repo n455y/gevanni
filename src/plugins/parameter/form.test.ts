@@ -3,7 +3,7 @@ import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import type { AnyMutationType } from "../../types/branded.ts";
+import type { MutationType } from "../../types/branded.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
 import { AuditParameter, type HttpRequest } from "../../types/models.ts";
 import {
@@ -36,7 +36,7 @@ function makeFormInstruction(
   paramName: string,
   originalValue: string,
   payload: string,
-  method: AnyMutationType,
+  method: MutationType,
 ): FormMutation {
   return new FormMutation(
     new FormParameter({ name: paramName }, originalValue, [

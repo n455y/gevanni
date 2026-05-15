@@ -38,18 +38,21 @@ export namespace BuiltinPayload {
 }
 
 // --- MutationType ---
-export type AnyMutationType = string & { readonly __brand: "MutationType" };
-export type MutationType<P extends Payload = Payload> = AnyMutationType & {
-  readonly __accepts?: (payload: P) => void;
+declare const __payload: unique symbol;
+export type MutationType<P extends Payload = Payload> = Brand<
+  string,
+  "MutationType"
+> & {
+  readonly [__payload]: P;
 };
-export function defineMutationType<P extends Payload>(
+export function defineMutationType<P extends Payload = Payload>(
   name: string,
 ): MutationType<P> {
-  return name as MutationType<P>;
+  return name as any;
 }
 
 export const BuiltinMutationType = {
-  ReplaceValue: defineMutationType<Payload>("ReplaceValue"),
+  ReplaceValue: defineMutationType("ReplaceValue"),
   AppendValue: defineMutationType<StringPayload>("AppendValue"),
   PrependValue: defineMutationType<StringPayload>("PrependValue"),
 } as const;

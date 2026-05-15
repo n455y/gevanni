@@ -1,6 +1,5 @@
 import { ScenarioType } from "./branded.ts";
 import type {
-  AnyMutationType,
   ScenarioId,
   JobId,
   ScanId,
@@ -34,16 +33,16 @@ export class AuditParameter<
 > extends SerializableBase<{
   location: L;
   originalValue: V;
-  allowedMutations: AnyMutationType[];
+  allowedMutations: MutationType[];
 }> {
   static base = "audit-parameter";
   readonly location: L;
   readonly originalValue: V;
-  readonly allowedMutations: AnyMutationType[];
+  readonly allowedMutations: MutationType[];
   constructor(
     location: L,
     originalValue: V,
-    allowedMutations: AnyMutationType[],
+    allowedMutations: MutationType[],
   ) {
     super();
     this.location = location;
@@ -63,7 +62,7 @@ export class AuditParameter<
   >(serialized: {
     location: L;
     originalValue: V;
-    allowedMutations: AnyMutationType[];
+    allowedMutations: MutationType[];
   }) {
     return new this(
       serialized.location,
@@ -84,8 +83,8 @@ export class AuditParameter<
 export abstract class AuditMutation<P extends AuditParameter = AuditParameter> {
   readonly parameter: P;
   readonly payload: Payload;
-  readonly method: AnyMutationType;
-  constructor(parameter: P, payload: Payload, method: AnyMutationType) {
+  readonly method: MutationType;
+  constructor(parameter: P, payload: Payload, method: MutationType) {
     this.parameter = parameter;
     this.payload = payload;
     this.method = method;
