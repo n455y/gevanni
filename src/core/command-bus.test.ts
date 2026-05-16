@@ -179,8 +179,8 @@ describe("InMemoryCommandBus edge cases", () => {
 describe("InMemoryCommandBus keyed broadcast", () => {
   it("routes to handler matching key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.registerKeyed(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
-    bus.registerKeyed(KeyedCommand, "beta", async (cmd) => `beta-${cmd.routeKey}`);
+    bus.register(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+    bus.register(KeyedCommand, "beta", async (cmd) => `beta-${cmd.routeKey}`);
 
     const results = await bus.broadcast(new KeyedCommand("alpha"));
     expect(results).toEqual(["alpha-alpha"]);
@@ -188,7 +188,7 @@ describe("InMemoryCommandBus keyed broadcast", () => {
 
   it("returns empty array when no handler matches key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.registerKeyed(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+    bus.register(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
 
     const results = await bus.broadcast(new KeyedCommand("unknown"));
     expect(results).toEqual([]);
@@ -196,8 +196,8 @@ describe("InMemoryCommandBus keyed broadcast", () => {
 
   it("calls all handlers registered under the same key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.registerKeyed(KeyedCommand, "shared", async () => "first");
-    bus.registerKeyed(KeyedCommand, "shared", async () => "second");
+    bus.register(KeyedCommand, "shared", async () => "first");
+    bus.register(KeyedCommand, "shared", async () => "second");
 
     const results = await bus.broadcast(new KeyedCommand("shared"));
     expect(results).toEqual(["first", "second"]);

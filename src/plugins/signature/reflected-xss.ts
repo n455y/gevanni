@@ -23,7 +23,7 @@ export class ReflectedXssPlugin implements Plugin {
         }));
     });
 
-    context.commandBus.registerKeyed(RunAuditCommand, "reflected-xss", async (cmd) => {
+    context.commandBus.register(RunAuditCommand, "reflected-xss", async (cmd) => {
       const { parameter, replay } = cmd.context;
 
       const payload = BuiltinPayload.String("<script>alert(1)</script>");

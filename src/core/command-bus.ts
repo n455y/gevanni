@@ -17,13 +17,9 @@ type HandlerFor<T extends Command<any>> = T extends PipelineCommand<any>
 export interface CommandBus {
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
-    handler: HandlerFor<T>,
-  ): void;
-
-  registerKeyed<T extends KeyedBroadcastCommand<any>>(
-    commandClass: new (...args: any[]) => T,
-    key: string,
-    handler: CommandHandler<T, CommandResult<T>>,
+    ...args: T extends KeyedBroadcastCommand<any>
+      ? [key: string, handler: CommandHandler<T, CommandResult<T>>]
+      : [handler: HandlerFor<T>]
   ): void;
 
   dispatch<TResult>(command: SingleCommand<TResult>): Promise<TResult>;
@@ -40,39 +36,40 @@ export class InMemoryCommandBus implements CommandBus {
 
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
-    handler: HandlerFor<T>,
+    ...args: T extends KeyedBroadcastCommand<any>
+      ? [key: string, handler: CommandHandler<T, CommandResult<T>>]
+      : [handler: HandlerFor<T>]
+  ): void;
+  register<T extends Command<any>>(
+    commandClass: new (...args: any[]) => T,
+    keyOrHandler: string | HandlerFor<T>,
+    handler?: CommandHandler<T, CommandResult<T>>,
   ): void {
     const name = commandClass.name;
 
-    this.singleHandlers.set(name, handler);
+    if (typeof keyOrHandler === "string" && handler) {
+      this.singleHandlers.set(name, handler);
+      let keyMap = this.keyedHandlers.get(name);
+      if (!keyMap) {
+        keyMap = new Map();
+        this.keyedHandlers.set(name, keyMap);
+      }
+      const existing = keyMap.get(keyOrHandler);
+      if (existing) {
+        existing.push(handler);
+      } else {
+        keyMap.set(keyOrHandler, [handler]);
+      }
+      return;
+    }
 
+    const h = keyOrHandler as HandlerFor<T>;
+    this.singleHandlers.set(name, h);
     const existing = this.multiHandlers.get(name);
     if (existing) {
-      existing.push(handler);
+      existing.push(h);
     } else {
-      this.multiHandlers.set(name, [handler]);
-    }
-  }
-
-  registerKeyed<T extends KeyedBroadcastCommand<any>>(
-    commandClass: new (...args: any[]) => T,
-    key: string,
-    handler: CommandHandler<T, CommandResult<T>>,
-  ): void {
-    const name = commandClass.name;
-
-    this.singleHandlers.set(name, handler);
-
-    let keyMap = this.keyedHandlers.get(name);
-    if (!keyMap) {
-      keyMap = new Map();
-      this.keyedHandlers.set(name, keyMap);
-    }
-    const existing = keyMap.get(key);
-    if (existing) {
-      existing.push(handler);
-    } else {
-      keyMap.set(key, [handler]);
+      this.multiHandlers.set(name, [h]);
     }
   }
 

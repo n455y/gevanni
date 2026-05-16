@@ -274,7 +274,7 @@ describe("Orchestrator", () => {
           response: mockResponse,
         },
       ]);
-      commandBus.registerKeyed(RunAuditCommand, "mock-sig", async () => mockFinding);
+      commandBus.register(RunAuditCommand, "mock-sig", async () => mockFinding);
 
       eventBus.subscribe("scan:jobStarted", () => {
         events.push("started");
@@ -344,7 +344,7 @@ describe("Orchestrator", () => {
           response: mockResponse,
         },
       ]);
-      commandBus.registerKeyed(RunAuditCommand, "failing-sig", async () => {
+      commandBus.register(RunAuditCommand, "failing-sig", async () => {
         throw new Error("Inspection failed");
       });
 

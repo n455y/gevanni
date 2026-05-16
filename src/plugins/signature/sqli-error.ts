@@ -31,7 +31,7 @@ export class SqliErrorPlugin implements Plugin {
         }));
     });
 
-    context.commandBus.registerKeyed(RunAuditCommand, "sqli-error", async (cmd) => {
+    context.commandBus.register(RunAuditCommand, "sqli-error", async (cmd) => {
       const { parameter, replay } = cmd.context;
 
       const payload = BuiltinPayload.String("' OR 1=1--");
