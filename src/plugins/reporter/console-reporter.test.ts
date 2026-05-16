@@ -12,6 +12,7 @@ import {
   JobStatus,
   ScanStatus,
   ExchangeId,
+  SignatureId,
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
@@ -30,7 +31,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    signatureName: "reflected-xss",
+    signatureName: SignatureId("reflected-xss"),
 parameter: new QueryParameter({ name: "" }, "", []),
     status: JobStatus.Completed,
     finding: null,
@@ -83,7 +84,7 @@ describe("ConsoleReporterPlugin", () => {
     const scanState = makeScanState();
     const vulnerableJob = makeJob({
       id: JobId("job-vuln"),
-      signatureName: "reflected-xss",
+      signatureName: SignatureId("reflected-xss"),
       status: JobStatus.Completed,
 parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       finding: {
@@ -127,7 +128,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const scanState = makeScanState();
     const safeJob = makeJob({
       id: JobId("job-safe"),
-      signatureName: "sqli-error",
+      signatureName: SignatureId("sqli-error"),
       status: JobStatus.Completed,
       finding: {
         vulnerable: false,
@@ -157,7 +158,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const scanState = makeScanState();
     const errorJob = makeJob({
       id: JobId("job-err"),
-      signatureName: "reflected-xss",
+      signatureName: SignatureId("reflected-xss"),
       status: JobStatus.Error,
       finding: null,
       error: "Connection refused" as any,

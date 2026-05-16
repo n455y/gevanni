@@ -9,6 +9,7 @@ import type {
   Payload,
   ErrorMessage,
   MutationType,
+  SignatureId,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
@@ -132,7 +133,7 @@ export interface Job {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
-  signatureName: string;
+  signatureName: SignatureId;
   parameter: AuditParameter;
   status: JobStatus;
   finding: Finding | null;
@@ -192,7 +193,7 @@ export interface SerializedJob {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
-  signatureName: string;
+  signatureName: SignatureId;
   parameter: { base: string; kind: string; serialized: SerializableValue };
   status: JobStatus;
   finding: Finding | null;

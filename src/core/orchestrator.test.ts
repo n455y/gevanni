@@ -23,6 +23,7 @@ import {
   ScenarioId,
   JobStatus,
   ScanStatus,
+  SignatureId,
 } from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";
 import {
@@ -113,7 +114,7 @@ describe("Orchestrator", () => {
       commandBus.register(ParseRequestCommand, async () => mockTargets);
 
       const mockItem: AuditItem = {
-        signatureName: "mock-sig",
+        signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
@@ -170,7 +171,7 @@ describe("Orchestrator", () => {
       commandBus.register(ParseRequestCommand, async () => mockTargets);
 
       const mockItem: AuditItem = {
-        signatureName: "mock-sig",
+        signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
@@ -234,7 +235,7 @@ describe("Orchestrator", () => {
         id: JobId("job-1"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
-        signatureName: "mock-sig",
+        signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
@@ -245,7 +246,7 @@ describe("Orchestrator", () => {
 
       const items = new Map<string, AuditItem>();
       items.set("job-1", {
-        signatureName: "mock-sig",
+        signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
       });
 
@@ -304,7 +305,7 @@ describe("Orchestrator", () => {
         id: JobId("job-err"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
-        signatureName: "failing-sig",
+        signatureName: SignatureId("failing-sig"),
         parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
@@ -315,7 +316,7 @@ describe("Orchestrator", () => {
 
       const items = new Map<string, AuditItem>();
       items.set("job-err", {
-        signatureName: "failing-sig",
+        signatureName: SignatureId("failing-sig"),
         parameter: mockTargets[0],
       });
 
@@ -400,7 +401,7 @@ describe("Orchestrator", () => {
           id: JobId("job-1"),
           scanId: ScanId("report-scan-id"),
           scenarioId: ScenarioId("sc-1"),
-          signatureName: "reflected-xss",
+          signatureName: SignatureId("reflected-xss"),
           parameter: mockTargets[0],
           status: JobStatus.Completed,
           finding: mockFinding,

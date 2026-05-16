@@ -6,9 +6,10 @@ import type {
   HttpRequest,
   HttpResponse,
 } from "../types/models.ts";
+import type { SignatureId } from "../types/branded.ts";
 
 export interface RunAuditContext {
-  signatureName: string;
+  signatureName: SignatureId;
   parameter: AuditParameter;
   replay: (mutations: AuditMutation[]) => Promise<{
     request: HttpRequest;

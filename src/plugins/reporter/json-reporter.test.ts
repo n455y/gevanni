@@ -15,6 +15,7 @@ import {
   JobStatus,
   ScanStatus,
   ExchangeId,
+  SignatureId,
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
@@ -33,7 +34,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    signatureName: "reflected-xss",
+    signatureName: SignatureId("reflected-xss"),
 parameter: new QueryParameter({ name: "" }, "", []),
     status: JobStatus.Completed,
     finding: null,

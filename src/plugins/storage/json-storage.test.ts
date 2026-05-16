@@ -29,6 +29,7 @@ import {
   ScanStatus,
   ExchangeId,
   ReplayId,
+  SignatureId,
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
@@ -37,7 +38,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    signatureName: "sig-1",
+    signatureName: SignatureId("sig-1"),
 parameter: new QueryParameter({ name: "" }, "", []),
     status: JobStatus.Pending,
     finding: null,
@@ -112,7 +113,7 @@ describe("JsonStoragePlugin", () => {
 
     it("saves multiple jobs and retrieves each", async () => {
       const job1 = makeJob({ id: JobId("job-1") });
-      const job2 = makeJob({ id: JobId("job-2"), signatureName: "sig-2" });
+      const job2 = makeJob({ id: JobId("job-2"), signatureName: SignatureId("sig-2") });
 
       await commandBus.dispatch(new SaveJobCommand(job1));
       await commandBus.dispatch(new SaveJobCommand(job2));
@@ -228,7 +229,7 @@ describe("JsonStoragePlugin", () => {
     });
 
     it("preserves fields not included in updates", async () => {
-      const job = makeJob({ signatureName: "original" });
+      const job = makeJob({ signatureName: SignatureId("original") });
       await commandBus.dispatch(new SaveJobCommand(job));
 
       await commandBus.dispatch(

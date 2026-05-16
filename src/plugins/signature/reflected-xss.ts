@@ -2,13 +2,14 @@ import {
   BuiltinMutationType,
   BuiltinPayload,
   ExchangeId,
+  SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = "reflected-xss";
+  readonly name = SignatureId("reflected-xss");
 
   constructor() {
     super([BuiltinMutationType.AppendValue]);

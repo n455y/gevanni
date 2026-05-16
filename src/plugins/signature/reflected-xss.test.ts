@@ -14,7 +14,7 @@ import { QueryParameter } from "../parameter/query.ts";
 import { FormParameter } from "../parameter/form.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { BuiltinMutationType } from "../../types/branded.ts";
+import { BuiltinMutationType, SignatureId } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
@@ -139,7 +139,7 @@ describe("ReflectedXssPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: "reflected-xss",
+        signatureName: SignatureId("reflected-xss"),
         parameter,
         replay: mockReplay,
       }),
@@ -172,7 +172,7 @@ describe("ReflectedXssPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: "reflected-xss",
+        signatureName: SignatureId("reflected-xss"),
         parameter,
         replay: mockReplay,
       }),
@@ -204,7 +204,7 @@ describe("ReflectedXssPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: "reflected-xss",
+        signatureName: SignatureId("reflected-xss"),
         parameter,
         replay: mockReplay,
       }),

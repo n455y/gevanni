@@ -2,6 +2,7 @@ import {
   BuiltinMutationType,
   BuiltinPayload,
   ExchangeId,
+  SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -16,7 +17,7 @@ export const SQL_ERROR_PATTERNS: RegExp[] = [
 ];
 
 export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = "sqli-error";
+  readonly name = SignatureId("sqli-error");
 
   constructor() {
     super([BuiltinMutationType.AppendValue]);
