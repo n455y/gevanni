@@ -236,7 +236,7 @@ export class Orchestrator {
               new ReplayCommand(scenario, {
                 mutations,
                 proxyPort: proxy.port,
-                replayId: job.id,
+                replayId: crypto.randomUUID(),
               }),
             );
             return exchange;
