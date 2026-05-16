@@ -1,51 +1,39 @@
-import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
-import { RunAuditCommand } from "../../commands/run-audit.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import {
   BuiltinMutationType,
   BuiltinPayload,
   ExchangeId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
+import type { RunAuditContext } from "../../commands/run-audit.ts";
+import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
-export class ReflectedXssPlugin implements Plugin {
+export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "reflected-xss";
 
-  async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(CreateAuditItemsCommand, async (cmd) => {
-      return cmd.parameters
-        .filter((parameter) =>
-          parameter.allowedMutations.includes(BuiltinMutationType.AppendValue),
-        )
-        .map((parameter) => ({
-          signatureName: "reflected-xss",
-          parameter,
-        }));
-    });
+  constructor() {
+    super([BuiltinMutationType.AppendValue]);
+  }
 
-    context.commandBus.register(RunAuditCommand, "reflected-xss", async (cmd) => {
-      const { parameter, replay } = cmd.context;
-
-      const payload = BuiltinPayload.String("<script>alert(1)</script>");
-      const instruction = parameter.createMutation(
-        payload,
-        BuiltinMutationType.AppendValue,
-      );
-      const { request, response } = await replay([instruction]);
-      const body = response.body?.toString() ?? "";
-      const vulnerable = body.includes(payload);
-      const exchange = { id: ExchangeId("ex-0"), request, response };
-      const evidence: Evidence = {
-        judgmentId: "payload-reflection",
-        exchanges: [exchange],
-        evidenceExchanges: vulnerable ? [exchange] : [],
-      };
-      return {
-        vulnerable,
-        evidence,
-        request,
-        response,
-      };
-    });
+  protected async runAudit({ parameter, replay }: RunAuditContext) {
+    const payload = BuiltinPayload.String("<script>alert(1)</script>");
+    const instruction = parameter.createMutation(
+      payload,
+      BuiltinMutationType.AppendValue,
+    );
+    const { request, response } = await replay([instruction]);
+    const body = response.body?.toString() ?? "";
+    const vulnerable = body.includes(payload);
+    const exchange = { id: ExchangeId("ex-0"), request, response };
+    const evidence: Evidence = {
+      judgmentId: "payload-reflection",
+      exchanges: [exchange],
+      evidenceExchanges: vulnerable ? [exchange] : [],
+    };
+    return {
+      vulnerable,
+      evidence,
+      request,
+      response,
+    };
   }
 }
