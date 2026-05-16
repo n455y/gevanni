@@ -11,6 +11,7 @@ import {
   BuiltinMutationType,
   BuiltinPayload,
   ScenarioId,
+  ReplayId,
 } from "../../types/branded.ts";
 import type { Exchange, Scenario } from "../../types/models.ts";
 import {
@@ -132,7 +133,7 @@ describe("PostmanPlugin", () => {
       const config: ReplayConfig = {
         mutations: [],
         proxyPort: proxy.port,
-        replayId: "test-plan",
+        replayId: ReplayId("test-plan"),
       };
 
       const results = await commandBus.dispatch<Exchange[]>(
@@ -182,7 +183,7 @@ describe("PostmanPlugin", () => {
       const config: ReplayConfig = {
         mutations,
         proxyPort: proxy.port,
-        replayId: "test-tamper",
+        replayId: ReplayId("test-tamper"),
       };
 
       const results = await commandBus.dispatch<Exchange[]>(
@@ -221,7 +222,7 @@ describe("PostmanPlugin", () => {
       const config: ReplayConfig = {
         mutations: [],
         proxyPort: proxy.port,
-        replayId: "test-post",
+        replayId: ReplayId("test-post"),
       };
 
       const results = await commandBus.dispatch<Exchange[]>(
@@ -274,7 +275,7 @@ describe("runNewman", () => {
       };
 
       await expect(
-        runNewman(scenario, runNewmanProxy.port, "test-replay-id"),
+        runNewman(scenario, runNewmanProxy.port, ReplayId("test-replay-id")),
       ).resolves.toBeUndefined();
     },
   );
@@ -299,7 +300,7 @@ describe("runNewman", () => {
     };
 
     await expect(
-      runNewman(scenario, runNewmanProxy.port, "test-replay-id"),
+      runNewman(scenario, runNewmanProxy.port, ReplayId("test-replay-id")),
     ).resolves.toBeUndefined();
   });
 });
@@ -343,7 +344,7 @@ describe("PostmanPlugin multi-request", () => {
       const config: ReplayConfig = {
         mutations: [],
         proxyPort: proxy.port,
-        replayId: "test-multi",
+        replayId: ReplayId("test-multi"),
       };
 
       const results = await commandBus.dispatch<Exchange[]>(

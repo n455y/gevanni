@@ -5,6 +5,7 @@ import {
   JobStatus,
   ScanStatus,
   ErrorMessage,
+  ReplayId,
 } from "../types/branded.ts";
 import type {
   Job,
@@ -93,7 +94,7 @@ export class Orchestrator {
         await commandBus.dispatch(new SaveScenarioCommand(scenario));
 
         // b. Dispatch ReplayCommand with empty mutations to get original request
-        const rid = crypto.randomUUID();
+        const rid = ReplayId(crypto.randomUUID());
         const replayResult = (
           (await commandBus.dispatch(
             new ReplayCommand(scenario, {
@@ -236,7 +237,7 @@ export class Orchestrator {
               new ReplayCommand(scenario, {
                 mutations,
                 proxyPort: proxy.port,
-                replayId: crypto.randomUUID(),
+                replayId: ReplayId(crypto.randomUUID()),
               }),
             );
             return exchange;

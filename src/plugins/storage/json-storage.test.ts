@@ -28,6 +28,7 @@ import {
   JobStatus,
   ScanStatus,
   ExchangeId,
+  ReplayId,
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
@@ -350,7 +351,7 @@ describe("JsonStoragePlugin", () => {
     };
 
     it("saves and loads exchanges by replayId", async () => {
-      const replayId = "test-replay-001";
+      const replayId = ReplayId("test-replay-001");
       await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
       const loaded: Exchange[] = await commandBus.dispatch(
         new LoadExchangesCommand(replayId),
@@ -362,13 +363,13 @@ describe("JsonStoragePlugin", () => {
 
     it("returns empty array when no exchanges exist", async () => {
       const loaded: Exchange[] = await commandBus.dispatch(
-        new LoadExchangesCommand("nonexistent-id"),
+        new LoadExchangesCommand(ReplayId("nonexistent-id")),
       );
       expect(loaded).toEqual([]);
     });
 
     it("accumulates multiple exchanges for same replayId", async () => {
-      const replayId = "test-replay-002";
+      const replayId = ReplayId("test-replay-002");
       await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
       const exchange2: Exchange = {
         id: ExchangeId("exchange-002"),

@@ -1,10 +1,11 @@
 import { SingleCommand } from "../core/command.ts";
 import type { Scenario, AuditMutation, Exchange } from "../types/models.ts";
+import type { ReplayId } from "../types/branded.ts";
 
 export interface ReplayConfig {
   mutations: AuditMutation[];
   proxyPort: number;
-  replayId: string;
+  replayId: ReplayId;
 }
 
 export class ReplayCommand extends SingleCommand<Exchange[]> {

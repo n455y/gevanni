@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
+import type { ReplayId } from "../../types/branded.ts";
 import {
   serializeJob,
   deserializeJob,
@@ -240,7 +241,7 @@ export class JsonStoragePlugin implements Plugin {
     });
 
     // --- Exchange storage ---
-    const exchangesPath = (replayId: string) =>
+    const exchangesPath = (replayId: ReplayId) =>
       join(this.outputDir, "exchanges", `${replayId}.json`);
 
     bus.register(SaveExchangeCommand, async (cmd) => {

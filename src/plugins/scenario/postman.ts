@@ -1,6 +1,7 @@
 import type { Exchange, Scenario } from "../../types/models.ts";
 import { ScenarioType } from "../../types/branded.ts";
 import { ExchangeId } from "../../types/branded.ts";
+import type { ReplayId } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { ReplayCommand } from "../../commands/replay.ts";
 import { LoadExchangesCommand } from "../../commands/exchange.ts";
@@ -37,7 +38,7 @@ export interface PostmanItem {
 export function runNewman(
   scenario: Scenario,
   proxyPort: number,
-  replayId: string,
+  replayId: ReplayId,
 ): Promise<void> {
   const source = scenario.source as { items: PostmanItem[] };
   const items = source.items;

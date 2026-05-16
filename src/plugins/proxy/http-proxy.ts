@@ -9,7 +9,7 @@ import type {
   AuditMutation,
   Exchange,
 } from "../../types/models.ts";
-import { ExchangeId } from "../../types/branded.ts";
+import { ExchangeId, ReplayId } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
 import { InterceptCommand } from "../../commands/intercept.ts";
@@ -109,7 +109,7 @@ export async function startMutationProxy(
         : undefined;
       delete headers["x-gevanni-exchange-id"];
 
-      const replayId = headers["x-gevanni-replay-id"];
+      const replayId = ReplayId(headers["x-gevanni-replay-id"]!);
       delete headers["x-gevanni-replay-id"];
 
       const shouldMutate = headers["x-gevanni-mutate"] === "true";
@@ -170,7 +170,7 @@ export async function startMutationProxy(
                 },
               };
               await commandBus.dispatch(
-                new SaveExchangeCommand(replayId!, exchange),
+                new SaveExchangeCommand(replayId, exchange),
               );
 
               res.writeHead(

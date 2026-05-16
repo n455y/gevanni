@@ -8,6 +8,7 @@ import {
   SaveExchangeCommand,
 } from "../../commands/exchange.ts";
 import { InterceptCommand } from "../../commands/intercept.ts";
+import { ReplayId } from "../../types/branded.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
@@ -317,7 +318,7 @@ describe("startMutationProxy", () => {
   });
 
   it("saves exchange when X-Gevanni-Exchange-Id header is present", async () => {
-    const replayId = "replay-test-001";
+    const replayId = ReplayId("replay-test-001");
     const proxy = await startMutationProxy([], commandBus);
 
     commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
@@ -497,7 +498,7 @@ describe("startMutationProxy", () => {
     }, 15000);
 
     it("saves exchange for HTTPS requests", async () => {
-      const replayId = "replay-https-001";
+      const replayId = ReplayId("replay-https-001");
       const proxy = await startMutationProxy([], commandBus);
 
       commandBus.register(

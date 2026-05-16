@@ -10,6 +10,10 @@ export type ScanId = Brand<string, "ScanId">;
 export const ScanId = (id: string) => id as ScanId;
 export type ExchangeId = Brand<string, "ExchangeId">;
 export const ExchangeId = (id: string) => id as ExchangeId;
+export type ReplayId = Brand<string, "ReplayId">;
+export const ReplayId = (id: string) => id as ReplayId;
+export type SignatureId = Brand<string, "SignatureId">;
+export const SignatureId = (id: string) => id as SignatureId;
 
 // --- Enum-like (fixed values + Brand) ---
 
@@ -28,7 +32,7 @@ export const BuiltinPayload = {
   String: (v: string) => v as StringPayload,
   Number: (v: number) => v as NumberPayload,
   Boolean: (v: boolean) => v as BooleanPayload,
-  Null: null as NullPayload,
+  Null: () => null as NullPayload,
 } as const;
 export namespace BuiltinPayload {
   export type String = StringPayload;
