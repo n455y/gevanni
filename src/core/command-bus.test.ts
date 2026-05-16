@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   SingleCommand,
   BroadcastCommand,
+  KeyedBroadcastCommand,
   PipelineCommand,
 } from "./command.ts";
 import { InMemoryCommandBus } from "./command-bus.ts";
@@ -31,6 +32,16 @@ class AccumulateCommand extends PipelineCommand<number> {
   readonly type = "accumulate";
   readonly initial = 0;
   constructor(readonly addend: number) {
+    super();
+  }
+}
+
+class KeyedCommand extends KeyedBroadcastCommand<string> {
+  readonly type = "keyed";
+  get key() {
+    return this.routeKey;
+  }
+  constructor(readonly routeKey: string) {
     super();
   }
 }
@@ -162,5 +173,33 @@ describe("InMemoryCommandBus edge cases", () => {
     await expect(bus.dispatch(new EchoCommand("hello"))).rejects.toThrow(
       "No handler registered for command: EchoCommand",
     );
+  });
+});
+
+describe("InMemoryCommandBus keyed broadcast", () => {
+  it("routes to handler matching key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.registerKeyed(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+    bus.registerKeyed(KeyedCommand, "beta", async (cmd) => `beta-${cmd.routeKey}`);
+
+    const results = await bus.broadcast(new KeyedCommand("alpha"));
+    expect(results).toEqual(["alpha-alpha"]);
+  });
+
+  it("returns empty array when no handler matches key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.registerKeyed(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+
+    const results = await bus.broadcast(new KeyedCommand("unknown"));
+    expect(results).toEqual([]);
+  });
+
+  it("calls all handlers registered under the same key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.registerKeyed(KeyedCommand, "shared", async () => "first");
+    bus.registerKeyed(KeyedCommand, "shared", async () => "second");
+
+    const results = await bus.broadcast(new KeyedCommand("shared"));
+    expect(results).toEqual(["first", "second"]);
   });
 });

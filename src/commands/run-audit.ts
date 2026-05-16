@@ -1,4 +1,4 @@
-import { BroadcastCommand } from "../core/command.ts";
+import { KeyedBroadcastCommand } from "../core/command.ts";
 import type {
   AuditParameter,
   Finding,
@@ -16,9 +16,12 @@ export interface RunAuditContext {
   }>;
 }
 
-export class RunAuditCommand extends BroadcastCommand<Finding | null> {
+export class RunAuditCommand extends KeyedBroadcastCommand<Finding | null> {
   readonly type = "runAudit";
   readonly context: RunAuditContext;
+  get key() {
+    return this.context.signatureName;
+  }
   constructor(context: RunAuditContext) {
     super();
     this.context = context;

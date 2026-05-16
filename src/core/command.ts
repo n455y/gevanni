@@ -7,6 +7,10 @@ export abstract class SingleCommand<TResult> extends Command<TResult> {}
 
 export abstract class BroadcastCommand<TResult> extends Command<TResult> {}
 
+export abstract class KeyedBroadcastCommand<TResult> extends BroadcastCommand<TResult> {
+  abstract readonly key: string;
+}
+
 export abstract class PipelineCommand<TAccumulator> extends Command<TAccumulator> {
   abstract readonly initial: TAccumulator;
 }

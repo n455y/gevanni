@@ -1,5 +1,6 @@
 import {
   Command,
+  KeyedBroadcastCommand,
   type CommandHandler,
   type PipelineHandler,
   type SingleCommand,
@@ -19,6 +20,12 @@ export interface CommandBus {
     handler: HandlerFor<T>,
   ): void;
 
+  registerKeyed<T extends KeyedBroadcastCommand<any>>(
+    commandClass: new (...args: any[]) => T,
+    key: string,
+    handler: CommandHandler<T, CommandResult<T>>,
+  ): void;
+
   dispatch<TResult>(command: SingleCommand<TResult>): Promise<TResult>;
   broadcast<TResult>(command: BroadcastCommand<TResult>): Promise<TResult[]>;
   pipe<TResult>(command: PipelineCommand<TResult>): Promise<TResult>;
@@ -29,22 +36,43 @@ type AnyHandler = CommandHandler<any, any> | PipelineHandler<any, any>;
 export class InMemoryCommandBus implements CommandBus {
   private singleHandlers = new Map<string, AnyHandler>();
   private multiHandlers = new Map<string, AnyHandler[]>();
+  private keyedHandlers = new Map<string, Map<string, AnyHandler[]>>();
 
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
     handler: HandlerFor<T>,
   ): void {
-    const key = commandClass.name;
+    const name = commandClass.name;
 
-    // Store as single handler (overwrites on re-register for dispatch)
-    this.singleHandlers.set(key, handler);
+    this.singleHandlers.set(name, handler);
 
-    // Store as multi handler (appends on re-register for broadcast/pipe)
-    const existing = this.multiHandlers.get(key);
+    const existing = this.multiHandlers.get(name);
     if (existing) {
       existing.push(handler);
     } else {
-      this.multiHandlers.set(key, [handler]);
+      this.multiHandlers.set(name, [handler]);
+    }
+  }
+
+  registerKeyed<T extends KeyedBroadcastCommand<any>>(
+    commandClass: new (...args: any[]) => T,
+    key: string,
+    handler: CommandHandler<T, CommandResult<T>>,
+  ): void {
+    const name = commandClass.name;
+
+    this.singleHandlers.set(name, handler);
+
+    let keyMap = this.keyedHandlers.get(name);
+    if (!keyMap) {
+      keyMap = new Map();
+      this.keyedHandlers.set(name, keyMap);
+    }
+    const existing = keyMap.get(key);
+    if (existing) {
+      existing.push(handler);
+    } else {
+      keyMap.set(key, [handler]);
     }
   }
 
@@ -58,8 +86,18 @@ export class InMemoryCommandBus implements CommandBus {
   }
 
   async broadcast<TResult>(command: BroadcastCommand<TResult>): Promise<TResult[]> {
-    const key = command.constructor.name;
-    const handlers = this.multiHandlers.get(key);
+    const name = command.constructor.name;
+
+    if (command instanceof KeyedBroadcastCommand) {
+      const handlers = this.keyedHandlers.get(name)?.get(command.key) ?? [];
+      return Promise.all(
+        handlers.map((handler) =>
+          (handler as CommandHandler<typeof command, TResult>)(command),
+        ),
+      );
+    }
+
+    const handlers = this.multiHandlers.get(name);
     if (!handlers || handlers.length === 0) {
       return [];
     }
