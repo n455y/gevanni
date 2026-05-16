@@ -1,6 +1,6 @@
 import {
   Command,
-  KeyedBroadcastCommand,
+  type Keyed,
   type CommandHandler,
   type PipelineHandler,
   type SingleCommand,
@@ -14,11 +14,13 @@ type HandlerFor<T extends Command<any>> = T extends PipelineCommand<any>
   ? PipelineHandler<T, CommandResult<T>>
   : CommandHandler<T, CommandResult<T>>;
 
+const isKeyed = (cmd: Command<any>): cmd is Command<any> & Keyed => "key" in cmd;
+
 export interface CommandBus {
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
-    ...args: T extends KeyedBroadcastCommand<any>
-      ? [key: string, handler: CommandHandler<T, CommandResult<T>>]
+    ...args: T extends Keyed
+      ? [key: string, handler: HandlerFor<T>]
       : [handler: HandlerFor<T>]
   ): void;
 
@@ -30,25 +32,23 @@ export interface CommandBus {
 type AnyHandler = CommandHandler<any, any> | PipelineHandler<any, any>;
 
 export class InMemoryCommandBus implements CommandBus {
-  private singleHandlers = new Map<string, AnyHandler>();
-  private multiHandlers = new Map<string, AnyHandler[]>();
+  private handlers = new Map<string, AnyHandler[]>();
   private keyedHandlers = new Map<string, Map<string, AnyHandler[]>>();
 
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
-    ...args: T extends KeyedBroadcastCommand<any>
-      ? [key: string, handler: CommandHandler<T, CommandResult<T>>]
+    ...args: T extends Keyed
+      ? [key: string, handler: HandlerFor<T>]
       : [handler: HandlerFor<T>]
   ): void;
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
     keyOrHandler: string | HandlerFor<T>,
-    handler?: CommandHandler<T, CommandResult<T>>,
+    handler?: HandlerFor<T>,
   ): void {
     const name = commandClass.name;
 
     if (typeof keyOrHandler === "string" && handler) {
-      this.singleHandlers.set(name, handler);
       let keyMap = this.keyedHandlers.get(name);
       if (!keyMap) {
         keyMap = new Map();
@@ -64,53 +64,41 @@ export class InMemoryCommandBus implements CommandBus {
     }
 
     const h = keyOrHandler as HandlerFor<T>;
-    this.singleHandlers.set(name, h);
-    const existing = this.multiHandlers.get(name);
+    const existing = this.handlers.get(name);
     if (existing) {
       existing.push(h);
     } else {
-      this.multiHandlers.set(name, [h]);
+      this.handlers.set(name, [h]);
     }
+  }
+
+  private resolveHandlers(command: Command<any>): AnyHandler[] {
+    const name = command.constructor.name;
+    if (isKeyed(command)) {
+      return this.keyedHandlers.get(name)?.get(command.key) ?? [];
+    }
+    return this.handlers.get(name) ?? [];
   }
 
   async dispatch<TResult>(command: SingleCommand<TResult>): Promise<TResult> {
-    const key = command.constructor.name;
-    const handler = this.singleHandlers.get(key);
-    if (!handler) {
-      throw new Error(`No handler registered for command: ${key}`);
+    const handlers = this.resolveHandlers(command);
+    if (handlers.length === 0) {
+      const name = command.constructor.name;
+      const suffix = isKeyed(command) ? ` with key: ${command.key}` : "";
+      throw new Error(`No handler registered for command: ${name}${suffix}`);
     }
-    return (handler as CommandHandler<typeof command, TResult>)(command);
+    return (handlers[handlers.length - 1] as CommandHandler<typeof command, TResult>)(command);
   }
 
   async broadcast<TResult>(command: BroadcastCommand<TResult>): Promise<TResult[]> {
-    const name = command.constructor.name;
-
-    if (command instanceof KeyedBroadcastCommand) {
-      const handlers = this.keyedHandlers.get(name)?.get(command.key) ?? [];
-      return Promise.all(
-        handlers.map((handler) =>
-          (handler as CommandHandler<typeof command, TResult>)(command),
-        ),
-      );
-    }
-
-    const handlers = this.multiHandlers.get(name);
-    if (!handlers || handlers.length === 0) {
-      return [];
-    }
+    const handlers = this.resolveHandlers(command);
     return Promise.all(
-      handlers.map((handler) =>
-        (handler as CommandHandler<typeof command, TResult>)(command),
-      ),
+      handlers.map((h) => (h as CommandHandler<typeof command, TResult>)(command)),
     );
   }
 
   async pipe<TResult>(command: PipelineCommand<TResult>): Promise<TResult> {
-    const key = command.constructor.name;
-    const handlers = this.multiHandlers.get(key);
-    if (!handlers || handlers.length === 0) {
-      return command.initial;
-    }
+    const handlers = this.resolveHandlers(command);
     let accumulator: TResult = command.initial;
     for (const handler of handlers) {
       accumulator = await (handler as PipelineHandler<typeof command, TResult>)(command, accumulator);

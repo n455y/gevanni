@@ -1,9 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   SingleCommand,
+  KeyedSingleCommand,
   BroadcastCommand,
   KeyedBroadcastCommand,
   PipelineCommand,
+  KeyedPipelineCommand,
 } from "./command.ts";
 import { InMemoryCommandBus } from "./command-bus.ts";
 
@@ -32,6 +34,27 @@ class AccumulateCommand extends PipelineCommand<number> {
   readonly type = "accumulate";
   readonly initial = 0;
   constructor(readonly addend: number) {
+    super();
+  }
+}
+
+class KeyedPipelineCmd extends KeyedPipelineCommand<number> {
+  readonly type = "keyedPipeline";
+  readonly initial = 0;
+  get key() {
+    return this.routeKey;
+  }
+  constructor(readonly routeKey: string, readonly addend: number) {
+    super();
+  }
+}
+
+class KeyedSingleCmd extends KeyedSingleCommand<string> {
+  readonly type = "keyedSingle";
+  get key() {
+    return this.routeKey;
+  }
+  constructor(readonly routeKey: string) {
     super();
   }
 }
@@ -147,6 +170,35 @@ describe("InMemoryCommandBus", () => {
   });
 });
 
+describe("InMemoryCommandBus keyed pipeline", () => {
+  it("passes accumulator through handlers matching key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.register(KeyedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
+    bus.register(KeyedPipelineCmd, "alpha", async (_cmd, acc) => acc * 2);
+    bus.register(KeyedPipelineCmd, "beta", async (cmd, acc) => acc + cmd.addend + 100);
+
+    const result = await bus.pipe(new KeyedPipelineCmd("alpha", 5));
+    expect(result).toBe(10);
+  });
+
+  it("returns initial value when no handler matches key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.register(KeyedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
+
+    const result = await bus.pipe(new KeyedPipelineCmd("unknown", 5));
+    expect(result).toBe(0);
+  });
+
+  it("isolates handlers between different keys", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.register(KeyedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
+    bus.register(KeyedPipelineCmd, "beta", async (cmd, acc) => acc + cmd.addend * 10);
+
+    expect(await bus.pipe(new KeyedPipelineCmd("alpha", 5))).toBe(5);
+    expect(await bus.pipe(new KeyedPipelineCmd("beta", 5))).toBe(50);
+  });
+});
+
 describe("InMemoryCommandBus edge cases", () => {
   it("broadcast executes handlers in parallel", async () => {
     const bus = new InMemoryCommandBus();
@@ -173,6 +225,35 @@ describe("InMemoryCommandBus edge cases", () => {
     await expect(bus.dispatch(new EchoCommand("hello"))).rejects.toThrow(
       "No handler registered for command: EchoCommand",
     );
+  });
+});
+
+describe("InMemoryCommandBus keyed single dispatch", () => {
+  it("routes to handler matching key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.register(KeyedSingleCmd, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+    bus.register(KeyedSingleCmd, "beta", async (cmd) => `beta-${cmd.routeKey}`);
+
+    const result = await bus.dispatch(new KeyedSingleCmd("alpha"));
+    expect(result).toBe("alpha-alpha");
+  });
+
+  it("throws when no handler matches key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.register(KeyedSingleCmd, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+
+    await expect(bus.dispatch(new KeyedSingleCmd("unknown"))).rejects.toThrow(
+      "No handler registered for command: KeyedSingleCmd with key: unknown",
+    );
+  });
+
+  it("uses last registered handler when multiple handlers share the same key", async () => {
+    const bus = new InMemoryCommandBus();
+    bus.register(KeyedSingleCmd, "shared", async () => "first");
+    bus.register(KeyedSingleCmd, "shared", async () => "second");
+
+    const result = await bus.dispatch(new KeyedSingleCmd("shared"));
+    expect(result).toBe("second");
   });
 });
 
