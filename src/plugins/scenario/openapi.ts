@@ -1,4 +1,4 @@
-import type { Exchange, Scenario } from "../../types/models.ts";
+import type { Exchange, HttpResponse } from "../../types/models.ts";
 import { ExchangeId } from "../../types/branded.ts";
 import type { ReplayId } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
@@ -11,38 +11,91 @@ import https from "node:https";
 import { randomUUID } from "node:crypto";
 import {
   type OpenApiOperation,
-  type OpenApiParameter,
   type OpenApiRequestBody,
+  type OpenApiScenarioSource,
   defaultValueForSchema,
 } from "../loader/openapi-loader.ts";
 
+// --- Runtime expression resolver ---
+
+export function resolveRuntimeExpression(
+  expr: string,
+  response: HttpResponse,
+): string {
+  if (expr.startsWith("$response.body#")) {
+    const pointer = expr.slice("$response.body#".length);
+    const body = response.body?.toString("utf-8") ?? "{}";
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      return "";
+    }
+    const value = resolveJsonPointer(parsed, pointer);
+    return String(value ?? "");
+  }
+
+  if (expr.startsWith("$response.header#")) {
+    const raw = expr.slice("$response.header#".length);
+    const headerName = raw.startsWith("/")
+      ? raw.slice(1).toLowerCase()
+      : raw.toLowerCase();
+    return response.headers[headerName] ?? "";
+  }
+
+  return expr;
+}
+
+function resolveJsonPointer(data: unknown, pointer: string): unknown {
+  if (pointer === "" || pointer === "/") return data;
+  const tokens = pointer.split("/").slice(1);
+  let current: unknown = data;
+  for (const token of tokens) {
+    if (current === null || current === undefined) return undefined;
+    if (Array.isArray(current)) {
+      current = current[parseInt(token, 10)];
+    } else if (typeof current === "object") {
+      current = (current as Record<string, unknown>)[decodeURIComponent(token)];
+    } else {
+      return undefined;
+    }
+  }
+  return current;
+}
+
 // --- Request building ---
 
-export function buildUrl(op: OpenApiOperation): string {
+export function buildUrl(
+  op: OpenApiOperation,
+  overrides?: Record<string, string>,
+): string {
   let resolvedPath = op.path;
   const queryParams: string[] = [];
-  const headerParams: Record<string, string> = {};
 
   for (const param of op.parameters) {
-    const value = String(
-      defaultValueForSchema(param.schema, param.example),
-    );
+    const value =
+      overrides?.[param.name] ??
+      String(defaultValueForSchema(param.schema, param.example));
 
     switch (param.in) {
       case "path":
-        resolvedPath = resolvedPath.replace(`{${param.name}}`, encodeURIComponent(value));
+        resolvedPath = resolvedPath.replace(
+          `{${param.name}}`,
+          encodeURIComponent(value),
+        );
         break;
       case "query":
-        queryParams.push(`${encodeURIComponent(param.name)}=${encodeURIComponent(value)}`);
-        break;
-      case "header":
-        headerParams[param.name] = value;
+        queryParams.push(
+          `${encodeURIComponent(param.name)}=${encodeURIComponent(value)}`,
+        );
         break;
     }
   }
 
   const base = op.baseUrl.replace(/\/$/, "");
-  const path = resolvedPath.startsWith("/") ? resolvedPath : `/${resolvedPath}`;
+  const path = resolvedPath.startsWith("/")
+    ? resolvedPath
+    : `/${resolvedPath}`;
   let url = `${base}${path}`;
   if (queryParams.length > 0) {
     url += `?${queryParams.join("&")}`;
@@ -53,8 +106,8 @@ export function buildUrl(op: OpenApiOperation): string {
 
 export function buildHeaders(
   op: OpenApiOperation,
-  proxyPort: number,
   replayId: ReplayId,
+  overrides?: Record<string, string>,
 ): Record<string, string> {
   const headers: Record<string, string> = {
     "X-Gevanni-Replay-Id": replayId,
@@ -62,9 +115,9 @@ export function buildHeaders(
 
   for (const param of op.parameters) {
     if (param.in === "header") {
-      headers[param.name] = String(
-        defaultValueForSchema(param.schema, param.example),
-      );
+      headers[param.name] =
+        overrides?.[param.name] ??
+        String(defaultValueForSchema(param.schema, param.example));
     }
   }
 
@@ -83,13 +136,17 @@ export function buildBody(requestBody?: OpenApiRequestBody): string | null {
 
 // --- HTTP sender ---
 
+interface ProxyResponse {
+  response: HttpResponse;
+}
+
 function sendViaProxy(
   method: string,
   url: string,
   headers: Record<string, string>,
   body: string | null,
   proxyPort: number,
-): Promise<void> {
+): Promise<ProxyResponse> {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
     const isHttps = parsedUrl.protocol === "https:";
@@ -109,8 +166,25 @@ function sendViaProxy(
     };
 
     const req = (isHttps ? https : http).request(options, (res) => {
-      res.resume();
-      res.on("end", resolve);
+      const chunks: Buffer[] = [];
+      res.on("data", (chunk: Buffer) => chunks.push(chunk));
+      res.on("end", () => {
+        const resHeaders: Record<string, string> = {};
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (typeof value === "string") {
+            resHeaders[key] = value;
+          } else if (Array.isArray(value)) {
+            resHeaders[key] = value.join(", ");
+          }
+        }
+        resolve({
+          response: {
+            statusCode: res.statusCode ?? 0,
+            headers: resHeaders,
+            body: chunks.length > 0 ? Buffer.concat(chunks) : null,
+          },
+        });
+      });
       res.on("error", reject);
     });
 
@@ -132,17 +206,47 @@ export class OpenApiPlugin implements Plugin {
     const { commandBus } = context;
     context.commandBus.register(ReplayCommand, async (cmd) => {
       const { scenario, config } = cmd;
-      const op = scenario.source as OpenApiOperation;
+      const source = scenario.source as OpenApiScenarioSource;
+      const steps = source.steps;
+      const overridesMap: Record<string, string> = {};
 
-      const url = buildUrl(op);
-      const headers = buildHeaders(op, config.proxyPort, config.replayId);
-      const body = buildBody(op.requestBody);
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const isLast = i === steps.length - 1;
 
-      // Last request in multi-request scenario gets exchange tracking + mutation
-      headers["X-Gevanni-Exchange-Id"] = ExchangeId(randomUUID());
-      headers["X-Gevanni-Mutate"] = "true";
+        const url = buildUrl(step.operation, overridesMap);
+        const headers = buildHeaders(
+          step.operation,
+          config.replayId,
+          overridesMap,
+        );
+        const body = buildBody(step.operation.requestBody);
 
-      await sendViaProxy(op.method, url, headers, body, config.proxyPort);
+        if (isLast) {
+          headers["X-Gevanni-Exchange-Id"] = ExchangeId(randomUUID());
+          headers["X-Gevanni-Mutate"] = "true";
+        }
+
+        const { response } = await sendViaProxy(
+          step.operation.method,
+          url,
+          headers,
+          body,
+          config.proxyPort,
+        );
+
+        // Resolve overrides for next step
+        if (step.link) {
+          for (const [paramName, expr] of Object.entries(
+            step.link.parameters,
+          )) {
+            overridesMap[paramName] = resolveRuntimeExpression(
+              expr,
+              response,
+            );
+          }
+        }
+      }
 
       const exchanges = await commandBus.dispatch<Exchange[]>(
         new LoadExchangesCommand(config.replayId),

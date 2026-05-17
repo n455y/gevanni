@@ -22,6 +22,11 @@ export interface OpenApiRequestBody {
   example?: unknown;
 }
 
+export interface OpenApiLink {
+  targetOperationId: string;
+  parameters: Record<string, string>;
+}
+
 export interface OpenApiOperation {
   baseUrl: string;
   method: string;
@@ -30,6 +35,16 @@ export interface OpenApiOperation {
   summary?: string;
   parameters: OpenApiParameter[];
   requestBody?: OpenApiRequestBody;
+  links?: OpenApiLink[];
+}
+
+export interface OpenApiStep {
+  operation: OpenApiOperation;
+  link?: OpenApiLink;
+}
+
+export interface OpenApiScenarioSource {
+  steps: OpenApiStep[];
 }
 
 // --- Helpers ---
@@ -49,7 +64,7 @@ const HTTP_METHODS = [
   "trace",
 ] as const;
 
-function defaultValueForSchema(
+export function defaultValueForSchema(
   schema?: { type?: string; [key: string]: unknown },
   example?: unknown,
 ): unknown {
@@ -86,6 +101,67 @@ function isOpenApi3(data: unknown): data is OpenApiDoc {
   return typeof data.openapi === "string" && data.openapi.startsWith("3.");
 }
 
+function extractParameters(rawList: unknown): OpenApiParameter[] {
+  const params: OpenApiParameter[] = [];
+  if (!Array.isArray(rawList)) return params;
+  for (const p of rawList) {
+    if (isObject(p) && !("$ref" in p)) {
+      params.push({
+        name: p.name as string,
+        in: p.in as OpenApiParameter["in"],
+        required: p.required as boolean | undefined,
+        schema: p.schema as OpenApiParameter["schema"],
+        example: p.example,
+      });
+    }
+  }
+  return params;
+}
+
+function extractRequestBody(opBody: unknown): OpenApiRequestBody | undefined {
+  if (!isObject(opBody) || "$ref" in opBody) return undefined;
+  const content = opBody.content as Record<string, unknown> | undefined;
+  if (!isObject(content)) return undefined;
+  const ct = Object.keys(content)[0];
+  const mediaType = content[ct] as Record<string, unknown>;
+  return {
+    contentType: ct,
+    schema: mediaType?.schema as OpenApiRequestBody["schema"],
+    example: mediaType?.example,
+  };
+}
+
+function extractLinks(responses: unknown): OpenApiLink[] {
+  const links: OpenApiLink[] = [];
+  if (!isObject(responses)) return links;
+
+  for (const response of Object.values(responses)) {
+    if (!isObject(response)) continue;
+    const linkMap = response.links;
+    if (!isObject(linkMap)) continue;
+
+    for (const linkDef of Object.values(linkMap)) {
+      if (!isObject(linkDef)) continue;
+      if ("operationRef" in linkDef && !("operationId" in linkDef)) continue;
+      if (!("operationId" in linkDef)) continue;
+
+      const params: Record<string, string> = {};
+      if (isObject(linkDef.parameters)) {
+        for (const [k, v] of Object.entries(linkDef.parameters)) {
+          if (typeof v === "string") params[k] = v;
+        }
+      }
+
+      links.push({
+        targetOperationId: linkDef.operationId as string,
+        parameters: params,
+      });
+    }
+  }
+
+  return links;
+}
+
 function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
   const baseUrl = doc.servers?.[0]?.url ?? "http://localhost";
   const operations: OpenApiOperation[] = [];
@@ -93,56 +169,16 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
   for (const [path, pathItem] of Object.entries(doc.paths ?? {})) {
     if (!isObject(pathItem)) continue;
 
+    const pathLevelParams = extractParameters(pathItem.parameters);
+
     for (const method of HTTP_METHODS) {
       const operation = pathItem[method];
       if (!isObject(operation)) continue;
 
-      const parameters: OpenApiParameter[] = [];
-      // Path-level parameters
-      const pathLevelParams = pathItem.parameters;
-      if (Array.isArray(pathLevelParams)) {
-        for (const p of pathLevelParams) {
-          if (isObject(p) && !("$ref" in p)) {
-            parameters.push({
-              name: p.name as string,
-              in: p.in as OpenApiParameter["in"],
-              required: p.required as boolean | undefined,
-              schema: p.schema as OpenApiParameter["schema"],
-              example: p.example,
-            });
-          }
-        }
-      }
-      // Operation-level parameters
-      const opParams = operation.parameters;
-      if (Array.isArray(opParams)) {
-        for (const p of opParams) {
-          if (isObject(p) && !("$ref" in p)) {
-            parameters.push({
-              name: p.name as string,
-              in: p.in as OpenApiParameter["in"],
-              required: p.required as boolean | undefined,
-              schema: p.schema as OpenApiParameter["schema"],
-              example: p.example,
-            });
-          }
-        }
-      }
-
-      let requestBody: OpenApiRequestBody | undefined;
-      const opBody = operation.requestBody;
-      if (isObject(opBody) && !("$ref" in opBody)) {
-        const content = opBody.content as Record<string, unknown> | undefined;
-        if (isObject(content)) {
-          const ct = Object.keys(content)[0];
-          const mediaType = content[ct] as Record<string, unknown>;
-          requestBody = {
-            contentType: ct,
-            schema: mediaType?.schema as OpenApiRequestBody["schema"],
-            example: mediaType?.example,
-          };
-        }
-      }
+      const opParams = extractParameters(operation.parameters);
+      const parameters = [...pathLevelParams, ...opParams];
+      const requestBody = extractRequestBody(operation.requestBody);
+      const links = extractLinks(operation.responses);
 
       operations.push({
         baseUrl,
@@ -152,6 +188,7 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
         summary: operation.summary as string | undefined,
         parameters,
         requestBody,
+        links: links.length > 0 ? links : undefined,
       });
     }
   }
@@ -159,7 +196,59 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
   return operations;
 }
 
-export { defaultValueForSchema, extractOperations, isOpenApi3 };
+// --- Chain building ---
+
+export function buildChains(
+  operations: OpenApiOperation[],
+): OpenApiScenarioSource[] {
+  const byId = new Map<string, OpenApiOperation>();
+  const targets = new Set<string>();
+
+  for (const op of operations) {
+    if (op.operationId) {
+      byId.set(op.operationId, op);
+    }
+    for (const link of op.links ?? []) {
+      targets.add(link.targetOperationId);
+    }
+  }
+
+  const visited = new Set<string>();
+  const chains: OpenApiScenarioSource[] = [];
+
+  // Build chains: start from non-targets, then fall back to unvisited targets
+  const startingOps = operations.filter(
+    (op) => op.operationId && !targets.has(op.operationId),
+  );
+  const allWithId = operations.filter((op) => op.operationId);
+
+  for (const op of [...startingOps, ...allWithId]) {
+    if (!op.operationId || visited.has(op.operationId)) continue;
+
+    const steps: OpenApiStep[] = [];
+    let current: OpenApiOperation | undefined = op;
+
+    while (current) {
+      visited.add(current.operationId ?? "");
+      const link: OpenApiLink | undefined = current.links?.[0]; // follow first link only
+      steps.push({ operation: current, link });
+      current = link ? byId.get(link.targetOperationId) : undefined;
+      if (current && visited.has(current.operationId ?? "")) break; // cycle
+    }
+
+    chains.push({ steps });
+  }
+
+  // Remaining operations without operationId → standalone
+  for (const op of operations) {
+    if (op.operationId) continue;
+    chains.push({ steps: [{ operation: op }] });
+  }
+
+  return chains;
+}
+
+export { extractOperations, isOpenApi3 };
 
 // --- Plugin ---
 
@@ -194,12 +283,19 @@ export class OpenApiLoaderPlugin implements ScenarioLoaderPlugin {
     if (!isOpenApi3(parsed)) return [];
 
     const operations = extractOperations(parsed);
+    const chains = buildChains(operations);
 
-    return operations.map((op) => ({
-      id: scenarioId(),
-      name: op.operationId ?? op.summary ?? `${op.method} ${op.path}`,
-      type: OpenApiScenarioType,
-      source: op,
-    }));
+    return chains.map((chain) => {
+      const first = chain.steps[0].operation;
+      return {
+        id: scenarioId(),
+        name:
+          first.operationId ??
+          first.summary ??
+          `${first.method} ${first.path}`,
+        type: OpenApiScenarioType,
+        source: chain,
+      };
+    });
   }
 }

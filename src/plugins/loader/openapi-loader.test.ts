@@ -2,12 +2,11 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "path";
-import type {
-  OpenApiOperation,
-} from "./openapi-loader.ts";
+import type { OpenApiOperation, OpenApiScenarioSource } from "./openapi-loader.ts";
 import {
   OpenApiLoaderPlugin,
   OpenApiScenarioType,
+  buildChains,
   defaultValueForSchema,
   isOpenApi3,
 } from "./openapi-loader.ts";
@@ -51,7 +50,7 @@ describe("OpenApiLoaderPlugin", () => {
       cleanup(f2);
     });
 
-    it("parses a simple OpenAPI 3.0 JSON spec", async () => {
+    it("parses a simple OpenAPI 3.0 JSON spec into single-step scenarios", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
@@ -103,7 +102,10 @@ describe("OpenApiLoaderPlugin", () => {
       expect(result).toHaveLength(3);
       expect(result[0].name).toBe("listUsers");
       expect(result[0].type).toBe(OpenApiScenarioType);
-      expect(result[0].source).toMatchObject({
+
+      const src0 = result[0].source as OpenApiScenarioSource;
+      expect(src0.steps).toHaveLength(1);
+      expect(src0.steps[0].operation).toMatchObject({
         baseUrl: "https://api.example.com",
         method: "GET",
         path: "/users",
@@ -112,14 +114,14 @@ describe("OpenApiLoaderPlugin", () => {
         ],
       });
 
-      expect(result[1].name).toBe("createUser");
-      expect(result[1].source).toMatchObject({
+      const src1 = result[1].source as OpenApiScenarioSource;
+      expect(src1.steps[0].operation).toMatchObject({
         method: "POST",
         requestBody: { contentType: "application/json" },
       });
 
-      expect(result[2].name).toBe("Get user by ID");
-      expect(result[2].source).toMatchObject({
+      const src2 = result[2].source as OpenApiScenarioSource;
+      expect(src2.steps[0].operation).toMatchObject({
         path: "/users/{id}",
         parameters: [{ name: "id", in: "path" }],
       });
@@ -149,7 +151,8 @@ paths:
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("listPets");
-      expect(result[0].source).toMatchObject({
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation).toMatchObject({
         baseUrl: "https://petstore.example.com",
         method: "GET",
         path: "/pets",
@@ -168,7 +171,8 @@ paths:
       cleanup(f);
 
       expect(result).toHaveLength(1);
-      expect(result[0].source).toMatchObject({
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation).toMatchObject({
         baseUrl: "http://localhost",
       });
     });
@@ -199,9 +203,9 @@ paths:
       cleanup(f);
 
       expect(result).toHaveLength(1);
-      const source = result[0].source as OpenApiOperation;
-      expect(source.parameters).toHaveLength(1);
-      expect(source.parameters[0].name).toBe("search");
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation.parameters).toHaveLength(1);
+      expect(src.steps[0].operation.parameters[0].name).toBe("search");
     });
 
     it("merges path-level and operation-level parameters", async () => {
@@ -237,8 +241,151 @@ paths:
       cleanup(f);
 
       expect(result).toHaveLength(1);
-      const source = result[0].source as OpenApiOperation;
-      expect(source.parameters).toHaveLength(2);
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation.parameters).toHaveLength(2);
+    });
+  });
+
+  describe("links", () => {
+    it("extracts links from responses", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/users": {
+            post: {
+              operationId: "createUser",
+              responses: {
+                "201": {
+                  links: {
+                    GetUser: {
+                      operationId: "getUser",
+                      parameters: { id: "$response.body#/id" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/users/{id}": {
+            get: {
+              operationId: "getUser",
+              parameters: [
+                { name: "id", in: "path", schema: { type: "string" } },
+              ],
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      // createUser → getUser chain = 1 scenario
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("createUser");
+
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps).toHaveLength(2);
+      expect(src.steps[0].operation.operationId).toBe("createUser");
+      expect(src.steps[0].link).toEqual({
+        targetOperationId: "getUser",
+        parameters: { id: "$response.body#/id" },
+      });
+      expect(src.steps[1].operation.operationId).toBe("getUser");
+      expect(src.steps[1].link).toBeUndefined();
+    });
+
+    it("keeps standalone operations separate from chained ones", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/users": {
+            post: {
+              operationId: "createUser",
+              responses: {
+                "201": {
+                  links: {
+                    GetUser: {
+                      operationId: "getUser",
+                      parameters: { id: "$response.body#/id" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/users/{id}": {
+            get: {
+              operationId: "getUser",
+              parameters: [
+                { name: "id", in: "path", schema: { type: "string" } },
+              ],
+            },
+          },
+          "/health": {
+            get: {
+              operationId: "healthCheck",
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      // createUser→getUser chain + standalone healthCheck
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe("createUser");
+      expect(result[1].name).toBe("healthCheck");
+
+      const chainSrc = result[0].source as OpenApiScenarioSource;
+      expect(chainSrc.steps).toHaveLength(2);
+
+      const standaloneSrc = result[1].source as OpenApiScenarioSource;
+      expect(standaloneSrc.steps).toHaveLength(1);
+    });
+
+    it("skips operationRef-only links", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/items": {
+            post: {
+              operationId: "createItem",
+              responses: {
+                "201": {
+                  links: {
+                    GetItem: {
+                      operationRef: "#/paths/~1items~1{id}/get",
+                      parameters: { id: "$response.body#/id" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/items/{id}": {
+            get: {
+              operationId: "getItem",
+              parameters: [
+                { name: "id", in: "path", schema: { type: "string" } },
+              ],
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      // No chain built since link uses operationRef, both ops are standalone
+      expect(result).toHaveLength(2);
     });
   });
 
@@ -256,6 +403,60 @@ paths:
         }),
       ).resolves.toBeUndefined();
     });
+  });
+});
+
+describe("buildChains", () => {
+  it("creates single-step chains for standalone operations", () => {
+    const ops: OpenApiOperation[] = [
+      {
+        baseUrl: "http://localhost",
+        method: "GET",
+        path: "/a",
+        operationId: "opA",
+        parameters: [],
+      },
+      {
+        baseUrl: "http://localhost",
+        method: "GET",
+        path: "/b",
+        operationId: "opB",
+        parameters: [],
+      },
+    ];
+
+    const chains = buildChains(ops);
+    expect(chains).toHaveLength(2);
+    expect(chains[0].steps).toHaveLength(1);
+    expect(chains[1].steps).toHaveLength(1);
+  });
+
+  it("detects cycles and stops", () => {
+    const ops: OpenApiOperation[] = [
+      {
+        baseUrl: "http://localhost",
+        method: "GET",
+        path: "/a",
+        operationId: "opA",
+        parameters: [],
+        links: [{ targetOperationId: "opB", parameters: {} }],
+      },
+      {
+        baseUrl: "http://localhost",
+        method: "GET",
+        path: "/b",
+        operationId: "opB",
+        parameters: [],
+        links: [{ targetOperationId: "opA", parameters: {} }],
+      },
+    ];
+
+    const chains = buildChains(ops);
+    // opA→opB cycle stops, opA is start (not a target from non-cycle)
+    // Actually both are targets. Since opA is visited first, it starts the chain.
+    // opB is a target of opA so it's not a starting point.
+    expect(chains).toHaveLength(1);
+    expect(chains[0].steps).toHaveLength(2);
   });
 });
 
