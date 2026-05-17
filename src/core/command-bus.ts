@@ -1,6 +1,8 @@
 import {
   Command,
-  type Keyed,
+  PartitionedSingleCommand,
+  PartitionedBroadcastCommand,
+  PartitionedPipelineCommand,
   type CommandHandler,
   type PipelineHandler,
   type SingleCommand,
@@ -8,18 +10,26 @@ import {
   type PipelineCommand,
 } from "./command.ts";
 
+type AnyPartitioned<TResult = any> =
+  | PartitionedSingleCommand<TResult>
+  | PartitionedBroadcastCommand<TResult>
+  | PartitionedPipelineCommand<TResult>;
+
 type CommandResult<T> = T extends Command<infer R> ? R : never;
 
 type HandlerFor<T extends Command<any>> = T extends PipelineCommand<any>
   ? PipelineHandler<T, CommandResult<T>>
   : CommandHandler<T, CommandResult<T>>;
 
-const isKeyed = (cmd: Command<any>): cmd is Command<any> & Keyed => "key" in cmd;
+const isPartitioned = (cmd: Command<any>): cmd is AnyPartitioned =>
+  cmd instanceof PartitionedSingleCommand ||
+  cmd instanceof PartitionedBroadcastCommand ||
+  cmd instanceof PartitionedPipelineCommand;
 
 export interface CommandBus {
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
-    ...args: T extends Keyed
+    ...args: T extends AnyPartitioned
       ? [key: string, handler: HandlerFor<T>]
       : [handler: HandlerFor<T>]
   ): void;
@@ -37,7 +47,7 @@ export class InMemoryCommandBus implements CommandBus {
 
   register<T extends Command<any>>(
     commandClass: new (...args: any[]) => T,
-    ...args: T extends Keyed
+    ...args: T extends AnyPartitioned
       ? [key: string, handler: HandlerFor<T>]
       : [handler: HandlerFor<T>]
   ): void;
@@ -74,8 +84,8 @@ export class InMemoryCommandBus implements CommandBus {
 
   private resolveHandlers(command: Command<any>): AnyHandler[] {
     const name = command.constructor.name;
-    if (isKeyed(command)) {
-      return this.keyedHandlers.get(name)?.get(command.key) ?? [];
+    if (isPartitioned(command)) {
+      return this.keyedHandlers.get(name)?.get(command.partition) ?? [];
     }
     return this.handlers.get(name) ?? [];
   }
@@ -84,7 +94,7 @@ export class InMemoryCommandBus implements CommandBus {
     const handlers = this.resolveHandlers(command);
     if (handlers.length === 0) {
       const name = command.constructor.name;
-      const suffix = isKeyed(command) ? ` with key: ${command.key}` : "";
+      const suffix = isPartitioned(command) ? ` with partition: ${command.partition}` : "";
       throw new Error(`No handler registered for command: ${name}${suffix}`);
     }
     return (handlers[handlers.length - 1] as CommandHandler<typeof command, TResult>)(command);

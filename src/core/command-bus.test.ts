@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   SingleCommand,
-  KeyedSingleCommand,
+  PartitionedSingleCommand,
   BroadcastCommand,
-  KeyedBroadcastCommand,
+  PartitionedBroadcastCommand,
   PipelineCommand,
-  KeyedPipelineCommand,
+  PartitionedPipelineCommand,
 } from "./command.ts";
 import { InMemoryCommandBus } from "./command-bus.ts";
 
@@ -38,33 +38,24 @@ class AccumulateCommand extends PipelineCommand<number> {
   }
 }
 
-class KeyedPipelineCmd extends KeyedPipelineCommand<number> {
-  readonly type = "keyedPipeline";
+class PartitionedPipelineCmd extends PartitionedPipelineCommand<number> {
+  readonly type = "partitionedPipeline";
   readonly initial = 0;
-  get key() {
-    return this.routeKey;
-  }
-  constructor(readonly routeKey: string, readonly addend: number) {
+  constructor(readonly partition: string, readonly addend: number) {
     super();
   }
 }
 
-class KeyedSingleCmd extends KeyedSingleCommand<string> {
-  readonly type = "keyedSingle";
-  get key() {
-    return this.routeKey;
-  }
-  constructor(readonly routeKey: string) {
+class PartitionedSingleCmd extends PartitionedSingleCommand<string> {
+  readonly type = "partitionedSingle";
+  constructor(readonly partition: string) {
     super();
   }
 }
 
-class KeyedCommand extends KeyedBroadcastCommand<string> {
-  readonly type = "keyed";
-  get key() {
-    return this.routeKey;
-  }
-  constructor(readonly routeKey: string) {
+class PartitionedCmd extends PartitionedBroadcastCommand<string> {
+  readonly type = "partitioned";
+  constructor(readonly partition: string) {
     super();
   }
 }
@@ -173,29 +164,29 @@ describe("InMemoryCommandBus", () => {
 describe("InMemoryCommandBus keyed pipeline", () => {
   it("passes accumulator through handlers matching key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
-    bus.register(KeyedPipelineCmd, "alpha", async (_cmd, acc) => acc * 2);
-    bus.register(KeyedPipelineCmd, "beta", async (cmd, acc) => acc + cmd.addend + 100);
+    bus.register(PartitionedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
+    bus.register(PartitionedPipelineCmd, "alpha", async (_cmd, acc) => acc * 2);
+    bus.register(PartitionedPipelineCmd, "beta", async (cmd, acc) => acc + cmd.addend + 100);
 
-    const result = await bus.pipe(new KeyedPipelineCmd("alpha", 5));
+    const result = await bus.pipe(new PartitionedPipelineCmd("alpha", 5));
     expect(result).toBe(10);
   });
 
   it("returns initial value when no handler matches key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
+    bus.register(PartitionedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
 
-    const result = await bus.pipe(new KeyedPipelineCmd("unknown", 5));
+    const result = await bus.pipe(new PartitionedPipelineCmd("unknown", 5));
     expect(result).toBe(0);
   });
 
   it("isolates handlers between different keys", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
-    bus.register(KeyedPipelineCmd, "beta", async (cmd, acc) => acc + cmd.addend * 10);
+    bus.register(PartitionedPipelineCmd, "alpha", async (cmd, acc) => acc + cmd.addend);
+    bus.register(PartitionedPipelineCmd, "beta", async (cmd, acc) => acc + cmd.addend * 10);
 
-    expect(await bus.pipe(new KeyedPipelineCmd("alpha", 5))).toBe(5);
-    expect(await bus.pipe(new KeyedPipelineCmd("beta", 5))).toBe(50);
+    expect(await bus.pipe(new PartitionedPipelineCmd("alpha", 5))).toBe(5);
+    expect(await bus.pipe(new PartitionedPipelineCmd("beta", 5))).toBe(50);
   });
 });
 
@@ -231,28 +222,28 @@ describe("InMemoryCommandBus edge cases", () => {
 describe("InMemoryCommandBus keyed single dispatch", () => {
   it("routes to handler matching key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedSingleCmd, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
-    bus.register(KeyedSingleCmd, "beta", async (cmd) => `beta-${cmd.routeKey}`);
+    bus.register(PartitionedSingleCmd, "alpha", async (cmd) => `alpha-${cmd.partition}`);
+    bus.register(PartitionedSingleCmd, "beta", async (cmd) => `beta-${cmd.partition}`);
 
-    const result = await bus.dispatch(new KeyedSingleCmd("alpha"));
+    const result = await bus.dispatch(new PartitionedSingleCmd("alpha"));
     expect(result).toBe("alpha-alpha");
   });
 
   it("throws when no handler matches key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedSingleCmd, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+    bus.register(PartitionedSingleCmd, "alpha", async (cmd) => `alpha-${cmd.partition}`);
 
-    await expect(bus.dispatch(new KeyedSingleCmd("unknown"))).rejects.toThrow(
-      "No handler registered for command: KeyedSingleCmd with key: unknown",
+    await expect(bus.dispatch(new PartitionedSingleCmd("unknown"))).rejects.toThrow(
+      "No handler registered for command: PartitionedSingleCmd with partition: unknown",
     );
   });
 
   it("uses last registered handler when multiple handlers share the same key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedSingleCmd, "shared", async () => "first");
-    bus.register(KeyedSingleCmd, "shared", async () => "second");
+    bus.register(PartitionedSingleCmd, "shared", async () => "first");
+    bus.register(PartitionedSingleCmd, "shared", async () => "second");
 
-    const result = await bus.dispatch(new KeyedSingleCmd("shared"));
+    const result = await bus.dispatch(new PartitionedSingleCmd("shared"));
     expect(result).toBe("second");
   });
 });
@@ -260,27 +251,27 @@ describe("InMemoryCommandBus keyed single dispatch", () => {
 describe("InMemoryCommandBus keyed broadcast", () => {
   it("routes to handler matching key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
-    bus.register(KeyedCommand, "beta", async (cmd) => `beta-${cmd.routeKey}`);
+    bus.register(PartitionedCmd, "alpha", async (cmd) => `alpha-${cmd.partition}`);
+    bus.register(PartitionedCmd, "beta", async (cmd) => `beta-${cmd.partition}`);
 
-    const results = await bus.broadcast(new KeyedCommand("alpha"));
+    const results = await bus.broadcast(new PartitionedCmd("alpha"));
     expect(results).toEqual(["alpha-alpha"]);
   });
 
   it("returns empty array when no handler matches key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedCommand, "alpha", async (cmd) => `alpha-${cmd.routeKey}`);
+    bus.register(PartitionedCmd, "alpha", async (cmd) => `alpha-${cmd.partition}`);
 
-    const results = await bus.broadcast(new KeyedCommand("unknown"));
+    const results = await bus.broadcast(new PartitionedCmd("unknown"));
     expect(results).toEqual([]);
   });
 
   it("calls all handlers registered under the same key", async () => {
     const bus = new InMemoryCommandBus();
-    bus.register(KeyedCommand, "shared", async () => "first");
-    bus.register(KeyedCommand, "shared", async () => "second");
+    bus.register(PartitionedCmd, "shared", async () => "first");
+    bus.register(PartitionedCmd, "shared", async () => "second");
 
-    const results = await bus.broadcast(new KeyedCommand("shared"));
+    const results = await bus.broadcast(new PartitionedCmd("shared"));
     expect(results).toEqual(["first", "second"]);
   });
 });

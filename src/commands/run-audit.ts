@@ -1,4 +1,4 @@
-import { KeyedBroadcastCommand } from "../core/command.ts";
+import { PartitionedBroadcastCommand } from "../core/command.ts";
 import type {
   AuditParameter,
   Finding,
@@ -17,10 +17,10 @@ export interface RunAuditContext {
   }>;
 }
 
-export class RunAuditCommand extends KeyedBroadcastCommand<Finding | null> {
+export class RunAuditCommand extends PartitionedBroadcastCommand<Finding | null> {
   readonly type = "runAudit";
   readonly context: RunAuditContext;
-  get key() {
+  get partition() {
     return this.context.signatureName;
   }
   constructor(context: RunAuditContext) {
