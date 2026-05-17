@@ -113,6 +113,18 @@ export interface Exchange {
   response: HttpResponse;
 }
 
+// --- ReplayResult ---
+export class ReplayResult {
+  constructor(
+    readonly exchange: Exchange,
+    readonly secondOrderExchanges: Exchange[] = [],
+  ) {}
+
+  get allExchanges(): Exchange[] {
+    return [this.exchange, ...this.secondOrderExchanges];
+  }
+}
+
 // --- Evidence ---
 export interface Evidence {
   judgmentId: string;

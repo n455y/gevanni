@@ -11,6 +11,7 @@ import type {
   Finding,
   Exchange,
 } from "../../types/models.ts";
+import { ReplayResult } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { FormParameter } from "../parameter/form.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
@@ -129,7 +130,7 @@ describe("ReflectedXssPlugin", () => {
     });
 
     const parameter = makeQueryParameter("q", "search");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -163,7 +164,7 @@ describe("ReflectedXssPlugin", () => {
     });
 
     const parameter = makeQueryParameter("q", "search");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -196,7 +197,7 @@ describe("ReflectedXssPlugin", () => {
     });
 
     const parameter = makeQueryParameter("q", "search");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {

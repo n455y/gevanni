@@ -11,6 +11,7 @@ import type {
   Finding,
   Exchange,
 } from "../../types/models.ts";
+import { ReplayResult } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
@@ -107,7 +108,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -142,7 +143,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -174,7 +175,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -205,7 +206,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -238,7 +239,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -269,7 +270,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
@@ -302,7 +303,7 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => ({
+    const mockReplay = async () => new ReplayResult({
       id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {

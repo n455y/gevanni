@@ -20,19 +20,21 @@ export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
       payload,
       BuiltinMutationType.AppendValue,
     );
-    const exchange = await replay([instruction]);
-    const body = exchange.response.body?.toString() ?? "";
-    const vulnerable = body.includes(payload);
+    const result = await replay([instruction]);
+    const allExchanges = result.allExchanges;
+    const reflected = allExchanges.filter(
+      (ex) => (ex.response.body?.toString() ?? "").includes(payload),
+    );
     const evidence: Evidence = {
       judgmentId: "payload-reflection",
-      exchanges: [exchange],
-      evidenceExchanges: vulnerable ? [exchange] : [],
+      exchanges: allExchanges,
+      evidenceExchanges: reflected,
     };
     return {
-      vulnerable,
+      vulnerable: reflected.length > 0,
       evidence,
-      request: exchange.request,
-      response: exchange.response,
+      request: result.exchange.request,
+      response: result.exchange.response,
     };
   }
 }

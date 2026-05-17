@@ -28,19 +28,21 @@ export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
       payload,
       BuiltinMutationType.AppendValue,
     );
-    const exchange = await replay([instruction]);
-    const body = exchange.response.body?.toString() ?? "";
-    const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));
+    const result = await replay([instruction]);
+    const allExchanges = result.allExchanges;
+    const matches = allExchanges.filter((ex) =>
+      SQL_ERROR_PATTERNS.some((p) => p.test(ex.response.body?.toString() ?? "")),
+    );
     const evidence: Evidence = {
       judgmentId: "sql-error-pattern",
-      exchanges: [exchange],
-      evidenceExchanges: vulnerable ? [exchange] : [],
+      exchanges: allExchanges,
+      evidenceExchanges: matches,
     };
     return {
-      vulnerable,
+      vulnerable: matches.length > 0,
       evidence,
-      request: exchange.request,
-      response: exchange.response,
+      request: result.exchange.request,
+      response: result.exchange.response,
     };
   }
 }

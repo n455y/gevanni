@@ -16,6 +16,7 @@ import type {
   Finding,
   AuditMutation,
 } from "../types/models.ts";
+import { ReplayResult } from "../types/models.ts";
 import type { CommandBus } from "./command-bus.ts";
 import type { EventBus } from "./event-bus.ts";
 import type { Logger } from "./logger.ts";
@@ -233,14 +234,15 @@ export class Orchestrator {
           );
           const proxy = await startMutationProxy(mutations, commandBus);
           try {
-            const [exchange] = await commandBus.dispatch(
+            const exchanges = await commandBus.dispatch(
               new ReplayCommand(scenario, {
                 mutations,
                 proxyPort: proxy.port,
                 replayId: ReplayId(crypto.randomUUID()),
               }),
             );
-            return exchange;
+            const [exchange, ...secondOrderExchanges] = exchanges;
+            return new ReplayResult(exchange, secondOrderExchanges);
           } finally {
             proxy.close();
           }
