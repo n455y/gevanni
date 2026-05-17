@@ -9,12 +9,13 @@ import type {
   HttpRequest,
   JsonPrimitive,
   Finding,
+  Exchange,
 } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { FormParameter } from "../parameter/form.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { BuiltinMutationType, SignatureId } from "../../types/branded.ts";
+import { BuiltinMutationType, ExchangeId, SignatureId } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
@@ -129,6 +130,7 @@ describe("ReflectedXssPlugin", () => {
 
     const parameter = makeQueryParameter("q", "search");
     const mockReplay = async () => ({
+      id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
         statusCode: 200,
@@ -162,6 +164,7 @@ describe("ReflectedXssPlugin", () => {
 
     const parameter = makeQueryParameter("q", "search");
     const mockReplay = async () => ({
+      id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
         statusCode: 200,
@@ -194,6 +197,7 @@ describe("ReflectedXssPlugin", () => {
 
     const parameter = makeQueryParameter("q", "search");
     const mockReplay = async () => ({
+      id: ExchangeId("test-exchange-id"),
       request: mockRequest,
       response: {
         statusCode: 200,

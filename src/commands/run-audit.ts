@@ -3,18 +3,14 @@ import type {
   AuditParameter,
   Finding,
   AuditMutation,
-  HttpRequest,
-  HttpResponse,
+  Exchange,
 } from "../types/models.ts";
 import type { SignatureId } from "../types/branded.ts";
 
 export interface RunAuditContext {
   signatureName: SignatureId;
   parameter: AuditParameter;
-  replay: (mutations: AuditMutation[]) => Promise<{
-    request: HttpRequest;
-    response: HttpResponse;
-  }>;
+  replay: (mutations: AuditMutation[]) => Promise<Exchange>;
 }
 
 export class RunAuditCommand extends PartitionedBroadcastCommand<Finding | null> {

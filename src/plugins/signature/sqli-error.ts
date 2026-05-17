@@ -1,7 +1,6 @@
 import {
   BuiltinMutationType,
   BuiltinPayload,
-  ExchangeId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -29,10 +28,9 @@ export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
       payload,
       BuiltinMutationType.AppendValue,
     );
-    const { request, response } = await replay([instruction]);
-    const body = response.body?.toString() ?? "";
+    const exchange = await replay([instruction]);
+    const body = exchange.response.body?.toString() ?? "";
     const vulnerable = SQL_ERROR_PATTERNS.some((p) => p.test(body));
-    const exchange = { id: ExchangeId("ex-0"), request, response };
     const evidence: Evidence = {
       judgmentId: "sql-error-pattern",
       exchanges: [exchange],
@@ -41,8 +39,8 @@ export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
     return {
       vulnerable,
       evidence,
-      request,
-      response,
+      request: exchange.request,
+      response: exchange.response,
     };
   }
 }

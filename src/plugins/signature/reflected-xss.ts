@@ -1,7 +1,6 @@
 import {
   BuiltinMutationType,
   BuiltinPayload,
-  ExchangeId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -21,10 +20,9 @@ export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
       payload,
       BuiltinMutationType.AppendValue,
     );
-    const { request, response } = await replay([instruction]);
-    const body = response.body?.toString() ?? "";
+    const exchange = await replay([instruction]);
+    const body = exchange.response.body?.toString() ?? "";
     const vulnerable = body.includes(payload);
-    const exchange = { id: ExchangeId("ex-0"), request, response };
     const evidence: Evidence = {
       judgmentId: "payload-reflection",
       exchanges: [exchange],
@@ -33,8 +31,8 @@ export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
     return {
       vulnerable,
       evidence,
-      request,
-      response,
+      request: exchange.request,
+      response: exchange.response,
     };
   }
 }
