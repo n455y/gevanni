@@ -1,6 +1,8 @@
 import type { PluginRegistry } from "./core/plugin.ts";
 import { PostmanPlugin } from "./plugins/scenario/postman.ts";
+import { OpenApiPlugin } from "./plugins/scenario/openapi.ts";
 import { PostmanLoaderPlugin } from "./plugins/loader/postman-loader.ts";
+import { OpenApiLoaderPlugin } from "./plugins/loader/openapi-loader.ts";
 import { HttpProxyPlugin } from "./plugins/proxy/http-proxy.ts";
 import { QueryParserPlugin, QueryMutationPlugin } from "./plugins/parameter/query.ts";
 import { JsonParserPlugin, JsonMutationPlugin } from "./plugins/parameter/json.ts";
@@ -15,10 +17,16 @@ import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./plugins/parameter/
 
 export function registerBuiltinPlugins(registry: PluginRegistry): void {
   registry.register("scenarioReplayer", "postman", () => new PostmanPlugin());
+  registry.register("scenarioReplayer", "openapi", () => new OpenApiPlugin());
   registry.register(
     "scenarioLoader",
     "postman",
     () => new PostmanLoaderPlugin(),
+  );
+  registry.register(
+    "scenarioLoader",
+    "openapi",
+    () => new OpenApiLoaderPlugin(),
   );
   registry.register("proxy", "http-proxy", () => new HttpProxyPlugin());
   registry.register("parser", "query-parser", () => new QueryParserPlugin());
