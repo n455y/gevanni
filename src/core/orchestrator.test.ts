@@ -14,15 +14,13 @@ import type {
   ScanState,
   Scenario,
 } from "../types/models.ts";
+import { JobStatus, ScanStatus, BuiltinMutationType } from "../types/models.ts";
 import type { AuditParameter } from "../types/models.ts";
 import {
-  BuiltinMutationType,
   ScanId,
   JobId,
   ExchangeId,
   ScenarioId,
-  JobStatus,
-  ScanStatus,
   SignatureId,
 } from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";

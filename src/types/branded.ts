@@ -1,5 +1,4 @@
-declare const __brand: unique symbol;
-export type Brand<T, B extends string> = T & { readonly [__brand]: B };
+export type Brand<T, B extends string> = T & { readonly __brand: B };
 
 // --- IDs ---
 export type ScenarioId = Brand<string, "ScenarioId">;
@@ -23,58 +22,17 @@ export const ScenarioType = (type: string) => type as ScenarioType;
 // --- Payload ---
 export type Payload<T = unknown> = Brand<T, "Payload">;
 
-type StringPayload = Payload<string>;
-type NumberPayload = Payload<number>;
-type BooleanPayload = Payload<boolean>;
-type NullPayload = Payload<null>;
-
-export const BuiltinPayload = {
-  String: (v: string) => v as StringPayload,
-  Number: (v: number) => v as NumberPayload,
-  Boolean: (v: boolean) => v as BooleanPayload,
-  Null: () => null as NullPayload,
-} as const;
-export namespace BuiltinPayload {
-  export type String = StringPayload;
-  export type Number = NumberPayload;
-  export type Boolean = BooleanPayload;
-  export type Null = NullPayload;
-}
-
 // --- MutationType ---
-declare const __payload: unique symbol;
 export type MutationType<P extends Payload = Payload> = Brand<
   string,
   "MutationType"
-> & {
-  readonly [__payload]: P;
-};
+> & { readonly __payload: P };
 export function defineMutationType<P extends Payload = Payload>(
   name: string,
 ): MutationType<P> {
   return name as any;
 }
 
-export const BuiltinMutationType = {
-  ReplaceValue: defineMutationType("ReplaceValue"),
-  AppendValue: defineMutationType<StringPayload>("AppendValue"),
-  PrependValue: defineMutationType<StringPayload>("PrependValue"),
-} as const;
-
-export const JobStatus = {
-  Pending: "pending",
-  Running: "running",
-  Completed: "completed",
-  Error: "error",
-} as const;
-export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
-export const ScanStatus = {
-  Planning: "planning",
-  Scanning: "scanning",
-  Completed: "completed",
-  Error: "error",
-} as const;
-export type ScanStatus = (typeof ScanStatus)[keyof typeof ScanStatus];
 
 // --- Semantic ---
 export type ErrorMessage = Brand<string, "ErrorMessage">;

@@ -1,17 +1,61 @@
-import { ScenarioType } from "./branded.ts";
+import { ScenarioType, defineMutationType } from "./branded.ts";
 import type {
   ScenarioId,
   JobId,
   ScanId,
   ExchangeId,
-  JobStatus,
-  ScanStatus,
   Payload,
   ErrorMessage,
   MutationType,
   SignatureId,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
+
+// --- Enum-like constants ---
+
+export const JobStatus = {
+  Pending: "pending",
+  Running: "running",
+  Completed: "completed",
+  Error: "error",
+} as const;
+export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
+
+export const ScanStatus = {
+  Planning: "planning",
+  Scanning: "scanning",
+  Completed: "completed",
+  Error: "error",
+} as const;
+export type ScanStatus = (typeof ScanStatus)[keyof typeof ScanStatus];
+
+// --- Payload builtins ---
+
+type StringPayload = Payload<string>;
+type NumberPayload = Payload<number>;
+type BooleanPayload = Payload<boolean>;
+type NullPayload = Payload<null>;
+
+export const BuiltinPayload = {
+  String: (v: string) => v as StringPayload,
+  Number: (v: number) => v as NumberPayload,
+  Boolean: (v: boolean) => v as BooleanPayload,
+  Null: () => null as NullPayload,
+} as const;
+export namespace BuiltinPayload {
+  export type String = StringPayload;
+  export type Number = NumberPayload;
+  export type Boolean = BooleanPayload;
+  export type Null = NullPayload;
+}
+
+// --- MutationType builtins ---
+
+export const BuiltinMutationType = {
+  ReplaceValue: defineMutationType("ReplaceValue"),
+  AppendValue: defineMutationType<StringPayload>("AppendValue"),
+  PrependValue: defineMutationType<StringPayload>("PrependValue"),
+} as const;
 
 // --- Scenario ---
 export interface Scenario {
@@ -40,11 +84,7 @@ export class AuditParameter<
   readonly location: L;
   readonly originalValue: V;
   readonly allowedMutations: MutationType[];
-  constructor(
-    location: L,
-    originalValue: V,
-    allowedMutations: MutationType[],
-  ) {
+  constructor(location: L, originalValue: V, allowedMutations: MutationType[]) {
     super();
     this.location = location;
     this.originalValue = originalValue;
@@ -117,10 +157,7 @@ export interface Exchange {
 export class ReplayResult {
   readonly exchange: Exchange;
   readonly secondOrderExchanges: Exchange[];
-  constructor(
-    exchange: Exchange,
-    secondOrderExchanges: Exchange[] = [],
-  ) {
+  constructor(exchange: Exchange, secondOrderExchanges: Exchange[] = []) {
     this.exchange = exchange;
     this.secondOrderExchanges = secondOrderExchanges;
   }

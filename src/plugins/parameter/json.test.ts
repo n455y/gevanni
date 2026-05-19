@@ -4,7 +4,7 @@ import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import type { MutationType } from "../../types/branded.ts";
-import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { AuditParameter, HttpRequest } from "../../types/models.ts";
 import {
   JsonArrayMutation,

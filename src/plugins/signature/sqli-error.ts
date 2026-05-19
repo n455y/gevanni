@@ -1,9 +1,8 @@
 import {
-  BuiltinMutationType,
-  BuiltinPayload,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 

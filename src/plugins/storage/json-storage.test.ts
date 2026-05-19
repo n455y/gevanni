@@ -19,14 +19,12 @@ import {
   SaveExchangeCommand,
   LoadExchangesCommand,
 } from "../../commands/exchange.ts";
-import { type Job, type ScanState, type Scenario, type Exchange } from "../../types/models.ts";
+import { type Job, type ScanState, type Scenario, type Exchange, JobStatus, ScanStatus } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
   JobId,
   ScenarioId,
-  JobStatus,
-  ScanStatus,
   ExchangeId,
   ReplayId,
   SignatureId,

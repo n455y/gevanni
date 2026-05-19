@@ -13,7 +13,7 @@ import { ReplayId } from "../../types/branded.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { BuiltinMutationType, BuiltinPayload } from "../../types/branded.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type {
   Exchange,
   HttpRequest,

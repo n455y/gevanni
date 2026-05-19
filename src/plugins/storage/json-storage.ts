@@ -13,8 +13,9 @@ import {
   type Exchange,
   type SerializedJob,
   type SerializedScanState,
+  JobStatus,
 } from "../../types/models.ts";
-import { ScanId, JobStatus } from "../../types/branded.ts";
+import { ScanId } from "../../types/branded.ts";
 import {
   SaveJobCommand,
   LoadJobCommand,

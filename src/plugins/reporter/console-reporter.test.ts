@@ -3,14 +3,12 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { ConsoleReporterPlugin } from "./console-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { type Job, type ScanState } from "../../types/models.ts";
+import { type Job, type ScanState, JobStatus, ScanStatus } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
   JobId,
   ScenarioId,
-  JobStatus,
-  ScanStatus,
   ExchangeId,
   SignatureId,
 } from "../../types/branded.ts";

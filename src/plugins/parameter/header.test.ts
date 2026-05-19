@@ -3,9 +3,8 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { HeaderParserPlugin } from "./header.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
-import { AuditParameter, type HttpRequest } from "../../types/models.ts";
+import { AuditParameter, type HttpRequest, BuiltinMutationType } from "../../types/models.ts";
 import { HeaderParameter } from "./header.ts";
-import { BuiltinMutationType } from "../../types/branded.ts";
 
 let commandBus: InMemoryCommandBus;
 

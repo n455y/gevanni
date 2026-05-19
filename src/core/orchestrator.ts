@@ -2,8 +2,6 @@ import crypto from "node:crypto";
 import {
   ScanId,
   JobId,
-  JobStatus,
-  ScanStatus,
   ErrorMessage,
   ReplayId,
 } from "../types/branded.ts";
@@ -16,7 +14,7 @@ import type {
   Finding,
   AuditMutation,
 } from "../types/models.ts";
-import { ReplayResult } from "../types/models.ts";
+import { JobStatus, ScanStatus, ReplayResult } from "../types/models.ts";
 import type { CommandBus } from "./command-bus.ts";
 import type { EventBus } from "./event-bus.ts";
 import type { Logger } from "./logger.ts";

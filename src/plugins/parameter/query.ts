@@ -1,9 +1,8 @@
-import { BuiltinMutationType } from "../../types/branded.ts";
 import type {
   MutationType,
   Payload,
 } from "../../types/branded.ts";
-import { AuditParameter, AuditMutation } from "../../types/models.ts";
+import { AuditParameter, AuditMutation, BuiltinMutationType } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";

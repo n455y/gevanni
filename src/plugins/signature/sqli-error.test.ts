@@ -11,11 +11,11 @@ import type {
   Finding,
   Exchange,
 } from "../../types/models.ts";
-import { ReplayResult } from "../../types/models.ts";
+import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { BuiltinMutationType, ExchangeId, SignatureId } from "../../types/branded.ts";
+import { ExchangeId, SignatureId } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;

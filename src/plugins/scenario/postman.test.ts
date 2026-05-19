@@ -8,12 +8,11 @@ import { ReplayCommand, type ReplayConfig } from "../../commands/replay.ts";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import {
-  BuiltinMutationType,
-  BuiltinPayload,
   ScenarioId,
   ReplayId,
 } from "../../types/branded.ts";
 import type { Exchange, Scenario } from "../../types/models.ts";
+import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import {
   QueryMutation,
   QueryMutationPlugin,
