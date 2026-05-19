@@ -25,6 +25,7 @@ export interface OpenApiRequestBody {
 export interface OpenApiLink {
   targetOperationId: string;
   parameters: Record<string, string>;
+  requestBody?: Record<string, string>;
 }
 
 export interface OpenApiOperation {
@@ -152,9 +153,18 @@ function extractLinks(responses: unknown): OpenApiLink[] {
         }
       }
 
+      let reqBody: Record<string, string> | undefined;
+      if (isObject(linkDef.requestBody)) {
+        reqBody = {};
+        for (const [k, v] of Object.entries(linkDef.requestBody)) {
+          if (typeof v === "string") reqBody[k] = v;
+        }
+      }
+
       links.push({
         targetOperationId: linkDef.operationId as string,
         parameters: params,
+        requestBody: reqBody,
       });
     }
   }
@@ -198,6 +208,32 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
 
 // --- Chain building ---
 
+function buildChainFrom(
+  startOp: OpenApiOperation,
+  startLinkIndex: number,
+  byId: Map<string, OpenApiOperation>,
+  globalVisited: Set<string>,
+): OpenApiScenarioSource {
+  const steps: OpenApiStep[] = [];
+  const chainVisited = new Set<string>();
+  let current: OpenApiOperation | undefined = startOp;
+  let linkIndex = startLinkIndex;
+
+  while (current) {
+    const id = current.operationId ?? "";
+    if (chainVisited.has(id)) break;
+    chainVisited.add(id);
+    globalVisited.add(id);
+
+    const link: OpenApiLink | undefined = current.links?.[linkIndex];
+    steps.push({ operation: current, link });
+    current = link ? byId.get(link.targetOperationId) : undefined;
+    linkIndex = 0; // subsequent ops follow first link only
+  }
+
+  return { steps };
+}
+
 export function buildChains(
   operations: OpenApiOperation[],
 ): OpenApiScenarioSource[] {
@@ -213,7 +249,7 @@ export function buildChains(
     }
   }
 
-  const visited = new Set<string>();
+  const globalVisited = new Set<string>();
   const chains: OpenApiScenarioSource[] = [];
 
   // Build chains: start from non-targets, then fall back to unvisited targets
@@ -223,20 +259,17 @@ export function buildChains(
   const allWithId = operations.filter((op) => op.operationId);
 
   for (const op of [...startingOps, ...allWithId]) {
-    if (!op.operationId || visited.has(op.operationId)) continue;
+    if (!op.operationId || globalVisited.has(op.operationId)) continue;
 
-    const steps: OpenApiStep[] = [];
-    let current: OpenApiOperation | undefined = op;
-
-    while (current) {
-      visited.add(current.operationId ?? "");
-      const link: OpenApiLink | undefined = current.links?.[0]; // follow first link only
-      steps.push({ operation: current, link });
-      current = link ? byId.get(link.targetOperationId) : undefined;
-      if (current && visited.has(current.operationId ?? "")) break; // cycle
+    const linkCount = op.links?.length ?? 0;
+    if (linkCount <= 1) {
+      chains.push(buildChainFrom(op, 0, byId, globalVisited));
+    } else {
+      // Multiple links: each link produces a separate chain
+      for (let li = 0; li < linkCount; li++) {
+        chains.push(buildChainFrom(op, li, byId, globalVisited));
+      }
     }
-
-    chains.push({ steps });
   }
 
   // Remaining operations without operationId → standalone

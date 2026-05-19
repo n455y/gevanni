@@ -128,9 +128,22 @@ export function buildHeaders(
   return headers;
 }
 
-export function buildBody(requestBody?: OpenApiRequestBody): string | null {
+export function buildBody(
+  requestBody?: OpenApiRequestBody,
+  overrides?: Record<string, string>,
+): string | null {
   if (!requestBody) return null;
   const value = defaultValueForSchema(requestBody.schema, requestBody.example);
+  if (overrides && Object.keys(overrides).length > 0) {
+    const obj =
+      typeof value === "object" && value !== null && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
+    for (const [k, v] of Object.entries(overrides)) {
+      obj[k] = v;
+    }
+    return JSON.stringify(obj);
+  }
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
@@ -209,6 +222,7 @@ export class OpenApiPlugin implements Plugin {
       const source = scenario.source as OpenApiScenarioSource;
       const steps = source.steps;
       const overridesMap: Record<string, string> = {};
+      const bodyOverridesMap: Record<string, string> = {};
 
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
@@ -220,7 +234,7 @@ export class OpenApiPlugin implements Plugin {
           config.replayId,
           overridesMap,
         );
-        const body = buildBody(step.operation.requestBody);
+        const body = buildBody(step.operation.requestBody, bodyOverridesMap);
 
         if (isLast) {
           headers["X-Gevanni-Exchange-Id"] = ExchangeId(randomUUID());
@@ -244,6 +258,16 @@ export class OpenApiPlugin implements Plugin {
               expr,
               response,
             );
+          }
+          if (step.link.requestBody) {
+            for (const [fieldName, expr] of Object.entries(
+              step.link.requestBody,
+            )) {
+              bodyOverridesMap[fieldName] = resolveRuntimeExpression(
+                expr,
+                response,
+              );
+            }
           }
         }
       }

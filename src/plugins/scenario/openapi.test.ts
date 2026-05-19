@@ -205,4 +205,31 @@ describe("buildBody", () => {
     };
     expect(buildBody(body)).toBe("hello world");
   });
+
+  it("applies overrides to object body", () => {
+    const body: OpenApiRequestBody = {
+      contentType: "application/json",
+      schema: { type: "object", properties: { uuid: { type: "string" } } },
+    };
+    const result = buildBody(body, { uuid: "abc-123" });
+    expect(result).toBe('{"uuid":"abc-123"}');
+  });
+
+  it("overrides add fields even when schema has no matching property", () => {
+    const body: OpenApiRequestBody = {
+      contentType: "application/json",
+      schema: { type: "object" },
+    };
+    const result = buildBody(body, { token: "xyz" });
+    expect(result).toBe('{"token":"xyz"}');
+  });
+
+  it("ignores empty overrides", () => {
+    const body: OpenApiRequestBody = {
+      contentType: "application/json",
+      schema: { type: "object" },
+    };
+    expect(buildBody(body, {})).toBe("{}");
+    expect(buildBody(body, undefined)).toBe("{}");
+  });
 });

@@ -387,6 +387,124 @@ paths:
       // No chain built since link uses operationRef, both ops are standalone
       expect(result).toHaveLength(2);
     });
+
+    it("extracts requestBody from links", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/uuid": {
+            get: {
+              operationId: "getUuid",
+              responses: {
+                "200": {
+                  links: {
+                    UseUuid: {
+                      operationId: "postUuid",
+                      requestBody: { uuid: "$response.body#/uuid" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/anything": {
+            post: {
+              operationId: "postUuid",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: { type: "object", properties: { uuid: { type: "string" } } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps).toHaveLength(2);
+      expect(src.steps[0].link).toEqual({
+        targetOperationId: "postUuid",
+        parameters: {},
+        requestBody: { uuid: "$response.body#/uuid" },
+      });
+    });
+
+    it("builds separate chains for each link from a single operation", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/uuid": {
+            get: {
+              operationId: "getUuid",
+              responses: {
+                "200": {
+                  links: {
+                    UseUuidAsQuery: {
+                      operationId: "useUuidAsQuery",
+                      parameters: { uuid: "$response.body#/uuid" },
+                    },
+                    UseUuidInBody: {
+                      operationId: "useUuidInBody",
+                      requestBody: { uuid: "$response.body#/uuid" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/get": {
+            get: {
+              operationId: "useUuidAsQuery",
+              parameters: [
+                { name: "uuid", in: "query", schema: { type: "string" } },
+              ],
+            },
+          },
+          "/anything": {
+            post: {
+              operationId: "useUuidInBody",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: { type: "object", properties: { uuid: { type: "string" } } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(2);
+
+      const src0 = result[0].source as OpenApiScenarioSource;
+      expect(src0.steps).toHaveLength(2);
+      expect(src0.steps[0].operation.operationId).toBe("getUuid");
+      expect(src0.steps[0].link?.targetOperationId).toBe("useUuidAsQuery");
+      expect(src0.steps[1].operation.operationId).toBe("useUuidAsQuery");
+
+      const src1 = result[1].source as OpenApiScenarioSource;
+      expect(src1.steps).toHaveLength(2);
+      expect(src1.steps[0].operation.operationId).toBe("getUuid");
+      expect(src1.steps[0].link?.targetOperationId).toBe("useUuidInBody");
+      expect(src1.steps[0].link?.requestBody).toEqual({
+        uuid: "$response.body#/uuid",
+      });
+      expect(src1.steps[1].operation.operationId).toBe("useUuidInBody");
+    });
   });
 
   describe("init and name", () => {
@@ -452,11 +570,52 @@ describe("buildChains", () => {
     ];
 
     const chains = buildChains(ops);
-    // opA→opB cycle stops, opA is start (not a target from non-cycle)
-    // Actually both are targets. Since opA is visited first, it starts the chain.
-    // opB is a target of opA so it's not a starting point.
     expect(chains).toHaveLength(1);
     expect(chains[0].steps).toHaveLength(2);
+  });
+
+  it("creates separate chains for each link from one operation", () => {
+    const ops: OpenApiOperation[] = [
+      {
+        baseUrl: "http://localhost",
+        method: "GET",
+        path: "/root",
+        operationId: "root",
+        parameters: [],
+        links: [
+          { targetOperationId: "branchA", parameters: { id: "$response.body#/id" } },
+          { targetOperationId: "branchB", parameters: {}, requestBody: { token: "$response.body#/token" } },
+        ],
+      },
+      {
+        baseUrl: "http://localhost",
+        method: "GET",
+        path: "/a",
+        operationId: "branchA",
+        parameters: [],
+      },
+      {
+        baseUrl: "http://localhost",
+        method: "POST",
+        path: "/b",
+        operationId: "branchB",
+        parameters: [],
+      },
+    ];
+
+    const chains = buildChains(ops);
+    expect(chains).toHaveLength(2);
+
+    expect(chains[0].steps[0].operation.operationId).toBe("root");
+    expect(chains[0].steps[0].link?.targetOperationId).toBe("branchA");
+    expect(chains[0].steps[1].operation.operationId).toBe("branchA");
+
+    expect(chains[1].steps[0].operation.operationId).toBe("root");
+    expect(chains[1].steps[0].link?.targetOperationId).toBe("branchB");
+    expect(chains[1].steps[0].link?.requestBody).toEqual({
+      token: "$response.body#/token",
+    });
+    expect(chains[1].steps[1].operation.operationId).toBe("branchB");
   });
 });
 
