@@ -96,14 +96,18 @@ function resolveSchema(schema: unknown): Record<string, unknown> | undefined {
   return { ...schema };
 }
 
-function expandSchemaVariants(schema: unknown): Record<string, unknown>[] {
-  if (!isObject(schema)) return [{}];
-  const resolved = resolveSchema(schema);
+function expandSchemaVariants(schema: unknown, resolver: RefResolver): Record<string, unknown>[] {
+  const deref = resolver.resolve<Record<string, unknown>>(schema);
+  if (!deref) return [{}];
+  const resolved = resolveSchema(deref);
   if (!resolved) return [{}];
   const variants = resolved.oneOf ?? resolved.anyOf;
   if (!Array.isArray(variants)) return [resolved];
   return variants
-    .map((v) => resolveSchema(v))
+    .map((v) => {
+      const d = resolver.resolve<Record<string, unknown>>(v);
+      return d ? resolveSchema(d) : undefined;
+    })
     .filter((v): v is Record<string, unknown> => v !== undefined);
 }
 
@@ -113,6 +117,9 @@ export function defaultValueForSchema(
 ): unknown {
   if (example !== undefined) return example;
   if (!schema) return "test";
+
+  if (schema.default !== undefined) return schema.default;
+  if (Array.isArray(schema.enum) && schema.enum.length > 0) return schema.enum[0];
 
   if (Array.isArray(schema.allOf)) {
     return defaultValueForSchema(mergeAllOf(schema.allOf));
@@ -153,10 +160,41 @@ function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
+// --- $ref resolver ---
+
+class RefResolver {
+  private doc: Record<string, unknown>;
+  constructor(doc: unknown) {
+    this.doc = (doc ?? {}) as Record<string, unknown>;
+  }
+
+  resolve<T>(node: unknown, depth = 0): T | undefined {
+    if (depth > 10) return undefined;
+    if (!isObject(node)) return undefined;
+    if ("$ref" in node && typeof node.$ref === "string") {
+      const target = this.followPointer(node.$ref);
+      return target ? this.resolve<T>(target, depth + 1) : undefined;
+    }
+    return node as T;
+  }
+
+  private followPointer(pointer: string): unknown {
+    if (!pointer.startsWith("#/")) return undefined;
+    const parts = pointer.slice(2).split("/");
+    let current: unknown = this.doc;
+    for (const part of parts) {
+      if (!isObject(current)) return undefined;
+      current = current[part];
+    }
+    return current;
+  }
+}
+
 interface OpenApiDoc {
   openapi?: string;
   servers?: { url: string }[];
   paths?: Record<string, Record<string, unknown>>;
+  components?: Record<string, unknown>;
 }
 
 function isOpenApi3(data: unknown): data is OpenApiDoc {
@@ -164,35 +202,37 @@ function isOpenApi3(data: unknown): data is OpenApiDoc {
   return typeof data.openapi === "string" && data.openapi.startsWith("3.");
 }
 
-function extractParameters(rawList: unknown): OpenApiParameter[] {
+function extractParameters(rawList: unknown, resolver: RefResolver): OpenApiParameter[] {
   const params: OpenApiParameter[] = [];
   if (!Array.isArray(rawList)) return params;
   for (const p of rawList) {
-    if (isObject(p) && !("$ref" in p)) {
-      params.push({
-        name: p.name as string,
-        in: p.in as OpenApiParameter["in"],
-        required: p.required as boolean | undefined,
-        schema: p.schema as OpenApiParameter["schema"],
-        example: p.example,
-      });
-    }
+    const deref = resolver.resolve<Record<string, unknown>>(p);
+    if (!deref) continue;
+    params.push({
+      name: deref.name as string,
+      in: deref.in as OpenApiParameter["in"],
+      required: deref.required as boolean | undefined,
+      schema: deref.schema as OpenApiParameter["schema"],
+      example: deref.example,
+    });
   }
   return params;
 }
 
 function extractRequestBodyVariants(
   opBody: unknown,
+  resolver: RefResolver,
 ): OpenApiRequestBody[] {
-  if (!isObject(opBody) || "$ref" in opBody) return [];
-  const content = opBody.content as Record<string, unknown> | undefined;
+  const deref = resolver.resolve<Record<string, unknown>>(opBody);
+  if (!deref) return [];
+  const content = deref.content as Record<string, unknown> | undefined;
   if (!isObject(content)) return [];
   const ct = Object.keys(content)[0];
   const mediaType = content[ct] as Record<string, unknown>;
   const rawSchema = mediaType?.schema;
   if (!isObject(rawSchema)) return [];
 
-  const variants = expandSchemaVariants(rawSchema);
+  const variants = expandSchemaVariants(rawSchema, resolver);
   return variants.map((s) => ({
     contentType: ct,
     schema: s as OpenApiRequestBody["schema"],
@@ -242,20 +282,21 @@ function extractLinks(responses: unknown): OpenApiLink[] {
 
 function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
   const baseUrl = doc.servers?.[0]?.url ?? "http://localhost";
+  const resolver = new RefResolver(doc);
   const operations: OpenApiOperation[] = [];
 
   for (const [path, pathItem] of Object.entries(doc.paths ?? {})) {
     if (!isObject(pathItem)) continue;
 
-    const pathLevelParams = extractParameters(pathItem.parameters);
+    const pathLevelParams = extractParameters(pathItem.parameters, resolver);
 
     for (const method of HTTP_METHODS) {
       const operation = pathItem[method];
       if (!isObject(operation)) continue;
 
-      const opParams = extractParameters(operation.parameters);
+      const opParams = extractParameters(operation.parameters, resolver);
       const parameters = [...pathLevelParams, ...opParams];
-      const bodyVariants = extractRequestBodyVariants(operation.requestBody);
+      const bodyVariants = extractRequestBodyVariants(operation.requestBody, resolver);
       const links = extractLinks(operation.responses);
 
       const base = {

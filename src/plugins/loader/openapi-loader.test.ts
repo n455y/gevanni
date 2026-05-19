@@ -748,6 +748,196 @@ paths:
       expect(names).toContain("healthCheck");
     });
   });
+
+  describe("$ref resolution", () => {
+    it("resolves $ref parameters from components", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/items/{id}": {
+            get: {
+              operationId: "getItem",
+              parameters: [
+                { $ref: "#/components/parameters/ItemId" },
+              ],
+            },
+          },
+        },
+        components: {
+          parameters: {
+            ItemId: {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "integer" },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation.parameters).toEqual([
+        {
+          name: "id",
+          in: "path",
+          required: true,
+          schema: { type: "integer" },
+          example: undefined,
+        },
+      ]);
+    });
+
+    it("resolves $ref request body schema from components", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/users": {
+            post: {
+              operationId: "createUser",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/User" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            User: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                email: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation.requestBody?.schema).toMatchObject({
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          email: { type: "string" },
+        },
+      });
+    });
+
+    it("resolves $ref in requestBody itself", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/items": {
+            post: {
+              operationId: "createItem",
+              requestBody: {
+                $ref: "#/components/requestBodies/ItemBody",
+              },
+            },
+          },
+        },
+        components: {
+          requestBodies: {
+            ItemBody: {
+              content: {
+                "application/json": {
+                  schema: { type: "object", properties: { name: { type: "string" } } },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation.requestBody?.schema).toMatchObject({
+        type: "object",
+        properties: { name: { type: "string" } },
+      });
+    });
+
+    it("resolves $ref inside oneOf variants", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            post: {
+              operationId: "createPet",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      oneOf: [
+                        { $ref: "#/components/schemas/Cat" },
+                        { $ref: "#/components/schemas/Dog" },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            Cat: {
+              type: "object",
+              properties: {
+                petType: { type: "string", enum: ["cat"] },
+                meow: { type: "string" },
+              },
+            },
+            Dog: {
+              type: "object",
+              properties: {
+                petType: { type: "string", enum: ["dog"] },
+                bark: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe("createPet_variant1");
+      expect(result[1].name).toBe("createPet_variant2");
+
+      const src0 = result[0].source as OpenApiScenarioSource;
+      expect(src0.steps[0].operation.requestBody?.schema).toMatchObject({
+        properties: {
+          petType: { type: "string", enum: ["cat"] },
+          meow: { type: "string" },
+        },
+      });
+    });
+  });
 });
 
 describe("buildChains", () => {
@@ -904,6 +1094,36 @@ describe("defaultValueForSchema", () => {
         },
       }),
     ).toEqual({ name: "test", count: 1, active: true });
+  });
+
+  it("uses default value when provided", () => {
+    expect(defaultValueForSchema({ type: "string", default: "hello" })).toBe("hello");
+    expect(defaultValueForSchema({ type: "integer", default: 42 })).toBe(42);
+    expect(defaultValueForSchema({ type: "boolean", default: false })).toBe(false);
+  });
+
+  it("prefers example over default", () => {
+    expect(
+      defaultValueForSchema({ type: "string", default: "fallback" }, "override"),
+    ).toBe("override");
+  });
+
+  it("uses first enum value", () => {
+    expect(
+      defaultValueForSchema({ type: "string", enum: ["active", "inactive"] }),
+    ).toBe("active");
+  });
+
+  it("prefers example over enum", () => {
+    expect(
+      defaultValueForSchema({ type: "string", enum: ["a", "b"] }, "c"),
+    ).toBe("c");
+  });
+
+  it("prefers default over enum", () => {
+    expect(
+      defaultValueForSchema({ type: "string", enum: ["a", "b"], default: "b" }),
+    ).toBe("b");
   });
 });
 
