@@ -115,10 +115,15 @@ export interface Exchange {
 
 // --- ReplayResult ---
 export class ReplayResult {
+  readonly exchange: Exchange;
+  readonly secondOrderExchanges: Exchange[];
   constructor(
-    readonly exchange: Exchange,
-    readonly secondOrderExchanges: Exchange[] = [],
-  ) {}
+    exchange: Exchange,
+    secondOrderExchanges: Exchange[] = [],
+  ) {
+    this.exchange = exchange;
+    this.secondOrderExchanges = secondOrderExchanges;
+  }
 
   get allExchanges(): Exchange[] {
     return [this.exchange, ...this.secondOrderExchanges];
