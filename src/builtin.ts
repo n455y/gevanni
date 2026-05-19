@@ -8,6 +8,7 @@ import { QueryParserPlugin, QueryMutationPlugin } from "./plugins/parameter/quer
 import { JsonParserPlugin, JsonMutationPlugin } from "./plugins/parameter/json.ts";
 import { FormParserPlugin, FormMutationPlugin } from "./plugins/parameter/form.ts";
 import { HeaderParserPlugin, HeaderMutationPlugin } from "./plugins/parameter/header.ts";
+import { CookieParserPlugin, CookieMutationPlugin } from "./plugins/parameter/cookie.ts";
 import { ReflectedXssPlugin } from "./plugins/signature/reflected-xss.ts";
 import { SqliErrorPlugin } from "./plugins/signature/sqli-error.ts";
 import { JsonStoragePlugin } from "./plugins/storage/json-storage.ts";
@@ -33,11 +34,13 @@ export function registerBuiltinPlugins(registry: PluginRegistry): void {
   registry.register("parser", "json-parser", () => new JsonParserPlugin());
   registry.register("parser", "form-parser", () => new FormParserPlugin());
   registry.register("parser", "header-parser", () => new HeaderParserPlugin());
+  registry.register("parser", "cookie-parser", () => new CookieParserPlugin());
   registry.register("parser", "graphql-parser", () => new GraphQLParserPlugin());
   registry.register("mutation", "query-mutation", () => new QueryMutationPlugin());
   registry.register("mutation", "json-mutation", () => new JsonMutationPlugin());
   registry.register("mutation", "form-mutation", () => new FormMutationPlugin());
   registry.register("mutation", "header-mutation", () => new HeaderMutationPlugin());
+  registry.register("mutation", "cookie-mutation", () => new CookieMutationPlugin());
   registry.register("mutation", "graphql-mutation", () => new GraphQLMutationPlugin());
   registry.register(
     "signature",
