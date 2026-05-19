@@ -65,12 +65,64 @@ const HTTP_METHODS = [
   "trace",
 ] as const;
 
+function mergeAllOf(schemas: unknown[]): Record<string, unknown> {
+  const allProperties: Record<string, unknown> = {};
+  const allRequired: string[] = [];
+  const extra: Record<string, unknown> = { type: "object" };
+
+  for (const s of schemas) {
+    if (!isObject(s)) continue;
+    if (isObject(s.properties)) {
+      Object.assign(allProperties, s.properties);
+    }
+    if (Array.isArray(s.required)) {
+      allRequired.push(...(s.required as string[]));
+    }
+    for (const [k, v] of Object.entries(s)) {
+      if (k !== "properties" && k !== "required" && k !== "allOf") {
+        extra[k] = v;
+      }
+    }
+  }
+
+  if (Object.keys(allProperties).length > 0) extra.properties = allProperties;
+  if (allRequired.length > 0) extra.required = [...new Set(allRequired)];
+  return extra;
+}
+
+function resolveSchema(schema: unknown): Record<string, unknown> | undefined {
+  if (!isObject(schema)) return undefined;
+  if (Array.isArray(schema.allOf)) return mergeAllOf(schema.allOf);
+  return { ...schema };
+}
+
+function expandSchemaVariants(schema: unknown): Record<string, unknown>[] {
+  if (!isObject(schema)) return [{}];
+  const resolved = resolveSchema(schema);
+  if (!resolved) return [{}];
+  const variants = resolved.oneOf ?? resolved.anyOf;
+  if (!Array.isArray(variants)) return [resolved];
+  return variants
+    .map((v) => resolveSchema(v))
+    .filter((v): v is Record<string, unknown> => v !== undefined);
+}
+
 export function defaultValueForSchema(
   schema?: { type?: string; [key: string]: unknown },
   example?: unknown,
 ): unknown {
   if (example !== undefined) return example;
   if (!schema) return "test";
+
+  if (Array.isArray(schema.allOf)) {
+    return defaultValueForSchema(mergeAllOf(schema.allOf));
+  }
+
+  if (Array.isArray(schema.oneOf) || Array.isArray(schema.anyOf)) {
+    const variants = (schema.oneOf ?? schema.anyOf) as unknown[];
+    const first = variants[0];
+    return first ? defaultValueForSchema(first as { type?: string; [key: string]: unknown }) : "test";
+  }
 
   switch (schema.type) {
     case "integer":
@@ -80,8 +132,18 @@ export function defaultValueForSchema(
       return true;
     case "array":
       return [];
-    case "object":
+    case "object": {
+      if (isObject(schema.properties)) {
+        const obj: Record<string, unknown> = {};
+        for (const [key, propSchema] of Object.entries(schema.properties)) {
+          obj[key] = defaultValueForSchema(
+            propSchema as { type?: string; [key: string]: unknown },
+          );
+        }
+        return obj;
+      }
       return {};
+    }
     default:
       return "test";
   }
@@ -119,17 +181,23 @@ function extractParameters(rawList: unknown): OpenApiParameter[] {
   return params;
 }
 
-function extractRequestBody(opBody: unknown): OpenApiRequestBody | undefined {
-  if (!isObject(opBody) || "$ref" in opBody) return undefined;
+function extractRequestBodyVariants(
+  opBody: unknown,
+): OpenApiRequestBody[] {
+  if (!isObject(opBody) || "$ref" in opBody) return [];
   const content = opBody.content as Record<string, unknown> | undefined;
-  if (!isObject(content)) return undefined;
+  if (!isObject(content)) return [];
   const ct = Object.keys(content)[0];
   const mediaType = content[ct] as Record<string, unknown>;
-  return {
+  const rawSchema = mediaType?.schema;
+  if (!isObject(rawSchema)) return [];
+
+  const variants = expandSchemaVariants(rawSchema);
+  return variants.map((s) => ({
     contentType: ct,
-    schema: mediaType?.schema as OpenApiRequestBody["schema"],
-    example: mediaType?.example,
-  };
+    schema: s as OpenApiRequestBody["schema"],
+    example: mediaType.example,
+  }));
 }
 
 function extractLinks(responses: unknown): OpenApiLink[] {
@@ -187,19 +255,35 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
 
       const opParams = extractParameters(operation.parameters);
       const parameters = [...pathLevelParams, ...opParams];
-      const requestBody = extractRequestBody(operation.requestBody);
+      const bodyVariants = extractRequestBodyVariants(operation.requestBody);
       const links = extractLinks(operation.responses);
 
-      operations.push({
+      const base = {
         baseUrl,
         method: method.toUpperCase(),
         path,
         operationId: operation.operationId as string | undefined,
         summary: operation.summary as string | undefined,
         parameters,
-        requestBody,
         links: links.length > 0 ? links : undefined,
-      });
+      };
+
+      if (bodyVariants.length <= 1) {
+        operations.push({ ...base, requestBody: bodyVariants[0] });
+      } else {
+        for (let vi = 0; vi < bodyVariants.length; vi++) {
+          operations.push({
+            ...base,
+            requestBody: bodyVariants[vi],
+            operationId: base.operationId
+              ? `${base.operationId}_variant${vi + 1}`
+              : undefined,
+            summary: base.summary
+              ? `${base.summary} (variant ${vi + 1})`
+              : undefined,
+          });
+        }
+      }
     }
   }
 

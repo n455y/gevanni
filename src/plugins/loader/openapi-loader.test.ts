@@ -522,6 +522,232 @@ paths:
       ).resolves.toBeUndefined();
     });
   });
+
+  describe("oneOf/anyOf request bodies", () => {
+    it("generates separate scenarios for each oneOf variant", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            post: {
+              operationId: "createPet",
+              summary: "Create a pet",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      oneOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            petType: { type: "string", enum: ["cat"] },
+                            meow: { type: "string" },
+                          },
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            petType: { type: "string", enum: ["dog"] },
+                            bark: { type: "string" },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe("createPet_variant1");
+      expect(result[1].name).toBe("createPet_variant2");
+
+      const src0 = result[0].source as OpenApiScenarioSource;
+      expect(src0.steps[0].operation.requestBody?.schema).toMatchObject({
+        properties: {
+          petType: { type: "string", enum: ["cat"] },
+          meow: { type: "string" },
+        },
+      });
+
+      const src1 = result[1].source as OpenApiScenarioSource;
+      expect(src1.steps[0].operation.requestBody?.schema).toMatchObject({
+        properties: {
+          petType: { type: "string", enum: ["dog"] },
+          bark: { type: "string" },
+        },
+      });
+    });
+
+    it("generates separate scenarios for each anyOf variant", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/notify": {
+            post: {
+              operationId: "sendNotification",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      anyOf: [
+                        {
+                          type: "object",
+                          properties: { email: { type: "string" } },
+                        },
+                        {
+                          type: "object",
+                          properties: { phone: { type: "string" } },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe("sendNotification_variant1");
+      expect(result[1].name).toBe("sendNotification_variant2");
+    });
+
+    it("resolves allOf within request body schema", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/users": {
+            post: {
+              operationId: "createUser",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      allOf: [
+                        {
+                          type: "object",
+                          properties: { name: { type: "string" } },
+                        },
+                        {
+                          type: "object",
+                          properties: { email: { type: "string" } },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation.requestBody?.schema).toMatchObject({
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          email: { type: "string" },
+        },
+      });
+    });
+
+    it("generates variants with suffix when no operationId", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/items": {
+            post: {
+              summary: "Create item",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      oneOf: [
+                        { type: "string" },
+                        { type: "integer" },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe("Create item (variant 1)");
+      expect(result[1].name).toBe("Create item (variant 2)");
+    });
+
+    it("preserves non-oneOf operations alongside expanded ones", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/items": {
+            post: {
+              operationId: "createItem",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      oneOf: [
+                        { type: "string" },
+                        { type: "integer" },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/health": {
+            get: {
+              operationId: "healthCheck",
+            },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(3);
+      const names = result.map((s) => s.name);
+      expect(names).toContain("createItem_variant1");
+      expect(names).toContain("createItem_variant2");
+      expect(names).toContain("healthCheck");
+    });
+  });
 });
 
 describe("buildChains", () => {
@@ -635,6 +861,49 @@ describe("defaultValueForSchema", () => {
 
   it("returns 'test' when no schema", () => {
     expect(defaultValueForSchema(undefined)).toBe("test");
+  });
+
+  it("resolves allOf by merging properties", () => {
+    expect(
+      defaultValueForSchema({
+        allOf: [
+          { type: "object", properties: { name: { type: "string" } } },
+          { type: "object", properties: { age: { type: "integer" } } },
+        ],
+      }),
+    ).toEqual({ name: "test", age: 1 });
+  });
+
+  it("resolves oneOf by using the first variant", () => {
+    expect(
+      defaultValueForSchema({
+        oneOf: [
+          { type: "object", properties: { email: { type: "string" } } },
+          { type: "object", properties: { phone: { type: "string" } } },
+        ],
+      }),
+    ).toEqual({ email: "test" });
+  });
+
+  it("resolves anyOf by using the first variant", () => {
+    expect(
+      defaultValueForSchema({
+        anyOf: [{ type: "integer" }, { type: "string" }],
+      }),
+    ).toBe(1);
+  });
+
+  it("generates defaults for object properties", () => {
+    expect(
+      defaultValueForSchema({
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          count: { type: "integer" },
+          active: { type: "boolean" },
+        },
+      }),
+    ).toEqual({ name: "test", count: 1, active: true });
   });
 });
 
