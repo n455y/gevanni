@@ -1,8 +1,5 @@
 import { BuiltinMutationType } from "../../types/branded.ts";
-import type {
-  MutationType,
-  Payload,
-} from "../../types/branded.ts";
+import type { MutationType, Payload } from "../../types/branded.ts";
 import { AuditParameter, AuditMutation } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
@@ -52,7 +49,11 @@ export class HeaderMutationPlugin implements Plugin {
         const parameterName = instr.parameter.location.name;
         const current = headers[parameterName] ?? "";
         const payload = String(instr.payload);
-        headers[parameterName] = applyMutation(current, payload, instr.mutationType);
+        headers[parameterName] = applyMutation(
+          current,
+          payload,
+          instr.mutationType,
+        );
       }
 
       return {
@@ -65,10 +66,18 @@ export class HeaderMutationPlugin implements Plugin {
   }
 }
 
+const EXCLUDED_HEADERS = [
+  "host",
+  "content-length",
+  "transfer-encoding",
+  "connection",
+];
+
 function parseHeaderParameters(request: HttpRequest): AuditParameter[] {
   const params: AuditParameter[] = [];
 
   for (const [name, value] of Object.entries(request.headers)) {
+    if (EXCLUDED_HEADERS.includes(name.toLowerCase())) continue;
     params.push(
       new HeaderParameter({ name }, value, [
         BuiltinMutationType.ReplaceValue,
