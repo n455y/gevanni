@@ -64,6 +64,7 @@ export interface OrchestratorDeps {
   commandBus: CommandBus;
   eventBus: EventBus;
   logger: Logger;
+  upstream?: string;
 }
 
 export class Orchestrator {
@@ -86,7 +87,7 @@ export class Orchestrator {
     // 1. Process each scenario
     const allJobs: Job[] = [];
 
-    const planProxy = await startMutationProxy([], commandBus);
+    const planProxy = await startMutationProxy([], commandBus, this.deps.upstream);
     try {
       for (const scenario of scenarios) {
         logger.debug(`Processing scenario: ${scenario.name}`);
@@ -232,7 +233,7 @@ export class Orchestrator {
           const scenario: Scenario = await commandBus.dispatch(
             new LoadScenarioCommand(job.scenarioId),
           );
-          const proxy = await startMutationProxy(mutations, commandBus);
+          const proxy = await startMutationProxy(mutations, commandBus, this.deps.upstream);
           try {
             const exchanges = await commandBus.dispatch(
               new ReplayCommand(scenario, {

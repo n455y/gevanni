@@ -71,7 +71,7 @@ async function bootstrap(
     (p): p is ScenarioLoaderPlugin => "load" in p && typeof (p as any).load === "function",
   );
 
-  const orchestrator = new Orchestrator({ commandBus, eventBus, logger });
+  const orchestrator = new Orchestrator({ commandBus, eventBus, logger, upstream: config.upstream });
   return { config, logger, commandBus, eventBus, registry, orchestrator, loaders };
 }
 

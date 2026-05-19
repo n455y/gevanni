@@ -2,6 +2,8 @@ import http from "node:http";
 import https from "node:https";
 import net, { type AddressInfo } from "node:net";
 import { TLSSocket } from "node:tls";
+import { HttpProxyAgent } from "http-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import selfsigned from "selfsigned";
 import type {
   HttpRequest,
@@ -16,11 +18,20 @@ import { InterceptCommand } from "../../commands/intercept.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { SaveExchangeCommand } from "../../commands/exchange.ts";
 
-export function sendRequest(request: HttpRequest): Promise<HttpResponse> {
+export function sendRequest(
+  request: HttpRequest,
+  upstreamProxyUrl?: string,
+): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(request.url);
     const isHttps = parsedUrl.protocol === "https:";
     const lib = isHttps ? https : http;
+
+    const agent = upstreamProxyUrl
+      ? isHttps
+        ? new HttpsProxyAgent(upstreamProxyUrl)
+        : new HttpProxyAgent(upstreamProxyUrl)
+      : undefined;
 
     const options: https.RequestOptions = {
       hostname: parsedUrl.hostname,
@@ -28,6 +39,7 @@ export function sendRequest(request: HttpRequest): Promise<HttpResponse> {
       path: parsedUrl.pathname + parsedUrl.search,
       method: request.method,
       headers: { ...request.headers },
+      ...(agent ? { agent } : {}),
     };
 
     const req = lib.request(options, (res) => {
@@ -76,6 +88,7 @@ export interface MutationProxy {
 export async function startMutationProxy(
   mutations: AuditMutation[],
   commandBus: CommandBus,
+  upstreamProxyUrl?: string,
 ): Promise<MutationProxy> {
   const notAfterDate = new Date();
   notAfterDate.setFullYear(notAfterDate.getFullYear() + 10);
@@ -133,6 +146,13 @@ export async function startMutationProxy(
       const targetUrl = new URL(mutated.url);
       const targetIsHttps = targetUrl.protocol === "https:";
       const lib = targetIsHttps ? https : http;
+
+      const targetAgent = upstreamProxyUrl
+        ? targetIsHttps
+          ? new HttpsProxyAgent(upstreamProxyUrl)
+          : new HttpProxyAgent(upstreamProxyUrl)
+        : undefined;
+
       const proxyReq = lib.request(
         {
           hostname: targetUrl.hostname,
@@ -142,6 +162,7 @@ export async function startMutationProxy(
           headers: { ...mutated.headers, host: targetUrl.host },
           rejectUnauthorized: false,
           autoSelectFamily: false,
+          ...(targetAgent ? { agent: targetAgent } : {}),
         } as https.RequestOptions,
         (proxyRes) => {
           if (exchangeId) {
@@ -221,7 +242,7 @@ export async function startMutationProxy(
     });
   });
 
-  server.on("connect", async (req, socket, head) => {
+  server.on("connect", async (_req, socket, head) => {
     const port = await httpsServerPort;
     const serverSocket = net.connect(port, "127.0.0.1", () => {
       socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
@@ -255,12 +276,14 @@ export async function startMutationProxy(
 export class HttpProxyPlugin implements Plugin {
   readonly name = "http-proxy";
   private extraHeaders: Record<string, string> = {};
+  private upstream?: string;
 
   async init(context: PluginContext): Promise<void> {
     this.extraHeaders = (context.config.headers ?? {}) as Record<
       string,
       string
     >;
+    this.upstream = context.config.upstream as string | undefined;
 
     context.commandBus.register(
       InterceptCommand,
@@ -279,7 +302,7 @@ export class HttpProxyPlugin implements Plugin {
         };
 
         // 3. Send request to target
-        const response = await sendRequest(finalRequest);
+        const response = await sendRequest(finalRequest, this.upstream);
         return { request: modifiedRequest, response };
       },
     );

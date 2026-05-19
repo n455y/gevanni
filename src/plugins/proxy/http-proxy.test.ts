@@ -1,6 +1,7 @@
 import { HttpsProxyAgent } from "https-proxy-agent";
 import http from "node:http";
 import https from "node:https";
+import { type AddressInfo } from "node:net";
 import selfsigned from "selfsigned";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -215,6 +216,68 @@ describe("HttpProxyPlugin", () => {
 
     // The returned request should be the modified one from the tamper pipeline
     expect(result.request.headers["x-tampered"]).toBe("true");
+  });
+
+  it("routes requests through upstream proxy when configured", async () => {
+    // Start a simple upstream proxy that records the request
+    let proxiedHost: string | undefined;
+    let proxiedPort: string | undefined;
+    const upstreamProxy = http.createServer((req, res) => {
+      // Act as a basic HTTP proxy: extract target from URL
+      const targetUrl = new URL(req.url!);
+      proxiedHost = targetUrl.hostname;
+      proxiedPort = targetUrl.port;
+
+      const options: http.RequestOptions = {
+        hostname: targetUrl.hostname,
+        port: targetUrl.port || 80,
+        path: targetUrl.pathname + targetUrl.search,
+        method: req.method,
+        headers: req.headers as Record<string, string>,
+      };
+
+      const proxyReq = http.request(options, (proxyRes) => {
+        res.writeHead(proxyRes.statusCode!, proxyRes.headers as Record<string, string>);
+        proxyRes.pipe(res);
+      });
+      proxyReq.on("error", () => {
+        res.writeHead(502);
+        res.end("upstream error");
+      });
+      req.pipe(proxyReq);
+    });
+
+    const upstreamProxyPort = await new Promise<number>((resolve) => {
+      upstreamProxy.listen(0, () => {
+        resolve((upstreamProxy.address() as AddressInfo).port);
+      });
+    });
+
+    try {
+      const plugin = new HttpProxyPlugin();
+      await plugin.init({
+        commandBus,
+        eventBus: new InMemoryEventBus(),
+        config: { upstream: `http://127.0.0.1:${upstreamProxyPort}` },
+      });
+
+      commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
+
+      const request = makeRequest(`http://127.0.0.1:${serverPort}/proxied`);
+
+      const result = await commandBus.dispatch<{
+        request: HttpRequest;
+        response: HttpResponse;
+      }>(new InterceptCommand(request, []));
+
+      expect(result.response.statusCode).toBe(200);
+      const body = JSON.parse((result.response.body as Buffer).toString("utf-8"));
+      expect(body.url).toBe("/proxied");
+      expect(proxiedHost).toBe("127.0.0.1");
+      expect(proxiedPort).toBe(String(serverPort));
+    } finally {
+      upstreamProxy.close();
+    }
   });
 });
 
