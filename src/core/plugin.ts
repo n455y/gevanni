@@ -1,10 +1,13 @@
 import type { CommandBus } from "./command-bus.ts";
 import type { EventBus } from "./event-bus.ts";
+import type { Logger } from "./logger.ts";
+import type { RuntimeContext } from "./runtime-context.ts";
 import type { Scenario } from "../types/models.ts";
 
 export interface PluginContext {
   commandBus: CommandBus;
   eventBus: EventBus;
+  logger: Logger;
   config: Record<string, unknown>;
 }
 
@@ -26,11 +29,7 @@ export interface PluginConfig {
 
 export interface PluginRegistry {
   register(type: string, name: string, factory: () => Plugin): void;
-  initializeAll(deps: {
-    commandBus: CommandBus;
-    eventBus: EventBus;
-    pluginConfigs?: PluginConfig[];
-  }): Promise<Plugin[]>;
+  initializeAll(deps: { context: RuntimeContext; pluginConfigs?: PluginConfig[] }): Promise<Plugin[]>;
   destroyAll(plugins: Plugin[]): Promise<void>;
 }
 
@@ -41,15 +40,11 @@ export class PluginRegistryImpl implements PluginRegistry {
     this.factories.set(`${type}:${name}`, factory);
   }
 
-  async initializeAll(deps: {
-    commandBus: CommandBus;
-    eventBus: EventBus;
-    pluginConfigs?: PluginConfig[];
-  }): Promise<Plugin[]> {
-    const configs = deps.pluginConfigs ?? [];
+  async initializeAll(deps: { context: RuntimeContext; pluginConfigs?: PluginConfig[] }): Promise<Plugin[]> {
+    const { context, pluginConfigs = [] } = deps;
     const plugins: Plugin[] = [];
 
-    for (const config of configs) {
+    for (const config of pluginConfigs) {
       const key = `${config.type}:${config.name}`;
       const factory = this.factories.get(key);
       if (!factory) {
@@ -57,8 +52,9 @@ export class PluginRegistryImpl implements PluginRegistry {
       }
       const plugin = factory();
       await plugin.init({
-        commandBus: deps.commandBus,
-        eventBus: deps.eventBus,
+        commandBus: context.commandBus,
+        eventBus: context.eventBus,
+        logger: context.logger,
         config: config.options,
       });
       plugins.push(plugin);

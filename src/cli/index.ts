@@ -1,7 +1,6 @@
 import { Command } from "commander";
-import { InMemoryCommandBus } from "../core/command-bus.ts";
-import { InMemoryEventBus } from "../core/event-bus.ts";
 import { PluginRegistryImpl } from "../core/plugin.ts";
+import { RuntimeContext } from "../core/runtime-context.ts";
 import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
 import { registerBuiltinPlugins } from "../builtin.ts";
@@ -56,14 +55,12 @@ async function bootstrap(
 ) {
   const config = loadConfig(configPath, cliOverrides);
   const logger = createLogger(config.logLevel);
-  const commandBus = new InMemoryCommandBus();
-  const eventBus = new InMemoryEventBus();
+  const ctx = new RuntimeContext({ logger });
   const registry = new PluginRegistryImpl();
 
   registerBuiltinPlugins(registry);
   const plugins = await registry.initializeAll({
-    commandBus,
-    eventBus,
+    context: ctx,
     pluginConfigs: config.plugins,
   });
 
@@ -71,8 +68,8 @@ async function bootstrap(
     (p): p is ScenarioLoaderPlugin => "load" in p && typeof (p as any).load === "function",
   );
 
-  const orchestrator = new Orchestrator({ commandBus, eventBus, logger, upstream: config.upstream });
-  return { config, logger, commandBus, eventBus, registry, orchestrator, loaders };
+  const orchestrator = new Orchestrator({ context: ctx, upstream: config.upstream });
+  return { config, logger, ctx, registry, orchestrator, loaders };
 }
 
 // CLI setup

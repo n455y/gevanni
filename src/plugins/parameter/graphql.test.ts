@@ -25,6 +25,8 @@ import { QueryParameter } from "./query.ts";
 
 type AnyGraphQLTarget = GraphQLQueryParameter | GraphQLVariableParameter;
 
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+
 let commandBus: InMemoryCommandBus;
 
 beforeEach(() => {
@@ -83,6 +85,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -120,6 +123,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -154,6 +158,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -180,6 +185,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -196,6 +202,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -217,6 +224,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -238,6 +246,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -254,6 +263,7 @@ describe("GraphQLParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -290,6 +300,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -317,6 +328,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -342,6 +354,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -367,6 +380,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -393,6 +407,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -419,6 +434,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -446,6 +462,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -473,6 +490,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -501,6 +519,7 @@ describe("GraphQLMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 

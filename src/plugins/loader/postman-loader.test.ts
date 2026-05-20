@@ -5,6 +5,8 @@ import path from "path";
 import { PostmanLoaderPlugin } from "./postman-loader.ts";
 import { PostmanScenarioType } from "../scenario/postman.ts";
 
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+
 describe("PostmanLoaderPlugin", () => {
   const loader = new PostmanLoaderPlugin();
 
@@ -154,6 +156,7 @@ describe("PostmanLoaderPlugin", () => {
         loader.init({
           commandBus: {} as any,
           eventBus: {} as any,
+          logger: noopLogger,
           config: {},
         }),
       ).resolves.toBeUndefined();

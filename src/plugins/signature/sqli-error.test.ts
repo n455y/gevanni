@@ -19,6 +19,7 @@ import { ExchangeId, SignatureId } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
@@ -59,6 +60,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -83,6 +85,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -104,6 +107,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -139,6 +143,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -171,6 +176,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -202,6 +208,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -235,6 +242,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -266,6 +274,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -299,6 +308,7 @@ describe("SqliErrorPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 

@@ -70,6 +70,7 @@ function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
 // --- Test setup ---
 let tempDir: string;
 let commandBus: InMemoryCommandBus;
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 
 beforeEach(async () => {
   tempDir = join(
@@ -82,6 +83,7 @@ beforeEach(async () => {
   await plugin.init({
     commandBus,
     eventBus: new InMemoryEventBus(),
+    logger: noopLogger,
     config: { outputDir: tempDir },
   });
 });

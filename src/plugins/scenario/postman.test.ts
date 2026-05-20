@@ -22,6 +22,8 @@ import type { MutationProxy } from "../proxy/http-proxy.ts";
 import { startMutationProxy } from "../proxy/http-proxy.ts";
 import { PostmanPlugin, PostmanScenarioType, runNewman } from "./postman.ts";
 
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
 let serverPort: number;
@@ -125,6 +127,7 @@ describe("PostmanPlugin", () => {
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
+        logger: noopLogger,
         config: {},
       });
 
@@ -167,11 +170,13 @@ describe("PostmanPlugin", () => {
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
+        logger: noopLogger,
         config: {},
       });
       await queryTamper.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
+        logger: noopLogger,
         config: {},
       });
 
@@ -211,6 +216,7 @@ describe("PostmanPlugin", () => {
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
+        logger: noopLogger,
         config: {},
       });
 
@@ -315,6 +321,7 @@ describe("PostmanPlugin multi-request", () => {
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
+        logger: noopLogger,
         config: {},
       });
 

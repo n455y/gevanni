@@ -42,6 +42,7 @@ parameter: new QueryParameter({ name: "" }, "", []),
 
 // --- Tests ---
 let commandBus: InMemoryCommandBus;
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 
 beforeEach(async () => {
   commandBus = new InMemoryCommandBus();
@@ -49,6 +50,7 @@ beforeEach(async () => {
   await plugin.init({
     commandBus,
     eventBus: new InMemoryEventBus(),
+    logger: noopLogger,
     config: {},
   });
 });

@@ -12,6 +12,8 @@ import {
   FormParserPlugin,
 } from "./form.ts";
 
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+
 let commandBus: InMemoryCommandBus;
 
 beforeEach(() => {
@@ -54,6 +56,7 @@ describe("FormParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -84,6 +87,7 @@ describe("FormParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -106,6 +110,7 @@ describe("FormParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -128,6 +133,7 @@ describe("FormParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -156,6 +162,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -185,6 +192,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -210,6 +218,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -235,6 +244,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -264,6 +274,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -287,6 +298,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -316,6 +328,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -350,6 +363,7 @@ describe("FormMutationPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 

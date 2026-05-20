@@ -46,6 +46,7 @@ parameter: new QueryParameter({ name: "" }, "", []),
 // --- Test setup ---
 let tempDir: string;
 let commandBus: InMemoryCommandBus;
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 
 beforeEach(async () => {
   tempDir = join(
@@ -67,6 +68,7 @@ describe("JsonReporterPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: { outputPath },
     });
 
@@ -99,6 +101,7 @@ describe("JsonReporterPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -128,6 +131,7 @@ describe("JsonReporterPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: { outputPath },
     });
 
@@ -192,6 +196,7 @@ describe("JsonReporterPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: { outputPath },
     });
 
@@ -222,6 +227,7 @@ describe("JsonReporterPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: { outputPath },
     });
 

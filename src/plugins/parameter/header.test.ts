@@ -6,6 +6,8 @@ import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { AuditParameter, type HttpRequest, BuiltinMutationType } from "../../types/models.ts";
 import { HeaderParameter } from "./header.ts";
 
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+
 let commandBus: InMemoryCommandBus;
 
 beforeEach(() => {
@@ -22,6 +24,7 @@ describe("HeaderParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -61,6 +64,7 @@ describe("HeaderParserPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 

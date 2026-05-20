@@ -23,6 +23,8 @@ import { AuditMutation } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { HttpProxyPlugin, startMutationProxy } from "./http-proxy.ts";
 
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+
 let commandBus: InMemoryCommandBus;
 let server: http.Server;
 let serverPort: number;
@@ -93,6 +95,7 @@ describe("HttpProxyPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -121,6 +124,7 @@ describe("HttpProxyPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -147,6 +151,7 @@ describe("HttpProxyPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -176,6 +181,7 @@ describe("HttpProxyPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {
         headers: { "X-Custom": "injected" },
       },
@@ -199,6 +205,7 @@ describe("HttpProxyPlugin", () => {
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
       config: {},
     });
 
@@ -258,6 +265,7 @@ describe("HttpProxyPlugin", () => {
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
+        logger: noopLogger,
         config: { upstream: `http://127.0.0.1:${upstreamProxyPort}` },
       });
 

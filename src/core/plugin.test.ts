@@ -1,8 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { SingleCommand } from "./command.ts";
 import { InMemoryCommandBus } from "./command-bus.ts";
 import { InMemoryEventBus } from "./event-bus.ts";
 import { PluginRegistryImpl, type Plugin, type PluginContext } from "./plugin.ts";
+import { RuntimeContext } from "./runtime-context.ts";
+import { SingleCommand } from "./command.ts";
 
 // Helper command for testing plugin command handler registration
 class GreetCommand extends SingleCommand<string> {
@@ -23,9 +24,8 @@ function createTestPlugin(name: string, onInit?: (ctx: PluginContext) => void): 
 
 describe("PluginRegistryImpl", () => {
   it("registers and initializes plugins", async () => {
+    const ctx = new RuntimeContext();
     const registry = new PluginRegistryImpl();
-    const commandBus = new InMemoryCommandBus();
-    const eventBus = new InMemoryEventBus();
     const initSpy = vi.fn();
 
     registry.register("parser", "json", () => ({
@@ -39,8 +39,7 @@ describe("PluginRegistryImpl", () => {
     }));
 
     const plugins = await registry.initializeAll({
-      commandBus,
-      eventBus,
+      context: ctx,
       pluginConfigs: [{ type: "parser", name: "json", options: {} }],
     });
 
@@ -49,14 +48,13 @@ describe("PluginRegistryImpl", () => {
     expect(initSpy).toHaveBeenCalledTimes(1);
 
     // Verify command handler works
-    const result = await commandBus.dispatch(new GreetCommand("world"));
+    const result = await ctx.commandBus.dispatch(new GreetCommand("world"));
     expect(result).toBe("Hello, world!");
   });
 
   it("initializes multiple plugins", async () => {
+    const ctx = new RuntimeContext();
     const registry = new PluginRegistryImpl();
-    const commandBus = new InMemoryCommandBus();
-    const eventBus = new InMemoryEventBus();
     const spy1 = vi.fn();
     const spy2 = vi.fn();
 
@@ -64,8 +62,7 @@ describe("PluginRegistryImpl", () => {
     registry.register("parser", "yaml", () => createTestPlugin("yaml-parser", spy2));
 
     const plugins = await registry.initializeAll({
-      commandBus,
-      eventBus,
+      context: ctx,
       pluginConfigs: [
         { type: "parser", name: "json", options: {} },
         { type: "parser", name: "yaml", options: {} },
@@ -80,9 +77,8 @@ describe("PluginRegistryImpl", () => {
   });
 
   it("passes config to plugin", async () => {
+    const ctx = new RuntimeContext();
     const registry = new PluginRegistryImpl();
-    const commandBus = new InMemoryCommandBus();
-    const eventBus = new InMemoryEventBus();
     let receivedConfig: Record<string, unknown> | undefined;
 
     registry.register("storage", "redis", () => ({
@@ -93,8 +89,7 @@ describe("PluginRegistryImpl", () => {
     }));
 
     await registry.initializeAll({
-      commandBus,
-      eventBus,
+      context: ctx,
       pluginConfigs: [
         {
           type: "storage",
@@ -108,9 +103,8 @@ describe("PluginRegistryImpl", () => {
   });
 
   it("calls destroy on plugins that have it", async () => {
+    const ctx = new RuntimeContext();
     const registry = new PluginRegistryImpl();
-    const commandBus = new InMemoryCommandBus();
-    const eventBus = new InMemoryEventBus();
     const destroySpy = vi.fn();
 
     registry.register("parser", "json", () => ({
@@ -122,8 +116,7 @@ describe("PluginRegistryImpl", () => {
     }));
 
     const plugins = await registry.initializeAll({
-      commandBus,
-      eventBus,
+      context: ctx,
       pluginConfigs: [{ type: "parser", name: "json", options: {} }],
     });
 
@@ -133,9 +126,8 @@ describe("PluginRegistryImpl", () => {
   });
 
   it("throws if plugin not found", async () => {
+    const ctx = new RuntimeContext();
     const registry = new PluginRegistryImpl();
-    const commandBus = new InMemoryCommandBus();
-    const eventBus = new InMemoryEventBus();
 
     // Register one plugin
     registry.register("parser", "json", () => createTestPlugin("json-parser"));
@@ -143,10 +135,32 @@ describe("PluginRegistryImpl", () => {
     // But try to initialize a different plugin
     await expect(
       registry.initializeAll({
-        commandBus,
-        eventBus,
+        context: ctx,
         pluginConfigs: [{ type: "storage", name: "redis", options: {} }],
       }),
     ).rejects.toThrow("No plugin factory registered for: storage:redis");
+  });
+
+  it("accepts custom commandBus and eventBus via RuntimeContext", async () => {
+    const commandBus = new InMemoryCommandBus();
+    const eventBus = new InMemoryEventBus();
+    const ctx = new RuntimeContext({ commandBus, eventBus });
+    const registry = new PluginRegistryImpl();
+
+    registry.register("parser", "json", () => ({
+      name: "json-parser",
+      async init(ctx: PluginContext) {
+        ctx.commandBus.register(GreetCommand, async (cmd) => `Hi, ${cmd.name}!`);
+      },
+    }));
+
+    await registry.initializeAll({
+      context: ctx,
+      pluginConfigs: [{ type: "parser", name: "json", options: {} }],
+    });
+
+    // Verify the injected commandBus is used
+    const result = await commandBus.dispatch(new GreetCommand("world"));
+    expect(result).toBe("Hi, world!");
   });
 });

@@ -11,6 +11,8 @@ import {
   isOpenApi3,
 } from "./openapi-loader.ts";
 
+const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+
 describe("OpenApiLoaderPlugin", () => {
   const loader = new OpenApiLoaderPlugin();
 
@@ -517,6 +519,7 @@ paths:
         loader.init({
           commandBus: {} as any,
           eventBus: {} as any,
+          logger: noopLogger,
           config: {},
         }),
       ).resolves.toBeUndefined();

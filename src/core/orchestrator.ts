@@ -15,9 +15,7 @@ import type {
   AuditMutation,
 } from "../types/models.ts";
 import { JobStatus, ScanStatus, ReplayResult } from "../types/models.ts";
-import type { CommandBus } from "./command-bus.ts";
-import type { EventBus } from "./event-bus.ts";
-import type { Logger } from "./logger.ts";
+import type { RuntimeContext } from "./runtime-context.ts";
 import type { AuditItem } from "./audit-item.ts";
 import {
   ReplayCommand,
@@ -59,9 +57,7 @@ export async function runWithConcurrency<T>(
 // --- Orchestrator ---
 
 export interface OrchestratorDeps {
-  commandBus: CommandBus;
-  eventBus: EventBus;
-  logger: Logger;
+  context: RuntimeContext;
   upstream?: string;
 }
 
@@ -75,7 +71,7 @@ export class Orchestrator {
     scanId: ScanId;
     items: Map<string, AuditItem>;
   }> {
-    const { commandBus, eventBus, logger } = this.deps;
+    const { commandBus, eventBus, logger } = this.deps.context;
     const id = ScanId(crypto.randomUUID());
     const now = new Date();
     const itemMap = new Map<string, AuditItem>();
@@ -178,7 +174,7 @@ export class Orchestrator {
     items: Map<string, AuditItem>,
     concurrency: number,
   ): Promise<void> {
-    const { commandBus, eventBus, logger } = this.deps;
+    const { commandBus, eventBus, logger } = this.deps.context;
     const now = new Date();
 
     // 1. Update ScanState to "scanning"
@@ -323,7 +319,7 @@ export class Orchestrator {
   }
 
   async report(scanId: ScanId): Promise<void> {
-    const { commandBus, logger } = this.deps;
+    const { commandBus, logger } = this.deps.context;
 
     // 1. Load scan state
     const scanState: ScanState | null = await commandBus.dispatch(
@@ -347,7 +343,7 @@ export class Orchestrator {
   }
 
   async resume(scanIdOrLatest?: ScanId, concurrency?: number): Promise<void> {
-    const { commandBus, logger } = this.deps;
+    const { commandBus, logger } = this.deps.context;
 
     // 1. Resolve scan ID
     let sid: ScanId;

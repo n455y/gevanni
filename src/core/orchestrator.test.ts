@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PostmanScenarioType } from "../plugins/scenario/postman.ts";
 import { InMemoryCommandBus } from "./command-bus.ts";
 import { InMemoryEventBus } from "./event-bus.ts";
+import { RuntimeContext } from "./runtime-context.ts";
 import { createLogger } from "./logger.ts";
 import { Orchestrator } from "./orchestrator.ts";
 import type { AuditItem } from "./audit-item.ts";
@@ -132,10 +133,9 @@ describe("Orchestrator", () => {
         events.push("plan:jobCreated");
       });
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       const result = await orchestrator.plan([]);
@@ -186,10 +186,9 @@ describe("Orchestrator", () => {
         events.push("plan:jobCreated");
       });
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       const result = await orchestrator.plan([mockScenario]);
@@ -214,10 +213,9 @@ describe("Orchestrator", () => {
       commandBus.register(SaveJobCommand, async () => {});
       commandBus.register(SaveScanStateCommand, async () => {});
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       const result = await orchestrator.plan([]);
@@ -282,10 +280,9 @@ describe("Orchestrator", () => {
         events.push("completed");
       });
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       await orchestrator.scan(scanId, items, 2);
@@ -351,10 +348,9 @@ describe("Orchestrator", () => {
         events.push("error");
       });
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       await orchestrator.scan(scanId, items, 2);
@@ -372,10 +368,9 @@ describe("Orchestrator", () => {
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadPendingJobsCommand, async () => []);
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       await orchestrator.scan(scanId, items, 2);
@@ -417,10 +412,9 @@ describe("Orchestrator", () => {
         reportPayload = cmd.payload;
       });
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       await orchestrator.report(scanId);
@@ -435,10 +429,9 @@ describe("Orchestrator", () => {
 
       commandBus.register(LoadScanStateCommand, async () => null);
 
+      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
-        commandBus,
-        eventBus,
-        logger,
+        context: ctx,
       });
 
       await orchestrator.report(scanId);
