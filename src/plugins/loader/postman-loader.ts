@@ -3,7 +3,6 @@ import crypto from "node:crypto";
 import type { Scenario } from "../../types/models.ts";
 import { PostmanScenarioType } from "../scenario/postman.ts";
 import { ScenarioId } from "../../types/branded.ts";
-import type { ScenarioLoaderPlugin, PluginContext } from "../../core/plugin.ts";
 
 // --- Postman Collection types (v2.1 subset) ---
 
@@ -42,40 +41,34 @@ function isPostmanCollection(data: unknown): data is PostmanCollection {
   return Array.isArray(obj.item);
 }
 
-// --- Plugin ---
+// --- Loader ---
 
-export class PostmanLoaderPlugin implements ScenarioLoaderPlugin {
-  readonly name = "postman-loader";
+export async function loadPostmanScenarios(source: unknown): Promise<Scenario[]> {
+  if (typeof source !== "string") return [];
 
-  async init(_context: PluginContext): Promise<void> {}
-
-  async load(source: unknown): Promise<Scenario[]> {
-    if (typeof source !== "string") return [];
-
-    let raw: string;
-    try {
-      raw = fs.readFileSync(source, "utf-8");
-    } catch {
-      return [];
-    }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return [];
-    }
-
-    if (!isPostmanCollection(parsed)) return [];
-
-    const items = parsed.item ?? [];
-    const flatItems = flattenItems(items);
-
-    return flatItems.map((item) => ({
-      id: scenarioId(),
-      name: item.name ?? "unnamed",
-      type: PostmanScenarioType,
-      source: { items: [item] },
-    }));
+  let raw: string;
+  try {
+    raw = fs.readFileSync(source, "utf-8");
+  } catch {
+    return [];
   }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+
+  if (!isPostmanCollection(parsed)) return [];
+
+  const items = parsed.item ?? [];
+  const flatItems = flattenItems(items);
+
+  return flatItems.map((item) => ({
+    id: scenarioId(),
+    name: item.name ?? "unnamed",
+    type: PostmanScenarioType,
+    source: { items: [item] },
+  }));
 }

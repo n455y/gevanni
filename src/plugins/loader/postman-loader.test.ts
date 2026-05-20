@@ -2,13 +2,11 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "path";
-import { PostmanLoaderPlugin } from "./postman-loader.ts";
+import { loadPostmanScenarios } from "./postman-loader.ts";
 import { PostmanScenarioType } from "../scenario/postman.ts";
 
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
-
-describe("PostmanLoaderPlugin", () => {
-  const loader = new PostmanLoaderPlugin();
+describe("PostmanLoader", () => {
+  const loader = { load: loadPostmanScenarios };
 
   describe("load", () => {
     it("returns empty array for non-string source", async () => {
@@ -146,20 +144,4 @@ describe("PostmanLoaderPlugin", () => {
     });
   });
 
-  describe("init and name", () => {
-    it("has correct name", () => {
-      expect(loader.name).toBe("postman-loader");
-    });
-
-    it("init resolves without error", async () => {
-      await expect(
-        loader.init({
-          commandBus: {} as any,
-          eventBus: {} as any,
-          logger: noopLogger,
-          config: {},
-        }),
-      ).resolves.toBeUndefined();
-    });
-  });
 });

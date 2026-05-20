@@ -2,7 +2,6 @@ import type { CommandBus } from "./command-bus.ts";
 import type { EventBus } from "./event-bus.ts";
 import type { Logger } from "./logger.ts";
 import type { RuntimeContext } from "./runtime-context.ts";
-import type { Scenario } from "../types/models.ts";
 
 export interface PluginContext {
   commandBus: CommandBus;
@@ -15,10 +14,6 @@ export interface Plugin {
   readonly name: string;
   init(context: PluginContext): Promise<void>;
   destroy?(): Promise<void>;
-}
-
-export interface ScenarioLoaderPlugin extends Plugin {
-  load(source: unknown): Promise<Scenario[]>;
 }
 
 export interface PluginConfig {

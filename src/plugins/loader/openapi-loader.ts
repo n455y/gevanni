@@ -4,7 +4,6 @@ import yaml from "js-yaml";
 import type { Scenario } from "../../types/models.ts";
 import { ScenarioId } from "../../types/branded.ts";
 import { ScenarioType } from "../../types/branded.ts";
-import type { ScenarioLoaderPlugin, PluginContext } from "../../core/plugin.ts";
 
 // --- OpenAPI 3.x types (subset) ---
 
@@ -408,52 +407,46 @@ export function buildChains(
 
 export { extractOperations, isOpenApi3 };
 
-// --- Plugin ---
+// --- Loader ---
 
 export const OpenApiScenarioType = ScenarioType("openapi");
 
-export class OpenApiLoaderPlugin implements ScenarioLoaderPlugin {
-  readonly name = "openapi-loader";
+export async function loadOpenApiScenarios(source: unknown): Promise<Scenario[]> {
+  if (typeof source !== "string") return [];
 
-  async init(_context: PluginContext): Promise<void> {}
+  let raw: string;
+  try {
+    raw = fs.readFileSync(source, "utf-8");
+  } catch {
+    return [];
+  }
 
-  async load(source: unknown): Promise<Scenario[]> {
-    if (typeof source !== "string") return [];
-
-    let raw: string;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
     try {
-      raw = fs.readFileSync(source, "utf-8");
+      parsed = yaml.load(raw);
     } catch {
       return [];
     }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      try {
-        parsed = yaml.load(raw);
-      } catch {
-        return [];
-      }
-    }
-
-    if (!isOpenApi3(parsed)) return [];
-
-    const operations = extractOperations(parsed);
-    const chains = buildChains(operations);
-
-    return chains.map((chain) => {
-      const first = chain.steps[0].operation;
-      return {
-        id: scenarioId(),
-        name:
-          first.operationId ??
-          first.summary ??
-          `${first.method} ${first.path}`,
-        type: OpenApiScenarioType,
-        source: chain,
-      };
-    });
   }
+
+  if (!isOpenApi3(parsed)) return [];
+
+  const operations = extractOperations(parsed);
+  const chains = buildChains(operations);
+
+  return chains.map((chain) => {
+    const first = chain.steps[0].operation;
+    return {
+      id: scenarioId(),
+      name:
+        first.operationId ??
+        first.summary ??
+        `${first.method} ${first.path}`,
+      type: OpenApiScenarioType,
+      source: chain,
+    };
+  });
 }

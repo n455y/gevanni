@@ -7,28 +7,28 @@ import { registerBuiltinPlugins } from "../builtin.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
-import type { ScenarioLoaderPlugin } from "../core/plugin.ts";
+import { loadOpenApiScenarios } from "../plugins/loader/openapi-loader.ts";
+import { loadPostmanScenarios } from "../plugins/loader/postman-loader.ts";
 import type { Scenario } from "../types/models.ts";
+
+const scenarioLoaders = [loadOpenApiScenarios, loadPostmanScenarios];
+
+async function loadScenarios(sources: unknown[]): Promise<Scenario[]> {
+  const scenarios: Scenario[] = [];
+  for (const source of sources) {
+    for (const loader of scenarioLoaders) {
+      const loaded = await loader(source);
+      scenarios.push(...loaded);
+    }
+  }
+  return scenarios;
+}
 
 interface CliOptions {
   config?: string;
   verbose?: boolean;
   quiet?: boolean;
   concurrency?: string;
-}
-
-async function loadScenarios(
-  loaders: ScenarioLoaderPlugin[],
-  scenarioSources: unknown[],
-): Promise<Scenario[]> {
-  const scenarios: Scenario[] = [];
-  for (const source of scenarioSources) {
-    for (const loader of loaders) {
-      const loaded = await loader.load(source);
-      scenarios.push(...loaded);
-    }
-  }
-  return scenarios;
 }
 
 function buildOverrides(
@@ -59,17 +59,13 @@ async function bootstrap(
   const registry = new PluginRegistryImpl();
 
   registerBuiltinPlugins(registry);
-  const plugins = await registry.initializeAll({
+  await registry.initializeAll({
     context: ctx,
     pluginConfigs: config.plugins,
   });
 
-  const loaders = plugins.filter(
-    (p): p is ScenarioLoaderPlugin => "load" in p && typeof (p as any).load === "function",
-  );
-
   const orchestrator = new Orchestrator({ context: ctx, upstream: config.upstream });
-  return { config, logger, ctx, registry, orchestrator, loaders };
+  return { config, logger, ctx, registry, orchestrator };
 }
 
 // CLI setup
@@ -89,11 +85,11 @@ program
   .option("--concurrency <n>", "Parallel workers")
   .action(async (opts: CliOptions) => {
     const overrides = buildOverrides(opts);
-    const { config, logger, orchestrator, loaders } = await bootstrap(
+    const { config, orchestrator } = await bootstrap(
       opts.config,
       overrides,
     );
-    const scenarios = await loadScenarios(loaders, config.scenarioSources);
+    const scenarios = await loadScenarios(config.scenarioSources);
     const { scanId, items } = await orchestrator.plan(scenarios);
     await orchestrator.scan(scanId, items, config.concurrency);
     await orchestrator.report(scanId);
@@ -107,11 +103,11 @@ program
   .option("--verbose", "Debug logging")
   .option("--quiet", "Minimal logging")
   .action(async (opts: CliOptions) => {
-    const { config, orchestrator, loaders } = await bootstrap(
+    const { config, orchestrator } = await bootstrap(
       opts.config,
       buildOverrides(opts),
     );
-    const scenarios = await loadScenarios(loaders, config.scenarioSources);
+    const scenarios = await loadScenarios(config.scenarioSources);
     await orchestrator.plan(scenarios);
   });
 

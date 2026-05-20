@@ -4,17 +4,15 @@ import os from "node:os";
 import path from "path";
 import type { OpenApiOperation, OpenApiScenarioSource } from "./openapi-loader.ts";
 import {
-  OpenApiLoaderPlugin,
+  loadOpenApiScenarios,
   OpenApiScenarioType,
   buildChains,
   defaultValueForSchema,
   isOpenApi3,
 } from "./openapi-loader.ts";
 
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
-
-describe("OpenApiLoaderPlugin", () => {
-  const loader = new OpenApiLoaderPlugin();
+describe("OpenApiLoader", () => {
+  const loader = { load: loadOpenApiScenarios };
 
   function writeTmpFile(content: string, ext = ".json"): string {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gevanni-test-"));
@@ -506,23 +504,6 @@ paths:
         uuid: "$response.body#/uuid",
       });
       expect(src1.steps[1].operation.operationId).toBe("useUuidInBody");
-    });
-  });
-
-  describe("init and name", () => {
-    it("has correct name", () => {
-      expect(loader.name).toBe("openapi-loader");
-    });
-
-    it("init resolves without error", async () => {
-      await expect(
-        loader.init({
-          commandBus: {} as any,
-          eventBus: {} as any,
-          logger: noopLogger,
-          config: {},
-        }),
-      ).resolves.toBeUndefined();
     });
   });
 
