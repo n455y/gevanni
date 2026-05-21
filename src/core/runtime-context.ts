@@ -7,7 +7,11 @@ export class RuntimeContext {
   readonly eventBus: EventBus;
   readonly logger: Logger;
 
-  constructor(deps?: { commandBus?: CommandBus; eventBus?: EventBus; logger?: Logger }) {
+  constructor(deps?: {
+    commandBus?: CommandBus;
+    eventBus?: EventBus;
+    logger?: Logger;
+  }) {
     this.commandBus = deps?.commandBus ?? new InMemoryCommandBus();
     this.eventBus = deps?.eventBus ?? new InMemoryEventBus();
     this.logger = deps?.logger ?? createLogger();

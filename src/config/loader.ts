@@ -8,7 +8,6 @@ export interface ResolvedConfig {
   plugins: PluginConfig[];
   scenarioSources: unknown[];
   logLevel: LogLevel;
-  upstream?: string;
 }
 
 export interface RawConfig {
@@ -16,7 +15,6 @@ export interface RawConfig {
   plugins?: PluginConfig[];
   scenarioSources?: unknown[];
   logLevel?: LogLevel;
-  upstream?: string;
 }
 
 const DEFAULT_CONCURRENCY = 5;
@@ -49,7 +47,6 @@ export function loadConfig(
     logLevel: cliOverrides?.logLevel ?? fileConfig.logLevel ?? DEFAULT_CONFIG.logLevel,
     plugins: cliOverrides?.plugins ?? fileConfig.plugins ?? DEFAULT_CONFIG.plugins,
     scenarioSources: cliOverrides?.scenarioSources ?? fileConfig.scenarioSources ?? DEFAULT_CONFIG.scenarioSources,
-    upstream: cliOverrides?.upstream ?? fileConfig.upstream,
   };
 
   return resolved;

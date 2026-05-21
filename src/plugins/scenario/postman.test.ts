@@ -18,7 +18,7 @@ import {
   QueryMutationPlugin,
   QueryParameter,
 } from "../parameter/query.ts";
-import type { MutationProxy } from "../proxy/http-proxy.ts";
+import type { MutationProxy } from "../../commands/proxy.ts";
 import { startMutationProxy } from "../proxy/http-proxy.ts";
 import { PostmanPlugin, PostmanScenarioType, runNewman } from "./postman.ts";
 

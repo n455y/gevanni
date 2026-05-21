@@ -31,8 +31,8 @@ import {
   SaveScenarioCommand,
   LoadJobsByScanIdCommand,
   GenerateReportCommand,
+  CreateProxyCommand,
 } from "../commands/index.ts";
-import { startMutationProxy } from "../plugins/proxy/http-proxy.ts";
 
 // --- Worker pool ---
 
@@ -58,7 +58,6 @@ export async function runWithConcurrency<T>(
 
 export interface OrchestratorDeps {
   context: RuntimeContext;
-  upstream?: string;
 }
 
 export class Orchestrator {
@@ -81,7 +80,7 @@ export class Orchestrator {
     // 1. Process each scenario
     const allJobs: Job[] = [];
 
-    const planProxy = await startMutationProxy([], commandBus, this.deps.upstream);
+    const planProxy = await commandBus.dispatch(new CreateProxyCommand([]));
     try {
       for (const scenario of scenarios) {
         logger.debug(`Processing scenario: ${scenario.name}`);
@@ -227,7 +226,9 @@ export class Orchestrator {
           const scenario: Scenario = await commandBus.dispatch(
             new LoadScenarioCommand(job.scenarioId),
           );
-          const proxy = await startMutationProxy(mutations, commandBus, this.deps.upstream);
+          const proxy = await commandBus.dispatch(
+            new CreateProxyCommand(mutations),
+          );
           try {
             const exchanges = await commandBus.dispatch(
               new ReplayCommand(scenario, {

@@ -39,6 +39,7 @@ import {
   GenerateReportCommand,
   SaveScenarioCommand,
   LoadScenarioCommand,
+  CreateProxyCommand,
 } from "../commands/index.ts";
 
 // --- Mock data helpers ---
@@ -98,6 +99,10 @@ describe("Orchestrator", () => {
     commandBus = new InMemoryCommandBus();
     eventBus = new InMemoryEventBus();
     logger = createMockLogger();
+    commandBus.register(CreateProxyCommand, async () => ({
+      port: 0,
+      close: vi.fn(),
+    }));
   });
 
   describe("plan phase", () => {

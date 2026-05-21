@@ -14,6 +14,8 @@ import type {
 import { ExchangeId, ReplayId } from "../../types/branded.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
+import type { MutationProxy } from "../../commands/proxy.ts";
+import { CreateProxyCommand } from "../../commands/proxy.ts";
 import { InterceptCommand } from "../../commands/intercept.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 import { SaveExchangeCommand } from "../../commands/exchange.ts";
@@ -79,11 +81,6 @@ export function sendRequest(
 }
 
 // --- Mutation Proxy ---
-
-export interface MutationProxy {
-  port: number;
-  close: () => void;
-}
 
 export async function startMutationProxy(
   mutations: AuditMutation[],
@@ -284,6 +281,17 @@ export class HttpProxyPlugin implements Plugin {
       string
     >;
     this.upstream = context.config.upstream as string | undefined;
+
+    context.commandBus.register(
+      CreateProxyCommand,
+      async (cmd) => {
+        return startMutationProxy(
+          cmd.mutations,
+          context.commandBus,
+          this.upstream,
+        );
+      },
+    );
 
     context.commandBus.register(
       InterceptCommand,

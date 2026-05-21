@@ -64,7 +64,9 @@ async function bootstrap(
     pluginConfigs: config.plugins,
   });
 
-  const orchestrator = new Orchestrator({ context: ctx, upstream: config.upstream });
+  const orchestrator = new Orchestrator({
+    context: ctx,
+  });
   return { config, logger, ctx, registry, orchestrator };
 }
 
