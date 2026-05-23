@@ -235,8 +235,9 @@ export interface ScanConfig {
   scenarioSources: unknown[];
 }
 
-export interface PluginConfig<T = Record<string, unknown>> {
-  type: string;
+export interface PluginConfig<
+  T extends Record<string, unknown> = Record<string, unknown>,
+> {
   name: string;
   options: T;
 }

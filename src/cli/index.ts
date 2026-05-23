@@ -59,10 +59,9 @@ async function bootstrap(
   const registry = new PluginRegistryImpl();
 
   for (const pc of config.plugins) {
-    const key = `${pc.type}:${pc.name}`;
-    const factory = builtinPluginFactories.get(key);
+    const factory = builtinPluginFactories.get(pc.name);
     if (!factory) {
-      throw new Error(`Unknown plugin: ${key}`);
+      throw new Error(`Unknown plugin: ${pc.name}`);
     }
     registry.register(factory(pc.options));
   }
@@ -156,7 +155,7 @@ program
   .action(async (opts: CliOptions) => {
     const { config } = await bootstrap(opts.config);
     for (const plugin of config.plugins) {
-      console.log(`${plugin.type}/${plugin.name}`);
+      console.log(plugin.name);
     }
   });
 

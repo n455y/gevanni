@@ -55,8 +55,8 @@ describe("loadConfig", () => {
       logLevel: "debug",
       scenarioSources: ["./collections/"],
       plugins: [
-        { type: "scenarioReplayer", name: "postman", options: {} },
-        { type: "signature", name: "reflected-xss", options: {} },
+        { name: "postman", options: {} },
+        { name: "reflected-xss", options: {} },
       ],
     });
 
@@ -66,7 +66,6 @@ describe("loadConfig", () => {
     expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toHaveLength(2);
     expect(config.plugins[0]).toEqual({
-      type: "scenarioReplayer",
       name: "postman",
       options: {},
     });
@@ -89,7 +88,7 @@ describe("loadConfig", () => {
       concurrency: 3,
       logLevel: "debug",
       scenarioSources: ["./collections/"],
-      plugins: [{ type: "proxy", name: "http-proxy", options: {} }],
+      plugins: [{ name: "http-proxy", options: {} }],
     });
 
     const config = loadConfig(configPath, {
@@ -102,7 +101,7 @@ describe("loadConfig", () => {
     // File values used for non-overridden fields
     expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toEqual([
-      { type: "proxy", name: "http-proxy", options: {} },
+      { name: "http-proxy", options: {} },
     ]);
   });
 
@@ -150,19 +149,19 @@ describe("loadConfig", () => {
       logLevel: "debug",
       scenarioSources: ["./collections/"],
       plugins: [
-        { type: "scenarioReplayer", name: "postman", options: {} },
-        { type: "proxy", name: "http-proxy", options: {} },
-        { type: "parser", name: "query-parser", options: {} },
-        { type: "parser", name: "json-parser", options: {} },
-        { type: "parser", name: "form-parser", options: {} },
-        { type: "tamper", name: "query-tamper", options: {} },
-        { type: "tamper", name: "json-tamper", options: {} },
-        { type: "tamper", name: "form-tamper", options: {} },
-        { type: "signature", name: "reflected-xss", options: {} },
-        { type: "signature", name: "sqli-error", options: {} },
-        { type: "storage", name: "json-storage", options: {} },
-        { type: "reporter", name: "console-reporter", options: {} },
-        { type: "reporter", name: "json-reporter", options: {} },
+        { name: "postman", options: {} },
+        { name: "http-proxy", options: {} },
+        { name: "query-parser", options: {} },
+        { name: "json-parser", options: {} },
+        { name: "form-parser", options: {} },
+        { name: "query-mutation", options: {} },
+        { name: "json-mutation", options: {} },
+        { name: "form-mutation", options: {} },
+        { name: "reflected-xss", options: {} },
+        { name: "sqli-error", options: {} },
+        { name: "json-storage", options: {} },
+        { name: "console-reporter", options: {} },
+        { name: "json-reporter", options: {} },
       ],
     });
 
