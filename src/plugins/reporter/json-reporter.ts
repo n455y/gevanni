@@ -4,7 +4,7 @@ import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import { serializeJob, serializeScanState, type Job, type SerializedJob, type SerializedScanState } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
-interface JsonReporterConfig {
+export interface JsonReporterConfig {
   outputPath?: string;
 }
 
@@ -50,8 +50,8 @@ export class JsonReporterPlugin implements Plugin {
   readonly name = "json-reporter";
   private outputPath: string | undefined;
 
-  constructor(options: Record<string, unknown> = {}) {
-    this.outputPath = (options as JsonReporterConfig).outputPath;
+  constructor(options: JsonReporterConfig = {}) {
+    this.outputPath = options.outputPath;
   }
 
   async init(ctx: PluginContext): Promise<void> {

@@ -55,7 +55,7 @@ async function writeJsonFile(path: string, data: unknown): Promise<void> {
 
 // --- Plugin ---
 
-interface JsonStorageConfig {
+export interface JsonStorageConfig {
   outputDir?: string;
 }
 
@@ -64,8 +64,8 @@ export class JsonStoragePlugin implements Plugin {
   private outputDir: string;
   private fileLocks = new Map<string, Promise<void>>();
 
-  constructor(options: Record<string, unknown> = {}) {
-    this.outputDir = (options as JsonStorageConfig).outputDir ?? "./gevanni-results";
+  constructor(options: JsonStorageConfig = {}) {
+    this.outputDir = options.outputDir ?? "./gevanni-results";
   }
 
   private async withFileLock<T>(filePath: string, fn: () => Promise<T>): Promise<T> {

@@ -270,14 +270,19 @@ export async function startMutationProxy(
   });
 }
 
+export interface HttpProxyConfig {
+  headers?: Record<string, string>;
+  upstream?: string;
+}
+
 export class HttpProxyPlugin implements Plugin {
   readonly name = "http-proxy";
   private extraHeaders: Record<string, string>;
   private upstream?: string;
 
-  constructor(options: Record<string, unknown> = {}) {
-    this.extraHeaders = (options.headers ?? {}) as Record<string, string>;
-    this.upstream = options.upstream as string | undefined;
+  constructor(options: HttpProxyConfig = {}) {
+    this.extraHeaders = options.headers ?? {};
+    this.upstream = options.upstream;
   }
 
   async init(context: PluginContext): Promise<void> {

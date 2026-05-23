@@ -235,10 +235,10 @@ export interface ScanConfig {
   scenarioSources: unknown[];
 }
 
-export interface PluginConfig {
+export interface PluginConfig<T = Record<string, unknown>> {
   type: string;
   name: string;
-  options: Record<string, unknown>;
+  options: T;
 }
 
 // --- Serialized Job ---
