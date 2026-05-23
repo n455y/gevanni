@@ -57,7 +57,6 @@ describe("FormParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeFormRequest("username=admin&password=secret");
@@ -88,7 +87,6 @@ describe("FormParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -111,7 +109,6 @@ describe("FormParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -134,7 +131,6 @@ describe("FormParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -163,7 +159,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeFormRequest("username=admin");
@@ -193,7 +188,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeFormRequest("username=admin");
@@ -219,7 +213,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeFormRequest("username=admin");
@@ -245,7 +238,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -275,7 +267,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeFormRequest("username=admin");
@@ -299,7 +290,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -329,7 +319,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeFormRequest("username=admin&password=secret");
@@ -364,7 +353,6 @@ describe("FormMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {

@@ -86,7 +86,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -124,7 +123,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -159,7 +157,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -186,7 +183,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(`{"name":"test","age":25}`);
@@ -203,7 +199,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -225,7 +220,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -247,7 +241,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(`{invalid json}`);
@@ -264,7 +257,6 @@ describe("GraphQLParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -301,7 +293,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -329,7 +320,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -355,7 +345,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -381,7 +370,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -408,7 +396,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -435,7 +422,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -463,7 +449,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(
@@ -491,7 +476,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -520,7 +504,6 @@ describe("GraphQLMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeGraphQLRequest(

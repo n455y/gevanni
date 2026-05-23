@@ -3,7 +3,7 @@ import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
 import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
-import { registerBuiltinPlugins } from "../builtin.ts";
+import { builtinPluginFactories } from "../builtin.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
@@ -58,11 +58,15 @@ async function bootstrap(
   const ctx = new RuntimeContext({ logger });
   const registry = new PluginRegistryImpl();
 
-  registerBuiltinPlugins(registry);
-  await registry.initializeAll({
-    context: ctx,
-    pluginConfigs: config.plugins,
-  });
+  for (const pc of config.plugins) {
+    const key = `${pc.type}:${pc.name}`;
+    const factory = builtinPluginFactories.get(key);
+    if (!factory) {
+      throw new Error(`Unknown plugin: ${key}`);
+    }
+    registry.register(factory(pc.options));
+  }
+  await registry.initializeAll(ctx);
 
   const orchestrator = new Orchestrator({
     context: ctx,

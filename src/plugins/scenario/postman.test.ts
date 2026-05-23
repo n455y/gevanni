@@ -128,7 +128,6 @@ describe("PostmanPlugin", () => {
         commandBus,
         eventBus: new InMemoryEventBus(),
         logger: noopLogger,
-        config: {},
       });
 
       const scenario = makeScenario({ method: "GET" });
@@ -171,13 +170,11 @@ describe("PostmanPlugin", () => {
         commandBus,
         eventBus: new InMemoryEventBus(),
         logger: noopLogger,
-        config: {},
       });
       await queryTamper.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
         logger: noopLogger,
-        config: {},
       });
 
       const scenario = makeScenario({
@@ -217,7 +214,6 @@ describe("PostmanPlugin", () => {
         commandBus,
         eventBus: new InMemoryEventBus(),
         logger: noopLogger,
-        config: {},
       });
 
       const scenario = makeScenario({
@@ -322,7 +318,6 @@ describe("PostmanPlugin multi-request", () => {
         commandBus,
         eventBus: new InMemoryEventBus(),
         logger: noopLogger,
-        config: {},
       });
 
       const scenario: Scenario = {

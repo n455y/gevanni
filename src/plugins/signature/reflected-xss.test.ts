@@ -69,7 +69,6 @@ describe("ReflectedXssPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const targets = [
@@ -94,7 +93,6 @@ describe("ReflectedXssPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const targets = [makeFormTarget("username", "admin")];
@@ -113,7 +111,6 @@ describe("ReflectedXssPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const targets = [makeHeaderTarget("Authorization", "Bearer token")];
@@ -131,7 +128,6 @@ describe("ReflectedXssPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("q", "search");
@@ -166,7 +162,6 @@ describe("ReflectedXssPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("q", "search");
@@ -200,7 +195,6 @@ describe("ReflectedXssPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("q", "search");

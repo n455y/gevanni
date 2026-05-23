@@ -51,7 +51,6 @@ beforeEach(async () => {
     commandBus,
     eventBus: new InMemoryEventBus(),
     logger: noopLogger,
-    config: {},
   });
 });
 

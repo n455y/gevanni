@@ -96,7 +96,6 @@ describe("HttpProxyPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     // Register a no-op ApplyMutationCommand handler
@@ -125,7 +124,6 @@ describe("HttpProxyPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     // Register a tamper handler that modifies the URL
@@ -152,7 +150,6 @@ describe("HttpProxyPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
@@ -177,14 +174,11 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("adds extra headers from config", async () => {
-    const plugin = new HttpProxyPlugin();
+    const plugin = new HttpProxyPlugin({ headers: { "X-Custom": "injected" } });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {
-        headers: { "X-Custom": "injected" },
-      },
     });
 
     commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);
@@ -206,7 +200,6 @@ describe("HttpProxyPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     commandBus.register(ApplyMutationCommand, async (_cmd, request) => ({
@@ -261,12 +254,11 @@ describe("HttpProxyPlugin", () => {
     });
 
     try {
-      const plugin = new HttpProxyPlugin();
+      const plugin = new HttpProxyPlugin({ upstream: `http://127.0.0.1:${upstreamProxyPort}` });
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
         logger: noopLogger,
-        config: { upstream: `http://127.0.0.1:${upstreamProxyPort}` },
       });
 
       commandBus.register(ApplyMutationCommand, async (_cmd, request) => request);

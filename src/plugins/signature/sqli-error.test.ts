@@ -61,7 +61,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const targets = [
@@ -86,7 +85,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const targets = [
@@ -108,7 +106,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("id", "1");
@@ -144,7 +141,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("id", "1");
@@ -177,7 +173,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("id", "1");
@@ -209,7 +204,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("id", "1");
@@ -243,7 +237,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("id", "1");
@@ -275,7 +268,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("id", "1");
@@ -309,7 +301,6 @@ describe("SqliErrorPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const parameter = makeQueryParameter("id", "1");

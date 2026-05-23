@@ -61,8 +61,12 @@ interface JsonStorageConfig {
 
 export class JsonStoragePlugin implements Plugin {
   readonly name = "json-storage";
-  private outputDir = "./gevanni-results";
+  private outputDir: string;
   private fileLocks = new Map<string, Promise<void>>();
+
+  constructor(options: Record<string, unknown> = {}) {
+    this.outputDir = (options as JsonStorageConfig).outputDir ?? "./gevanni-results";
+  }
 
   private async withFileLock<T>(filePath: string, fn: () => Promise<T>): Promise<T> {
     const prev = this.fileLocks.get(filePath);
@@ -81,8 +85,6 @@ export class JsonStoragePlugin implements Plugin {
   }
 
   async init(context: PluginContext): Promise<void> {
-    const cfg = context.config as JsonStorageConfig;
-    this.outputDir = cfg.outputDir ?? "./gevanni-results";
     const bus: CommandBus = context.commandBus;
 
     const scanDir = (scanId: ScanId) => join(this.outputDir, scanId);

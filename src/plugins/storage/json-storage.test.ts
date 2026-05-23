@@ -79,12 +79,11 @@ beforeEach(async () => {
   );
   commandBus = new InMemoryCommandBus();
 
-  const plugin = new JsonStoragePlugin();
+  const plugin = new JsonStoragePlugin({ outputDir: tempDir });
   await plugin.init({
     commandBus,
     eventBus: new InMemoryEventBus(),
     logger: noopLogger,
-    config: { outputDir: tempDir },
   });
 });
 

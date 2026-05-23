@@ -71,7 +71,6 @@ describe("JsonParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test","age":25}}`);
@@ -122,7 +121,6 @@ describe("JsonParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -145,7 +143,6 @@ describe("JsonParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -168,7 +165,6 @@ describe("JsonParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{invalid json}`);
@@ -185,7 +181,6 @@ describe("JsonParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"items":["a","b"]}`);
@@ -231,7 +226,6 @@ describe("JsonParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"active":true,"deleted":null}`);
@@ -262,7 +256,6 @@ describe("JsonMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
@@ -289,7 +282,6 @@ describe("JsonMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
@@ -314,7 +306,6 @@ describe("JsonMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
@@ -339,7 +330,6 @@ describe("JsonMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"user":{"name":"test"}}`);
@@ -365,7 +355,6 @@ describe("JsonMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -395,7 +384,6 @@ describe("JsonMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(
@@ -431,7 +419,6 @@ describe("JsonMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request = makeJsonRequest(`{"items":["a","b"]}`);

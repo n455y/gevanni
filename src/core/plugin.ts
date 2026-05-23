@@ -7,7 +7,6 @@ export interface PluginContext {
   commandBus: CommandBus;
   eventBus: EventBus;
   logger: Logger;
-  config: Record<string, unknown>;
 }
 
 export interface Plugin {
@@ -16,46 +15,28 @@ export interface Plugin {
   destroy?(): Promise<void>;
 }
 
-export interface PluginConfig {
-  type: string;
-  name: string;
-  options: Record<string, unknown>;
-}
-
 export interface PluginRegistry {
-  register(type: string, name: string, factory: () => Plugin): void;
-  initializeAll(deps: { context: RuntimeContext; pluginConfigs?: PluginConfig[] }): Promise<Plugin[]>;
+  register(plugin: Plugin): void;
+  initializeAll(context: RuntimeContext): Promise<Plugin[]>;
   destroyAll(plugins: Plugin[]): Promise<void>;
 }
 
 export class PluginRegistryImpl implements PluginRegistry {
-  private factories = new Map<string, () => Plugin>();
+  private plugins: Plugin[] = [];
 
-  register(type: string, name: string, factory: () => Plugin): void {
-    this.factories.set(`${type}:${name}`, factory);
+  register(plugin: Plugin): void {
+    this.plugins.push(plugin);
   }
 
-  async initializeAll(deps: { context: RuntimeContext; pluginConfigs?: PluginConfig[] }): Promise<Plugin[]> {
-    const { context, pluginConfigs = [] } = deps;
-    const plugins: Plugin[] = [];
-
-    for (const config of pluginConfigs) {
-      const key = `${config.type}:${config.name}`;
-      const factory = this.factories.get(key);
-      if (!factory) {
-        throw new Error(`No plugin factory registered for: ${key}`);
-      }
-      const plugin = factory();
+  async initializeAll(context: RuntimeContext): Promise<Plugin[]> {
+    for (const plugin of this.plugins) {
       await plugin.init({
         commandBus: context.commandBus,
         eventBus: context.eventBus,
         logger: context.logger,
-        config: config.options,
       });
-      plugins.push(plugin);
     }
-
-    return plugins;
+    return this.plugins;
   }
 
   async destroyAll(plugins: Plugin[]): Promise<void> {

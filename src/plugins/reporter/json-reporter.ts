@@ -50,9 +50,11 @@ export class JsonReporterPlugin implements Plugin {
   readonly name = "json-reporter";
   private outputPath: string | undefined;
 
+  constructor(options: Record<string, unknown> = {}) {
+    this.outputPath = (options as JsonReporterConfig).outputPath;
+  }
+
   async init(ctx: PluginContext): Promise<void> {
-    const cfg = ctx.config as JsonReporterConfig;
-    this.outputPath = cfg.outputPath;
 
     ctx.commandBus.register(GenerateReportCommand, async (cmd) => {
       const { scanState, jobs } = cmd.payload;

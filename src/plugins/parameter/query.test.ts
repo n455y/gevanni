@@ -49,7 +49,6 @@ describe("QueryParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -86,7 +85,6 @@ describe("QueryParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -109,7 +107,6 @@ describe("QueryParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -134,7 +131,6 @@ describe("QueryMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -168,7 +164,6 @@ describe("QueryMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -199,7 +194,6 @@ describe("QueryMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -230,7 +224,6 @@ describe("QueryMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -266,7 +259,6 @@ describe("QueryMutationPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {

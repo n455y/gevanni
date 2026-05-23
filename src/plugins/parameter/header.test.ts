@@ -25,7 +25,6 @@ describe("HeaderParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {
@@ -65,7 +64,6 @@ describe("HeaderParserPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const request: HttpRequest = {

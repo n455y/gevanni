@@ -64,12 +64,11 @@ describe("JsonReporterPlugin", () => {
   it("writes report to the configured output path", async () => {
     const outputPath = join(tempDir, "report.json");
 
-    const plugin = new JsonReporterPlugin();
+    const plugin = new JsonReporterPlugin({ outputPath });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: { outputPath },
     });
 
     const scanState = makeScanState({
@@ -102,7 +101,6 @@ describe("JsonReporterPlugin", () => {
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: {},
     });
 
     const scanState = makeScanState({
@@ -127,12 +125,11 @@ describe("JsonReporterPlugin", () => {
   it("computes correct summary for mixed job statuses", async () => {
     const outputPath = join(tempDir, "mixed-report.json");
 
-    const plugin = new JsonReporterPlugin();
+    const plugin = new JsonReporterPlugin({ outputPath });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: { outputPath },
     });
 
     const scanState = makeScanState();
@@ -192,12 +189,11 @@ describe("JsonReporterPlugin", () => {
   it("handles empty jobs list", async () => {
     const outputPath = join(tempDir, "empty-report.json");
 
-    const plugin = new JsonReporterPlugin();
+    const plugin = new JsonReporterPlugin({ outputPath });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: { outputPath },
     });
 
     const scanState = makeScanState();
@@ -223,12 +219,11 @@ describe("JsonReporterPlugin", () => {
     const nestedDir = join(tempDir, "nested", "dir");
     const outputPath = join(nestedDir, "report.json");
 
-    const plugin = new JsonReporterPlugin();
+    const plugin = new JsonReporterPlugin({ outputPath });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
       logger: noopLogger,
-      config: { outputPath },
     });
 
     const scanState = makeScanState();

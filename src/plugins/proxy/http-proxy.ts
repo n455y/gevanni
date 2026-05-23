@@ -272,15 +272,15 @@ export async function startMutationProxy(
 
 export class HttpProxyPlugin implements Plugin {
   readonly name = "http-proxy";
-  private extraHeaders: Record<string, string> = {};
+  private extraHeaders: Record<string, string>;
   private upstream?: string;
 
+  constructor(options: Record<string, unknown> = {}) {
+    this.extraHeaders = (options.headers ?? {}) as Record<string, string>;
+    this.upstream = options.upstream as string | undefined;
+  }
+
   async init(context: PluginContext): Promise<void> {
-    this.extraHeaders = (context.config.headers ?? {}) as Record<
-      string,
-      string
-    >;
-    this.upstream = context.config.upstream as string | undefined;
 
     context.commandBus.register(
       CreateProxyCommand,
