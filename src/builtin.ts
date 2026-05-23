@@ -9,6 +9,19 @@ import { HeaderParserPlugin, HeaderMutationPlugin } from "./plugins/parameter/he
 import { CookieParserPlugin, CookieMutationPlugin } from "./plugins/parameter/cookie.ts";
 import { ReflectedXssPlugin } from "./plugins/signature/reflected-xss.ts";
 import { SqliErrorPlugin } from "./plugins/signature/sqli-error.ts";
+import { SqliBooleanPlugin } from "./plugins/signature/sqli-boolean.ts";
+import { SqliTimePlugin } from "./plugins/signature/sqli-time.ts";
+import { SqliUnionPlugin } from "./plugins/signature/sqli-union.ts";
+import { LdapInjectionPlugin } from "./plugins/signature/ldap-injection.ts";
+import { OsCommandInjectionPlugin } from "./plugins/signature/os-command-injection.ts";
+import { PathTraversalPlugin } from "./plugins/signature/path-traversal.ts";
+import { SstiPlugin } from "./plugins/signature/ssti.ts";
+import { XpathInjectionPlugin } from "./plugins/signature/xpath-injection.ts";
+import { NosqlInjectionPlugin } from "./plugins/signature/nosql-injection.ts";
+import { XxeInjectionPlugin } from "./plugins/signature/xxe-injection.ts";
+import { CrlfInjectionPlugin } from "./plugins/signature/crlf-injection.ts";
+import { SsiInjectionPlugin } from "./plugins/signature/ssi-injection.ts";
+import { PrototypePollutionPlugin } from "./plugins/signature/prototype-pollution.ts";
 import { JsonStoragePlugin, type JsonStorageConfig } from "./plugins/storage/json-storage.ts";
 import { ConsoleReporterPlugin } from "./plugins/reporter/console-reporter.ts";
 import { JsonReporterPlugin, type JsonReporterConfig } from "./plugins/reporter/json-reporter.ts";
@@ -34,6 +47,19 @@ const builtinPlugins: PluginFactory[] = [
   () => new GraphQLMutationPlugin(),
   () => new ReflectedXssPlugin(),
   () => new SqliErrorPlugin(),
+  () => new SqliBooleanPlugin(),
+  () => new SqliTimePlugin(),
+  () => new SqliUnionPlugin(),
+  () => new LdapInjectionPlugin(),
+  () => new OsCommandInjectionPlugin(),
+  () => new PathTraversalPlugin(),
+  () => new SstiPlugin(),
+  () => new XpathInjectionPlugin(),
+  () => new NosqlInjectionPlugin(),
+  () => new XxeInjectionPlugin(),
+  () => new CrlfInjectionPlugin(),
+  () => new SsiInjectionPlugin(),
+  () => new PrototypePollutionPlugin(),
   (opts) => new JsonStoragePlugin(opts as JsonStorageConfig),
   () => new ConsoleReporterPlugin(),
   (opts) => new JsonReporterPlugin(opts as JsonReporterConfig),
