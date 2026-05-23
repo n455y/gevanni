@@ -55,7 +55,7 @@ describe("loadConfig", () => {
       logLevel: "debug",
       scenarioSources: ["./collections/"],
       plugins: [
-        { name: "postman", options: {} },
+        { name: "scenario:postman", options: {} },
         { name: "reflected-xss", options: {} },
       ],
     });
@@ -66,7 +66,7 @@ describe("loadConfig", () => {
     expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toHaveLength(2);
     expect(config.plugins[0]).toEqual({
-      name: "postman",
+      name: "scenario:postman",
       options: {},
     });
   });
@@ -88,7 +88,7 @@ describe("loadConfig", () => {
       concurrency: 3,
       logLevel: "debug",
       scenarioSources: ["./collections/"],
-      plugins: [{ name: "http-proxy", options: {} }],
+      plugins: [{ name: "proxy:http", options: {} }],
     });
 
     const config = loadConfig(configPath, {
@@ -101,7 +101,7 @@ describe("loadConfig", () => {
     // File values used for non-overridden fields
     expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toEqual([
-      { name: "http-proxy", options: {} },
+      { name: "proxy:http", options: {} },
     ]);
   });
 
@@ -149,19 +149,19 @@ describe("loadConfig", () => {
       logLevel: "debug",
       scenarioSources: ["./collections/"],
       plugins: [
-        { name: "postman", options: {} },
-        { name: "http-proxy", options: {} },
-        { name: "query-parser", options: {} },
-        { name: "json-parser", options: {} },
-        { name: "form-parser", options: {} },
-        { name: "query-mutation", options: {} },
-        { name: "json-mutation", options: {} },
-        { name: "form-mutation", options: {} },
+        { name: "scenario:postman", options: {} },
+        { name: "proxy:http", options: {} },
+        { name: "parser:query", options: {} },
+        { name: "parser:json", options: {} },
+        { name: "parser:form", options: {} },
+        { name: "mutation:query", options: {} },
+        { name: "mutation:json", options: {} },
+        { name: "mutation:form", options: {} },
         { name: "reflected-xss", options: {} },
         { name: "sqli-error", options: {} },
-        { name: "json-storage", options: {} },
-        { name: "console-reporter", options: {} },
-        { name: "json-reporter", options: {} },
+        { name: "storage:json", options: {} },
+        { name: "reporter:console", options: {} },
+        { name: "reporter:json", options: {} },
       ],
     });
 

@@ -12,7 +12,7 @@ import type {
   Exchange,
 } from "../../types/models.ts";
 import { ExchangeId, ReplayId } from "../../types/branded.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ProxyPlugin, PluginContext } from "../../core/plugin.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
 import type { MutationProxy } from "../../commands/proxy.ts";
 import { CreateProxyCommand } from "../../commands/proxy.ts";
@@ -275,8 +275,8 @@ export interface HttpProxyConfig {
   upstream?: string;
 }
 
-export class HttpProxyPlugin implements Plugin {
-  readonly name = "http-proxy";
+export class HttpProxyPlugin implements ProxyPlugin {
+  readonly name = "proxy:http";
   private extraHeaders: Record<string, string>;
   private upstream?: string;
 

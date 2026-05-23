@@ -5,7 +5,7 @@ import type {
 import { AuditParameter, AuditMutation, BuiltinMutationType } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ParserPlugin, MutationPlugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
@@ -22,8 +22,8 @@ serializable(QueryParameter);
 
 export class QueryMutation extends AuditMutation<QueryParameter> {}
 
-export class QueryParserPlugin implements Plugin {
-  readonly name = "query-parser";
+export class QueryParserPlugin implements ParserPlugin {
+  readonly name = "parser:query";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ParseRequestCommand, async (cmd) => {
@@ -32,8 +32,8 @@ export class QueryParserPlugin implements Plugin {
   }
 }
 
-export class QueryMutationPlugin implements Plugin {
-  readonly name = "query-mutation";
+export class QueryMutationPlugin implements MutationPlugin {
+  readonly name = "mutation:query";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {

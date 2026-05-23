@@ -1,8 +1,8 @@
 import type { MutationType } from "../../types/branded.ts";
 import type { AuditParameter } from "../../types/models.ts";
-import { SignaturePlugin } from "./base.ts";
+import { SignaturePluginBase } from "./base.ts";
 
-export abstract class MutationFilteredSignaturePlugin extends SignaturePlugin {
+export abstract class MutationFilteredSignaturePlugin extends SignaturePluginBase {
   private readonly mutationTypes: readonly MutationType[];
 
   constructor(mutationTypes: readonly MutationType[]) {

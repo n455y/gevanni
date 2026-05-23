@@ -5,7 +5,7 @@ import type {
 import type { HttpRequest, JsonValue, JsonObject } from "../../types/models.ts";
 import { AuditParameter, AuditMutation, BuiltinMutationType } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ParserPlugin, MutationPlugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
@@ -55,8 +55,8 @@ const ALLOWED_MUTATIONS = [
   BuiltinMutationType.PrependValue,
 ];
 
-export class GraphQLParserPlugin implements Plugin {
-  readonly name = "graphql-parser";
+export class GraphQLParserPlugin implements ParserPlugin {
+  readonly name = "parser:graphql";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ParseRequestCommand, async (cmd) => {
@@ -65,8 +65,8 @@ export class GraphQLParserPlugin implements Plugin {
   }
 }
 
-export class GraphQLMutationPlugin implements Plugin {
-  readonly name = "graphql-mutation";
+export class GraphQLMutationPlugin implements MutationPlugin {
+  readonly name = "mutation:graphql";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {

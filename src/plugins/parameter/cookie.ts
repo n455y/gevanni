@@ -2,7 +2,7 @@ import type { MutationType, Payload } from "../../types/branded.ts";
 import { AuditParameter, AuditMutation, BuiltinMutationType } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ParserPlugin, MutationPlugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
@@ -19,8 +19,8 @@ serializable(CookieParameter);
 
 export class CookieMutation extends AuditMutation<CookieParameter> {}
 
-export class CookieParserPlugin implements Plugin {
-  readonly name = "cookie-parser";
+export class CookieParserPlugin implements ParserPlugin {
+  readonly name = "parser:cookie";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ParseRequestCommand, async (cmd) => {
@@ -29,8 +29,8 @@ export class CookieParserPlugin implements Plugin {
   }
 }
 
-export class CookieMutationPlugin implements Plugin {
-  readonly name = "cookie-mutation";
+export class CookieMutationPlugin implements MutationPlugin {
+  readonly name = "mutation:cookie";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {

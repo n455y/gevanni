@@ -5,7 +5,11 @@ import type { RunAuditContext } from "../../commands/run-audit.ts";
 import type { AuditParameter, Finding } from "../../types/models.ts";
 import type { SignatureId } from "../../types/branded.ts";
 
-export abstract class SignaturePlugin implements Plugin {
+export interface SignaturePlugin extends Plugin {
+  readonly name: SignatureId;
+}
+
+export abstract class SignaturePluginBase implements SignaturePlugin {
   abstract readonly name: SignatureId;
 
   protected abstract filterParameters(

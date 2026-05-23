@@ -11,7 +11,7 @@ import type {
 } from "../../types/models.ts";
 import { AuditParameter, AuditMutation, BuiltinMutationType } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ParserPlugin, MutationPlugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
@@ -80,8 +80,8 @@ function isJsonMutation(instr: AuditMutation): instr is JsonMutation {
   );
 }
 
-export class JsonParserPlugin implements Plugin {
-  readonly name = "json-parser";
+export class JsonParserPlugin implements ParserPlugin {
+  readonly name = "parser:json";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ParseRequestCommand, async (cmd) => {
@@ -90,8 +90,8 @@ export class JsonParserPlugin implements Plugin {
   }
 }
 
-export class JsonMutationPlugin implements Plugin {
-  readonly name = "json-mutation";
+export class JsonMutationPlugin implements MutationPlugin {
+  readonly name = "mutation:json";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {

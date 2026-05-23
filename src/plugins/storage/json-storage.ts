@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { StoragePlugin, PluginContext } from "../../core/plugin.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
 import type { ReplayId } from "../../types/branded.ts";
 import {
@@ -59,8 +59,8 @@ export interface JsonStorageConfig {
   outputDir?: string;
 }
 
-export class JsonStoragePlugin implements Plugin {
-  readonly name = "json-storage";
+export class JsonStoragePlugin implements StoragePlugin {
+  readonly name = "storage:json";
   private outputDir: string;
   private fileLocks = new Map<string, Promise<void>>();
 

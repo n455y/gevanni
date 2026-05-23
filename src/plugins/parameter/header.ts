@@ -2,7 +2,7 @@ import type { MutationType, Payload } from "../../types/branded.ts";
 import { AuditParameter, AuditMutation, BuiltinMutationType } from "../../types/models.ts";
 import { serializable } from "../../types/serializable.ts";
 import type { HttpRequest } from "../../types/models.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ParserPlugin, MutationPlugin, PluginContext } from "../../core/plugin.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { ApplyMutationCommand } from "../../commands/mutation.ts";
 
@@ -19,8 +19,8 @@ serializable(HeaderParameter);
 
 export class HeaderMutation extends AuditMutation<HeaderParameter> {}
 
-export class HeaderParserPlugin implements Plugin {
-  readonly name = "header-parser";
+export class HeaderParserPlugin implements ParserPlugin {
+  readonly name = "parser:header";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ParseRequestCommand, async (cmd) => {
@@ -29,8 +29,8 @@ export class HeaderParserPlugin implements Plugin {
   }
 }
 
-export class HeaderMutationPlugin implements Plugin {
-  readonly name = "header-mutation";
+export class HeaderMutationPlugin implements MutationPlugin {
+  readonly name = "mutation:header";
 
   async init(context: PluginContext): Promise<void> {
     context.commandBus.register(ApplyMutationCommand, async (cmd, request) => {

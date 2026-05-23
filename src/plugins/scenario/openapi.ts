@@ -1,7 +1,7 @@
 import type { Exchange, HttpResponse } from "../../types/models.ts";
 import { ExchangeId } from "../../types/branded.ts";
 import type { ReplayId } from "../../types/branded.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ScenarioPlugin, PluginContext } from "../../core/plugin.ts";
 import { ReplayCommand } from "../../commands/replay.ts";
 import { LoadExchangesCommand } from "../../commands/exchange.ts";
 import { HttpProxyAgent } from "http-proxy-agent";
@@ -212,8 +212,8 @@ function sendViaProxy(
 
 // --- Plugin ---
 
-export class OpenApiPlugin implements Plugin {
-  readonly name = "openapi";
+export class OpenApiPlugin implements ScenarioPlugin {
+  readonly name = "scenario:openapi";
 
   async init(context: PluginContext): Promise<void> {
     const { commandBus } = context;

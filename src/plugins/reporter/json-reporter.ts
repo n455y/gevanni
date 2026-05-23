@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ReporterPlugin, PluginContext } from "../../core/plugin.ts";
 import { serializeJob, serializeScanState, type Job, type SerializedJob, type SerializedScanState } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
@@ -46,8 +46,8 @@ function computeSummary(jobs: Job[]): ReportSummary {
   };
 }
 
-export class JsonReporterPlugin implements Plugin {
-  readonly name = "json-reporter";
+export class JsonReporterPlugin implements ReporterPlugin {
+  readonly name = "reporter:json";
   private outputPath: string | undefined;
 
   constructor(options: JsonReporterConfig = {}) {

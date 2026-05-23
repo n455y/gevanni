@@ -15,6 +15,30 @@ export interface Plugin {
   destroy?(): Promise<void>;
 }
 
+export interface ScenarioPlugin extends Plugin {
+  readonly name: `scenario:${string}`;
+}
+
+export interface ProxyPlugin extends Plugin {
+  readonly name: `proxy:${string}`;
+}
+
+export interface ReporterPlugin extends Plugin {
+  readonly name: `reporter:${string}`;
+}
+
+export interface StoragePlugin extends Plugin {
+  readonly name: `storage:${string}`;
+}
+
+export interface ParserPlugin extends Plugin {
+  readonly name: `parser:${string}`;
+}
+
+export interface MutationPlugin extends Plugin {
+  readonly name: `mutation:${string}`;
+}
+
 export interface PluginRegistry {
   register(plugin: Plugin): void;
   initializeAll(context: RuntimeContext): Promise<Plugin[]>;

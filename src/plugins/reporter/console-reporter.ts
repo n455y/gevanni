@@ -1,4 +1,4 @@
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { ReporterPlugin, PluginContext } from "../../core/plugin.ts";
 import type { Job } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
@@ -11,8 +11,8 @@ function formatParameter(job: Job): string {
   return `${p.constructor.name} ${loc} = ${String(p.originalValue)}`;
 }
 
-export class ConsoleReporterPlugin implements Plugin {
-  readonly name = "console-reporter";
+export class ConsoleReporterPlugin implements ReporterPlugin {
+  readonly name = "reporter:console";
 
   async init(ctx: PluginContext): Promise<void> {
     ctx.commandBus.register(GenerateReportCommand, async (cmd) => {
