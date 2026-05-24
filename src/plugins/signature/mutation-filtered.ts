@@ -3,15 +3,7 @@ import type { AuditParameter } from "../../types/models.ts";
 import { SignaturePluginBase } from "./base.ts";
 
 export abstract class MutationFilteredSignaturePlugin extends SignaturePluginBase {
-  private readonly mutationTypes: readonly MutationType[];
-
-  constructor(
-    mutationTypes: readonly MutationType[],
-    options?: { groups?: string[] },
-  ) {
-    super(options);
-    this.mutationTypes = mutationTypes;
-  }
+  protected abstract readonly mutationTypes: readonly MutationType[];
 
   protected filterParameters(parameters: AuditParameter[]) {
     return parameters.filter((parameter) =>

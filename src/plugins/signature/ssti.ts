@@ -21,10 +21,7 @@ const SSTI_PAYLOADS: SstiPayload[] = [
 
 export class SstiPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("ssti");
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
-  }
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const allExchanges: Exchange[] = [];

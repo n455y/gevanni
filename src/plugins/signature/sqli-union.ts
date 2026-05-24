@@ -24,13 +24,10 @@ export const UNION_PAYLOADS = buildUnionPayloads(10);
 
 export class SqliUnionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-union");
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected override get defaultGroups() {
     return [SignatureGroupId("sqli")];
-  }
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

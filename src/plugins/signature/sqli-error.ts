@@ -17,13 +17,10 @@ export const SQL_ERROR_PATTERNS: RegExp[] = [
 
 export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-error");
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected override get defaultGroups() {
     return [SignatureGroupId("sqli")];
-  }
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

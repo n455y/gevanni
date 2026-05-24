@@ -23,10 +23,7 @@ export const XXE_ERROR_PATTERNS: RegExp[] = [
 
 export class XxeInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("xxe-injection");
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.ReplaceValue], options);
-  }
+  protected readonly mutationTypes = [BuiltinMutationType.ReplaceValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const payload = BuiltinPayload.String(

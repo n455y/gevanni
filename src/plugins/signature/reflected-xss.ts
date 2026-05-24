@@ -8,10 +8,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("reflected-xss");
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
-  }
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const payload = BuiltinPayload.String("<script>alert(1)</script>");

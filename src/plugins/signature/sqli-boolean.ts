@@ -9,13 +9,10 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-boolean");
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected override get defaultGroups() {
     return [SignatureGroupId("sqli")];
-  }
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

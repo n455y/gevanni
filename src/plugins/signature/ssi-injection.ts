@@ -20,10 +20,7 @@ const SSI_PAYLOADS: SsiPayload[] = [
 
 export class SsiInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("ssi-injection");
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
-  }
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const allExchanges: Exchange[] = [];

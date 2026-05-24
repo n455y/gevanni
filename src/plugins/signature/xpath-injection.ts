@@ -17,10 +17,7 @@ export const XPATH_ERROR_PATTERNS: RegExp[] = [
 
 export class XpathInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("xpath-injection");
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
-  }
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const payload = BuiltinPayload.String("' or '1'='1");

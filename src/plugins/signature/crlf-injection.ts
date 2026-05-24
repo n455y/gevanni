@@ -10,10 +10,7 @@ const MARKER = "gevanni_crlf";
 
 export class CrlfInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("crlf-injection");
-
-  constructor(options?: { groups?: string[] }) {
-    super([BuiltinMutationType.AppendValue], options);
-  }
+  protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const payload = BuiltinPayload.String(`\r\nX-Injected: ${MARKER}`);
