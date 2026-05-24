@@ -23,7 +23,6 @@ import {
   ExchangeId,
   ScenarioId,
   SignatureId,
-  SignatureGroupId,
 } from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";
 import {
@@ -41,6 +40,7 @@ import {
   SaveScenarioCommand,
   LoadScenarioCommand,
   CreateProxyCommand,
+  ShouldSkipCommand,
 } from "../commands/index.ts";
 
 // --- Mock data helpers ---
@@ -121,7 +121,6 @@ describe("Orchestrator", () => {
       const mockItem: AuditItem = {
         signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
-        groups: [],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
 
@@ -178,7 +177,6 @@ describe("Orchestrator", () => {
       const mockItem: AuditItem = {
         signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
-        groups: [],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
 
@@ -241,7 +239,6 @@ describe("Orchestrator", () => {
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
-        groups: [],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -253,7 +250,6 @@ describe("Orchestrator", () => {
       items.set("job-1", {
         signatureName: SignatureId("mock-sig"),
         parameter: mockTargets[0],
-        groups: [],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -282,6 +278,7 @@ describe("Orchestrator", () => {
         },
       ]);
       commandBus.register(RunAuditCommand, "mock-sig", async () => mockFinding);
+      commandBus.register(ShouldSkipCommand, "mock-sig", async () => false);
 
       eventBus.subscribe("scan:jobStarted", () => {
         events.push("started");
@@ -312,7 +309,6 @@ describe("Orchestrator", () => {
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("failing-sig"),
         parameter: mockTargets[0],
-        groups: [],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -324,7 +320,6 @@ describe("Orchestrator", () => {
       items.set("job-err", {
         signatureName: SignatureId("failing-sig"),
         parameter: mockTargets[0],
-        groups: [],
       });
 
       const updateCalls: Partial<Job>[] = [];
@@ -355,6 +350,7 @@ describe("Orchestrator", () => {
       commandBus.register(RunAuditCommand, "failing-sig", async () => {
         throw new Error("Inspection failed");
       });
+      commandBus.register(ShouldSkipCommand, "failing-sig", async () => false);
 
       eventBus.subscribe("scan:jobError", () => {
         events.push("error");
@@ -408,7 +404,6 @@ describe("Orchestrator", () => {
           scenarioId: ScenarioId("sc-1"),
           signatureName: SignatureId("reflected-xss"),
           parameter: mockTargets[0],
-          groups: [],
           status: JobStatus.Completed,
           finding: mockFinding,
           error: null,
@@ -455,7 +450,7 @@ describe("Orchestrator", () => {
     });
   });
 
-  describe("scan phase group-based skipping", () => {
+  describe("scan phase shouldSkip-based skipping", () => {
     const vulnerableFinding: Finding = {
       vulnerable: true,
       evidence: {
@@ -467,7 +462,7 @@ describe("Orchestrator", () => {
       response: mockResponse,
     };
 
-    it("skips jobs in the same group for the same parameter after detection", async () => {
+    it("completes both jobs by default when shouldSkip returns false", async () => {
       const scanId = ScanId("test-scan-id");
       const scenarioId = ScenarioId("scenario-1");
       const param = mockTargets[0];
@@ -478,7 +473,6 @@ describe("Orchestrator", () => {
         scenarioId,
         signatureName: SignatureId("sqli-error"),
         parameter: param,
-        groups: [SignatureGroupId("sqli")],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -491,7 +485,6 @@ describe("Orchestrator", () => {
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
         parameter: param,
-        groups: [SignatureGroupId("sqli")],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -500,8 +493,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: param, groups: [SignatureGroupId("sqli")] });
-      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), parameter: param, groups: [SignatureGroupId("sqli")] });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: param });
+      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), parameter: param });
 
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
@@ -519,6 +512,8 @@ describe("Orchestrator", () => {
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
       commandBus.register(RunAuditCommand, "sqli-boolean", async () => vulnerableFinding);
+      commandBus.register(ShouldSkipCommand, "sqli-error", async () => false);
+      commandBus.register(ShouldSkipCommand, "sqli-boolean", async () => false);
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
@@ -528,7 +523,7 @@ describe("Orchestrator", () => {
       const job2Updates = updateCalls.filter((c) => c.jobId === "job-2");
 
       expect(job1Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
-      expect(job2Updates.some((c) => c.updates.status === JobStatus.Skipped)).toBe(true);
+      expect(job2Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
     });
 
     it("does not skip jobs with different parameters", async () => {
@@ -543,7 +538,6 @@ describe("Orchestrator", () => {
         scenarioId,
         signatureName: SignatureId("sqli-error"),
         parameter: param1,
-        groups: [SignatureGroupId("sqli")],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -556,7 +550,6 @@ describe("Orchestrator", () => {
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
         parameter: param2,
-        groups: [SignatureGroupId("sqli")],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -565,8 +558,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: param1, groups: [SignatureGroupId("sqli")] });
-      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), parameter: param2, groups: [SignatureGroupId("sqli")] });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: param1 });
+      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), parameter: param2 });
 
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
@@ -584,6 +577,8 @@ describe("Orchestrator", () => {
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
       commandBus.register(RunAuditCommand, "sqli-boolean", async () => vulnerableFinding);
+      commandBus.register(ShouldSkipCommand, "sqli-error", async () => false);
+      commandBus.register(ShouldSkipCommand, "sqli-boolean", async () => false);
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
@@ -596,7 +591,7 @@ describe("Orchestrator", () => {
       expect(job2Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
     });
 
-    it("does not skip jobs with empty groups", async () => {
+    it("completes all jobs when shouldSkip returns false", async () => {
       const scanId = ScanId("test-scan-id");
       const scenarioId = ScenarioId("scenario-1");
 
@@ -606,7 +601,6 @@ describe("Orchestrator", () => {
         scenarioId,
         signatureName: SignatureId("sqli-error"),
         parameter: mockTargets[0],
-        groups: [],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -619,7 +613,6 @@ describe("Orchestrator", () => {
         scenarioId,
         signatureName: SignatureId("reflected-xss"),
         parameter: mockTargets[0],
-        groups: [],
         status: JobStatus.Pending,
         finding: null,
         error: null,
@@ -628,8 +621,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: mockTargets[0], groups: [] });
-      items.set("job-2", { signatureName: SignatureId("reflected-xss"), parameter: mockTargets[0], groups: [] });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: mockTargets[0] });
+      items.set("job-2", { signatureName: SignatureId("reflected-xss"), parameter: mockTargets[0] });
 
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
@@ -647,6 +640,8 @@ describe("Orchestrator", () => {
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
       commandBus.register(RunAuditCommand, "reflected-xss", async () => vulnerableFinding);
+      commandBus.register(ShouldSkipCommand, "sqli-error", async () => false);
+      commandBus.register(ShouldSkipCommand, "reflected-xss", async () => false);
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });

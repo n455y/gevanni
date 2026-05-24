@@ -1,6 +1,5 @@
 import crypto from "node:crypto";
 import { ScanId, JobId, ErrorMessage, ReplayId } from "../types/branded.ts";
-import type { SignatureGroupId } from "../types/branded.ts";
 import type {
   Job,
   ScanState,
@@ -28,6 +27,7 @@ import {
   LoadJobsByScanIdCommand,
   GenerateReportCommand,
   CreateProxyCommand,
+  ShouldSkipCommand,
 } from "../commands/index.ts";
 
 // --- Worker pool ---
@@ -120,7 +120,6 @@ export class Orchestrator {
             scenarioId: scenario.id,
             signatureName: item.signatureName,
             parameter: item.parameter,
-            groups: item.groups,
             status: JobStatus.Pending,
             finding: null,
             error: null,
@@ -201,31 +200,35 @@ export class Orchestrator {
     let errorCount = 0;
     let skippedCount = 0;
 
-    // Track detected groups per parameter to enable group-based skipping
-    const detectedGroups = new Map<string, Set<SignatureGroupId>>();
+    // Track completed jobs per parameter for shouldSkip decisions
+    const completedJobsByParam = new Map<string, Job[]>();
 
     // 3. Run jobs with concurrency
     await runWithConcurrency(jobs, concurrency, async (job: Job) => {
       try {
-        // Check if any group for this parameter has already detected a vulnerability
+        // Check if the signature plugin wants to skip based on prior results
         const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
-        if (job.groups.length > 0) {
-          const detected = detectedGroups.get(paramKey);
-          if (detected && job.groups.every((g) => detected.has(g))) {
-            const skippedNow = new Date();
-            await commandBus.dispatch(
-              new UpdateJobCommand(job.id, {
-                status: JobStatus.Skipped,
-                error: ErrorMessage(
-                  `Skipped: group already detected vulnerability for this parameter`,
-                ),
-                updatedAt: skippedNow,
-              }),
-            );
-            eventBus.publish("scan:jobSkipped", { jobId: job.id });
-            skippedCount++;
-            return;
-          }
+        const completedForParam = completedJobsByParam.get(paramKey) ?? [];
+        const skipResult = await commandBus.dispatch(
+          new ShouldSkipCommand({
+            signatureName: job.signatureName,
+            completedJobs: completedForParam,
+          }),
+        );
+        if (skipResult) {
+          const skippedNow = new Date();
+          await commandBus.dispatch(
+            new UpdateJobCommand(job.id, {
+              status: JobStatus.Skipped,
+              error: ErrorMessage(
+                `Skipped: signature plugin decided to skip based on prior results`,
+              ),
+              updatedAt: skippedNow,
+            }),
+          );
+          eventBus.publish("scan:jobSkipped", { jobId: job.id });
+          skippedCount++;
+          return;
         }
 
         // Update job status to running
@@ -293,18 +296,16 @@ export class Orchestrator {
           finding,
         });
 
-        // Mark groups as detected for this parameter
-        if (finding.vulnerable && job.groups.length > 0) {
-          const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
-          let detected = detectedGroups.get(paramKey);
-          if (!detected) {
-            detected = new Set();
-            detectedGroups.set(paramKey, detected);
-          }
-          for (const group of job.groups) {
-            detected.add(group);
-          }
+        // Track completed job for shouldSkip decisions
+        if (!completedJobsByParam.has(paramKey)) {
+          completedJobsByParam.set(paramKey, []);
         }
+        completedJobsByParam.get(paramKey)!.push({
+          ...job,
+          status: JobStatus.Completed,
+          finding,
+          updatedAt: completedNow,
+        });
 
         completedCount++;
       } catch (err) {
@@ -412,7 +413,6 @@ export class Orchestrator {
       itemMap.set(job.id, {
         signatureName: job.signatureName,
         parameter: job.parameter,
-        groups: job.groups,
       });
     }
 

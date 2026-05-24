@@ -31,7 +31,6 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: ScenarioId("scan-1"),
     signatureName: SignatureId("reflected-xss"),
 parameter: new QueryParameter({ name: "" }, "", []),
-    groups: [],
     status: JobStatus.Completed,
     finding: null,
     error: null,
