@@ -18,14 +18,12 @@ import {
   CreateAuditItemsCommand,
   RunAuditCommand,
   SaveJobCommand,
-  LoadPendingJobsCommand,
+  LoadJobsByStatusCommand,
   UpdateJobCommand,
   SaveScanStateCommand,
   LoadScanStateCommand,
   LoadScenarioCommand,
   SaveScenarioCommand,
-  LoadJobsByScanIdCommand,
-  LoadCompletedJobsCommand,
   GenerateReportCommand,
   CreateProxyCommand,
   ShouldSkipCommand,
@@ -185,7 +183,7 @@ export class Orchestrator {
 
     // 2. Load pending jobs
     const jobs: Job[] = await commandBus.dispatch(
-      new LoadPendingJobsCommand(scanId),
+      new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
     );
 
     if (jobs.length === 0) {
@@ -206,7 +204,7 @@ export class Orchestrator {
 
     // Pre-populate with already-completed jobs (useful on resume)
     const completedJobs: Job[] = await commandBus.dispatch(
-      new LoadCompletedJobsCommand(scanId),
+      new LoadJobsByStatusCommand(scanId, [JobStatus.Completed]),
     );
     for (const job of completedJobs) {
       const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
@@ -381,7 +379,7 @@ export class Orchestrator {
 
     // 2. Load all jobs
     const jobs: Job[] = await commandBus.dispatch(
-      new LoadJobsByScanIdCommand(scanId),
+      new LoadJobsByStatusCommand(scanId),
     );
 
     // 3. Broadcast GenerateReportCommand
@@ -411,7 +409,7 @@ export class Orchestrator {
 
     // 2. Load pending jobs
     const pendingJobs: Job[] = await commandBus.dispatch(
-      new LoadPendingJobsCommand(sid),
+      new LoadJobsByStatusCommand(sid, [JobStatus.Pending]),
     );
 
     if (pendingJobs.length === 0) {

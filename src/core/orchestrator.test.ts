@@ -31,12 +31,10 @@ import {
   CreateAuditItemsCommand,
   RunAuditCommand,
   SaveJobCommand,
-  LoadPendingJobsCommand,
+  LoadJobsByStatusCommand,
   UpdateJobCommand,
   SaveScanStateCommand,
   LoadScanStateCommand,
-  LoadJobsByScanIdCommand,
-  LoadCompletedJobsCommand,
   GenerateReportCommand,
   SaveScenarioCommand,
   LoadScenarioCommand,
@@ -257,8 +255,10 @@ describe("Orchestrator", () => {
       const events: string[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
-      commandBus.register(LoadPendingJobsCommand, async () => [mockJob]);
-      commandBus.register(LoadCompletedJobsCommand, async () => []);
+      commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
+        if (cmd.statusFilter.includes(JobStatus.Pending)) return [mockJob];
+        return [];
+      });
       commandBus.register(UpdateJobCommand, async (_cmd) => {
         updateCalls.push(_cmd.updates);
       });
@@ -328,8 +328,10 @@ describe("Orchestrator", () => {
       const events: string[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
-      commandBus.register(LoadPendingJobsCommand, async () => [mockJob]);
-      commandBus.register(LoadCompletedJobsCommand, async () => []);
+      commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
+        if (cmd.statusFilter.includes(JobStatus.Pending)) return [mockJob];
+        return [];
+      });
       commandBus.register(UpdateJobCommand, async (_cmd) => {
         updateCalls.push(_cmd.updates);
       });
@@ -377,8 +379,7 @@ describe("Orchestrator", () => {
       const items = new Map<string, AuditItem>();
 
       commandBus.register(SaveScanStateCommand, async () => {});
-      commandBus.register(LoadPendingJobsCommand, async () => []);
-      commandBus.register(LoadCompletedJobsCommand, async () => []);
+      commandBus.register(LoadJobsByStatusCommand, async () => []);
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({
@@ -417,7 +418,7 @@ describe("Orchestrator", () => {
       ];
 
       commandBus.register(LoadScanStateCommand, async () => mockScanState);
-      commandBus.register(LoadJobsByScanIdCommand, async () => mockJobs);
+      commandBus.register(LoadJobsByStatusCommand, async () => mockJobs);
 
       let reportPayload: { scanState: ScanState; jobs: Job[] } | null = null;
       commandBus.register(GenerateReportCommand, async (cmd) => {
@@ -503,8 +504,10 @@ describe("Orchestrator", () => {
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
-      commandBus.register(LoadPendingJobsCommand, async () => [job1, job2]);
-      commandBus.register(LoadCompletedJobsCommand, async () => []);
+      commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
+        if (cmd.statusFilter.includes(JobStatus.Pending)) return [job1, job2];
+        return [];
+      });
       commandBus.register(UpdateJobCommand, async (cmd) => {
         updateCalls.push({ jobId: cmd.id, updates: cmd.updates });
       });
@@ -569,8 +572,10 @@ describe("Orchestrator", () => {
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
-      commandBus.register(LoadPendingJobsCommand, async () => [job1, job2]);
-      commandBus.register(LoadCompletedJobsCommand, async () => []);
+      commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
+        if (cmd.statusFilter.includes(JobStatus.Pending)) return [job1, job2];
+        return [];
+      });
       commandBus.register(UpdateJobCommand, async (cmd) => {
         updateCalls.push({ jobId: cmd.id, updates: cmd.updates });
       });
@@ -633,8 +638,10 @@ describe("Orchestrator", () => {
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
-      commandBus.register(LoadPendingJobsCommand, async () => [job1, job2]);
-      commandBus.register(LoadCompletedJobsCommand, async () => []);
+      commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
+        if (cmd.statusFilter.includes(JobStatus.Pending)) return [job1, job2];
+        return [];
+      });
       commandBus.register(UpdateJobCommand, async (cmd) => {
         updateCalls.push({ jobId: cmd.id, updates: cmd.updates });
       });

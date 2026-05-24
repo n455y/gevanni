@@ -1,5 +1,5 @@
 import { SingleCommand } from "../core/command.ts";
-import type { Job, ScanState, Scenario } from "../types/models.ts";
+import type { Job, JobStatus, ScanState, Scenario } from "../types/models.ts";
 import type { JobId, ScanId, ScenarioId } from "../types/branded.ts";
 
 export class SaveJobCommand extends SingleCommand<void> {
@@ -12,20 +12,15 @@ export class LoadJobCommand extends SingleCommand<Job | null> {
   readonly id: JobId;
   constructor(id: JobId) { super(); this.id = id; }
 }
-export class LoadJobsByScanIdCommand extends SingleCommand<Job[]> {
-  readonly type = "loadJobsByScanId";
+export class LoadJobsByStatusCommand extends SingleCommand<Job[]> {
+  readonly type = "loadJobsByStatus";
   readonly scanId: ScanId;
-  constructor(scanId: ScanId) { super(); this.scanId = scanId; }
-}
-export class LoadPendingJobsCommand extends SingleCommand<Job[]> {
-  readonly type = "loadPendingJobs";
-  readonly scanId: ScanId;
-  constructor(scanId: ScanId) { super(); this.scanId = scanId; }
-}
-export class LoadCompletedJobsCommand extends SingleCommand<Job[]> {
-  readonly type = "loadCompletedJobs";
-  readonly scanId: ScanId;
-  constructor(scanId: ScanId) { super(); this.scanId = scanId; }
+  readonly statusFilter: JobStatus[];
+  constructor(scanId: ScanId, statusFilter: JobStatus[] = []) {
+    super();
+    this.scanId = scanId;
+    this.statusFilter = statusFilter;
+  }
 }
 export class UpdateJobCommand extends SingleCommand<void> {
   readonly type = "updateJob";

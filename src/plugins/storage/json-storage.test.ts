@@ -8,8 +8,7 @@ import { JsonStoragePlugin } from "./json-storage.ts";
 import {
   SaveJobCommand,
   LoadJobCommand,
-  LoadJobsByScanIdCommand,
-  LoadPendingJobsCommand,
+  LoadJobsByStatusCommand,
   UpdateJobCommand,
   SaveScanStateCommand,
   LoadScanStateCommand,
@@ -129,8 +128,8 @@ describe("JsonStoragePlugin", () => {
     });
   });
 
-  describe("LoadJobsByScanIdCommand", () => {
-    it("returns all jobs for a given scan", async () => {
+  describe("LoadJobsByStatusCommand", () => {
+    it("returns all jobs when no status filter is given", async () => {
       const scanId = ScanId("scan-1");
       const job1 = makeJob({
         id: JobId("job-1"),
@@ -147,7 +146,7 @@ describe("JsonStoragePlugin", () => {
       await commandBus.dispatch(new SaveJobCommand(job2));
 
       const jobs: Job[] = await commandBus.dispatch(
-        new LoadJobsByScanIdCommand(scanId),
+        new LoadJobsByStatusCommand(scanId),
       );
       expect(jobs).toHaveLength(2);
       expect(jobs).toEqual(expect.arrayContaining([job1, job2]));
@@ -155,14 +154,14 @@ describe("JsonStoragePlugin", () => {
 
     it("returns empty array when no jobs exist for scan", async () => {
       const jobs: Job[] = await commandBus.dispatch(
-        new LoadJobsByScanIdCommand(ScanId("empty-scan")),
+        new LoadJobsByStatusCommand(ScanId("empty-scan")),
       );
       expect(jobs).toEqual([]);
     });
   });
 
-  describe("LoadPendingJobsCommand", () => {
-    it("returns only pending jobs", async () => {
+  describe("LoadJobsByStatusCommand with status filter", () => {
+    it("returns only pending jobs when filter is [Pending]", async () => {
       const scanId = ScanId("scan-1");
       const pendingJob = makeJob({
         id: JobId("job-pending"),
@@ -188,13 +187,69 @@ describe("JsonStoragePlugin", () => {
       await commandBus.dispatch(new SaveJobCommand(errorJob));
 
       const pending: Job[] = await commandBus.dispatch(
-        new LoadPendingJobsCommand(scanId),
+        new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
       );
       expect(pending).toHaveLength(1);
       expect(pending[0].id).toBe(JobId("job-pending"));
     });
 
-    it("returns empty array when no pending jobs exist", async () => {
+    it("returns only completed jobs when filter is [Completed]", async () => {
+      const scanId = ScanId("scan-1");
+      const pendingJob = makeJob({
+        id: JobId("job-pending"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus.Pending,
+      });
+      const completedJob = makeJob({
+        id: JobId("job-completed"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus.Completed,
+      });
+      const errorJob = makeJob({
+        id: JobId("job-error"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus.Error,
+      });
+
+      await commandBus.dispatch(new SaveJobCommand(pendingJob));
+      await commandBus.dispatch(new SaveJobCommand(completedJob));
+      await commandBus.dispatch(new SaveJobCommand(errorJob));
+
+      const completed: Job[] = await commandBus.dispatch(
+        new LoadJobsByStatusCommand(scanId, [JobStatus.Completed]),
+      );
+      expect(completed).toHaveLength(1);
+      expect(completed[0].id).toBe(JobId("job-completed"));
+    });
+
+    it("returns multiple statuses when filter has multiple values", async () => {
+      const scanId = ScanId("scan-1");
+      const pendingJob = makeJob({
+        id: JobId("job-pending"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus.Pending,
+      });
+      const completedJob = makeJob({
+        id: JobId("job-completed"),
+        scanId: ScanId("scan-1"),
+        scenarioId: ScenarioId("scan-1"),
+        status: JobStatus.Completed,
+      });
+
+      await commandBus.dispatch(new SaveJobCommand(pendingJob));
+      await commandBus.dispatch(new SaveJobCommand(completedJob));
+
+      const jobs: Job[] = await commandBus.dispatch(
+        new LoadJobsByStatusCommand(scanId, [JobStatus.Pending, JobStatus.Completed]),
+      );
+      expect(jobs).toHaveLength(2);
+    });
+
+    it("returns empty array when no matching jobs exist", async () => {
       const scanId = ScanId("scan-1");
       const completedJob = makeJob({
         id: JobId("job-1"),
@@ -205,7 +260,7 @@ describe("JsonStoragePlugin", () => {
       await commandBus.dispatch(new SaveJobCommand(completedJob));
 
       const pending: Job[] = await commandBus.dispatch(
-        new LoadPendingJobsCommand(scanId),
+        new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
       );
       expect(pending).toEqual([]);
     });

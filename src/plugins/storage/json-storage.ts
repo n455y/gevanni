@@ -13,15 +13,12 @@ import {
   type Exchange,
   type SerializedJob,
   type SerializedScanState,
-  JobStatus,
 } from "../../types/models.ts";
 import { ScanId } from "../../types/branded.ts";
 import {
   SaveJobCommand,
   LoadJobCommand,
-  LoadJobsByScanIdCommand,
-  LoadPendingJobsCommand,
-  LoadCompletedJobsCommand,
+  LoadJobsByStatusCommand,
   UpdateJobCommand,
   SaveScanStateCommand,
   LoadScanStateCommand,
@@ -121,32 +118,14 @@ export class JsonStoragePlugin implements StoragePlugin {
       return null;
     });
 
-    // --- LoadJobsByScanIdCommand ---
-    bus.register(LoadJobsByScanIdCommand, async (cmd) => {
+    // --- LoadJobsByStatusCommand ---
+    bus.register(LoadJobsByStatusCommand, async (cmd) => {
       const path = jobsPath(cmd.scanId);
       const jobs = await readJsonFile<SerializedJob[]>(path);
       if (!jobs) return [];
-      return jobs.map(deserializeJob);
-    });
-
-    // --- LoadPendingJobsCommand ---
-    bus.register(LoadPendingJobsCommand, async (cmd) => {
-      const path = jobsPath(cmd.scanId);
-      const jobs = await readJsonFile<SerializedJob[]>(path);
-      if (!jobs) return [];
-      return jobs
-        .map(deserializeJob)
-        .filter((j) => j.status === JobStatus.Pending);
-    });
-
-    // --- LoadCompletedJobsCommand ---
-    bus.register(LoadCompletedJobsCommand, async (cmd) => {
-      const path = jobsPath(cmd.scanId);
-      const jobs = await readJsonFile<SerializedJob[]>(path);
-      if (!jobs) return [];
-      return jobs
-        .map(deserializeJob)
-        .filter((j) => j.status === JobStatus.Completed);
+      const all = jobs.map(deserializeJob);
+      if (cmd.statusFilter.length === 0) return all;
+      return all.filter((j) => cmd.statusFilter.includes(j.status));
     });
 
     // --- UpdateJobCommand ---
