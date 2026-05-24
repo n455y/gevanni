@@ -6,7 +6,6 @@ import type {
   Scenario,
   AuditParameter,
   Exchange,
-  Finding,
   AuditMutation,
 } from "../types/models.ts";
 import { JobStatus, ScanStatus, ReplayResult } from "../types/models.ts";
@@ -17,6 +16,7 @@ import {
   ParseRequestCommand,
   CreateAuditItemsCommand,
   RunAuditCommand,
+  SKIP_AUDIT,
   SaveJobCommand,
   LoadJobsByStatusCommand,
   UpdateJobCommand,
@@ -26,7 +26,6 @@ import {
   SaveScenarioCommand,
   GenerateReportCommand,
   CreateProxyCommand,
-  ShouldSkipCommand,
 } from "../commands/index.ts";
 
 // --- Worker pool ---
@@ -217,30 +216,8 @@ export class Orchestrator {
     // 3. Run jobs with concurrency
     await runWithConcurrency(jobs, concurrency, async (job: Job) => {
       try {
-        // Check if the signature plugin wants to skip based on prior results
         const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
         const completedForParam = completedJobsByParam.get(paramKey) ?? [];
-        const skipResult = await commandBus.dispatch(
-          new ShouldSkipCommand({
-            signatureName: job.signatureName,
-            completedJobs: completedForParam,
-          }),
-        );
-        if (skipResult) {
-          const skippedNow = new Date();
-          await commandBus.dispatch(
-            new UpdateJobCommand(job.id, {
-              status: JobStatus.Skipped,
-              error: ErrorMessage(
-                `Skipped: signature plugin decided to skip based on prior results`,
-              ),
-              updatedAt: skippedNow,
-            }),
-          );
-          eventBus.publish("scan:jobSkipped", { jobId: job.id });
-          skippedCount++;
-          return;
-        }
 
         // Update job status to running
         await commandBus.dispatch(
@@ -281,30 +258,41 @@ export class Orchestrator {
         };
 
         // Run audit
-        const results = await commandBus.broadcast(
+        const result = await commandBus.dispatch(
           new RunAuditCommand({
             signatureName: item.signatureName,
             parameter: job.parameter,
             replay,
+            completedJobs: completedForParam,
           }),
         );
-        const finding = results.find((r): r is Finding => r !== null);
-        if (!finding) {
-          throw new Error(`No handler for signature: ${item.signatureName}`);
+        if (result === SKIP_AUDIT) {
+          const skippedNow = new Date();
+          await commandBus.dispatch(
+            new UpdateJobCommand(job.id, {
+              status: JobStatus.Skipped,
+              error: ErrorMessage(
+                `Skipped: signature plugin decided to skip based on prior results`,
+              ),
+              updatedAt: skippedNow,
+            }),
+          );
+          eventBus.publish("scan:jobSkipped", { jobId: job.id });
+          skippedCount++;
+          return;
         }
-
         // Update job with finding
         const completedNow = new Date();
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
             status: JobStatus.Completed,
-            finding,
+            finding: result,
             updatedAt: completedNow,
           }),
         );
         eventBus.publish("scan:jobCompleted", {
           jobId: job.id,
-          finding,
+          finding: result,
         });
 
         // Track completed job for shouldSkip decisions
@@ -314,7 +302,7 @@ export class Orchestrator {
         completedJobsByParam.get(paramKey)!.push({
           ...job,
           status: JobStatus.Completed,
-          finding,
+          finding: result,
           updatedAt: completedNow,
         });
 

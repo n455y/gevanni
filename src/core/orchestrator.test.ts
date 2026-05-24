@@ -39,7 +39,6 @@ import {
   SaveScenarioCommand,
   LoadScenarioCommand,
   CreateProxyCommand,
-  ShouldSkipCommand,
 } from "../commands/index.ts";
 
 // --- Mock data helpers ---
@@ -280,7 +279,6 @@ describe("Orchestrator", () => {
         },
       ]);
       commandBus.register(RunAuditCommand, "mock-sig", async () => mockFinding);
-      commandBus.register(ShouldSkipCommand, "mock-sig", async () => false);
 
       eventBus.subscribe("scan:jobStarted", () => {
         events.push("started");
@@ -355,7 +353,6 @@ describe("Orchestrator", () => {
       commandBus.register(RunAuditCommand, "failing-sig", async () => {
         throw new Error("Inspection failed");
       });
-      commandBus.register(ShouldSkipCommand, "failing-sig", async () => false);
 
       eventBus.subscribe("scan:jobError", () => {
         events.push("error");
@@ -520,8 +517,6 @@ describe("Orchestrator", () => {
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
       commandBus.register(RunAuditCommand, "sqli-boolean", async () => vulnerableFinding);
-      commandBus.register(ShouldSkipCommand, "sqli-error", async () => false);
-      commandBus.register(ShouldSkipCommand, "sqli-boolean", async () => false);
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
@@ -588,8 +583,6 @@ describe("Orchestrator", () => {
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
       commandBus.register(RunAuditCommand, "sqli-boolean", async () => vulnerableFinding);
-      commandBus.register(ShouldSkipCommand, "sqli-error", async () => false);
-      commandBus.register(ShouldSkipCommand, "sqli-boolean", async () => false);
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
@@ -654,8 +647,6 @@ describe("Orchestrator", () => {
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
       commandBus.register(RunAuditCommand, "reflected-xss", async () => vulnerableFinding);
-      commandBus.register(ShouldSkipCommand, "sqli-error", async () => false);
-      commandBus.register(ShouldSkipCommand, "reflected-xss", async () => false);
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
