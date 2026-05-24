@@ -22,6 +22,11 @@ export class LoadPendingJobsCommand extends SingleCommand<Job[]> {
   readonly scanId: ScanId;
   constructor(scanId: ScanId) { super(); this.scanId = scanId; }
 }
+export class LoadCompletedJobsCommand extends SingleCommand<Job[]> {
+  readonly type = "loadCompletedJobs";
+  readonly scanId: ScanId;
+  constructor(scanId: ScanId) { super(); this.scanId = scanId; }
+}
 export class UpdateJobCommand extends SingleCommand<void> {
   readonly type = "updateJob";
   readonly id: JobId;

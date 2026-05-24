@@ -25,6 +25,7 @@ import {
   LoadScenarioCommand,
   SaveScenarioCommand,
   LoadJobsByScanIdCommand,
+  LoadCompletedJobsCommand,
   GenerateReportCommand,
   CreateProxyCommand,
   ShouldSkipCommand,
@@ -202,6 +203,18 @@ export class Orchestrator {
 
     // Track completed jobs per parameter for shouldSkip decisions
     const completedJobsByParam = new Map<string, Job[]>();
+
+    // Pre-populate with already-completed jobs (useful on resume)
+    const completedJobs: Job[] = await commandBus.dispatch(
+      new LoadCompletedJobsCommand(scanId),
+    );
+    for (const job of completedJobs) {
+      const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
+      if (!completedJobsByParam.has(paramKey)) {
+        completedJobsByParam.set(paramKey, []);
+      }
+      completedJobsByParam.get(paramKey)!.push(job);
+    }
 
     // 3. Run jobs with concurrency
     await runWithConcurrency(jobs, concurrency, async (job: Job) => {

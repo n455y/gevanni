@@ -21,6 +21,7 @@ import {
   LoadJobCommand,
   LoadJobsByScanIdCommand,
   LoadPendingJobsCommand,
+  LoadCompletedJobsCommand,
   UpdateJobCommand,
   SaveScanStateCommand,
   LoadScanStateCommand,
@@ -136,6 +137,16 @@ export class JsonStoragePlugin implements StoragePlugin {
       return jobs
         .map(deserializeJob)
         .filter((j) => j.status === JobStatus.Pending);
+    });
+
+    // --- LoadCompletedJobsCommand ---
+    bus.register(LoadCompletedJobsCommand, async (cmd) => {
+      const path = jobsPath(cmd.scanId);
+      const jobs = await readJsonFile<SerializedJob[]>(path);
+      if (!jobs) return [];
+      return jobs
+        .map(deserializeJob)
+        .filter((j) => j.status === JobStatus.Completed);
     });
 
     // --- UpdateJobCommand ---
