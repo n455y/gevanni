@@ -13,6 +13,8 @@ export type ReplayId = Brand<string, "ReplayId">;
 export const ReplayId = (id: string) => id as ReplayId;
 export type SignatureId = Brand<string, "SignatureId">;
 export const SignatureId = (id: string) => id as SignatureId;
+export type SignatureGroupId = Brand<string, "SignatureGroupId">;
+export const SignatureGroupId = (id: string) => id as SignatureGroupId;
 
 // --- Enum-like (fixed values + Brand) ---
 

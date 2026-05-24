@@ -20,8 +20,8 @@ export const PROTOTYPE_POLLUTION_PATTERNS: RegExp[] = [
 export class PrototypePollutionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("prototype-pollution");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

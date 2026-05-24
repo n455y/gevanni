@@ -11,8 +11,8 @@ const MARKER = "gevanni_crlf";
 export class CrlfInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("crlf-injection");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

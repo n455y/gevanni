@@ -20,8 +20,8 @@ export const NOSQL_ERROR_PATTERNS: RegExp[] = [
 export class NosqlInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("nosql-injection");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

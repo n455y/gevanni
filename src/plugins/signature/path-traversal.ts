@@ -19,8 +19,8 @@ function containsFileContent(body: string): boolean {
 export class PathTraversalPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("path-traversal");
 
-  constructor() {
-    super([BuiltinMutationType.ReplaceValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.ReplaceValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

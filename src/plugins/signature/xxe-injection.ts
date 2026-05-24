@@ -24,8 +24,8 @@ export const XXE_ERROR_PATTERNS: RegExp[] = [
 export class XxeInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("xxe-injection");
 
-  constructor() {
-    super([BuiltinMutationType.ReplaceValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.ReplaceValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

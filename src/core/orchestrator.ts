@@ -1,10 +1,6 @@
 import crypto from "node:crypto";
-import {
-  ScanId,
-  JobId,
-  ErrorMessage,
-  ReplayId,
-} from "../types/branded.ts";
+import { ScanId, JobId, ErrorMessage, ReplayId } from "../types/branded.ts";
+import type { SignatureGroupId } from "../types/branded.ts";
 import type {
   Job,
   ScanState,
@@ -124,6 +120,7 @@ export class Orchestrator {
             scenarioId: scenario.id,
             signatureName: item.signatureName,
             parameter: item.parameter,
+            groups: item.groups,
             status: JobStatus.Pending,
             finding: null,
             error: null,
@@ -202,10 +199,35 @@ export class Orchestrator {
 
     let completedCount = 0;
     let errorCount = 0;
+    let skippedCount = 0;
+
+    // Track detected groups per parameter to enable group-based skipping
+    const detectedGroups = new Map<string, Set<SignatureGroupId>>();
 
     // 3. Run jobs with concurrency
     await runWithConcurrency(jobs, concurrency, async (job: Job) => {
       try {
+        // Check if any group for this parameter has already detected a vulnerability
+        const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
+        if (job.groups.length > 0) {
+          const detected = detectedGroups.get(paramKey);
+          if (detected && job.groups.every((g) => detected.has(g))) {
+            const skippedNow = new Date();
+            await commandBus.dispatch(
+              new UpdateJobCommand(job.id, {
+                status: JobStatus.Skipped,
+                error: ErrorMessage(
+                  `Skipped: group already detected vulnerability for this parameter`,
+                ),
+                updatedAt: skippedNow,
+              }),
+            );
+            eventBus.publish("scan:jobSkipped", { jobId: job.id });
+            skippedCount++;
+            return;
+          }
+        }
+
         // Update job status to running
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
@@ -271,6 +293,19 @@ export class Orchestrator {
           finding,
         });
 
+        // Mark groups as detected for this parameter
+        if (finding.vulnerable && job.groups.length > 0) {
+          const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
+          let detected = detectedGroups.get(paramKey);
+          if (!detected) {
+            detected = new Set();
+            detectedGroups.set(paramKey, detected);
+          }
+          for (const group of job.groups) {
+            detected.add(group);
+          }
+        }
+
         completedCount++;
       } catch (err) {
         const errorMessage = ErrorMessage(
@@ -301,9 +336,7 @@ export class Orchestrator {
 
     // 4. Update final scan state
     const finalStatus: ScanStatus =
-      errorCount === jobs.length
-        ? ScanStatus.Error
-        : ScanStatus.Completed;
+      errorCount === jobs.length ? ScanStatus.Error : ScanStatus.Completed;
 
     await commandBus.dispatch(
       new SaveScanStateCommand({
@@ -315,7 +348,7 @@ export class Orchestrator {
     );
 
     logger.info(
-      `Scan phase complete: ${completedCount} completed, ${errorCount} errors`,
+      `Scan phase complete: ${completedCount} completed, ${skippedCount} skipped, ${errorCount} errors`,
     );
   }
 
@@ -379,6 +412,7 @@ export class Orchestrator {
       itemMap.set(job.id, {
         signatureName: job.signatureName,
         parameter: job.parameter,
+        groups: job.groups,
       });
     }
 

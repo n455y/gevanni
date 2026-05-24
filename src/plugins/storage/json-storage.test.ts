@@ -38,6 +38,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     scenarioId: ScenarioId("scan-1"),
     signatureName: SignatureId("sig-1"),
 parameter: new QueryParameter({ name: "" }, "", []),
+    groups: [],
     status: JobStatus.Pending,
     finding: null,
     error: null,

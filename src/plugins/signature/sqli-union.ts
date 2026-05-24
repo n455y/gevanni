@@ -1,5 +1,6 @@
 import {
   SignatureId,
+  SignatureGroupId,
 } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
@@ -24,8 +25,12 @@ export const UNION_PAYLOADS = buildUnionPayloads(10);
 export class SqliUnionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-union");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  protected override get defaultGroups() {
+    return [SignatureGroupId("sqli")];
+  }
+
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

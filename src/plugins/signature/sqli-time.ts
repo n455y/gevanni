@@ -1,5 +1,6 @@
 import {
   SignatureId,
+  SignatureGroupId,
 } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
@@ -19,8 +20,12 @@ const TIME_PAYLOADS = [
 export class SqliTimePlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-time");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  protected override get defaultGroups() {
+    return [SignatureGroupId("sqli")];
+  }
+
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

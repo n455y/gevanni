@@ -8,6 +8,7 @@ import type {
   ErrorMessage,
   MutationType,
   SignatureId,
+  SignatureGroupId,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
@@ -17,6 +18,7 @@ export const JobStatus = {
   Pending: "pending",
   Running: "running",
   Completed: "completed",
+  Skipped: "skipped",
   Error: "error",
 } as const;
 export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
@@ -189,6 +191,7 @@ export interface Job {
   scenarioId: ScenarioId;
   signatureName: SignatureId;
   parameter: AuditParameter;
+  groups: readonly SignatureGroupId[];
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
@@ -250,6 +253,7 @@ export interface SerializedJob {
   scenarioId: ScenarioId;
   signatureName: SignatureId;
   parameter: { base: string; kind: string; serialized: SerializableValue };
+  groups: readonly SignatureGroupId[];
   status: JobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
@@ -270,6 +274,7 @@ export function deserializeJob(data: SerializedJob): Job {
   return {
     ...data,
     parameter: AuditParameter.deserialize(data.parameter),
+    groups: data.groups ?? [],
     createdAt: new Date(data.createdAt),
     updatedAt: new Date(data.updatedAt),
   };

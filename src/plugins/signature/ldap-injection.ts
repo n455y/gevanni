@@ -17,8 +17,8 @@ export const LDAP_ERROR_PATTERNS: RegExp[] = [
 export class LdapInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("ldap-injection");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

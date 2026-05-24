@@ -22,8 +22,8 @@ const SSTI_PAYLOADS: SstiPayload[] = [
 export class SstiPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("ssti");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

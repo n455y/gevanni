@@ -11,8 +11,8 @@ const MARKER = "gevanni_cm7j";
 export class OsCommandInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("os-command-injection");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

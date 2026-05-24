@@ -18,8 +18,8 @@ export const XPATH_ERROR_PATTERNS: RegExp[] = [
 export class XpathInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("xpath-injection");
 
-  constructor() {
-    super([BuiltinMutationType.AppendValue]);
+  constructor(options?: { groups?: string[] }) {
+    super([BuiltinMutationType.AppendValue], options);
   }
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

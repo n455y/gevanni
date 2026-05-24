@@ -5,8 +5,11 @@ import { SignaturePluginBase } from "./base.ts";
 export abstract class MutationFilteredSignaturePlugin extends SignaturePluginBase {
   private readonly mutationTypes: readonly MutationType[];
 
-  constructor(mutationTypes: readonly MutationType[]) {
-    super();
+  constructor(
+    mutationTypes: readonly MutationType[],
+    options?: { groups?: string[] },
+  ) {
+    super(options);
     this.mutationTypes = mutationTypes;
   }
 
