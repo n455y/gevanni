@@ -126,7 +126,7 @@ describe("OsCommandInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("command-output-reflection");
     expect(finding.evidence.evidenceExchanges).toHaveLength(1);
@@ -159,7 +159,7 @@ describe("OsCommandInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.judgmentId).toBe("command-output-reflection");
     expect(finding.evidence.evidenceExchanges).toHaveLength(0);
@@ -192,7 +192,7 @@ describe("OsCommandInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(false);
   });
 });

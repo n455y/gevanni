@@ -16,7 +16,6 @@ import {
   ParseRequestCommand,
   CreateAuditItemsCommand,
   RunAuditCommand,
-  SKIP_AUDIT,
   SaveJobCommand,
   LoadJobsByStatusCommand,
   UpdateJobCommand,
@@ -215,123 +214,113 @@ export class Orchestrator {
 
     // 3. Run jobs with concurrency
     await runWithConcurrency(jobs, concurrency, async (job: Job) => {
-      try {
-        const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
-        const completedForParam = completedJobsByParam.get(paramKey) ?? [];
+      const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
+      const completedForParam = completedJobsByParam.get(paramKey) ?? [];
 
-        // Update job status to running
-        await commandBus.dispatch(
-          new UpdateJobCommand(job.id, {
-            status: JobStatus.Running,
-            updatedAt: new Date(),
-          }),
+      // Update job status to running
+      await commandBus.dispatch(
+        new UpdateJobCommand(job.id, {
+          status: JobStatus.Running,
+          updatedAt: new Date(),
+        }),
+      );
+      eventBus.publish("scan:jobStarted", { jobId: job.id });
+
+      // Get audit item
+      const item = items.get(job.id);
+      if (!item) {
+        throw new Error(`No audit item found for job ${job.id}`);
+      }
+
+      // Create replay function
+      const replay = async (mutations: AuditMutation[]) => {
+        const scenario: Scenario = await commandBus.dispatch(
+          new LoadScenarioCommand(job.scenarioId),
         );
-        eventBus.publish("scan:jobStarted", { jobId: job.id });
-
-        // Get audit item
-        const item = items.get(job.id);
-        if (!item) {
-          throw new Error(`No audit item found for job ${job.id}`);
-        }
-
-        // Create replay function
-        const replay = async (mutations: AuditMutation[]) => {
-          const scenario: Scenario = await commandBus.dispatch(
-            new LoadScenarioCommand(job.scenarioId),
-          );
-          const proxy = await commandBus.dispatch(
-            new CreateProxyCommand(mutations),
-          );
-          try {
-            const exchanges = await commandBus.dispatch(
-              new ReplayCommand(scenario, {
-                mutations,
-                proxyPort: proxy.port,
-                replayId: ReplayId(crypto.randomUUID()),
-              }),
-            );
-            const [exchange, ...secondOrderExchanges] = exchanges;
-            return new ReplayResult(exchange, secondOrderExchanges);
-          } finally {
-            proxy.close();
-          }
-        };
-
-        // Run audit
-        const result = await commandBus.dispatch(
-          new RunAuditCommand({
-            signatureName: item.signatureName,
-            parameter: job.parameter,
-            replay,
-            completedJobs: completedForParam,
-          }),
+        const proxy = await commandBus.dispatch(
+          new CreateProxyCommand(mutations),
         );
-        if (result === SKIP_AUDIT) {
-          const skippedNow = new Date();
-          await commandBus.dispatch(
-            new UpdateJobCommand(job.id, {
-              status: JobStatus.Skipped,
-              error: ErrorMessage(
-                `Skipped: signature plugin decided to skip based on prior results`,
-              ),
-              updatedAt: skippedNow,
-            }),
-          );
-          eventBus.publish("scan:jobSkipped", { jobId: job.id });
-          skippedCount++;
-          return;
-        }
-        // Update job with finding
-        const completedNow = new Date();
-        await commandBus.dispatch(
-          new UpdateJobCommand(job.id, {
-            status: JobStatus.Completed,
-            finding: result,
-            updatedAt: completedNow,
-          }),
-        );
-        eventBus.publish("scan:jobCompleted", {
-          jobId: job.id,
-          finding: result,
-        });
-
-        // Track completed job for shouldSkip decisions
-        if (!completedJobsByParam.has(paramKey)) {
-          completedJobsByParam.set(paramKey, []);
-        }
-        completedJobsByParam.get(paramKey)!.push({
-          ...job,
-          status: JobStatus.Completed,
-          finding: result,
-          updatedAt: completedNow,
-        });
-
-        completedCount++;
-      } catch (err) {
-        const errorMessage = ErrorMessage(
-          err instanceof Error ? err.message : String(err),
-        );
-        const errorNow = new Date();
-
         try {
-          await commandBus.dispatch(
-            new UpdateJobCommand(job.id, {
-              status: JobStatus.Error,
-              error: errorMessage,
-              updatedAt: errorNow,
+          const exchanges = await commandBus.dispatch(
+            new ReplayCommand(scenario, {
+              mutations,
+              proxyPort: proxy.port,
+              replayId: ReplayId(crypto.randomUUID()),
             }),
           );
-        } catch {
-          // Job update itself failed; log but don't crash
+          const [exchange, ...secondOrderExchanges] = exchanges;
+          return new ReplayResult(exchange, secondOrderExchanges);
+        } finally {
+          proxy.close();
         }
+      };
 
+      // Run audit
+      const result = await commandBus.dispatch(
+        new RunAuditCommand({
+          signatureName: item.signatureName,
+          parameter: job.parameter,
+          replay,
+          completedJobs: completedForParam,
+        }),
+      );
+      if (result.status === "skipped") {
+        const skippedNow = new Date();
+        await commandBus.dispatch(
+          new UpdateJobCommand(job.id, {
+            status: JobStatus.Skipped,
+            error: ErrorMessage(
+              `Skipped: signature plugin decided to skip based on prior results`,
+            ),
+            updatedAt: skippedNow,
+          }),
+        );
+        eventBus.publish("scan:jobSkipped", { jobId: job.id });
+        skippedCount++;
+        return;
+      }
+      if (result.status === "error") {
+        const errorNow = new Date();
+        await commandBus.dispatch(
+          new UpdateJobCommand(job.id, {
+            status: JobStatus.Error,
+            error: result.error,
+            updatedAt: errorNow,
+          }),
+        );
         eventBus.publish("scan:jobError", {
           jobId: job.id,
-          error: errorMessage,
+          error: result.error,
         });
-
         errorCount++;
+        return;
       }
+      // Update job with finding
+      const completedNow = new Date();
+      await commandBus.dispatch(
+        new UpdateJobCommand(job.id, {
+          status: JobStatus.Completed,
+          finding: result.finding,
+          updatedAt: completedNow,
+        }),
+      );
+      eventBus.publish("scan:jobCompleted", {
+        jobId: job.id,
+        finding: result.finding,
+      });
+
+      // Track completed job for shouldSkip decisions
+      if (!completedJobsByParam.has(paramKey)) {
+        completedJobsByParam.set(paramKey, []);
+      }
+      completedJobsByParam.get(paramKey)!.push({
+        ...job,
+        status: JobStatus.Completed,
+        finding: result.finding,
+        updatedAt: completedNow,
+      });
+
+      completedCount++;
     });
 
     // 4. Update final scan state

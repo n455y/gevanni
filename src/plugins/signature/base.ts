@@ -1,6 +1,6 @@
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/index.ts";
-import { SKIP_AUDIT } from "../../commands/run-audit.ts";
+import type { AuditResult } from "../../commands/run-audit.ts";
 import type { Plugin, PluginContext } from "../../core/plugin.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import type { AuditParameter, Finding, Job } from "../../types/models.ts";
@@ -31,9 +31,10 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
       }));
     });
 
-    context.commandBus.register(RunAuditCommand, this.name, async (cmd) => {
-      if (this.shouldSkip(cmd.context.completedJobs ?? [])) return SKIP_AUDIT;
-      return this.runAudit(cmd.context);
+    context.commandBus.register(RunAuditCommand, this.name, async (cmd): Promise<AuditResult> => {
+      if (this.shouldSkip(cmd.context.completedJobs ?? [])) return { status: "skipped" };
+      const finding = await this.runAudit(cmd.context);
+      return { status: "completed", finding };
     });
   }
 }

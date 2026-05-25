@@ -126,7 +126,7 @@ describe("XpathInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("xpath-error-pattern");
     expect(finding.evidence.evidenceExchanges).toHaveLength(1);
@@ -159,7 +159,7 @@ describe("XpathInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(true);
   });
 
@@ -190,7 +190,7 @@ describe("XpathInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(true);
   });
 
@@ -221,7 +221,7 @@ describe("XpathInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.judgmentId).toBe("xpath-error-pattern");
     expect(finding.evidence.evidenceExchanges).toHaveLength(0);
@@ -254,7 +254,7 @@ describe("XpathInjectionPlugin", () => {
       }),
     );
 
-    const finding = findings[0] as Finding;
+    const { finding } = findings[0] as { status: "completed"; finding: Finding };
     expect(finding.vulnerable).toBe(false);
   });
 

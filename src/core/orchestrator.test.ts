@@ -23,6 +23,7 @@ import {
   ExchangeId,
   ScenarioId,
   SignatureId,
+  ErrorMessage,
 } from "../types/branded.ts";
 import { QueryParameter } from "../plugins/parameter/query.ts";
 import {
@@ -278,7 +279,7 @@ describe("Orchestrator", () => {
           response: mockResponse,
         },
       ]);
-      commandBus.register(RunAuditCommand, "mock-sig", async () => mockFinding);
+      commandBus.register(RunAuditCommand, "mock-sig", async () => ({ status: "completed", finding: mockFinding }));
 
       eventBus.subscribe("scan:jobStarted", () => {
         events.push("started");
@@ -351,7 +352,7 @@ describe("Orchestrator", () => {
         },
       ]);
       commandBus.register(RunAuditCommand, "failing-sig", async () => {
-        throw new Error("Inspection failed");
+        return { status: "error", error: ErrorMessage("Inspection failed") } as const;
       });
 
       eventBus.subscribe("scan:jobError", () => {
@@ -515,8 +516,8 @@ describe("Orchestrator", () => {
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
-      commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
-      commandBus.register(RunAuditCommand, "sqli-boolean", async () => vulnerableFinding);
+      commandBus.register(RunAuditCommand, "sqli-error", async () => ({ status: "completed", finding: vulnerableFinding }));
+      commandBus.register(RunAuditCommand, "sqli-boolean", async () => ({ status: "completed", finding: vulnerableFinding }));
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
@@ -581,8 +582,8 @@ describe("Orchestrator", () => {
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
-      commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
-      commandBus.register(RunAuditCommand, "sqli-boolean", async () => vulnerableFinding);
+      commandBus.register(RunAuditCommand, "sqli-error", async () => ({ status: "completed", finding: vulnerableFinding }));
+      commandBus.register(RunAuditCommand, "sqli-boolean", async () => ({ status: "completed", finding: vulnerableFinding }));
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
@@ -645,8 +646,8 @@ describe("Orchestrator", () => {
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
-      commandBus.register(RunAuditCommand, "sqli-error", async () => vulnerableFinding);
-      commandBus.register(RunAuditCommand, "reflected-xss", async () => vulnerableFinding);
+      commandBus.register(RunAuditCommand, "sqli-error", async () => ({ status: "completed", finding: vulnerableFinding }));
+      commandBus.register(RunAuditCommand, "reflected-xss", async () => ({ status: "completed", finding: vulnerableFinding }));
 
       const ctx = new RuntimeContext({ commandBus, eventBus, logger });
       const orchestrator = new Orchestrator({ context: ctx });
