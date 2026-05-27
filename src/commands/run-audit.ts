@@ -17,7 +17,7 @@ export interface RunAuditContext {
   signatureName: SignatureId;
   parameter: AuditParameter;
   replay: (mutations: AuditMutation[]) => Promise<ReplayResult>;
-  completedJobs?: Job[];
+  completedJobs: Job[];
 }
 
 export class RunAuditCommand extends PartitionedSingleCommand<AuditResult> {

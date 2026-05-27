@@ -126,6 +126,7 @@ describe("SqliTimePlugin", () => {
         signatureName: SignatureId("sqli-time"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const findings = await findingsPromise;
@@ -163,6 +164,7 @@ describe("SqliTimePlugin", () => {
         signatureName: SignatureId("sqli-time"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };

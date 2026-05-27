@@ -123,6 +123,7 @@ describe("SsiInjectionPlugin", () => {
         signatureName: SignatureId("ssi-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -156,6 +157,7 @@ describe("SsiInjectionPlugin", () => {
         signatureName: SignatureId("ssi-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -189,6 +191,7 @@ describe("SsiInjectionPlugin", () => {
         signatureName: SignatureId("ssi-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };

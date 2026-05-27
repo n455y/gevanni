@@ -126,6 +126,7 @@ describe("SqliErrorPlugin", () => {
         signatureName: SignatureId("sqli-error"),
         parameter: parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -159,6 +160,7 @@ describe("SqliErrorPlugin", () => {
         signatureName: SignatureId("sqli-error"),
         parameter: parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -191,6 +193,7 @@ describe("SqliErrorPlugin", () => {
         signatureName: SignatureId("sqli-error"),
         parameter: parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -224,6 +227,7 @@ describe("SqliErrorPlugin", () => {
         signatureName: SignatureId("sqli-error"),
         parameter: parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -255,6 +259,7 @@ describe("SqliErrorPlugin", () => {
         signatureName: SignatureId("sqli-error"),
         parameter: parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -286,6 +291,7 @@ describe("SqliErrorPlugin", () => {
         signatureName: SignatureId("sqli-error"),
         parameter: parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -319,6 +325,7 @@ describe("SqliErrorPlugin", () => {
         signatureName: SignatureId("sqli-error"),
         parameter: parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };

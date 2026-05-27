@@ -122,6 +122,7 @@ describe("PathTraversalPlugin", () => {
         signatureName: SignatureId("path-traversal"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -170,6 +171,7 @@ describe("PathTraversalPlugin", () => {
         signatureName: SignatureId("path-traversal"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -202,6 +204,7 @@ describe("PathTraversalPlugin", () => {
         signatureName: SignatureId("path-traversal"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -235,6 +238,7 @@ describe("PathTraversalPlugin", () => {
         signatureName: SignatureId("path-traversal"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -270,6 +274,7 @@ describe("PathTraversalPlugin", () => {
         signatureName: SignatureId("path-traversal"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 

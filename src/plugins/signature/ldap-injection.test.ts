@@ -123,6 +123,7 @@ describe("LdapInjectionPlugin", () => {
         signatureName: SignatureId("ldap-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -156,6 +157,7 @@ describe("LdapInjectionPlugin", () => {
         signatureName: SignatureId("ldap-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -187,6 +189,7 @@ describe("LdapInjectionPlugin", () => {
         signatureName: SignatureId("ldap-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -218,6 +221,7 @@ describe("LdapInjectionPlugin", () => {
         signatureName: SignatureId("ldap-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -249,6 +253,7 @@ describe("LdapInjectionPlugin", () => {
         signatureName: SignatureId("ldap-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -282,6 +287,7 @@ describe("LdapInjectionPlugin", () => {
         signatureName: SignatureId("ldap-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 

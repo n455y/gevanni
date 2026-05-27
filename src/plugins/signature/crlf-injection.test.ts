@@ -123,6 +123,7 @@ describe("CrlfInjectionPlugin", () => {
         signatureName: SignatureId("crlf-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -156,6 +157,7 @@ describe("CrlfInjectionPlugin", () => {
         signatureName: SignatureId("crlf-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -187,6 +189,7 @@ describe("CrlfInjectionPlugin", () => {
         signatureName: SignatureId("crlf-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -220,6 +223,7 @@ describe("CrlfInjectionPlugin", () => {
         signatureName: SignatureId("crlf-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };

@@ -130,6 +130,7 @@ describe("SqliUnionPlugin", () => {
         signatureName: SignatureId("sqli-union"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -164,6 +165,7 @@ describe("SqliUnionPlugin", () => {
         signatureName: SignatureId("sqli-union"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -200,6 +202,7 @@ describe("SqliUnionPlugin", () => {
         signatureName: SignatureId("sqli-union"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 

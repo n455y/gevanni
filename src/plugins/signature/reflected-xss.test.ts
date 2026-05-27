@@ -146,6 +146,7 @@ describe("ReflectedXssPlugin", () => {
         signatureName: SignatureId("reflected-xss"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -180,6 +181,7 @@ describe("ReflectedXssPlugin", () => {
         signatureName: SignatureId("reflected-xss"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -213,6 +215,7 @@ describe("ReflectedXssPlugin", () => {
         signatureName: SignatureId("reflected-xss"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 

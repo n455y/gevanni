@@ -129,6 +129,7 @@ describe("SqliBooleanPlugin", () => {
         signatureName: SignatureId("sqli-boolean"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -166,6 +167,7 @@ describe("SqliBooleanPlugin", () => {
         signatureName: SignatureId("sqli-boolean"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -198,6 +200,7 @@ describe("SqliBooleanPlugin", () => {
         signatureName: SignatureId("sqli-boolean"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -231,6 +234,7 @@ describe("SqliBooleanPlugin", () => {
         signatureName: SignatureId("sqli-boolean"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };

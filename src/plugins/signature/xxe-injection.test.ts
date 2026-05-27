@@ -123,6 +123,7 @@ describe("XxeInjectionPlugin", () => {
         signatureName: SignatureId("xxe-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -156,6 +157,7 @@ describe("XxeInjectionPlugin", () => {
         signatureName: SignatureId("xxe-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -187,6 +189,7 @@ describe("XxeInjectionPlugin", () => {
         signatureName: SignatureId("xxe-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -218,6 +221,7 @@ describe("XxeInjectionPlugin", () => {
         signatureName: SignatureId("xxe-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };
@@ -251,6 +255,7 @@ describe("XxeInjectionPlugin", () => {
         signatureName: SignatureId("xxe-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
     const { finding } = findings[0] as { status: "completed"; finding: Finding };

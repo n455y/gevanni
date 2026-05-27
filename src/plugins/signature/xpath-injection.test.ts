@@ -123,6 +123,7 @@ describe("XpathInjectionPlugin", () => {
         signatureName: SignatureId("xpath-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -156,6 +157,7 @@ describe("XpathInjectionPlugin", () => {
         signatureName: SignatureId("xpath-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -187,6 +189,7 @@ describe("XpathInjectionPlugin", () => {
         signatureName: SignatureId("xpath-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -218,6 +221,7 @@ describe("XpathInjectionPlugin", () => {
         signatureName: SignatureId("xpath-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -251,6 +255,7 @@ describe("XpathInjectionPlugin", () => {
         signatureName: SignatureId("xpath-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 

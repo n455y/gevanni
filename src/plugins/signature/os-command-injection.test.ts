@@ -123,6 +123,7 @@ describe("OsCommandInjectionPlugin", () => {
         signatureName: SignatureId("os-command-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -156,6 +157,7 @@ describe("OsCommandInjectionPlugin", () => {
         signatureName: SignatureId("os-command-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -189,6 +191,7 @@ describe("OsCommandInjectionPlugin", () => {
         signatureName: SignatureId("os-command-injection"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 

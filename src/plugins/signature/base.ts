@@ -19,7 +19,7 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
 
   protected abstract runAudit(context: RunAuditContext): Promise<Finding>;
 
-  protected shouldSkip(_completedJobs: Job[]): boolean {
+  protected isAlreadyChecked(context: RunAuditContext): boolean {
     return false;
   }
 
@@ -31,10 +31,14 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
       }));
     });
 
-    context.commandBus.register(RunAuditCommand, this.name, async (cmd): Promise<AuditResult> => {
-      if (this.shouldSkip(cmd.context.completedJobs ?? [])) return { status: "skipped" };
-      const finding = await this.runAudit(cmd.context);
-      return { status: "completed", finding };
-    });
+    context.commandBus.register(
+      RunAuditCommand,
+      this.name,
+      async (cmd): Promise<AuditResult> => {
+        if (this.isAlreadyChecked(cmd.context)) return { status: "skipped" };
+        const finding = await this.runAudit(cmd.context);
+        return { status: "completed", finding };
+      },
+    );
   }
 }

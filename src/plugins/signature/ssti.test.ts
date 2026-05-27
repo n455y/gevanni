@@ -123,6 +123,7 @@ describe("SstiPlugin", () => {
         signatureName: SignatureId("ssti"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -171,6 +172,7 @@ describe("SstiPlugin", () => {
         signatureName: SignatureId("ssti"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -203,6 +205,7 @@ describe("SstiPlugin", () => {
         signatureName: SignatureId("ssti"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
@@ -236,6 +239,7 @@ describe("SstiPlugin", () => {
         signatureName: SignatureId("ssti"),
         parameter,
         replay: mockReplay,
+        completedJobs: [],
       }),
     );
 
