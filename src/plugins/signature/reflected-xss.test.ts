@@ -16,7 +16,7 @@ import { QueryParameter } from "../parameter/query.ts";
 import { FormParameter } from "../parameter/form.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, SignatureId } from "../../types/branded.ts";
+import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
@@ -144,6 +144,7 @@ describe("ReflectedXssPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: SignatureId("reflected-xss"),
+        scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -179,6 +180,7 @@ describe("ReflectedXssPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: SignatureId("reflected-xss"),
+        scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -213,6 +215,7 @@ describe("ReflectedXssPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: SignatureId("reflected-xss"),
+        scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],

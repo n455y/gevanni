@@ -6,7 +6,7 @@ import type {
   ReplayResult,
   Job,
 } from "../types/models.ts";
-import type { ErrorMessage, SignatureId } from "../types/branded.ts";
+import type { ErrorMessage, ScenarioId, SignatureId } from "../types/branded.ts";
 
 export type AuditResult =
   | { status: "completed"; finding: Finding }
@@ -15,6 +15,7 @@ export type AuditResult =
 
 export interface RunAuditContext {
   signatureName: SignatureId;
+  scenarioId: ScenarioId;
   parameter: AuditParameter;
   replay: (mutations: AuditMutation[]) => Promise<ReplayResult>;
   completedJobs: Job[];

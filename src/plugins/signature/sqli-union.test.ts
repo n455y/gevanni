@@ -14,7 +14,7 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, SignatureId } from "../../types/branded.ts";
+import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
@@ -128,6 +128,7 @@ describe("SqliUnionPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: SignatureId("sqli-union"),
+        scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -163,6 +164,7 @@ describe("SqliUnionPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: SignatureId("sqli-union"),
+        scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -200,6 +202,7 @@ describe("SqliUnionPlugin", () => {
     await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: SignatureId("sqli-union"),
+        scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],

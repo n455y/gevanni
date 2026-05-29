@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
@@ -8,6 +9,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-boolean");
+  protected override get categories() { return [SignatureGroupId("sqli")]; }
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

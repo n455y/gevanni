@@ -197,25 +197,13 @@ export class Orchestrator {
     let errorCount = 0;
     let skippedCount = 0;
 
-    // Track completed jobs per parameter for shouldSkip decisions
-    const completedJobsByParam = new Map<string, Job[]>();
-
-    // Pre-populate with already-completed jobs (useful on resume)
+    // Track completed jobs for shouldSkip decisions
     const completedJobs: Job[] = await commandBus.dispatch(
       new LoadJobsByStatusCommand(scanId, [JobStatus.Completed]),
     );
-    for (const job of completedJobs) {
-      const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
-      if (!completedJobsByParam.has(paramKey)) {
-        completedJobsByParam.set(paramKey, []);
-      }
-      completedJobsByParam.get(paramKey)!.push(job);
-    }
 
     // 3. Run jobs with concurrency
     await runWithConcurrency(jobs, concurrency, async (job: Job) => {
-      const paramKey = `${job.scenarioId}:${JSON.stringify(job.parameter.location)}`;
-      const completedForParam = completedJobsByParam.get(paramKey) ?? [];
 
       // Update job status to running
       await commandBus.dispatch(
@@ -259,9 +247,10 @@ export class Orchestrator {
       const result = await commandBus.dispatch(
         new RunAuditCommand({
           signatureName: item.signatureName,
+          scenarioId: job.scenarioId,
           parameter: job.parameter,
           replay,
-          completedJobs: completedForParam,
+          completedJobs,
         }),
       );
       if (result.status === "skipped") {
@@ -310,10 +299,7 @@ export class Orchestrator {
       });
 
       // Track completed job for shouldSkip decisions
-      if (!completedJobsByParam.has(paramKey)) {
-        completedJobsByParam.set(paramKey, []);
-      }
-      completedJobsByParam.get(paramKey)!.push({
+      completedJobs.push({
         ...job,
         status: JobStatus.Completed,
         finding: result.finding,

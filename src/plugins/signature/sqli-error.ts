@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -16,6 +17,7 @@ export const SQL_ERROR_PATTERNS: RegExp[] = [
 
 export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-error");
+  protected override get categories() { return [SignatureGroupId("sqli")]; }
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
