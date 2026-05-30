@@ -3,7 +3,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { ConsoleReporterPlugin } from "./console-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { type SignatureJob, type ScanState, JobStatus, ScanStatus } from "../../types/models.ts";
+import { type SignatureJob, type ScanState, SignatureJobStatus, ScanStatus } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
@@ -32,7 +32,7 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     signatureName: SignatureId("reflected-xss"),
     categories: [],
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: JobStatus.Completed,
+    status: SignatureJobStatus.Completed,
     finding: null,
     error: null,
     createdAt: new Date("2025-01-01T00:00:00Z"),
@@ -85,7 +85,7 @@ describe("ConsoleReporterPlugin", () => {
     const vulnerableJob = makeJob({
       id: SignatureJobId("job-vuln"),
       signatureName: SignatureId("reflected-xss"),
-      status: JobStatus.Completed,
+      status: SignatureJobStatus.Completed,
     categories: [],
 parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       finding: {
@@ -130,7 +130,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const safeJob = makeJob({
       id: SignatureJobId("job-safe"),
       signatureName: SignatureId("sqli-error"),
-      status: JobStatus.Completed,
+      status: SignatureJobStatus.Completed,
       finding: {
         vulnerable: false,
         evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
@@ -160,7 +160,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const errorJob = makeJob({
       id: SignatureJobId("job-err"),
       signatureName: SignatureId("reflected-xss"),
-      status: JobStatus.Error,
+      status: SignatureJobStatus.Error,
       finding: null,
       error: "Connection refused" as any,
     });
@@ -184,7 +184,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const jobs: SignatureJob[] = [
       makeJob({
         id: SignatureJobId("j1"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: true,
           evidence: { judgmentId: "payload-reflection", exchanges: [], evidenceExchanges: [] },
@@ -194,7 +194,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       }),
       makeJob({
         id: SignatureJobId("j2"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: false,
           evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
@@ -204,7 +204,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       }),
       makeJob({
         id: SignatureJobId("j3"),
-        status: JobStatus.Error,
+        status: SignatureJobStatus.Error,
         error: "timeout" as any,
       }),
     ];

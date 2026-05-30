@@ -14,14 +14,14 @@ import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
 // --- Enum-like constants ---
 
-export const JobStatus = {
+export const SignatureJobStatus = {
   Pending: "pending",
   Running: "running",
   Completed: "completed",
   Skipped: "skipped",
   Error: "error",
 } as const;
-export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
+export type SignatureJobStatus = (typeof SignatureJobStatus)[keyof typeof SignatureJobStatus];
 
 export const ScanStatus = {
   Planning: "planning",
@@ -192,7 +192,7 @@ export interface SignatureJob {
   signatureName: SignatureId;
   categories: SignatureGroupId[];
   parameter: AuditParameter;
-  status: JobStatus;
+  status: SignatureJobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
   createdAt: Date;
@@ -254,7 +254,7 @@ export interface SerializedSignatureJob {
   signatureName: SignatureId;
   categories: SignatureGroupId[];
   parameter: { base: string; kind: string; serialized: SerializableValue };
-  status: JobStatus;
+  status: SignatureJobStatus;
   finding: Finding | null;
   error: ErrorMessage | null;
   createdAt: number;

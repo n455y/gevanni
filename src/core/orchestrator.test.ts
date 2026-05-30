@@ -15,7 +15,7 @@ import type {
   ScanState,
   Scenario,
 } from "../types/models.ts";
-import { JobStatus, ScanStatus, BuiltinMutationType } from "../types/models.ts";
+import { SignatureJobStatus, ScanStatus, BuiltinMutationType } from "../types/models.ts";
 import type { AuditParameter } from "../types/models.ts";
 import {
   ScanId,
@@ -241,7 +241,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("mock-sig"),
         categories: [],
         parameter: mockTargets[0],
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -260,7 +260,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
-        if (cmd.statusFilter.includes(JobStatus.Pending)) return [mockJob];
+        if (cmd.statusFilter.includes(SignatureJobStatus.Pending)) return [mockJob];
         return [];
       });
       commandBus.register(UpdateJobCommand, async (_cmd) => {
@@ -300,8 +300,8 @@ describe("Orchestrator", () => {
       await orchestrator.scan(scanId, items, 2);
 
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      expect(updateCalls[0].status).toBe(JobStatus.Running);
-      expect(updateCalls[1].status).toBe(JobStatus.Completed);
+      expect(updateCalls[0].status).toBe(SignatureJobStatus.Running);
+      expect(updateCalls[1].status).toBe(SignatureJobStatus.Completed);
       expect(events).toContain("started");
       expect(events).toContain("completed");
     });
@@ -315,7 +315,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("failing-sig"),
         categories: [],
         parameter: mockTargets[0],
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -334,7 +334,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
-        if (cmd.statusFilter.includes(JobStatus.Pending)) return [mockJob];
+        if (cmd.statusFilter.includes(SignatureJobStatus.Pending)) return [mockJob];
         return [];
       });
       commandBus.register(UpdateJobCommand, async (_cmd) => {
@@ -374,8 +374,8 @@ describe("Orchestrator", () => {
 
       expect(events).toContain("error");
       expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      expect(updateCalls[0].status).toBe(JobStatus.Running);
-      expect(updateCalls[1].status).toBe(JobStatus.Error);
+      expect(updateCalls[0].status).toBe(SignatureJobStatus.Running);
+      expect(updateCalls[1].status).toBe(SignatureJobStatus.Error);
     });
 
     it("handles empty job list", async () => {
@@ -414,7 +414,7 @@ describe("Orchestrator", () => {
           signatureName: SignatureId("reflected-xss"),
           categories: [],
           parameter: mockTargets[0],
-          status: JobStatus.Completed,
+          status: SignatureJobStatus.Completed,
           finding: mockFinding,
           error: null,
           createdAt: new Date("2024-01-01T00:00:00.000Z"),
@@ -484,7 +484,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("sqli-error"),
         categories: [],
         parameter: param,
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -497,7 +497,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("sqli-boolean"),
         categories: [],
         parameter: param,
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -512,7 +512,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
-        if (cmd.statusFilter.includes(JobStatus.Pending)) return [job1, job2];
+        if (cmd.statusFilter.includes(SignatureJobStatus.Pending)) return [job1, job2];
         return [];
       });
       commandBus.register(UpdateJobCommand, async (cmd) => {
@@ -535,8 +535,8 @@ describe("Orchestrator", () => {
       const job1Updates = updateCalls.filter((c) => c.jobId === "job-1");
       const job2Updates = updateCalls.filter((c) => c.jobId === "job-2");
 
-      expect(job1Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
-      expect(job2Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
+      expect(job1Updates.some((c) => c.updates.status === SignatureJobStatus.Completed)).toBe(true);
+      expect(job2Updates.some((c) => c.updates.status === SignatureJobStatus.Completed)).toBe(true);
     });
 
     it("does not skip jobs with different parameters", async () => {
@@ -552,7 +552,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("sqli-error"),
         categories: [],
         parameter: param1,
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -565,7 +565,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("sqli-boolean"),
         categories: [],
         parameter: param2,
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -580,7 +580,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
-        if (cmd.statusFilter.includes(JobStatus.Pending)) return [job1, job2];
+        if (cmd.statusFilter.includes(SignatureJobStatus.Pending)) return [job1, job2];
         return [];
       });
       commandBus.register(UpdateJobCommand, async (cmd) => {
@@ -603,8 +603,8 @@ describe("Orchestrator", () => {
       const job1Updates = updateCalls.filter((c) => c.jobId === "job-1");
       const job2Updates = updateCalls.filter((c) => c.jobId === "job-2");
 
-      expect(job1Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
-      expect(job2Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
+      expect(job1Updates.some((c) => c.updates.status === SignatureJobStatus.Completed)).toBe(true);
+      expect(job2Updates.some((c) => c.updates.status === SignatureJobStatus.Completed)).toBe(true);
     });
 
     it("completes all jobs when shouldSkip returns false", async () => {
@@ -618,7 +618,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("sqli-error"),
         categories: [],
         parameter: mockTargets[0],
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -631,7 +631,7 @@ describe("Orchestrator", () => {
         signatureName: SignatureId("reflected-xss"),
           categories: [],
         parameter: mockTargets[0],
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
         finding: null,
         error: null,
         createdAt: new Date(),
@@ -646,7 +646,7 @@ describe("Orchestrator", () => {
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
-        if (cmd.statusFilter.includes(JobStatus.Pending)) return [job1, job2];
+        if (cmd.statusFilter.includes(SignatureJobStatus.Pending)) return [job1, job2];
         return [];
       });
       commandBus.register(UpdateJobCommand, async (cmd) => {
@@ -669,8 +669,8 @@ describe("Orchestrator", () => {
       const job1Updates = updateCalls.filter((c) => c.jobId === "job-1");
       const job2Updates = updateCalls.filter((c) => c.jobId === "job-2");
 
-      expect(job1Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
-      expect(job2Updates.some((c) => c.updates.status === JobStatus.Completed)).toBe(true);
+      expect(job1Updates.some((c) => c.updates.status === SignatureJobStatus.Completed)).toBe(true);
+      expect(job2Updates.some((c) => c.updates.status === SignatureJobStatus.Completed)).toBe(true);
     });
   });
 });

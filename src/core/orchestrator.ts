@@ -8,7 +8,7 @@ import type {
   Exchange,
   AuditMutation,
 } from "../types/models.ts";
-import { JobStatus, ScanStatus, ReplayResult } from "../types/models.ts";
+import { SignatureJobStatus, ScanStatus, ReplayResult } from "../types/models.ts";
 import type { RuntimeContext } from "./runtime-context.ts";
 import type { AuditItem } from "./audit-item.ts";
 import {
@@ -118,7 +118,7 @@ export class Orchestrator {
             signatureName: item.signatureName,
             categories: item.categories,
             parameter: item.parameter,
-            status: JobStatus.Pending,
+            status: SignatureJobStatus.Pending,
             finding: null,
             error: null,
             createdAt: now,
@@ -182,7 +182,7 @@ export class Orchestrator {
 
     // 2. Load pending jobs
     const jobs: SignatureJob[] = await commandBus.dispatch(
-      new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
+      new LoadJobsByStatusCommand(scanId, [SignatureJobStatus.Pending]),
     );
 
     if (jobs.length === 0) {
@@ -200,7 +200,7 @@ export class Orchestrator {
 
     // Track completed jobs for shouldSkip decisions
     const completedJobs: SignatureJob[] = await commandBus.dispatch(
-      new LoadJobsByStatusCommand(scanId, [JobStatus.Completed]),
+      new LoadJobsByStatusCommand(scanId, [SignatureJobStatus.Completed]),
     );
 
     // 3. Run jobs with concurrency
@@ -209,7 +209,7 @@ export class Orchestrator {
       // Update job status to running
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, {
-          status: JobStatus.Running,
+          status: SignatureJobStatus.Running,
           updatedAt: new Date(),
         }),
       );
@@ -258,7 +258,7 @@ export class Orchestrator {
         const skippedNow = new Date();
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
-            status: JobStatus.Skipped,
+            status: SignatureJobStatus.Skipped,
             error: ErrorMessage(
               `Skipped: signature plugin decided to skip based on prior results`,
             ),
@@ -273,7 +273,7 @@ export class Orchestrator {
         const errorNow = new Date();
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
-            status: JobStatus.Error,
+            status: SignatureJobStatus.Error,
             error: result.error,
             updatedAt: errorNow,
           }),
@@ -289,7 +289,7 @@ export class Orchestrator {
       const completedNow = new Date();
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, {
-          status: JobStatus.Completed,
+          status: SignatureJobStatus.Completed,
           finding: result.finding,
           updatedAt: completedNow,
         }),
@@ -302,7 +302,7 @@ export class Orchestrator {
       // Track completed job for shouldSkip decisions
       completedJobs.push({
         ...job,
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
         finding: result.finding,
         updatedAt: completedNow,
       });
@@ -373,7 +373,7 @@ export class Orchestrator {
 
     // 2. Load pending jobs
     const pendingJobs: SignatureJob[] = await commandBus.dispatch(
-      new LoadJobsByStatusCommand(sid, [JobStatus.Pending]),
+      new LoadJobsByStatusCommand(sid, [SignatureJobStatus.Pending]),
     );
 
     if (pendingJobs.length === 0) {

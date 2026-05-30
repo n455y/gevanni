@@ -18,7 +18,7 @@ import {
   SaveExchangeCommand,
   LoadExchangesCommand,
 } from "../../commands/exchange.ts";
-import { type SignatureJob, type ScanState, type Scenario, type Exchange, JobStatus, ScanStatus } from "../../types/models.ts";
+import { type SignatureJob, type ScanState, type Scenario, type Exchange, SignatureJobStatus, ScanStatus } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
@@ -38,7 +38,7 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     signatureName: SignatureId("sig-1"),
     categories: [],
     parameter: new QueryParameter({ name: "" }, "", []),
-    status: JobStatus.Pending,
+    status: SignatureJobStatus.Pending,
     finding: null,
     error: null,
     createdAt: new Date("2025-01-01T00:00:00Z"),
@@ -168,19 +168,19 @@ describe("JsonStoragePlugin", () => {
         id: SignatureJobId("job-pending"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
       });
       const completedJob = makeJob({
         id: SignatureJobId("job-completed"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
       });
       const errorJob = makeJob({
         id: SignatureJobId("job-error"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Error,
+        status: SignatureJobStatus.Error,
       });
 
       await commandBus.dispatch(new SaveJobCommand(pendingJob));
@@ -188,7 +188,7 @@ describe("JsonStoragePlugin", () => {
       await commandBus.dispatch(new SaveJobCommand(errorJob));
 
       const pending: SignatureJob[] = await commandBus.dispatch(
-        new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
+        new LoadJobsByStatusCommand(scanId, [SignatureJobStatus.Pending]),
       );
       expect(pending).toHaveLength(1);
       expect(pending[0].id).toBe(SignatureJobId("job-pending"));
@@ -200,19 +200,19 @@ describe("JsonStoragePlugin", () => {
         id: SignatureJobId("job-pending"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
       });
       const completedJob = makeJob({
         id: SignatureJobId("job-completed"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
       });
       const errorJob = makeJob({
         id: SignatureJobId("job-error"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Error,
+        status: SignatureJobStatus.Error,
       });
 
       await commandBus.dispatch(new SaveJobCommand(pendingJob));
@@ -220,7 +220,7 @@ describe("JsonStoragePlugin", () => {
       await commandBus.dispatch(new SaveJobCommand(errorJob));
 
       const completed: SignatureJob[] = await commandBus.dispatch(
-        new LoadJobsByStatusCommand(scanId, [JobStatus.Completed]),
+        new LoadJobsByStatusCommand(scanId, [SignatureJobStatus.Completed]),
       );
       expect(completed).toHaveLength(1);
       expect(completed[0].id).toBe(SignatureJobId("job-completed"));
@@ -232,20 +232,20 @@ describe("JsonStoragePlugin", () => {
         id: SignatureJobId("job-pending"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Pending,
+        status: SignatureJobStatus.Pending,
       });
       const completedJob = makeJob({
         id: SignatureJobId("job-completed"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
       });
 
       await commandBus.dispatch(new SaveJobCommand(pendingJob));
       await commandBus.dispatch(new SaveJobCommand(completedJob));
 
       const jobs: SignatureJob[] = await commandBus.dispatch(
-        new LoadJobsByStatusCommand(scanId, [JobStatus.Pending, JobStatus.Completed]),
+        new LoadJobsByStatusCommand(scanId, [SignatureJobStatus.Pending, SignatureJobStatus.Completed]),
       );
       expect(jobs).toHaveLength(2);
     });
@@ -256,12 +256,12 @@ describe("JsonStoragePlugin", () => {
         id: SignatureJobId("job-1"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
       });
       await commandBus.dispatch(new SaveJobCommand(completedJob));
 
       const pending: SignatureJob[] = await commandBus.dispatch(
-        new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
+        new LoadJobsByStatusCommand(scanId, [SignatureJobStatus.Pending]),
       );
       expect(pending).toEqual([]);
     });
@@ -269,10 +269,10 @@ describe("JsonStoragePlugin", () => {
 
   describe("UpdateJobCommand", () => {
     it("updates job status", async () => {
-      const job = makeJob({ status: JobStatus.Pending });
+      const job = makeJob({ status: SignatureJobStatus.Pending });
       await commandBus.dispatch(new SaveJobCommand(job));
 
-      const newStatus = JobStatus.Running;
+      const newStatus = SignatureJobStatus.Running;
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, { status: newStatus }),
       );
@@ -289,7 +289,7 @@ describe("JsonStoragePlugin", () => {
 
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, {
-          status: JobStatus.Completed,
+          status: SignatureJobStatus.Completed,
         }),
       );
 
@@ -297,14 +297,14 @@ describe("JsonStoragePlugin", () => {
         new LoadJobCommand(job.id),
       );
       expect(loaded!.signatureName).toBe("original");
-      expect(loaded!.status).toBe(JobStatus.Completed);
+      expect(loaded!.status).toBe(SignatureJobStatus.Completed);
     });
 
     it("throws when job not found", async () => {
       await expect(
         commandBus.dispatch(
           new UpdateJobCommand(SignatureJobId("nonexistent"), {
-            status: JobStatus.Running,
+            status: SignatureJobStatus.Running,
           }),
         ),
       ).rejects.toThrow("Job not found");

@@ -6,7 +6,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { JsonReporterPlugin } from "./json-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { serializeSignatureJob, serializeScanState, type SignatureJob, type ScanState, JobStatus, ScanStatus } from "../../types/models.ts";
+import { serializeSignatureJob, serializeScanState, type SignatureJob, type ScanState, SignatureJobStatus, ScanStatus } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
@@ -35,7 +35,7 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     signatureName: SignatureId("reflected-xss"),
     categories: [],
 parameter: new QueryParameter({ name: "" }, "", []),
-    status: JobStatus.Completed,
+    status: SignatureJobStatus.Completed,
     finding: null,
     error: null,
     createdAt: new Date("2025-01-01T00:00:00Z"),
@@ -137,7 +137,7 @@ describe("JsonReporterPlugin", () => {
     const jobs: SignatureJob[] = [
       makeJob({
         id: SignatureJobId("j1"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: true,
           evidence: { judgmentId: "payload-reflection", exchanges: [], evidenceExchanges: [] },
@@ -147,7 +147,7 @@ describe("JsonReporterPlugin", () => {
       }),
       makeJob({
         id: SignatureJobId("j2"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: false,
           evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
@@ -157,12 +157,12 @@ describe("JsonReporterPlugin", () => {
       }),
       makeJob({
         id: SignatureJobId("j3"),
-        status: JobStatus.Error,
+        status: SignatureJobStatus.Error,
         error: "Connection refused" as any,
       }),
       makeJob({
         id: SignatureJobId("j4"),
-        status: JobStatus.Completed,
+        status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: true,
           evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },

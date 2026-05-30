@@ -1,5 +1,5 @@
 import { SingleCommand } from "../core/command.ts";
-import type { SignatureJob, JobStatus, ScanState, Scenario } from "../types/models.ts";
+import type { SignatureJob, SignatureJobStatus, ScanState, Scenario } from "../types/models.ts";
 import type { SignatureJobId, ScanId, ScenarioId } from "../types/branded.ts";
 
 export class SaveJobCommand extends SingleCommand<void> {
@@ -15,8 +15,8 @@ export class LoadJobCommand extends SingleCommand<SignatureJob | null> {
 export class LoadJobsByStatusCommand extends SingleCommand<SignatureJob[]> {
   readonly type = "loadJobsByStatus";
   readonly scanId: ScanId;
-  readonly statusFilter: JobStatus[];
-  constructor(scanId: ScanId, statusFilter: JobStatus[] = []) {
+  readonly statusFilter: SignatureJobStatus[];
+  constructor(scanId: ScanId, statusFilter: SignatureJobStatus[] = []) {
     super();
     this.scanId = scanId;
     this.statusFilter = statusFilter;
