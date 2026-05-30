@@ -3,8 +3,8 @@ export type Brand<T, B extends string> = T & { readonly __brand: B };
 // --- IDs ---
 export type ScenarioId = Brand<string, "ScenarioId">;
 export const ScenarioId = (id: string) => id as ScenarioId;
-export type JobId = Brand<string, "JobId">;
-export const JobId = (id: string) => id as JobId;
+export type SignatureJobId = Brand<string, "SignatureJobId">;
+export const SignatureJobId = (id: string) => id as SignatureJobId;
 export type ScanId = Brand<string, "ScanId">;
 export const ScanId = (id: string) => id as ScanId;
 export type ExchangeId = Brand<string, "ExchangeId">;

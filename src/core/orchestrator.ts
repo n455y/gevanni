@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { ScanId, JobId, ErrorMessage, ReplayId } from "../types/branded.ts";
+import { ScanId, SignatureJobId, ErrorMessage, ReplayId } from "../types/branded.ts";
 import type {
   SignatureJob,
   ScanState,
@@ -110,7 +110,7 @@ export class Orchestrator {
 
         // d. For each definition, create a SignatureJob
         for (const item of items) {
-          const jid = JobId(crypto.randomUUID());
+          const jid = SignatureJobId(crypto.randomUUID());
           const job: SignatureJob = {
             id: jid,
             scanId: id,

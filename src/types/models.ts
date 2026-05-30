@@ -1,7 +1,7 @@
 import { ScenarioType, defineMutationType } from "./branded.ts";
 import type {
   ScenarioId,
-  JobId,
+  SignatureJobId,
   ScanId,
   ExchangeId,
   Payload,
@@ -186,7 +186,7 @@ export interface Finding {
 
 // --- SignatureJob ---
 export interface SignatureJob {
-  id: JobId;
+  id: SignatureJobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
   signatureName: SignatureId;
@@ -248,7 +248,7 @@ export interface PluginConfig<
 // --- Serialized SignatureJob ---
 
 export interface SerializedSignatureJob {
-  id: JobId;
+  id: SignatureJobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
   signatureName: SignatureId;

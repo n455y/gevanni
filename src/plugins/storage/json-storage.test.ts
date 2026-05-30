@@ -22,7 +22,7 @@ import { type SignatureJob, type ScanState, type Scenario, type Exchange, JobSta
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
-  JobId,
+  SignatureJobId,
   ScenarioId,
   ExchangeId,
   ReplayId,
@@ -32,7 +32,7 @@ import {
 // --- Fixture factories ---
 function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
   return {
-    id: JobId("job-1"),
+    id: SignatureJobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
     signatureName: SignatureId("sig-1"),
@@ -105,23 +105,23 @@ describe("JsonStoragePlugin", () => {
 
     it("returns null when job does not exist", async () => {
       const result: SignatureJob | null = await commandBus.dispatch(
-        new LoadJobCommand(JobId("nonexistent")),
+        new LoadJobCommand(SignatureJobId("nonexistent")),
       );
       expect(result).toBeNull();
     });
 
     it("saves multiple jobs and retrieves each", async () => {
-      const job1 = makeJob({ id: JobId("job-1") });
-      const job2 = makeJob({ id: JobId("job-2"), signatureName: SignatureId("sig-2") });
+      const job1 = makeJob({ id: SignatureJobId("job-1") });
+      const job2 = makeJob({ id: SignatureJobId("job-2"), signatureName: SignatureId("sig-2") });
 
       await commandBus.dispatch(new SaveJobCommand(job1));
       await commandBus.dispatch(new SaveJobCommand(job2));
 
       const loaded1: SignatureJob | null = await commandBus.dispatch(
-        new LoadJobCommand(JobId("job-1")),
+        new LoadJobCommand(SignatureJobId("job-1")),
       );
       const loaded2: SignatureJob | null = await commandBus.dispatch(
-        new LoadJobCommand(JobId("job-2")),
+        new LoadJobCommand(SignatureJobId("job-2")),
       );
 
       expect(loaded1).toEqual(job1);
@@ -133,12 +133,12 @@ describe("JsonStoragePlugin", () => {
     it("returns all jobs when no status filter is given", async () => {
       const scanId = ScanId("scan-1");
       const job1 = makeJob({
-        id: JobId("job-1"),
+        id: SignatureJobId("job-1"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
       });
       const job2 = makeJob({
-        id: JobId("job-2"),
+        id: SignatureJobId("job-2"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
       });
@@ -165,19 +165,19 @@ describe("JsonStoragePlugin", () => {
     it("returns only pending jobs when filter is [Pending]", async () => {
       const scanId = ScanId("scan-1");
       const pendingJob = makeJob({
-        id: JobId("job-pending"),
+        id: SignatureJobId("job-pending"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Pending,
       });
       const completedJob = makeJob({
-        id: JobId("job-completed"),
+        id: SignatureJobId("job-completed"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Completed,
       });
       const errorJob = makeJob({
-        id: JobId("job-error"),
+        id: SignatureJobId("job-error"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Error,
@@ -191,25 +191,25 @@ describe("JsonStoragePlugin", () => {
         new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
       );
       expect(pending).toHaveLength(1);
-      expect(pending[0].id).toBe(JobId("job-pending"));
+      expect(pending[0].id).toBe(SignatureJobId("job-pending"));
     });
 
     it("returns only completed jobs when filter is [Completed]", async () => {
       const scanId = ScanId("scan-1");
       const pendingJob = makeJob({
-        id: JobId("job-pending"),
+        id: SignatureJobId("job-pending"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Pending,
       });
       const completedJob = makeJob({
-        id: JobId("job-completed"),
+        id: SignatureJobId("job-completed"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Completed,
       });
       const errorJob = makeJob({
-        id: JobId("job-error"),
+        id: SignatureJobId("job-error"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Error,
@@ -223,19 +223,19 @@ describe("JsonStoragePlugin", () => {
         new LoadJobsByStatusCommand(scanId, [JobStatus.Completed]),
       );
       expect(completed).toHaveLength(1);
-      expect(completed[0].id).toBe(JobId("job-completed"));
+      expect(completed[0].id).toBe(SignatureJobId("job-completed"));
     });
 
     it("returns multiple statuses when filter has multiple values", async () => {
       const scanId = ScanId("scan-1");
       const pendingJob = makeJob({
-        id: JobId("job-pending"),
+        id: SignatureJobId("job-pending"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Pending,
       });
       const completedJob = makeJob({
-        id: JobId("job-completed"),
+        id: SignatureJobId("job-completed"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Completed,
@@ -253,7 +253,7 @@ describe("JsonStoragePlugin", () => {
     it("returns empty array when no matching jobs exist", async () => {
       const scanId = ScanId("scan-1");
       const completedJob = makeJob({
-        id: JobId("job-1"),
+        id: SignatureJobId("job-1"),
         scanId: ScanId("scan-1"),
         scenarioId: ScenarioId("scan-1"),
         status: JobStatus.Completed,
@@ -303,7 +303,7 @@ describe("JsonStoragePlugin", () => {
     it("throws when job not found", async () => {
       await expect(
         commandBus.dispatch(
-          new UpdateJobCommand(JobId("nonexistent"), {
+          new UpdateJobCommand(SignatureJobId("nonexistent"), {
             status: JobStatus.Running,
           }),
         ),

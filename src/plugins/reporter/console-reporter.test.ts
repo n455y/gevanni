@@ -7,7 +7,7 @@ import { type SignatureJob, type ScanState, JobStatus, ScanStatus } from "../../
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
-  JobId,
+  SignatureJobId,
   ScenarioId,
   ExchangeId,
   SignatureId,
@@ -26,7 +26,7 @@ function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
 
 function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
   return {
-    id: JobId("job-1"),
+    id: SignatureJobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
     signatureName: SignatureId("reflected-xss"),
@@ -83,7 +83,7 @@ describe("ConsoleReporterPlugin", () => {
 
     const scanState = makeScanState();
     const vulnerableJob = makeJob({
-      id: JobId("job-vuln"),
+      id: SignatureJobId("job-vuln"),
       signatureName: SignatureId("reflected-xss"),
       status: JobStatus.Completed,
     categories: [],
@@ -128,7 +128,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     const scanState = makeScanState();
     const safeJob = makeJob({
-      id: JobId("job-safe"),
+      id: SignatureJobId("job-safe"),
       signatureName: SignatureId("sqli-error"),
       status: JobStatus.Completed,
       finding: {
@@ -158,7 +158,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     const scanState = makeScanState();
     const errorJob = makeJob({
-      id: JobId("job-err"),
+      id: SignatureJobId("job-err"),
       signatureName: SignatureId("reflected-xss"),
       status: JobStatus.Error,
       finding: null,
@@ -183,7 +183,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const scanState = makeScanState();
     const jobs: SignatureJob[] = [
       makeJob({
-        id: JobId("j1"),
+        id: SignatureJobId("j1"),
         status: JobStatus.Completed,
         finding: {
           vulnerable: true,
@@ -193,7 +193,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
         },
       }),
       makeJob({
-        id: JobId("j2"),
+        id: SignatureJobId("j2"),
         status: JobStatus.Completed,
         finding: {
           vulnerable: false,
@@ -203,7 +203,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
         },
       }),
       makeJob({
-        id: JobId("j3"),
+        id: SignatureJobId("j3"),
         status: JobStatus.Error,
         error: "timeout" as any,
       }),

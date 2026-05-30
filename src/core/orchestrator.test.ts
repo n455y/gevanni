@@ -19,7 +19,7 @@ import { JobStatus, ScanStatus, BuiltinMutationType } from "../types/models.ts";
 import type { AuditParameter } from "../types/models.ts";
 import {
   ScanId,
-  JobId,
+  SignatureJobId,
   ExchangeId,
   ScenarioId,
   SignatureId,
@@ -235,7 +235,7 @@ describe("Orchestrator", () => {
     it("runs jobs and updates their status", async () => {
       const scanId = ScanId("test-scan-id");
       const mockJob: SignatureJob = {
-        id: JobId("job-1"),
+        id: SignatureJobId("job-1"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("mock-sig"),
@@ -309,7 +309,7 @@ describe("Orchestrator", () => {
     it("handles job errors gracefully", async () => {
       const scanId = ScanId("test-scan-id");
       const mockJob: SignatureJob = {
-        id: JobId("job-err"),
+        id: SignatureJobId("job-err"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("failing-sig"),
@@ -408,7 +408,7 @@ describe("Orchestrator", () => {
 
       const mockJobs: SignatureJob[] = [
         {
-          id: JobId("job-1"),
+          id: SignatureJobId("job-1"),
           scanId: ScanId("report-scan-id"),
           scenarioId: ScenarioId("sc-1"),
           signatureName: SignatureId("reflected-xss"),
@@ -478,7 +478,7 @@ describe("Orchestrator", () => {
       const param = mockTargets[0];
 
       const job1: SignatureJob = {
-        id: JobId("job-1"),
+        id: SignatureJobId("job-1"),
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
@@ -491,7 +491,7 @@ describe("Orchestrator", () => {
         updatedAt: new Date(),
       };
       const job2: SignatureJob = {
-        id: JobId("job-2"),
+        id: SignatureJobId("job-2"),
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
@@ -546,7 +546,7 @@ describe("Orchestrator", () => {
       const param2 = new QueryParameter({ name: "id" }, "123", [BuiltinMutationType.ReplaceValue]);
 
       const job1: SignatureJob = {
-        id: JobId("job-1"),
+        id: SignatureJobId("job-1"),
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
@@ -559,7 +559,7 @@ describe("Orchestrator", () => {
         updatedAt: new Date(),
       };
       const job2: SignatureJob = {
-        id: JobId("job-2"),
+        id: SignatureJobId("job-2"),
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
@@ -612,7 +612,7 @@ describe("Orchestrator", () => {
       const scenarioId = ScenarioId("scenario-1");
 
       const job1: SignatureJob = {
-        id: JobId("job-1"),
+        id: SignatureJobId("job-1"),
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
@@ -625,7 +625,7 @@ describe("Orchestrator", () => {
         updatedAt: new Date(),
       };
       const job2: SignatureJob = {
-        id: JobId("job-2"),
+        id: SignatureJobId("job-2"),
         scanId,
         scenarioId,
         signatureName: SignatureId("reflected-xss"),

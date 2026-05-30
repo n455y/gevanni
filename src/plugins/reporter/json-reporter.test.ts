@@ -10,7 +10,7 @@ import { serializeSignatureJob, serializeScanState, type SignatureJob, type Scan
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
-  JobId,
+  SignatureJobId,
   ScenarioId,
   ExchangeId,
   SignatureId,
@@ -29,7 +29,7 @@ function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
 
 function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
   return {
-    id: JobId("job-1"),
+    id: SignatureJobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
     signatureName: SignatureId("reflected-xss"),
@@ -76,7 +76,7 @@ describe("JsonReporterPlugin", () => {
       id: ScanId("scan-abc"),
     });
     const jobs: SignatureJob[] = [
-      makeJob({ id: JobId("job-1") }),
+      makeJob({ id: SignatureJobId("job-1") }),
     ];
 
     await commandBus.broadcast(
@@ -136,7 +136,7 @@ describe("JsonReporterPlugin", () => {
     const scanState = makeScanState();
     const jobs: SignatureJob[] = [
       makeJob({
-        id: JobId("j1"),
+        id: SignatureJobId("j1"),
         status: JobStatus.Completed,
         finding: {
           vulnerable: true,
@@ -146,7 +146,7 @@ describe("JsonReporterPlugin", () => {
         },
       }),
       makeJob({
-        id: JobId("j2"),
+        id: SignatureJobId("j2"),
         status: JobStatus.Completed,
         finding: {
           vulnerable: false,
@@ -156,12 +156,12 @@ describe("JsonReporterPlugin", () => {
         },
       }),
       makeJob({
-        id: JobId("j3"),
+        id: SignatureJobId("j3"),
         status: JobStatus.Error,
         error: "Connection refused" as any,
       }),
       makeJob({
-        id: JobId("j4"),
+        id: SignatureJobId("j4"),
         status: JobStatus.Completed,
         finding: {
           vulnerable: true,
