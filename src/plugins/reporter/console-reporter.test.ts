@@ -30,7 +30,7 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
     signatureName: SignatureId("reflected-xss"),
-    categories: [],
+    groups: [],
 parameter: new QueryParameter({ name: "" }, "", []),
     status: SignatureJobStatus.Completed,
     finding: null,
@@ -86,7 +86,7 @@ describe("ConsoleReporterPlugin", () => {
       id: SignatureJobId("job-vuln"),
       signatureName: SignatureId("reflected-xss"),
       status: SignatureJobStatus.Completed,
-    categories: [],
+    groups: [],
 parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       finding: {
         vulnerable: true,

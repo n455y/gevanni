@@ -119,7 +119,7 @@ describe("Orchestrator", () => {
 
       const mockItem: AuditItem = {
         signatureName: SignatureId("mock-sig"),
-        categories: [],
+        groups: [],
         parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
@@ -176,7 +176,7 @@ describe("Orchestrator", () => {
 
       const mockItem: AuditItem = {
         signatureName: SignatureId("mock-sig"),
-        categories: [],
+        groups: [],
         parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
@@ -239,7 +239,7 @@ describe("Orchestrator", () => {
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("mock-sig"),
-        categories: [],
+        groups: [],
         parameter: mockTargets[0],
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -251,7 +251,7 @@ describe("Orchestrator", () => {
       const items = new Map<string, AuditItem>();
       items.set("job-1", {
         signatureName: SignatureId("mock-sig"),
-        categories: [],
+        groups: [],
         parameter: mockTargets[0],
       });
 
@@ -313,7 +313,7 @@ describe("Orchestrator", () => {
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("failing-sig"),
-        categories: [],
+        groups: [],
         parameter: mockTargets[0],
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -325,7 +325,7 @@ describe("Orchestrator", () => {
       const items = new Map<string, AuditItem>();
       items.set("job-err", {
         signatureName: SignatureId("failing-sig"),
-        categories: [],
+        groups: [],
         parameter: mockTargets[0],
       });
 
@@ -412,7 +412,7 @@ describe("Orchestrator", () => {
           scanId: ScanId("report-scan-id"),
           scenarioId: ScenarioId("sc-1"),
           signatureName: SignatureId("reflected-xss"),
-          categories: [],
+          groups: [],
           parameter: mockTargets[0],
           status: SignatureJobStatus.Completed,
           finding: mockFinding,
@@ -482,7 +482,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
-        categories: [],
+        groups: [],
         parameter: param,
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -495,7 +495,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
-        categories: [],
+        groups: [],
         parameter: param,
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -505,8 +505,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: param });
-      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), categories: [], parameter: param });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), groups: [], parameter: param });
+      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), groups: [], parameter: param });
 
       const updateCalls: { jobId: string; updates: Partial<SignatureJob> }[] = [];
 
@@ -550,7 +550,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
-        categories: [],
+        groups: [],
         parameter: param1,
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -563,7 +563,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
-        categories: [],
+        groups: [],
         parameter: param2,
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -573,8 +573,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: param1 });
-      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), categories: [], parameter: param2 });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), groups: [], parameter: param1 });
+      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), groups: [], parameter: param2 });
 
       const updateCalls: { jobId: string; updates: Partial<SignatureJob> }[] = [];
 
@@ -616,7 +616,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
-        categories: [],
+        groups: [],
         parameter: mockTargets[0],
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -629,7 +629,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("reflected-xss"),
-          categories: [],
+          groups: [],
         parameter: mockTargets[0],
         status: SignatureJobStatus.Pending,
         finding: null,
@@ -639,8 +639,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: mockTargets[0] });
-      items.set("job-2", { signatureName: SignatureId("reflected-xss"), categories: [], parameter: mockTargets[0] });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), groups: [], parameter: mockTargets[0] });
+      items.set("job-2", { signatureName: SignatureId("reflected-xss"), groups: [], parameter: mockTargets[0] });
 
       const updateCalls: { jobId: string; updates: Partial<SignatureJob> }[] = [];
 

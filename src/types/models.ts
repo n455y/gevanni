@@ -190,7 +190,7 @@ export interface SignatureJob {
   scanId: ScanId;
   scenarioId: ScenarioId;
   signatureName: SignatureId;
-  categories: SignatureGroupId[];
+  groups: SignatureGroupId[];
   parameter: AuditParameter;
   status: SignatureJobStatus;
   finding: Finding | null;
@@ -252,7 +252,7 @@ export interface SerializedSignatureJob {
   scanId: ScanId;
   scenarioId: ScenarioId;
   signatureName: SignatureId;
-  categories: SignatureGroupId[];
+  groups: SignatureGroupId[];
   parameter: { base: string; kind: string; serialized: SerializableValue };
   status: SignatureJobStatus;
   finding: Finding | null;

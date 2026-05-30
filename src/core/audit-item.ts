@@ -4,7 +4,7 @@ import type { SignatureGroupId, SignatureId } from "../types/branded.ts";
 interface AuditItem {
   readonly signatureName: SignatureId;
   readonly parameter: AuditParameter;
-  readonly categories: SignatureGroupId[];
+  readonly groups: SignatureGroupId[];
 }
 
 export type { AuditItem };

@@ -33,7 +33,7 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
     signatureName: SignatureId("reflected-xss"),
-    categories: [],
+    groups: [],
 parameter: new QueryParameter({ name: "" }, "", []),
     status: SignatureJobStatus.Completed,
     finding: null,
