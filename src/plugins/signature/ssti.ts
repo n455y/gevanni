@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
@@ -21,6 +22,7 @@ const SSTI_PAYLOADS: SstiPayload[] = [
 
 export class SstiPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("ssti");
+  protected readonly groups = [SignatureGroupId("ssti")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

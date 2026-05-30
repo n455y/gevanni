@@ -19,7 +19,7 @@ const TIME_PAYLOADS = [
 
 export class SqliTimePlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-time");
-  protected override get categories() { return [SignatureGroupId("sqli")]; }
+  protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

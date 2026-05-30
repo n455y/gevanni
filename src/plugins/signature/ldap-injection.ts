@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -16,6 +17,7 @@ export const LDAP_ERROR_PATTERNS: RegExp[] = [
 
 export class LdapInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("ldap-injection");
+  protected readonly groups = [SignatureGroupId("ldap-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

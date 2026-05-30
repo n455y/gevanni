@@ -9,7 +9,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("sqli-boolean");
-  protected override get categories() { return [SignatureGroupId("sqli")]; }
+  protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

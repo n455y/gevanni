@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -8,6 +9,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("reflected-xss");
+  protected readonly groups = [SignatureGroupId("xss")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

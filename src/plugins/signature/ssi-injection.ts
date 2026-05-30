@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
@@ -20,6 +21,7 @@ const SSI_PAYLOADS: SsiPayload[] = [
 
 export class SsiInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("ssi-injection");
+  protected readonly groups = [SignatureGroupId("ssi-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

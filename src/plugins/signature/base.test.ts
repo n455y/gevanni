@@ -22,14 +22,14 @@ function makeQueryParameter(name: string, value: string): AuditParameter {
 function makeCompletedJob(
   signatureName: string,
   vulnerable: boolean,
-  categories: SignatureGroupId[] = [],
+  groups: SignatureGroupId[] = [],
 ): SignatureJob {
   return {
     id: "job-id" as any,
     scanId: "scan-id" as any,
     scenarioId: ScenarioId("test-scenario"),
     signatureName: SignatureId(signatureName),
-    categories,
+    groups,
     parameter: makeQueryParameter("id", "1"),
     status: "completed" as any,
     finding: {
@@ -51,7 +51,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
     commandBus = new InMemoryCommandBus();
   });
 
-  it("skips when same category already found vulnerability", async () => {
+  it("skips when same group already found vulnerability", async () => {
     const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,
@@ -59,7 +59,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
       logger: noopLogger,
     });
 
-    // Register sqli-boolean too so its category is in the registry
+    // Register sqli-boolean too so its group is in the registry
     const booleanPlugin = new SqliBooleanPlugin();
     await booleanPlugin.init({
       commandBus,
@@ -84,7 +84,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
     expect(results.status).toBe("skipped");
   });
 
-  it("does not skip when same category found no vulnerability", async () => {
+  it("does not skip when same group found no vulnerability", async () => {
     const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,
@@ -116,7 +116,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
     expect(results.status).toBe("completed");
   });
 
-  it("does not skip when different category found vulnerability", async () => {
+  it("does not skip when different group found vulnerability", async () => {
     const plugin = new SqliErrorPlugin();
     await plugin.init({
       commandBus,
@@ -173,12 +173,10 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
     expect(results.status).toBe("completed");
   });
 
-  describe("multiple categories", () => {
-    class MultiCategoryPlugin extends SignaturePluginBase {
+  describe("multiple groups", () => {
+    class MultiGroupPlugin extends SignaturePluginBase {
       readonly name = SignatureId("multi-cat-test");
-      protected override get categories() {
-        return [SignatureGroupId("cat-a"), SignatureGroupId("cat-b")];
-      }
+      protected readonly groups = [SignatureGroupId("cat-a"), SignatureGroupId("cat-b")];
       protected async runAudit() {
         return {
           vulnerable: false,
@@ -189,11 +187,9 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
       }
     }
 
-    class SingleCategoryPlugin extends SignaturePluginBase {
+    class SingleGroupPlugin extends SignaturePluginBase {
       readonly name = SignatureId("cat-a-member");
-      protected override get categories() {
-        return [SignatureGroupId("cat-a")];
-      }
+      protected readonly groups = [SignatureGroupId("cat-a")];
       protected async runAudit() {
         return {
           vulnerable: false,
@@ -204,8 +200,8 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
       }
     }
 
-    it("skips when all categories have detected vulnerability", async () => {
-      const plugin = new MultiCategoryPlugin();
+    it("skips when all groups have detected vulnerability", async () => {
+      const plugin = new MultiGroupPlugin();
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
@@ -213,7 +209,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
       });
 
       // Register a plugin in cat-a
-      const catAPlugin = new SingleCategoryPlugin();
+      const catAPlugin = new SingleGroupPlugin();
       await catAPlugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
@@ -240,15 +236,15 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
       expect(results.status).toBe("skipped");
     });
 
-    it("does not skip when only some categories have detected vulnerability", async () => {
-      const plugin = new MultiCategoryPlugin();
+    it("does not skip when only some groups have detected vulnerability", async () => {
+      const plugin = new MultiGroupPlugin();
       await plugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),
         logger: noopLogger,
       });
 
-      const catAPlugin = new SingleCategoryPlugin();
+      const catAPlugin = new SingleGroupPlugin();
       await catAPlugin.init({
         commandBus,
         eventBus: new InMemoryEventBus(),

@@ -12,10 +12,7 @@ export interface SignaturePlugin extends Plugin {
 
 export abstract class SignaturePluginBase implements SignaturePlugin {
   abstract readonly name: SignatureId;
-
-  protected get categories(): SignatureGroupId[] {
-    return [SignatureGroupId(this.name as string)];
-  }
+  protected abstract readonly groups: SignatureGroupId[];
 
   protected abstract runAudit(context: RunAuditContext): Promise<Finding>;
 
@@ -28,9 +25,9 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
     const sameParamJobs = context.completedJobs.filter(
       (job) => `${job.scenarioId}:${JSON.stringify(job.parameter.location)}` === paramKey,
     );
-    return this.categories.every((cat) =>
+    return this.groups.every((cat) =>
       sameParamJobs.some((job) =>
-        job.categories.includes(cat) && job.finding?.vulnerable === true,
+        job.groups.includes(cat) && job.finding?.vulnerable === true,
       ),
     );
   }
@@ -40,7 +37,7 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
       return this.filterParameters(cmd.parameters).map((parameter) => ({
         signatureName: this.name,
         parameter,
-        categories: this.categories,
+        groups: this.groups,
       }));
     });
 

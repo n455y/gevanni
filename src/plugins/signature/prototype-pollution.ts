@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
@@ -19,6 +20,7 @@ export const PROTOTYPE_POLLUTION_PATTERNS: RegExp[] = [
 
 export class PrototypePollutionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("prototype-pollution");
+  protected readonly groups = [SignatureGroupId("prototype-pollution")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

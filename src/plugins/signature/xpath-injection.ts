@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -17,6 +18,7 @@ export const XPATH_ERROR_PATTERNS: RegExp[] = [
 
 export class XpathInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("xpath-injection");
+  protected readonly groups = [SignatureGroupId("xpath-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

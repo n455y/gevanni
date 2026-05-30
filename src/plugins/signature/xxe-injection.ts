@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -23,6 +24,7 @@ export const XXE_ERROR_PATTERNS: RegExp[] = [
 
 export class XxeInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("xxe-injection");
+  protected readonly groups = [SignatureGroupId("xxe-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.ReplaceValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

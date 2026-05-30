@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -10,6 +11,7 @@ const MARKER = "gevanni_crlf";
 
 export class CrlfInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("crlf-injection");
+  protected readonly groups = [SignatureGroupId("crlf-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {

@@ -1,4 +1,5 @@
 import {
+  SignatureGroupId,
   SignatureId,
 } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
@@ -19,6 +20,7 @@ export const NOSQL_ERROR_PATTERNS: RegExp[] = [
 
 export class NosqlInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = SignatureId("nosql-injection");
+  protected readonly groups = [SignatureGroupId("nosql-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
