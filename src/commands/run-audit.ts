@@ -4,7 +4,7 @@ import type {
   Finding,
   AuditMutation,
   ReplayResult,
-  Job,
+  SignatureJob,
 } from "../types/models.ts";
 import type { ErrorMessage, ScenarioId, SignatureId } from "../types/branded.ts";
 
@@ -18,7 +18,7 @@ export interface RunAuditContext {
   scenarioId: ScenarioId;
   parameter: AuditParameter;
   replay: (mutations: AuditMutation[]) => Promise<ReplayResult>;
-  completedJobs: Job[];
+  completedJobs: SignatureJob[];
 }
 
 export class RunAuditCommand extends PartitionedSingleCommand<AuditResult> {

@@ -1,8 +1,8 @@
 import type { ReporterPlugin, PluginContext } from "../../core/plugin.ts";
-import type { Job } from "../../types/models.ts";
+import type { SignatureJob } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
-function formatParameter(job: Job): string {
+function formatParameter(job: SignatureJob): string {
   const p = job.parameter;
   const loc =
     typeof p.location === "object" && p.location !== null
@@ -33,7 +33,7 @@ export class ConsoleReporterPlugin implements ReporterPlugin {
       let errors = 0;
 
       for (const job of jobs) {
-        if (job.status === ("completed" as Job["status"])) {
+        if (job.status === ("completed" as SignatureJob["status"])) {
           if (job.finding?.vulnerable) {
             vulnerable++;
             lines.push(`[VULNERABLE] ${job.signatureName}`);
@@ -51,7 +51,7 @@ export class ConsoleReporterPlugin implements ReporterPlugin {
             lines.push(`  Target: ${formatParameter(job)}`);
             lines.push("");
           }
-        } else if (job.status === ("error" as Job["status"])) {
+        } else if (job.status === ("error" as SignatureJob["status"])) {
           errors++;
           lines.push(`[ERROR] ${job.signatureName}`);
           if (job.error) {

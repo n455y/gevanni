@@ -6,7 +6,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { JsonReporterPlugin } from "./json-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { serializeJob, serializeScanState, type Job, type ScanState, JobStatus, ScanStatus } from "../../types/models.ts";
+import { serializeSignatureJob, serializeScanState, type SignatureJob, type ScanState, JobStatus, ScanStatus } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
@@ -27,7 +27,7 @@ function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   };
 }
 
-function makeJob(overrides: Partial<Job> = {}): Job {
+function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
   return {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
@@ -75,7 +75,7 @@ describe("JsonReporterPlugin", () => {
     const scanState = makeScanState({
       id: ScanId("scan-abc"),
     });
-    const jobs: Job[] = [
+    const jobs: SignatureJob[] = [
       makeJob({ id: JobId("job-1") }),
     ];
 
@@ -87,7 +87,7 @@ describe("JsonReporterPlugin", () => {
     const report = JSON.parse(raw);
 
     expect(report.scanState).toEqual(serializeScanState(scanState));
-    expect(report.jobs).toEqual(jobs.map(serializeJob));
+    expect(report.jobs).toEqual(jobs.map(serializeSignatureJob));
     expect(report.summary).toEqual({
       total: 1,
       vulnerable: 0,
@@ -134,7 +134,7 @@ describe("JsonReporterPlugin", () => {
     });
 
     const scanState = makeScanState();
-    const jobs: Job[] = [
+    const jobs: SignatureJob[] = [
       makeJob({
         id: JobId("j1"),
         status: JobStatus.Completed,

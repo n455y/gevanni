@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import type { ReporterPlugin, PluginContext } from "../../core/plugin.ts";
-import { serializeJob, serializeScanState, type Job, type SerializedJob, type SerializedScanState } from "../../types/models.ts";
+import { serializeSignatureJob, serializeScanState, type SignatureJob, type SerializedSignatureJob, type SerializedScanState } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
 export interface JsonReporterConfig {
@@ -17,23 +17,23 @@ interface ReportSummary {
 
 interface Report {
   scanState: SerializedScanState;
-  jobs: SerializedJob[];
+  jobs: SerializedSignatureJob[];
   summary: ReportSummary;
 }
 
-function computeSummary(jobs: Job[]): ReportSummary {
+function computeSummary(jobs: SignatureJob[]): ReportSummary {
   let vulnerable = 0;
   let safe = 0;
   let errors = 0;
 
   for (const job of jobs) {
-    if (job.status === ("completed" as Job["status"])) {
+    if (job.status === ("completed" as SignatureJob["status"])) {
       if (job.finding?.vulnerable) {
         vulnerable++;
       } else {
         safe++;
       }
-    } else if (job.status === ("error" as Job["status"])) {
+    } else if (job.status === ("error" as SignatureJob["status"])) {
       errors++;
     }
   }
@@ -63,7 +63,7 @@ export class JsonReporterPlugin implements ReporterPlugin {
 
       const report: Report = {
         scanState: serializeScanState(scanState),
-        jobs: jobs.map(serializeJob),
+        jobs: jobs.map(serializeSignatureJob),
         summary,
       };
 

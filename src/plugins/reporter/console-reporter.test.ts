@@ -3,7 +3,7 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { ConsoleReporterPlugin } from "./console-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { type Job, type ScanState, JobStatus, ScanStatus } from "../../types/models.ts";
+import { type SignatureJob, type ScanState, JobStatus, ScanStatus } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
@@ -24,7 +24,7 @@ function makeScanState(overrides: Partial<ScanState> = {}): ScanState {
   };
 }
 
-function makeJob(overrides: Partial<Job> = {}): Job {
+function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
   return {
     id: JobId("job-1"),
     scanId: ScanId("test-scan-id"),
@@ -181,7 +181,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     const scanState = makeScanState();
-    const jobs: Job[] = [
+    const jobs: SignatureJob[] = [
       makeJob({
         id: JobId("j1"),
         status: JobStatus.Completed,

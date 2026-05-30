@@ -11,7 +11,7 @@ import type {
   Finding,
   HttpRequest,
   HttpResponse,
-  Job,
+  SignatureJob,
   ScanState,
   Scenario,
 } from "../types/models.ts";
@@ -124,7 +124,7 @@ describe("Orchestrator", () => {
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
 
-      const savedJobs: Job[] = [];
+      const savedJobs: SignatureJob[] = [];
       commandBus.register(SaveJobCommand, async (cmd) => {
         savedJobs.push(cmd.job);
       });
@@ -181,7 +181,7 @@ describe("Orchestrator", () => {
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
 
-      const savedJobs: Job[] = [];
+      const savedJobs: SignatureJob[] = [];
       commandBus.register(SaveJobCommand, async (cmd) => {
         savedJobs.push(cmd.job);
       });
@@ -234,7 +234,7 @@ describe("Orchestrator", () => {
   describe("scan phase", () => {
     it("runs jobs and updates their status", async () => {
       const scanId = ScanId("test-scan-id");
-      const mockJob: Job = {
+      const mockJob: SignatureJob = {
         id: JobId("job-1"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
@@ -255,7 +255,7 @@ describe("Orchestrator", () => {
         parameter: mockTargets[0],
       });
 
-      const updateCalls: Partial<Job>[] = [];
+      const updateCalls: Partial<SignatureJob>[] = [];
       const events: string[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
@@ -308,7 +308,7 @@ describe("Orchestrator", () => {
 
     it("handles job errors gracefully", async () => {
       const scanId = ScanId("test-scan-id");
-      const mockJob: Job = {
+      const mockJob: SignatureJob = {
         id: JobId("job-err"),
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
@@ -329,7 +329,7 @@ describe("Orchestrator", () => {
         parameter: mockTargets[0],
       });
 
-      const updateCalls: Partial<Job>[] = [];
+      const updateCalls: Partial<SignatureJob>[] = [];
       const events: string[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
@@ -406,7 +406,7 @@ describe("Orchestrator", () => {
         updatedAt: new Date("2024-01-01T00:01:00.000Z"),
       };
 
-      const mockJobs: Job[] = [
+      const mockJobs: SignatureJob[] = [
         {
           id: JobId("job-1"),
           scanId: ScanId("report-scan-id"),
@@ -425,7 +425,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScanStateCommand, async () => mockScanState);
       commandBus.register(LoadJobsByStatusCommand, async () => mockJobs);
 
-      let reportPayload: { scanState: ScanState; jobs: Job[] } | null = null;
+      let reportPayload: { scanState: ScanState; jobs: SignatureJob[] } | null = null;
       commandBus.register(GenerateReportCommand, async (cmd) => {
         reportPayload = cmd.payload;
       });
@@ -477,7 +477,7 @@ describe("Orchestrator", () => {
       const scenarioId = ScenarioId("scenario-1");
       const param = mockTargets[0];
 
-      const job1: Job = {
+      const job1: SignatureJob = {
         id: JobId("job-1"),
         scanId,
         scenarioId,
@@ -490,7 +490,7 @@ describe("Orchestrator", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      const job2: Job = {
+      const job2: SignatureJob = {
         id: JobId("job-2"),
         scanId,
         scenarioId,
@@ -508,7 +508,7 @@ describe("Orchestrator", () => {
       items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: param });
       items.set("job-2", { signatureName: SignatureId("sqli-boolean"), categories: [], parameter: param });
 
-      const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
+      const updateCalls: { jobId: string; updates: Partial<SignatureJob> }[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
@@ -545,7 +545,7 @@ describe("Orchestrator", () => {
       const param1 = new QueryParameter({ name: "q" }, "hello", [BuiltinMutationType.ReplaceValue]);
       const param2 = new QueryParameter({ name: "id" }, "123", [BuiltinMutationType.ReplaceValue]);
 
-      const job1: Job = {
+      const job1: SignatureJob = {
         id: JobId("job-1"),
         scanId,
         scenarioId,
@@ -558,7 +558,7 @@ describe("Orchestrator", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      const job2: Job = {
+      const job2: SignatureJob = {
         id: JobId("job-2"),
         scanId,
         scenarioId,
@@ -576,7 +576,7 @@ describe("Orchestrator", () => {
       items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: param1 });
       items.set("job-2", { signatureName: SignatureId("sqli-boolean"), categories: [], parameter: param2 });
 
-      const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
+      const updateCalls: { jobId: string; updates: Partial<SignatureJob> }[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {
@@ -611,7 +611,7 @@ describe("Orchestrator", () => {
       const scanId = ScanId("test-scan-id");
       const scenarioId = ScenarioId("scenario-1");
 
-      const job1: Job = {
+      const job1: SignatureJob = {
         id: JobId("job-1"),
         scanId,
         scenarioId,
@@ -624,7 +624,7 @@ describe("Orchestrator", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      const job2: Job = {
+      const job2: SignatureJob = {
         id: JobId("job-2"),
         scanId,
         scenarioId,
@@ -642,7 +642,7 @@ describe("Orchestrator", () => {
       items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: mockTargets[0] });
       items.set("job-2", { signatureName: SignatureId("reflected-xss"), categories: [], parameter: mockTargets[0] });
 
-      const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
+      const updateCalls: { jobId: string; updates: Partial<SignatureJob> }[] = [];
 
       commandBus.register(SaveScanStateCommand, async () => {});
       commandBus.register(LoadJobsByStatusCommand, async (cmd) => {

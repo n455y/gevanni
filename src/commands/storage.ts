@@ -1,18 +1,18 @@
 import { SingleCommand } from "../core/command.ts";
-import type { Job, JobStatus, ScanState, Scenario } from "../types/models.ts";
+import type { SignatureJob, JobStatus, ScanState, Scenario } from "../types/models.ts";
 import type { JobId, ScanId, ScenarioId } from "../types/branded.ts";
 
 export class SaveJobCommand extends SingleCommand<void> {
   readonly type = "saveJob";
-  readonly job: Job;
-  constructor(job: Job) { super(); this.job = job; }
+  readonly job: SignatureJob;
+  constructor(job: SignatureJob) { super(); this.job = job; }
 }
-export class LoadJobCommand extends SingleCommand<Job | null> {
+export class LoadJobCommand extends SingleCommand<SignatureJob | null> {
   readonly type = "loadJob";
   readonly id: JobId;
   constructor(id: JobId) { super(); this.id = id; }
 }
-export class LoadJobsByStatusCommand extends SingleCommand<Job[]> {
+export class LoadJobsByStatusCommand extends SingleCommand<SignatureJob[]> {
   readonly type = "loadJobsByStatus";
   readonly scanId: ScanId;
   readonly statusFilter: JobStatus[];
@@ -25,8 +25,8 @@ export class LoadJobsByStatusCommand extends SingleCommand<Job[]> {
 export class UpdateJobCommand extends SingleCommand<void> {
   readonly type = "updateJob";
   readonly id: JobId;
-  readonly updates: Partial<Job>;
-  constructor(id: JobId, updates: Partial<Job>) { super(); this.id = id; this.updates = updates; }
+  readonly updates: Partial<SignatureJob>;
+  constructor(id: JobId, updates: Partial<SignatureJob>) { super(); this.id = id; this.updates = updates; }
 }
 export class SaveScanStateCommand extends SingleCommand<void> {
   readonly type = "saveScanState";

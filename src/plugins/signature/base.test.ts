@@ -6,7 +6,7 @@ import { SqliBooleanPlugin } from "./sqli-boolean.ts";
 import { SqliErrorPlugin } from "./sqli-error.ts";
 import { ReflectedXssPlugin } from "./reflected-xss.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
-import type { AuditParameter, Finding, Job } from "../../types/models.ts";
+import type { AuditParameter, Finding, SignatureJob } from "../../types/models.ts";
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { ExchangeId, ScenarioId, SignatureId, SignatureGroupId } from "../../types/branded.ts";
@@ -23,7 +23,7 @@ function makeCompletedJob(
   signatureName: string,
   vulnerable: boolean,
   categories: SignatureGroupId[] = [],
-): Job {
+): SignatureJob {
   return {
     id: "job-id" as any,
     scanId: "scan-id" as any,

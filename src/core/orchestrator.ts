@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { ScanId, JobId, ErrorMessage, ReplayId } from "../types/branded.ts";
 import type {
-  Job,
+  SignatureJob,
   ScanState,
   Scenario,
   AuditParameter,
@@ -71,7 +71,7 @@ export class Orchestrator {
     logger.info(`Loaded ${scenarios.length} scenarios`);
 
     // 1. Process each scenario
-    const allJobs: Job[] = [];
+    const allJobs: SignatureJob[] = [];
 
     const planProxy = await commandBus.dispatch(new CreateProxyCommand([]));
     try {
@@ -108,10 +108,10 @@ export class Orchestrator {
         );
         const items: AuditItem[] = definitionResults.flat();
 
-        // d. For each definition, create a Job
+        // d. For each definition, create a SignatureJob
         for (const item of items) {
           const jid = JobId(crypto.randomUUID());
-          const job: Job = {
+          const job: SignatureJob = {
             id: jid,
             scanId: id,
             scenarioId: scenario.id,
@@ -181,7 +181,7 @@ export class Orchestrator {
     );
 
     // 2. Load pending jobs
-    const jobs: Job[] = await commandBus.dispatch(
+    const jobs: SignatureJob[] = await commandBus.dispatch(
       new LoadJobsByStatusCommand(scanId, [JobStatus.Pending]),
     );
 
@@ -199,12 +199,12 @@ export class Orchestrator {
     let skippedCount = 0;
 
     // Track completed jobs for shouldSkip decisions
-    const completedJobs: Job[] = await commandBus.dispatch(
+    const completedJobs: SignatureJob[] = await commandBus.dispatch(
       new LoadJobsByStatusCommand(scanId, [JobStatus.Completed]),
     );
 
     // 3. Run jobs with concurrency
-    await runWithConcurrency(jobs, concurrency, async (job: Job) => {
+    await runWithConcurrency(jobs, concurrency, async (job: SignatureJob) => {
 
       // Update job status to running
       await commandBus.dispatch(
@@ -342,7 +342,7 @@ export class Orchestrator {
     }
 
     // 2. Load all jobs
-    const jobs: Job[] = await commandBus.dispatch(
+    const jobs: SignatureJob[] = await commandBus.dispatch(
       new LoadJobsByStatusCommand(scanId),
     );
 
@@ -372,7 +372,7 @@ export class Orchestrator {
     logger.info(`Resuming scan ${sid}`);
 
     // 2. Load pending jobs
-    const pendingJobs: Job[] = await commandBus.dispatch(
+    const pendingJobs: SignatureJob[] = await commandBus.dispatch(
       new LoadJobsByStatusCommand(sid, [JobStatus.Pending]),
     );
 

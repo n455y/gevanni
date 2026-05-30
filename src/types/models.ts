@@ -184,8 +184,8 @@ export interface Finding {
   response: HttpResponse;
 }
 
-// --- Job ---
-export interface Job {
+// --- SignatureJob ---
+export interface SignatureJob {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
@@ -245,9 +245,9 @@ export interface PluginConfig<
   options: T;
 }
 
-// --- Serialized Job ---
+// --- Serialized SignatureJob ---
 
-export interface SerializedJob {
+export interface SerializedSignatureJob {
   id: JobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
@@ -261,7 +261,7 @@ export interface SerializedJob {
   updatedAt: number;
 }
 
-export function serializeJob(job: Job): SerializedJob {
+export function serializeSignatureJob(job: SignatureJob): SerializedSignatureJob {
   return {
     ...job,
     parameter: job.parameter.serialize(),
@@ -270,7 +270,7 @@ export function serializeJob(job: Job): SerializedJob {
   };
 }
 
-export function deserializeJob(data: SerializedJob): Job {
+export function deserializeSignatureJob(data: SerializedSignatureJob): SignatureJob {
   return {
     ...data,
     parameter: AuditParameter.deserialize(data.parameter),
