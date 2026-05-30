@@ -22,12 +22,14 @@ function makeQueryParameter(name: string, value: string): AuditParameter {
 function makeCompletedJob(
   signatureName: string,
   vulnerable: boolean,
+  categories: SignatureGroupId[] = [],
 ): Job {
   return {
     id: "job-id" as any,
     scanId: "scan-id" as any,
     scenarioId: ScenarioId("test-scenario"),
     signatureName: SignatureId(signatureName),
+    categories,
     parameter: makeQueryParameter("id", "1"),
     status: "completed" as any,
     finding: {
@@ -47,7 +49,6 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
   beforeEach(() => {
     commandBus = new InMemoryCommandBus();
-    SignaturePluginBase.resetCategories();
   });
 
   it("skips when same category already found vulnerability", async () => {
@@ -76,7 +77,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
           request: { method: "GET", url: "", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         }),
-        completedJobs: [makeCompletedJob("sqli-boolean", true)],
+        completedJobs: [makeCompletedJob("sqli-boolean", true, [SignatureGroupId("sqli")])],
       }),
     );
 
@@ -108,7 +109,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
           request: { method: "GET", url: "", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         }),
-        completedJobs: [makeCompletedJob("sqli-boolean", false)],
+        completedJobs: [makeCompletedJob("sqli-boolean", false, [SignatureGroupId("sqli")])],
       }),
     );
 
@@ -230,8 +231,8 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
             response: { statusCode: 200, headers: {}, body: null },
           }),
           completedJobs: [
-            makeCompletedJob("cat-a-member", true),
-            makeCompletedJob("multi-cat-test", true),
+            makeCompletedJob("cat-a-member", true, [SignatureGroupId("cat-a")]),
+            makeCompletedJob("multi-cat-test", true, [SignatureGroupId("cat-a"), SignatureGroupId("cat-b")]),
           ],
         }),
       );
@@ -265,7 +266,7 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
             response: { statusCode: 200, headers: {}, body: null },
           }),
           completedJobs: [
-            makeCompletedJob("cat-a-member", true),
+            makeCompletedJob("cat-a-member", true, [SignatureGroupId("cat-a")]),
             // cat-b has no vulnerable detection
           ],
         }),

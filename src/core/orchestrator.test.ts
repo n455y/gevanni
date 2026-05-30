@@ -119,6 +119,7 @@ describe("Orchestrator", () => {
 
       const mockItem: AuditItem = {
         signatureName: SignatureId("mock-sig"),
+        categories: [],
         parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
@@ -175,6 +176,7 @@ describe("Orchestrator", () => {
 
       const mockItem: AuditItem = {
         signatureName: SignatureId("mock-sig"),
+        categories: [],
         parameter: mockTargets[0],
       };
       commandBus.register(CreateAuditItemsCommand, async () => [mockItem]);
@@ -237,6 +239,7 @@ describe("Orchestrator", () => {
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("mock-sig"),
+        categories: [],
         parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
@@ -248,6 +251,7 @@ describe("Orchestrator", () => {
       const items = new Map<string, AuditItem>();
       items.set("job-1", {
         signatureName: SignatureId("mock-sig"),
+        categories: [],
         parameter: mockTargets[0],
       });
 
@@ -309,6 +313,7 @@ describe("Orchestrator", () => {
         scanId: ScanId("test-scan-id"),
         scenarioId: ScenarioId("scenario-1"),
         signatureName: SignatureId("failing-sig"),
+        categories: [],
         parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
@@ -320,6 +325,7 @@ describe("Orchestrator", () => {
       const items = new Map<string, AuditItem>();
       items.set("job-err", {
         signatureName: SignatureId("failing-sig"),
+        categories: [],
         parameter: mockTargets[0],
       });
 
@@ -406,6 +412,7 @@ describe("Orchestrator", () => {
           scanId: ScanId("report-scan-id"),
           scenarioId: ScenarioId("sc-1"),
           signatureName: SignatureId("reflected-xss"),
+          categories: [],
           parameter: mockTargets[0],
           status: JobStatus.Completed,
           finding: mockFinding,
@@ -475,6 +482,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
+        categories: [],
         parameter: param,
         status: JobStatus.Pending,
         finding: null,
@@ -487,6 +495,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
+        categories: [],
         parameter: param,
         status: JobStatus.Pending,
         finding: null,
@@ -496,8 +505,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: param });
-      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), parameter: param });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: param });
+      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), categories: [], parameter: param });
 
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
@@ -541,6 +550,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
+        categories: [],
         parameter: param1,
         status: JobStatus.Pending,
         finding: null,
@@ -553,6 +563,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-boolean"),
+        categories: [],
         parameter: param2,
         status: JobStatus.Pending,
         finding: null,
@@ -562,8 +573,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: param1 });
-      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), parameter: param2 });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: param1 });
+      items.set("job-2", { signatureName: SignatureId("sqli-boolean"), categories: [], parameter: param2 });
 
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 
@@ -605,6 +616,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("sqli-error"),
+        categories: [],
         parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
@@ -617,6 +629,7 @@ describe("Orchestrator", () => {
         scanId,
         scenarioId,
         signatureName: SignatureId("reflected-xss"),
+          categories: [],
         parameter: mockTargets[0],
         status: JobStatus.Pending,
         finding: null,
@@ -626,8 +639,8 @@ describe("Orchestrator", () => {
       };
 
       const items = new Map<string, AuditItem>();
-      items.set("job-1", { signatureName: SignatureId("sqli-error"), parameter: mockTargets[0] });
-      items.set("job-2", { signatureName: SignatureId("reflected-xss"), parameter: mockTargets[0] });
+      items.set("job-1", { signatureName: SignatureId("sqli-error"), categories: [], parameter: mockTargets[0] });
+      items.set("job-2", { signatureName: SignatureId("reflected-xss"), categories: [], parameter: mockTargets[0] });
 
       const updateCalls: { jobId: string; updates: Partial<Job> }[] = [];
 

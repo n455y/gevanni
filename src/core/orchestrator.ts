@@ -116,6 +116,7 @@ export class Orchestrator {
             scanId: id,
             scenarioId: scenario.id,
             signatureName: item.signatureName,
+            categories: item.categories,
             parameter: item.parameter,
             status: JobStatus.Pending,
             finding: null,
@@ -386,6 +387,7 @@ export class Orchestrator {
     for (const job of pendingJobs) {
       itemMap.set(job.id, {
         signatureName: job.signatureName,
+        categories: job.categories,
         parameter: job.parameter,
       });
     }

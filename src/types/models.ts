@@ -8,6 +8,7 @@ import type {
   ErrorMessage,
   MutationType,
   SignatureId,
+  SignatureGroupId,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
 
@@ -189,6 +190,7 @@ export interface Job {
   scanId: ScanId;
   scenarioId: ScenarioId;
   signatureName: SignatureId;
+  categories: SignatureGroupId[];
   parameter: AuditParameter;
   status: JobStatus;
   finding: Finding | null;
@@ -250,6 +252,7 @@ export interface SerializedJob {
   scanId: ScanId;
   scenarioId: ScenarioId;
   signatureName: SignatureId;
+  categories: SignatureGroupId[];
   parameter: { base: string; kind: string; serialized: SerializableValue };
   status: JobStatus;
   finding: Finding | null;

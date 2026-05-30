@@ -11,12 +11,6 @@ export interface SignaturePlugin extends Plugin {
 }
 
 export abstract class SignaturePluginBase implements SignaturePlugin {
-  private static readonly _categories = new Map<SignatureId, SignatureGroupId[]>();
-
-  static resetCategories(): void {
-    SignaturePluginBase._categories.clear();
-  }
-
   abstract readonly name: SignatureId;
 
   protected get categories(): SignatureGroupId[] {
@@ -35,20 +29,18 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
       (job) => `${job.scenarioId}:${JSON.stringify(job.parameter.location)}` === paramKey,
     );
     return this.categories.every((cat) =>
-      sameParamJobs.some((job) => {
-        const jobCategories = SignaturePluginBase._categories.get(job.signatureName);
-        return jobCategories?.includes(cat) && job.finding?.vulnerable === true;
-      }),
+      sameParamJobs.some((job) =>
+        job.categories.includes(cat) && job.finding?.vulnerable === true,
+      ),
     );
   }
 
   async init(context: PluginContext): Promise<void> {
-    SignaturePluginBase._categories.set(this.name, this.categories);
-
     context.commandBus.register(CreateAuditItemsCommand, async (cmd) => {
       return this.filterParameters(cmd.parameters).map((parameter) => ({
         signatureName: this.name,
         parameter,
+        categories: this.categories,
       }));
     });
 
