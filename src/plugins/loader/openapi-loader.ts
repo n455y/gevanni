@@ -43,8 +43,13 @@ export interface OpenApiStep {
   link?: OpenApiLink;
 }
 
+export interface OpenApiSecondOrder {
+  steps: OpenApiStep[];
+}
+
 export interface OpenApiScenarioSource {
   steps: OpenApiStep[];
+  secondOrders: OpenApiSecondOrder[];
 }
 
 // --- Helpers ---
@@ -330,79 +335,69 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
   return operations;
 }
 
-// --- Chain building ---
+// --- Scenario building from x-gevanni-scenarios ---
 
-function buildChainFrom(
-  startOp: OpenApiOperation,
-  startLinkIndex: number,
+function resolveSteps(
+  operationIds: string[],
   byId: Map<string, OpenApiOperation>,
-  globalVisited: Set<string>,
-): OpenApiScenarioSource {
+): OpenApiStep[] {
   const steps: OpenApiStep[] = [];
-  const chainVisited = new Set<string>();
-  let current: OpenApiOperation | undefined = startOp;
-  let linkIndex = startLinkIndex;
-
-  while (current) {
-    const id = current.operationId ?? "";
-    if (chainVisited.has(id)) break;
-    chainVisited.add(id);
-    globalVisited.add(id);
-
-    const link: OpenApiLink | undefined = current.links?.[linkIndex];
-    steps.push({ operation: current, link });
-    current = link ? byId.get(link.targetOperationId) : undefined;
-    linkIndex = 0; // subsequent ops follow first link only
+  for (let i = 0; i < operationIds.length; i++) {
+    const op = byId.get(operationIds[i]);
+    if (!op) continue;
+    const link: OpenApiLink | undefined =
+      i < operationIds.length - 1
+        ? op.links?.find((l) => l.targetOperationId === operationIds[i + 1])
+        : undefined;
+    steps.push({ operation: op, link });
   }
-
-  return { steps };
+  return steps;
 }
 
-export function buildChains(
+export function buildScenariosFromExtension(
+  doc: unknown,
   operations: OpenApiOperation[],
 ): OpenApiScenarioSource[] {
-  const byId = new Map<string, OpenApiOperation>();
-  const targets = new Set<string>();
+  if (!isObject(doc)) return [];
+  const ext = doc["x-gevanni-scenarios"];
+  if (!Array.isArray(ext)) return [];
 
+  const byId = new Map<string, OpenApiOperation>();
   for (const op of operations) {
-    if (op.operationId) {
-      byId.set(op.operationId, op);
-    }
-    for (const link of op.links ?? []) {
-      targets.add(link.targetOperationId);
-    }
+    if (op.operationId) byId.set(op.operationId, op);
   }
 
-  const globalVisited = new Set<string>();
-  const chains: OpenApiScenarioSource[] = [];
+  const sources: OpenApiScenarioSource[] = [];
+  for (const entry of ext) {
+    if (!isObject(entry)) continue;
+    const stepIds = entry.steps;
+    if (!Array.isArray(stepIds)) continue;
 
-  // Build chains: start from non-targets, then fall back to unvisited targets
-  const startingOps = operations.filter(
-    (op) => op.operationId && !targets.has(op.operationId),
-  );
-  const allWithId = operations.filter((op) => op.operationId);
+    const steps = resolveSteps(
+      stepIds.filter((s): s is string => typeof s === "string"),
+      byId,
+    );
+    if (steps.length === 0) continue;
 
-  for (const op of [...startingOps, ...allWithId]) {
-    if (!op.operationId || globalVisited.has(op.operationId)) continue;
-
-    const linkCount = op.links?.length ?? 0;
-    if (linkCount <= 1) {
-      chains.push(buildChainFrom(op, 0, byId, globalVisited));
-    } else {
-      // Multiple links: each link produces a separate chain
-      for (let li = 0; li < linkCount; li++) {
-        chains.push(buildChainFrom(op, li, byId, globalVisited));
+    const secondOrders: OpenApiSecondOrder[] = [];
+    const so = entry.secondOrders;
+    if (Array.isArray(so)) {
+      for (const group of so) {
+        if (!isObject(group) || !Array.isArray(group.steps)) continue;
+        const soSteps = resolveSteps(
+          (group.steps as string[]).filter(
+            (s): s is string => typeof s === "string",
+          ),
+          byId,
+        );
+        if (soSteps.length > 0) secondOrders.push({ steps: soSteps });
       }
     }
+
+    sources.push({ steps, secondOrders });
   }
 
-  // Remaining operations without operationId → standalone
-  for (const op of operations) {
-    if (op.operationId) continue;
-    chains.push({ steps: [{ operation: op }] });
-  }
-
-  return chains;
+  return sources;
 }
 
 export { extractOperations, isOpenApi3 };
@@ -435,18 +430,24 @@ export async function loadOpenApiScenarios(source: unknown): Promise<Scenario[]>
   if (!isOpenApi3(parsed)) return [];
 
   const operations = extractOperations(parsed);
-  const chains = buildChains(operations);
+  const sources = buildScenariosFromExtension(parsed, operations);
 
-  return chains.map((chain) => {
-    const first = chain.steps[0].operation;
+  const ext = isObject(parsed) ? parsed["x-gevanni-scenarios"] : undefined;
+  const extEntries = Array.isArray(ext) ? ext : [];
+
+  return sources.map((source, i) => {
+    const scenarioId_value = extEntries[i]?.id;
+    const name =
+      typeof scenarioId_value === "string"
+        ? scenarioId_value
+        : source.steps[0].operation.operationId ??
+          source.steps[0].operation.summary ??
+          `${source.steps[0].operation.method} ${source.steps[0].operation.path}`;
     return {
       id: scenarioId(),
-      name:
-        first.operationId ??
-        first.summary ??
-        `${first.method} ${first.path}`,
+      name,
       type: OpenApiScenarioType,
-      source: chain,
+      source,
     };
   });
 }

@@ -220,56 +220,11 @@ export class OpenApiPlugin implements ScenarioPlugin {
     context.commandBus.register(ReplayCommand, async (cmd) => {
       const { scenario, config } = cmd;
       const source = scenario.source as OpenApiScenarioSource;
-      const steps = source.steps;
-      const overridesMap: Record<string, string> = {};
-      const bodyOverridesMap: Record<string, string> = {};
 
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        const isLast = i === steps.length - 1;
+      await executeSteps(source.steps, config);
 
-        const url = buildUrl(step.operation, overridesMap);
-        const headers = buildHeaders(
-          step.operation,
-          config.replayId,
-          overridesMap,
-        );
-        const body = buildBody(step.operation.requestBody, bodyOverridesMap);
-
-        if (isLast) {
-          headers["X-Gevanni-Exchange-Id"] = ExchangeId(randomUUID());
-          headers["X-Gevanni-Mutate"] = "true";
-        }
-
-        const { response } = await sendViaProxy(
-          step.operation.method,
-          url,
-          headers,
-          body,
-          config.proxyPort,
-        );
-
-        // Resolve overrides for next step
-        if (step.link) {
-          for (const [paramName, expr] of Object.entries(
-            step.link.parameters,
-          )) {
-            overridesMap[paramName] = resolveRuntimeExpression(
-              expr,
-              response,
-            );
-          }
-          if (step.link.requestBody) {
-            for (const [fieldName, expr] of Object.entries(
-              step.link.requestBody,
-            )) {
-              bodyOverridesMap[fieldName] = resolveRuntimeExpression(
-                expr,
-                response,
-              );
-            }
-          }
-        }
+      for (const so of source.secondOrders ?? []) {
+        await executeSteps(so.steps, config);
       }
 
       const exchanges = await commandBus.dispatch<Exchange[]>(
@@ -282,6 +237,52 @@ export class OpenApiPlugin implements ScenarioPlugin {
       }
       return exchanges;
     });
+  }
+}
+
+async function executeSteps(
+  steps: import("../loader/openapi-loader.ts").OpenApiStep[],
+  config: import("../../commands/replay.ts").ReplayConfig,
+): Promise<void> {
+  const overridesMap: Record<string, string> = {};
+  const bodyOverridesMap: Record<string, string> = {};
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    const isLast = i === steps.length - 1;
+
+    const url = buildUrl(step.operation, overridesMap);
+    const headers = buildHeaders(step.operation, config.replayId, overridesMap);
+    const body = buildBody(step.operation.requestBody, bodyOverridesMap);
+
+    if (isLast) {
+      headers["X-Gevanni-Exchange-Id"] = ExchangeId(randomUUID());
+      headers["X-Gevanni-Mutate"] = "true";
+    }
+
+    const { response } = await sendViaProxy(
+      step.operation.method,
+      url,
+      headers,
+      body,
+      config.proxyPort,
+    );
+
+    if (step.link) {
+      for (const [paramName, expr] of Object.entries(step.link.parameters)) {
+        overridesMap[paramName] = resolveRuntimeExpression(expr, response);
+      }
+      if (step.link.requestBody) {
+        for (const [fieldName, expr] of Object.entries(
+          step.link.requestBody,
+        )) {
+          bodyOverridesMap[fieldName] = resolveRuntimeExpression(
+            expr,
+            response,
+          );
+        }
+      }
+    }
   }
 }
 

@@ -6,7 +6,7 @@ import type { OpenApiOperation, OpenApiScenarioSource } from "./openapi-loader.t
 import {
   loadOpenApiScenarios,
   OpenApiScenarioType,
-  buildChains,
+  buildScenariosFromExtension,
   defaultValueForSchema,
   isOpenApi3,
 } from "./openapi-loader.ts";
@@ -81,6 +81,7 @@ describe("OpenApiLoader", () => {
           },
           "/users/{id}": {
             get: {
+              operationId: "getUserById",
               summary: "Get user by ID",
               parameters: [
                 {
@@ -93,6 +94,11 @@ describe("OpenApiLoader", () => {
             },
           },
         },
+        "x-gevanni-scenarios": [
+          { id: "listUsers", steps: ["listUsers"] },
+          { id: "createUser", steps: ["createUser"] },
+          { id: "getUserById", steps: ["getUserById"] },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -144,6 +150,10 @@ paths:
           in: query
           schema:
             type: string
+x-gevanni-scenarios:
+  - id: listPets
+    steps:
+      - listPets
       `;
       const f = writeTmpFile(yamlContent, ".yaml");
       const result = await loader.load(f);
@@ -164,6 +174,7 @@ paths:
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
         paths: { "/health": { get: { operationId: "health" } } },
+        "x-gevanni-scenarios": [{ id: "health", steps: ["health"] }],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -196,6 +207,7 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [{ id: "listItems", steps: ["listItems"] }],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -234,6 +246,7 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [{ id: "getItem", steps: ["getItem"] }],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -246,8 +259,26 @@ paths:
     });
   });
 
-  describe("links", () => {
-    it("extracts links from responses", async () => {
+  describe("x-gevanni-scenarios", () => {
+    it("returns empty when no x-gevanni-scenarios extension", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/users": {
+            get: { operationId: "listUsers" },
+          },
+        },
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("parses x-gevanni-scenarios with steps", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
@@ -276,15 +307,20 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          {
+            id: "userFlow",
+            steps: ["createUser", "getUser"],
+          },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
       const result = await loader.load(f);
       cleanup(f);
 
-      // createUser → getUser chain = 1 scenario
       expect(result).toHaveLength(1);
-      expect(result[0].name).toBe("createUser");
+      expect(result[0].name).toBe("userFlow");
 
       const src = result[0].source as OpenApiScenarioSource;
       expect(src.steps).toHaveLength(2);
@@ -295,149 +331,10 @@ paths:
       });
       expect(src.steps[1].operation.operationId).toBe("getUser");
       expect(src.steps[1].link).toBeUndefined();
+      expect(src.secondOrders).toEqual([]);
     });
 
-    it("keeps standalone operations separate from chained ones", async () => {
-      const spec = {
-        openapi: "3.0.0",
-        info: { title: "Test", version: "1.0.0" },
-        paths: {
-          "/users": {
-            post: {
-              operationId: "createUser",
-              responses: {
-                "201": {
-                  links: {
-                    GetUser: {
-                      operationId: "getUser",
-                      parameters: { id: "$response.body#/id" },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          "/users/{id}": {
-            get: {
-              operationId: "getUser",
-              parameters: [
-                { name: "id", in: "path", schema: { type: "string" } },
-              ],
-            },
-          },
-          "/health": {
-            get: {
-              operationId: "healthCheck",
-            },
-          },
-        },
-      };
-
-      const f = writeTmpFile(JSON.stringify(spec));
-      const result = await loader.load(f);
-      cleanup(f);
-
-      // createUser→getUser chain + standalone healthCheck
-      expect(result).toHaveLength(2);
-      expect(result[0].name).toBe("createUser");
-      expect(result[1].name).toBe("healthCheck");
-
-      const chainSrc = result[0].source as OpenApiScenarioSource;
-      expect(chainSrc.steps).toHaveLength(2);
-
-      const standaloneSrc = result[1].source as OpenApiScenarioSource;
-      expect(standaloneSrc.steps).toHaveLength(1);
-    });
-
-    it("skips operationRef-only links", async () => {
-      const spec = {
-        openapi: "3.0.0",
-        info: { title: "Test", version: "1.0.0" },
-        paths: {
-          "/items": {
-            post: {
-              operationId: "createItem",
-              responses: {
-                "201": {
-                  links: {
-                    GetItem: {
-                      operationRef: "#/paths/~1items~1{id}/get",
-                      parameters: { id: "$response.body#/id" },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          "/items/{id}": {
-            get: {
-              operationId: "getItem",
-              parameters: [
-                { name: "id", in: "path", schema: { type: "string" } },
-              ],
-            },
-          },
-        },
-      };
-
-      const f = writeTmpFile(JSON.stringify(spec));
-      const result = await loader.load(f);
-      cleanup(f);
-
-      // No chain built since link uses operationRef, both ops are standalone
-      expect(result).toHaveLength(2);
-    });
-
-    it("extracts requestBody from links", async () => {
-      const spec = {
-        openapi: "3.0.0",
-        info: { title: "Test", version: "1.0.0" },
-        paths: {
-          "/uuid": {
-            get: {
-              operationId: "getUuid",
-              responses: {
-                "200": {
-                  links: {
-                    UseUuid: {
-                      operationId: "postUuid",
-                      requestBody: { uuid: "$response.body#/uuid" },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          "/anything": {
-            post: {
-              operationId: "postUuid",
-              requestBody: {
-                content: {
-                  "application/json": {
-                    schema: { type: "object", properties: { uuid: { type: "string" } } },
-                  },
-                },
-              },
-            },
-          },
-        },
-      };
-
-      const f = writeTmpFile(JSON.stringify(spec));
-      const result = await loader.load(f);
-      cleanup(f);
-
-      expect(result).toHaveLength(1);
-      const src = result[0].source as OpenApiScenarioSource;
-      expect(src.steps).toHaveLength(2);
-      expect(src.steps[0].link).toEqual({
-        targetOperationId: "postUuid",
-        parameters: {},
-        requestBody: { uuid: "$response.body#/uuid" },
-      });
-    });
-
-    it("builds separate chains for each link from a single operation", async () => {
+    it("parses x-gevanni-scenarios with secondOrders", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
@@ -482,28 +379,93 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          {
+            id: "uuidFlow",
+            steps: ["getUuid", "useUuidInBody"],
+            secondOrders: [
+              { steps: ["getUuid", "useUuidAsQuery"] },
+              { steps: ["getUuid", "useUuidInBody"] },
+            ],
+          },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
       const result = await loader.load(f);
       cleanup(f);
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("uuidFlow");
 
-      const src0 = result[0].source as OpenApiScenarioSource;
-      expect(src0.steps).toHaveLength(2);
-      expect(src0.steps[0].operation.operationId).toBe("getUuid");
-      expect(src0.steps[0].link?.targetOperationId).toBe("useUuidAsQuery");
-      expect(src0.steps[1].operation.operationId).toBe("useUuidAsQuery");
-
-      const src1 = result[1].source as OpenApiScenarioSource;
-      expect(src1.steps).toHaveLength(2);
-      expect(src1.steps[0].operation.operationId).toBe("getUuid");
-      expect(src1.steps[0].link?.targetOperationId).toBe("useUuidInBody");
-      expect(src1.steps[0].link?.requestBody).toEqual({
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps).toHaveLength(2);
+      expect(src.steps[0].operation.operationId).toBe("getUuid");
+      expect(src.steps[0].link?.targetOperationId).toBe("useUuidInBody");
+      expect(src.steps[0].link?.requestBody).toEqual({
         uuid: "$response.body#/uuid",
       });
-      expect(src1.steps[1].operation.operationId).toBe("useUuidInBody");
+
+      expect(src.secondOrders).toHaveLength(2);
+      expect(src.secondOrders[0].steps).toHaveLength(2);
+      expect(src.secondOrders[0].steps[0].operation.operationId).toBe("getUuid");
+      expect(src.secondOrders[0].steps[0].link?.targetOperationId).toBe("useUuidAsQuery");
+      expect(src.secondOrders[0].steps[1].operation.operationId).toBe("useUuidAsQuery");
+
+      expect(src.secondOrders[1].steps).toHaveLength(2);
+      expect(src.secondOrders[1].steps[0].operation.operationId).toBe("getUuid");
+      expect(src.secondOrders[1].steps[0].link?.targetOperationId).toBe("useUuidInBody");
+    });
+
+    it("skips unknown operationIds in steps", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/health": {
+            get: { operationId: "healthCheck" },
+          },
+        },
+        "x-gevanni-scenarios": [
+          {
+            id: "goodFlow",
+            steps: ["healthCheck"],
+          },
+          {
+            id: "badFlow",
+            steps: ["nonExistent"],
+          },
+        ],
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("goodFlow");
+    });
+
+    it("uses operationId as name when scenario id is missing", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/health": {
+            get: { operationId: "healthCheck" },
+          },
+        },
+        "x-gevanni-scenarios": [
+          { steps: ["healthCheck"] },
+        ],
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("healthCheck");
     });
   });
 
@@ -544,6 +506,10 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          { id: "createPet_cat", steps: ["createPet_variant1"] },
+          { id: "createPet_dog", steps: ["createPet_variant2"] },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -551,8 +517,8 @@ paths:
       cleanup(f);
 
       expect(result).toHaveLength(2);
-      expect(result[0].name).toBe("createPet_variant1");
-      expect(result[1].name).toBe("createPet_variant2");
+      expect(result[0].name).toBe("createPet_cat");
+      expect(result[1].name).toBe("createPet_dog");
 
       const src0 = result[0].source as OpenApiScenarioSource;
       expect(src0.steps[0].operation.requestBody?.schema).toMatchObject({
@@ -600,6 +566,10 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          { id: "notify_email", steps: ["sendNotification_variant1"] },
+          { id: "notify_phone", steps: ["sendNotification_variant2"] },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -607,8 +577,8 @@ paths:
       cleanup(f);
 
       expect(result).toHaveLength(2);
-      expect(result[0].name).toBe("sendNotification_variant1");
-      expect(result[1].name).toBe("sendNotification_variant2");
+      expect(result[0].name).toBe("notify_email");
+      expect(result[1].name).toBe("notify_phone");
     });
 
     it("resolves allOf within request body schema", async () => {
@@ -640,6 +610,9 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          { id: "createUser", steps: ["createUser"] },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -680,15 +653,18 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          { id: "variant1", steps: ["POST /items_variant1"] },
+          { id: "variant2", steps: ["POST /items_variant2"] },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
       const result = await loader.load(f);
       cleanup(f);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].name).toBe("Create item (variant 1)");
-      expect(result[1].name).toBe("Create item (variant 2)");
+      // No operationId means the variant suffix doesn't match
+      expect(result).toHaveLength(0);
     });
 
     it("preserves non-oneOf operations alongside expanded ones", async () => {
@@ -719,6 +695,11 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          { id: "createItem_v1", steps: ["createItem_variant1"] },
+          { id: "createItem_v2", steps: ["createItem_variant2"] },
+          { id: "healthCheck", steps: ["healthCheck"] },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -727,8 +708,8 @@ paths:
 
       expect(result).toHaveLength(3);
       const names = result.map((s) => s.name);
-      expect(names).toContain("createItem_variant1");
-      expect(names).toContain("createItem_variant2");
+      expect(names).toContain("createItem_v1");
+      expect(names).toContain("createItem_v2");
       expect(names).toContain("healthCheck");
     });
   });
@@ -758,6 +739,7 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [{ id: "getItem", steps: ["getItem"] }],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -806,6 +788,7 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [{ id: "createUser", steps: ["createUser"] }],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -848,6 +831,7 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [{ id: "createItem", steps: ["createItem"] }],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -903,6 +887,10 @@ paths:
             },
           },
         },
+        "x-gevanni-scenarios": [
+          { id: "createPet_cat", steps: ["createPet_variant1"] },
+          { id: "createPet_dog", steps: ["createPet_variant2"] },
+        ],
       };
 
       const f = writeTmpFile(JSON.stringify(spec));
@@ -910,8 +898,8 @@ paths:
       cleanup(f);
 
       expect(result).toHaveLength(2);
-      expect(result[0].name).toBe("createPet_variant1");
-      expect(result[1].name).toBe("createPet_variant2");
+      expect(result[0].name).toBe("createPet_cat");
+      expect(result[1].name).toBe("createPet_dog");
 
       const src0 = result[0].source as OpenApiScenarioSource;
       expect(src0.steps[0].operation.requestBody?.schema).toMatchObject({
@@ -924,8 +912,8 @@ paths:
   });
 });
 
-describe("buildChains", () => {
-  it("creates single-step chains for standalone operations", () => {
+describe("buildScenariosFromExtension", () => {
+  it("returns empty for doc without x-gevanni-scenarios", () => {
     const ops: OpenApiOperation[] = [
       {
         baseUrl: "http://localhost",
@@ -933,6 +921,22 @@ describe("buildChains", () => {
         path: "/a",
         operationId: "opA",
         parameters: [],
+      },
+    ];
+
+    const sources = buildScenariosFromExtension({}, ops);
+    expect(sources).toHaveLength(0);
+  });
+
+  it("builds scenario source from x-gevanni-scenarios", () => {
+    const ops: OpenApiOperation[] = [
+      {
+        baseUrl: "http://localhost",
+        method: "GET",
+        path: "/a",
+        operationId: "opA",
+        parameters: [],
+        links: [{ targetOperationId: "opB", parameters: { id: "$response.body#/id" } }],
       },
       {
         baseUrl: "http://localhost",
@@ -943,38 +947,23 @@ describe("buildChains", () => {
       },
     ];
 
-    const chains = buildChains(ops);
-    expect(chains).toHaveLength(2);
-    expect(chains[0].steps).toHaveLength(1);
-    expect(chains[1].steps).toHaveLength(1);
+    const doc = {
+      "x-gevanni-scenarios": [
+        { id: "chain1", steps: ["opA", "opB"] },
+      ],
+    };
+
+    const sources = buildScenariosFromExtension(doc, ops);
+    expect(sources).toHaveLength(1);
+    expect(sources[0].steps).toHaveLength(2);
+    expect(sources[0].steps[0].operation.operationId).toBe("opA");
+    expect(sources[0].steps[0].link?.targetOperationId).toBe("opB");
+    expect(sources[0].steps[1].operation.operationId).toBe("opB");
+    expect(sources[0].steps[1].link).toBeUndefined();
+    expect(sources[0].secondOrders).toEqual([]);
   });
 
-  it("detects cycles and stops", () => {
-    const ops: OpenApiOperation[] = [
-      {
-        baseUrl: "http://localhost",
-        method: "GET",
-        path: "/a",
-        operationId: "opA",
-        parameters: [],
-        links: [{ targetOperationId: "opB", parameters: {} }],
-      },
-      {
-        baseUrl: "http://localhost",
-        method: "GET",
-        path: "/b",
-        operationId: "opB",
-        parameters: [],
-        links: [{ targetOperationId: "opA", parameters: {} }],
-      },
-    ];
-
-    const chains = buildChains(ops);
-    expect(chains).toHaveLength(1);
-    expect(chains[0].steps).toHaveLength(2);
-  });
-
-  it("creates separate chains for each link from one operation", () => {
+  it("builds scenario with secondOrders", () => {
     const ops: OpenApiOperation[] = [
       {
         baseUrl: "http://localhost",
@@ -1003,19 +992,32 @@ describe("buildChains", () => {
       },
     ];
 
-    const chains = buildChains(ops);
-    expect(chains).toHaveLength(2);
+    const doc = {
+      "x-gevanni-scenarios": [
+        {
+          id: "mainFlow",
+          steps: ["root", "branchA"],
+          secondOrders: [
+            { steps: ["root", "branchB"] },
+          ],
+        },
+      ],
+    };
 
-    expect(chains[0].steps[0].operation.operationId).toBe("root");
-    expect(chains[0].steps[0].link?.targetOperationId).toBe("branchA");
-    expect(chains[0].steps[1].operation.operationId).toBe("branchA");
+    const sources = buildScenariosFromExtension(doc, ops);
+    expect(sources).toHaveLength(1);
 
-    expect(chains[1].steps[0].operation.operationId).toBe("root");
-    expect(chains[1].steps[0].link?.targetOperationId).toBe("branchB");
-    expect(chains[1].steps[0].link?.requestBody).toEqual({
+    expect(sources[0].steps[0].operation.operationId).toBe("root");
+    expect(sources[0].steps[0].link?.targetOperationId).toBe("branchA");
+    expect(sources[0].steps[1].operation.operationId).toBe("branchA");
+
+    expect(sources[0].secondOrders).toHaveLength(1);
+    expect(sources[0].secondOrders[0].steps[0].operation.operationId).toBe("root");
+    expect(sources[0].secondOrders[0].steps[0].link?.targetOperationId).toBe("branchB");
+    expect(sources[0].secondOrders[0].steps[0].link?.requestBody).toEqual({
       token: "$response.body#/token",
     });
-    expect(chains[1].steps[1].operation.operationId).toBe("branchB");
+    expect(sources[0].secondOrders[0].steps[1].operation.operationId).toBe("branchB");
   });
 });
 
