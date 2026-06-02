@@ -41,6 +41,8 @@ export interface OpenApiOperation {
 export interface OpenApiStep {
   operation: OpenApiOperation;
   link?: OpenApiLink;
+  secondOrders?: OpenApiSecondOrder[];
+  scannable: boolean;
 }
 
 export interface OpenApiSecondOrder {
@@ -49,7 +51,6 @@ export interface OpenApiSecondOrder {
 
 export interface OpenApiScenarioSource {
   steps: OpenApiStep[];
-  secondOrders: OpenApiSecondOrder[];
 }
 
 // --- Helpers ---
@@ -337,19 +338,102 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
 
 // --- Scenario building from x-gevanni-scenarios ---
 
-function resolveSteps(
-  operationIds: string[],
+interface StepDef {
+  ref: string;
+  secondOrders?: { steps: string[] }[];
+  scannable?: boolean;
+}
+
+function parseStepDefs(raw: unknown): StepDef[] {
+  if (!Array.isArray(raw)) return [];
+  const defs: StepDef[] = [];
+  for (const entry of raw) {
+    if (typeof entry === "string") {
+      defs.push({ ref: entry });
+    } else if (isObject(entry)) {
+      const ref = entry.id ?? entry.operationId;
+      if (typeof ref !== "string") continue;
+      const secondOrders: { steps: string[] }[] = [];
+      if (Array.isArray(entry.secondOrders)) {
+        for (const so of entry.secondOrders) {
+          if (isObject(so) && Array.isArray(so.steps)) {
+            secondOrders.push({
+              steps: so.steps.filter((s): s is string => typeof s === "string"),
+            });
+          }
+        }
+      }
+      defs.push({
+        ref,
+        secondOrders: secondOrders.length > 0 ? secondOrders : undefined,
+        scannable: typeof entry.scannable === "boolean" ? entry.scannable : undefined,
+      });
+    }
+  }
+  return defs;
+}
+
+function expandStepDefs(
+  defs: StepDef[],
+  scenarioDefs: Map<string, StepDef[]>,
+  byId: Map<string, OpenApiOperation>,
+  depth = 0,
+): StepDef[] {
+  if (depth > 10) return defs;
+  const expanded: StepDef[] = [];
+  for (const def of defs) {
+    if (!byId.has(def.ref) && scenarioDefs.has(def.ref)) {
+      if (def.secondOrders) {
+        throw new Error(
+          `secondOrders cannot be attached to scenario reference "${def.ref}". Attach secondOrders to an operationId step instead.`,
+        );
+      }
+      const inner = expandStepDefs(
+        scenarioDefs.get(def.ref)!,
+        scenarioDefs,
+        byId,
+        depth + 1,
+      );
+      expanded.push(...inner);
+    } else {
+      expanded.push(def);
+    }
+  }
+  return expanded;
+}
+
+function resolveStepDefs(
+  defs: StepDef[],
+  scenarioDefs: Map<string, StepDef[]>,
   byId: Map<string, OpenApiOperation>,
 ): OpenApiStep[] {
   const steps: OpenApiStep[] = [];
-  for (let i = 0; i < operationIds.length; i++) {
-    const op = byId.get(operationIds[i]);
+  for (let i = 0; i < defs.length; i++) {
+    const op = byId.get(defs[i].ref);
     if (!op) continue;
     const link: OpenApiLink | undefined =
-      i < operationIds.length - 1
-        ? op.links?.find((l) => l.targetOperationId === operationIds[i + 1])
+      i < defs.length - 1
+        ? op.links?.find((l) => l.targetOperationId === defs[i + 1].ref)
         : undefined;
-    steps.push({ operation: op, link });
+    const secondOrders: OpenApiSecondOrder[] = [];
+    const soRaw = defs[i].secondOrders;
+    if (soRaw) {
+      for (const soDef of soRaw) {
+        const expanded = expandStepDefs(
+          soDef.steps.map((s) => ({ ref: s })),
+          scenarioDefs,
+          byId,
+        );
+        const soSteps = resolveStepDefs(expanded, scenarioDefs, byId);
+        if (soSteps.length > 0) secondOrders.push({ steps: soSteps });
+      }
+    }
+    steps.push({
+      operation: op,
+      link,
+      secondOrders: secondOrders.length > 0 ? secondOrders : undefined,
+      scannable: defs[i].scannable ?? true,
+    });
   }
   return steps;
 }
@@ -367,34 +451,27 @@ export function buildScenariosFromExtension(
     if (op.operationId) byId.set(op.operationId, op);
   }
 
+  const scenarioDefs = new Map<string, StepDef[]>();
+  for (const entry of ext) {
+    if (!isObject(entry)) continue;
+    const id = entry.id;
+    if (typeof id !== "string") continue;
+    const defs = parseStepDefs(entry.steps);
+    if (defs.length > 0) scenarioDefs.set(id, defs);
+  }
+
   const sources: OpenApiScenarioSource[] = [];
   for (const entry of ext) {
     if (!isObject(entry)) continue;
-    const stepIds = entry.steps;
-    if (!Array.isArray(stepIds)) continue;
+    const defs = parseStepDefs(entry.steps);
+    if (defs.length === 0) continue;
 
-    const steps = resolveSteps(
-      stepIds.filter((s): s is string => typeof s === "string"),
-      byId,
-    );
+    const expanded = expandStepDefs(defs, scenarioDefs, byId);
+    const steps = resolveStepDefs(expanded, scenarioDefs, byId);
     if (steps.length === 0) continue;
+    if (!steps[steps.length - 1].scannable) continue;
 
-    const secondOrders: OpenApiSecondOrder[] = [];
-    const so = entry.secondOrders;
-    if (Array.isArray(so)) {
-      for (const group of so) {
-        if (!isObject(group) || !Array.isArray(group.steps)) continue;
-        const soSteps = resolveSteps(
-          (group.steps as string[]).filter(
-            (s): s is string => typeof s === "string",
-          ),
-          byId,
-        );
-        if (soSteps.length > 0) secondOrders.push({ steps: soSteps });
-      }
-    }
-
-    sources.push({ steps, secondOrders });
+    sources.push({ steps });
   }
 
   return sources;

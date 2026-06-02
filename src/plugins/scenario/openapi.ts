@@ -223,7 +223,8 @@ export class OpenApiPlugin implements ScenarioPlugin {
 
       await executeSteps(source.steps, config);
 
-      for (const so of source.secondOrders ?? []) {
+      const lastStep = source.steps[source.steps.length - 1];
+      for (const so of lastStep?.secondOrders ?? []) {
         await executeSteps(so.steps, config);
       }
 
