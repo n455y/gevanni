@@ -41,8 +41,6 @@ export interface OpenApiOperation {
 export interface OpenApiStep {
   operation: OpenApiOperation;
   link?: OpenApiLink;
-  secondOrders?: OpenApiSecondOrder[];
-  scannable: boolean;
 }
 
 export interface OpenApiSecondOrder {
@@ -51,6 +49,8 @@ export interface OpenApiSecondOrder {
 
 export interface OpenApiScenarioSource {
   steps: OpenApiStep[];
+  scannable: boolean;
+  secondOrders?: OpenApiSecondOrder[];
 }
 
 // --- Helpers ---
@@ -340,8 +340,6 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
 
 interface StepDef {
   ref: string;
-  secondOrders?: { steps: string[] }[];
-  scannable?: boolean;
 }
 
 function parseStepDefs(raw: unknown): StepDef[] {
@@ -353,21 +351,7 @@ function parseStepDefs(raw: unknown): StepDef[] {
     } else if (isObject(entry)) {
       const ref = entry.id ?? entry.operationId;
       if (typeof ref !== "string") continue;
-      const secondOrders: { steps: string[] }[] = [];
-      if (Array.isArray(entry.secondOrders)) {
-        for (const so of entry.secondOrders) {
-          if (isObject(so) && Array.isArray(so.steps)) {
-            secondOrders.push({
-              steps: so.steps.filter((s): s is string => typeof s === "string"),
-            });
-          }
-        }
-      }
-      defs.push({
-        ref,
-        secondOrders: secondOrders.length > 0 ? secondOrders : undefined,
-        scannable: typeof entry.scannable === "boolean" ? entry.scannable : undefined,
-      });
+      defs.push({ ref });
     }
   }
   return defs;
@@ -383,11 +367,6 @@ function expandStepDefs(
   const expanded: StepDef[] = [];
   for (const def of defs) {
     if (!byId.has(def.ref) && scenarioDefs.has(def.ref)) {
-      if (def.secondOrders) {
-        throw new Error(
-          `secondOrders cannot be attached to scenario reference "${def.ref}". Attach secondOrders to an operationId step instead.`,
-        );
-      }
       const inner = expandStepDefs(
         scenarioDefs.get(def.ref)!,
         scenarioDefs,
@@ -404,7 +383,6 @@ function expandStepDefs(
 
 function resolveStepDefs(
   defs: StepDef[],
-  scenarioDefs: Map<string, StepDef[]>,
   byId: Map<string, OpenApiOperation>,
 ): OpenApiStep[] {
   const steps: OpenApiStep[] = [];
@@ -415,24 +393,9 @@ function resolveStepDefs(
       i < defs.length - 1
         ? op.links?.find((l) => l.targetOperationId === defs[i + 1].ref)
         : undefined;
-    const secondOrders: OpenApiSecondOrder[] = [];
-    const soRaw = defs[i].secondOrders;
-    if (soRaw) {
-      for (const soDef of soRaw) {
-        const expanded = expandStepDefs(
-          soDef.steps.map((s) => ({ ref: s })),
-          scenarioDefs,
-          byId,
-        );
-        const soSteps = resolveStepDefs(expanded, scenarioDefs, byId);
-        if (soSteps.length > 0) secondOrders.push({ steps: soSteps });
-      }
-    }
     steps.push({
       operation: op,
       link,
-      secondOrders: secondOrders.length > 0 ? secondOrders : undefined,
-      scannable: defs[i].scannable ?? true,
     });
   }
   return steps;
@@ -467,11 +430,30 @@ export function buildScenariosFromExtension(
     if (defs.length === 0) continue;
 
     const expanded = expandStepDefs(defs, scenarioDefs, byId);
-    const steps = resolveStepDefs(expanded, scenarioDefs, byId);
+    const steps = resolveStepDefs(expanded, byId);
     if (steps.length === 0) continue;
-    if (!steps[steps.length - 1].scannable) continue;
 
-    sources.push({ steps });
+    const scannable = typeof entry.scannable === "boolean" ? entry.scannable : true;
+    if (!scannable) continue;
+
+    const secondOrders: OpenApiSecondOrder[] = [];
+    if (Array.isArray(entry.secondOrders)) {
+      for (const so of entry.secondOrders) {
+        if (!isObject(so) || !Array.isArray(so.steps)) continue;
+        const soDefs = so.steps
+          .filter((s): s is string => typeof s === "string")
+          .map((s) => ({ ref: s }));
+        const soExpanded = expandStepDefs(soDefs, scenarioDefs, byId);
+        const soSteps = resolveStepDefs(soExpanded, byId);
+        if (soSteps.length > 0) secondOrders.push({ steps: soSteps });
+      }
+    }
+
+    sources.push({
+      steps,
+      scannable,
+      secondOrders: secondOrders.length > 0 ? secondOrders : undefined,
+    });
   }
 
   return sources;

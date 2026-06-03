@@ -331,10 +331,10 @@ x-gevanni-scenarios:
       });
       expect(src.steps[1].operation.operationId).toBe("getUser");
       expect(src.steps[1].link).toBeUndefined();
-      expect(src.steps[1].secondOrders).toBeUndefined();
+      expect(src.secondOrders).toBeUndefined();
     });
 
-    it("parses x-gevanni-scenarios with step-level secondOrders", async () => {
+    it("parses x-gevanni-scenarios with scenario-level secondOrders", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
@@ -382,15 +382,10 @@ x-gevanni-scenarios:
         "x-gevanni-scenarios": [
           {
             id: "uuidFlow",
-            steps: [
-              "getUuid",
-              {
-                id: "useUuidInBody",
-                secondOrders: [
-                  { steps: ["getUuid", "useUuidAsQuery"] },
-                  { steps: ["getUuid", "useUuidInBody"] },
-                ],
-              },
+            steps: ["getUuid", "useUuidInBody"],
+            secondOrders: [
+              { steps: ["getUuid", "useUuidAsQuery"] },
+              { steps: ["getUuid", "useUuidInBody"] },
             ],
           },
         ],
@@ -411,17 +406,16 @@ x-gevanni-scenarios:
         uuid: "$response.body#/uuid",
       });
 
-      const lastStep = src.steps[1];
-      expect(lastStep.operation.operationId).toBe("useUuidInBody");
-      expect(lastStep.secondOrders).toHaveLength(2);
-      expect(lastStep.secondOrders![0].steps).toHaveLength(2);
-      expect(lastStep.secondOrders![0].steps[0].operation.operationId).toBe("getUuid");
-      expect(lastStep.secondOrders![0].steps[0].link?.targetOperationId).toBe("useUuidAsQuery");
-      expect(lastStep.secondOrders![0].steps[1].operation.operationId).toBe("useUuidAsQuery");
+      expect(src.steps[1].operation.operationId).toBe("useUuidInBody");
+      expect(src.secondOrders).toHaveLength(2);
+      expect(src.secondOrders![0].steps).toHaveLength(2);
+      expect(src.secondOrders![0].steps[0].operation.operationId).toBe("getUuid");
+      expect(src.secondOrders![0].steps[0].link?.targetOperationId).toBe("useUuidAsQuery");
+      expect(src.secondOrders![0].steps[1].operation.operationId).toBe("useUuidAsQuery");
 
-      expect(lastStep.secondOrders![1].steps).toHaveLength(2);
-      expect(lastStep.secondOrders![1].steps[0].operation.operationId).toBe("getUuid");
-      expect(lastStep.secondOrders![1].steps[0].link?.targetOperationId).toBe("useUuidInBody");
+      expect(src.secondOrders![1].steps).toHaveLength(2);
+      expect(src.secondOrders![1].steps[0].operation.operationId).toBe("getUuid");
+      expect(src.secondOrders![1].steps[0].link?.targetOperationId).toBe("useUuidInBody");
     });
 
     it("skips unknown operationIds in steps", async () => {
@@ -967,7 +961,7 @@ describe("buildScenariosFromExtension", () => {
     expect(sources[0].steps[0].link?.targetOperationId).toBe("opB");
     expect(sources[0].steps[1].operation.operationId).toBe("opB");
     expect(sources[0].steps[1].link).toBeUndefined();
-    expect(sources[0].steps[1].secondOrders).toBeUndefined();
+    expect(sources[0].secondOrders).toBeUndefined();
   });
 
   it("expands scenario id references in steps", () => {
@@ -1103,45 +1097,7 @@ describe("buildScenariosFromExtension", () => {
     expect(sources[1].steps[1].operation.operationId).toBe("next");
   });
 
-  it("throws when secondOrders is attached to a scenario reference", () => {
-    const ops: OpenApiOperation[] = [
-      {
-        baseUrl: "http://localhost",
-        method: "GET",
-        path: "/a",
-        operationId: "opA",
-        parameters: [],
-      },
-      {
-        baseUrl: "http://localhost",
-        method: "POST",
-        path: "/b",
-        operationId: "opB",
-        parameters: [],
-      },
-    ];
-
-    const doc = {
-      "x-gevanni-scenarios": [
-        { id: "partA", steps: ["opA"] },
-        {
-          id: "badFlow",
-          steps: [
-            {
-              id: "partA",
-              secondOrders: [{ steps: ["opA", "opB"] }],
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(() => buildScenariosFromExtension(doc, ops)).toThrow(
-      'secondOrders cannot be attached to scenario reference "partA"',
-    );
-  });
-
-  it("expands scenario id references in step-level secondOrders", () => {
+  it("resolves scenario-level secondOrders with scenario id references", () => {
     const ops: OpenApiOperation[] = [
       {
         baseUrl: "http://localhost",
@@ -1175,13 +1131,8 @@ describe("buildScenariosFromExtension", () => {
         { id: "rootPart", steps: ["root"] },
         {
           id: "mainFlow",
-          steps: [
-            "rootPart",
-            {
-              id: "branchA",
-              secondOrders: [{ steps: ["rootPart", "branchB"] }],
-            },
-          ],
+          steps: ["rootPart", "branchA"],
+          secondOrders: [{ steps: ["rootPart", "branchB"] }],
         },
       ],
     };
@@ -1189,9 +1140,13 @@ describe("buildScenariosFromExtension", () => {
     const sources = buildScenariosFromExtension(doc, ops);
     expect(sources).toHaveLength(2);
 
-    // mainFlow's last step has secondOrders, rootPart expanded
-    const lastStep = sources[1].steps[1];
-    const so = lastStep.secondOrders;
+    // mainFlow has scenario-level secondOrders, rootPart expanded
+    const src = sources[1];
+    expect(src.steps).toHaveLength(2);
+    expect(src.steps[0].operation.operationId).toBe("root");
+    expect(src.steps[1].operation.operationId).toBe("branchA");
+
+    const so = src.secondOrders;
     expect(so).toHaveLength(1);
     expect(so![0].steps).toHaveLength(2);
     expect(so![0].steps[0].operation.operationId).toBe("root");
@@ -1199,7 +1154,7 @@ describe("buildScenariosFromExtension", () => {
     expect(so![0].steps[1].operation.operationId).toBe("branchB");
   });
 
-  it("builds scenario with step-level secondOrders", () => {
+  it("builds scenario with scenario-level secondOrders", () => {
     const ops: OpenApiOperation[] = [
       {
         baseUrl: "http://localhost",
@@ -1232,14 +1187,9 @@ describe("buildScenariosFromExtension", () => {
       "x-gevanni-scenarios": [
         {
           id: "mainFlow",
-          steps: [
-            "root",
-            {
-              id: "branchA",
-              secondOrders: [
-                { steps: ["root", "branchB"] },
-              ],
-            },
+          steps: ["root", "branchA"],
+          secondOrders: [
+            { steps: ["root", "branchB"] },
           ],
         },
       ],
@@ -1252,15 +1202,16 @@ describe("buildScenariosFromExtension", () => {
     expect(sources[0].steps[0].link?.targetOperationId).toBe("branchA");
     expect(sources[0].steps[1].operation.operationId).toBe("branchA");
 
-    const lastStep = sources[0].steps[1];
-    expect(lastStep.secondOrders).toHaveLength(1);
-    expect(lastStep.secondOrders![0].steps[0].operation.operationId).toBe("root");
-    expect(lastStep.secondOrders![0].steps[0].link?.targetOperationId).toBe("branchB");
-    expect(lastStep.secondOrders![0].steps[0].link?.requestBody).toEqual({
+    const so = sources[0].secondOrders;
+    expect(so).toHaveLength(1);
+    expect(so![0].steps[0].operation.operationId).toBe("root");
+    expect(so![0].steps[0].link?.targetOperationId).toBe("branchB");
+    expect(so![0].steps[0].link?.requestBody).toEqual({
       token: "$response.body#/token",
     });
-    expect(lastStep.secondOrders![0].steps[1].operation.operationId).toBe("branchB");
+    expect(so![0].steps[1].operation.operationId).toBe("branchB");
   });
+
 });
 
 describe("defaultValueForSchema", () => {
@@ -1394,16 +1345,16 @@ describe("scannable", () => {
     cleanup(f);
 
     const src = result[0].source as OpenApiScenarioSource;
-    expect(src.steps[0].scannable).toBe(true);
+    expect(src.scannable).toBe(true);
   });
 
-  it("sets scannable to false on a step", async () => {
+  it("excludes scenario when scannable is false", async () => {
     const spec = {
       openapi: "3.0.0",
       info: { title: "Test", version: "1.0.0" },
       paths: { "/a": { get: { operationId: "opA" } } },
       "x-gevanni-scenarios": [
-        { id: "s1", steps: [{ id: "opA", scannable: false }] },
+        { id: "s1", steps: ["opA"], scannable: false },
       ],
     };
 
@@ -1412,31 +1363,5 @@ describe("scannable", () => {
     cleanup(f);
 
     expect(result).toHaveLength(0);
-  });
-
-  it("includes scenario when non-last step has scannable false", async () => {
-    const spec = {
-      openapi: "3.0.0",
-      info: { title: "Test", version: "1.0.0" },
-      paths: {
-        "/a": { get: { operationId: "opA" } },
-        "/b": { post: { operationId: "opB" } },
-      },
-      "x-gevanni-scenarios": [
-        {
-          id: "s1",
-          steps: [{ id: "opA", scannable: false }, "opB"],
-        },
-      ],
-    };
-
-    const f = writeTmpFile(JSON.stringify(spec));
-    const result = await loadOpenApiScenarios(f);
-    cleanup(f);
-
-    expect(result).toHaveLength(1);
-    const src = result[0].source as OpenApiScenarioSource;
-    expect(src.steps[0].scannable).toBe(false);
-    expect(src.steps[1].scannable).toBe(true);
   });
 });
