@@ -68,7 +68,9 @@ export class Orchestrator {
     const now = new Date();
     const itemMap = new Map<string, AuditItem>();
 
-    logger.info(`Loaded ${scenarios.length} scenarios`);
+    logger.info(
+      `Loaded ${scenarios.length} scenarios:\n${scenarios.map((s) => s.representation).join("\n")}`,
+    );
 
     // 1. Process each scenario
     const allJobs: SignatureJob[] = [];

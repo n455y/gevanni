@@ -520,11 +520,24 @@ export async function loadOpenApiScenarios(source: unknown): Promise<Scenario[]>
         : source.steps[0].operation.operationId ??
           source.steps[0].operation.summary ??
           `${source.steps[0].operation.method} ${source.steps[0].operation.path}`;
+    const steps = source.steps;
+    const lines = [`  ${name}`];
+    for (const step of steps) {
+      const op = step.operation;
+      lines.push(`    ${op.method} ${op.path}${op.operationId ? ` (${op.operationId})` : ""}${op.summary ? ` - ${op.summary}` : ""}`);
+      if (op.parameters.length > 0) {
+        lines.push(`      params: ${op.parameters.map((p) => p.name).join(", ")}`);
+      }
+      if (op.requestBody) {
+        lines.push(`      body: ${op.requestBody.contentType}`);
+      }
+    }
     return {
       id: scenarioId(),
       name,
       type: OpenApiScenarioType,
       source,
+      representation: lines.join("\n"),
     };
   });
 }

@@ -63,6 +63,7 @@ function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
     name: "Test Scenario",
     type: "xss" as any,
     source: null,
+    representation: "  Test Scenario",
     ...overrides,
   };
 }
@@ -378,7 +379,13 @@ describe("JsonStoragePlugin", () => {
       const loaded: Scenario = await commandBus.dispatch(
         new LoadScenarioCommand(ScenarioId("scenario-1")),
       );
-      expect(loaded).toEqual(scenario);
+      expect(loaded).toMatchObject({
+        id: scenario.id,
+        name: scenario.name,
+        type: scenario.type,
+        source: scenario.source,
+      });
+      expect(loaded.representation).toBe(scenario.representation);
     });
 
     it("throws when scenario not found", async () => {

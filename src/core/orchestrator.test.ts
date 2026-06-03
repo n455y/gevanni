@@ -163,6 +163,7 @@ describe("Orchestrator", () => {
             },
           ],
         },
+        representation: "  Test Scenario\n    GET https://example.com",
       };
 
       commandBus.register(ReplayCommand, async () => [
@@ -275,6 +276,7 @@ describe("Orchestrator", () => {
             { request: { method: "GET", url: { raw: "https://example.com" } } },
           ],
         },
+        representation: "  test\n    GET https://example.com",
       }));
       commandBus.register(ReplayCommand, async () => [
         {
@@ -349,6 +351,7 @@ describe("Orchestrator", () => {
             { request: { method: "GET", url: { raw: "https://example.com" } } },
           ],
         },
+        representation: "  test\n    GET https://example.com",
       }));
       commandBus.register(ReplayCommand, async () => [
         {
@@ -523,6 +526,7 @@ describe("Orchestrator", () => {
         name: "test",
         type: PostmanScenarioType,
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
+        representation: "  test\n    GET https://example.com",
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => ({ status: "completed", finding: vulnerableFinding }));
@@ -591,6 +595,7 @@ describe("Orchestrator", () => {
         name: "test",
         type: PostmanScenarioType,
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
+        representation: "  test\n    GET https://example.com",
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => ({ status: "completed", finding: vulnerableFinding }));
@@ -657,6 +662,7 @@ describe("Orchestrator", () => {
         name: "test",
         type: PostmanScenarioType,
         source: { items: [{ request: { method: "GET", url: { raw: "https://example.com" } } }] },
+        representation: "  test\n    GET https://example.com",
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "sqli-error", async () => ({ status: "completed", finding: vulnerableFinding }));

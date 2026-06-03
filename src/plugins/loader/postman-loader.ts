@@ -65,10 +65,16 @@ export async function loadPostmanScenarios(source: unknown): Promise<Scenario[]>
   const items = parsed.item ?? [];
   const flatItems = flattenItems(items);
 
-  return flatItems.map((item) => ({
-    id: scenarioId(),
-    name: item.name ?? "unnamed",
-    type: PostmanScenarioType,
-    source: { items: [item] },
-  }));
+  return flatItems.map((item) => {
+    const req = item.request as { method?: string; url?: { raw?: string } | string } | undefined;
+    const method = req?.method ?? "GET";
+    const url = typeof req?.url === "string" ? req.url : req?.url?.raw ?? "unknown";
+    return {
+      id: scenarioId(),
+      name: item.name ?? "unnamed",
+      type: PostmanScenarioType,
+      source: { items: [item] },
+      representation: `  ${item.name ?? "unnamed"}\n    ${method} ${url}`,
+    };
+  });
 }
