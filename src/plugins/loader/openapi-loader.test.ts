@@ -471,7 +471,7 @@ x-gevanni-scenarios:
   });
 
   describe("oneOf/anyOf request bodies", () => {
-    it("generates separate scenarios for each oneOf variant", async () => {
+    it("selects oneOf variant using match", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
@@ -508,8 +508,8 @@ x-gevanni-scenarios:
           },
         },
         "x-gevanni-scenarios": [
-          { id: "createPet_cat", steps: ["createPet_variant1"] },
-          { id: "createPet_dog", steps: ["createPet_variant2"] },
+          { id: "createPet_cat", steps: [{ id: "createPet", match: { petType: "cat" } }] },
+          { id: "createPet_dog", steps: [{ id: "createPet", match: { petType: "dog" } }] },
         ],
       };
 
@@ -538,7 +538,7 @@ x-gevanni-scenarios:
       });
     });
 
-    it("generates separate scenarios for each anyOf variant", async () => {
+    it("selects anyOf variant using match", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
@@ -553,11 +553,11 @@ x-gevanni-scenarios:
                       anyOf: [
                         {
                           type: "object",
-                          properties: { email: { type: "string" } },
+                          properties: { channel: { type: "string", enum: ["email"] } },
                         },
                         {
                           type: "object",
-                          properties: { phone: { type: "string" } },
+                          properties: { channel: { type: "string", enum: ["sms"] } },
                         },
                       ],
                     },
@@ -568,8 +568,8 @@ x-gevanni-scenarios:
           },
         },
         "x-gevanni-scenarios": [
-          { id: "notify_email", steps: ["sendNotification_variant1"] },
-          { id: "notify_phone", steps: ["sendNotification_variant2"] },
+          { id: "notify_email", steps: [{ id: "sendNotification", match: { channel: "email" } }] },
+          { id: "notify_sms", steps: [{ id: "sendNotification", match: { channel: "sms" } }] },
         ],
       };
 
@@ -579,7 +579,7 @@ x-gevanni-scenarios:
 
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe("notify_email");
-      expect(result[1].name).toBe("notify_phone");
+      expect(result[1].name).toBe("notify_sms");
     });
 
     it("resolves allOf within request body schema", async () => {
@@ -631,14 +631,14 @@ x-gevanni-scenarios:
       });
     });
 
-    it("generates variants with suffix when no operationId", async () => {
+    it("selects variant by index when no discriminant", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
         paths: {
           "/items": {
             post: {
-              summary: "Create item",
+              operationId: "createItem",
               requestBody: {
                 content: {
                   "application/json": {
@@ -655,8 +655,8 @@ x-gevanni-scenarios:
           },
         },
         "x-gevanni-scenarios": [
-          { id: "variant1", steps: ["POST /items_variant1"] },
-          { id: "variant2", steps: ["POST /items_variant2"] },
+          { id: "stringVariant", steps: [{ id: "createItem", match: 0 }] },
+          { id: "intVariant", steps: [{ id: "createItem", match: 1 }] },
         ],
       };
 
@@ -664,11 +664,16 @@ x-gevanni-scenarios:
       const result = await loader.load(f);
       cleanup(f);
 
-      // No operationId means the variant suffix doesn't match
-      expect(result).toHaveLength(0);
+      expect(result).toHaveLength(2);
+
+      const src0 = result[0].source as OpenApiScenarioSource;
+      expect(src0.steps[0].operation.requestBody?.schema).toMatchObject({ type: "string" });
+
+      const src1 = result[1].source as OpenApiScenarioSource;
+      expect(src1.steps[0].operation.requestBody?.schema).toMatchObject({ type: "integer" });
     });
 
-    it("preserves non-oneOf operations alongside expanded ones", async () => {
+    it("preserves non-oneOf operations alongside ones with variants", async () => {
       const spec = {
         openapi: "3.0.0",
         info: { title: "Test", version: "1.0.0" },
@@ -697,8 +702,8 @@ x-gevanni-scenarios:
           },
         },
         "x-gevanni-scenarios": [
-          { id: "createItem_v1", steps: ["createItem_variant1"] },
-          { id: "createItem_v2", steps: ["createItem_variant2"] },
+          { id: "createItem_v1", steps: [{ id: "createItem", match: 0 }] },
+          { id: "createItem_v2", steps: [{ id: "createItem", match: 1 }] },
           { id: "healthCheck", steps: ["healthCheck"] },
         ],
       };
@@ -889,8 +894,8 @@ x-gevanni-scenarios:
           },
         },
         "x-gevanni-scenarios": [
-          { id: "createPet_cat", steps: ["createPet_variant1"] },
-          { id: "createPet_dog", steps: ["createPet_variant2"] },
+          { id: "createPet_cat", steps: [{ id: "createPet", match: { petType: "cat" } }] },
+          { id: "createPet_dog", steps: [{ id: "createPet", match: { petType: "dog" } }] },
         ],
       };
 
@@ -907,6 +912,175 @@ x-gevanni-scenarios:
         properties: {
           petType: { type: "string", enum: ["cat"] },
           meow: { type: "string" },
+        },
+      });
+    });
+
+    it("merges multiple anyOf variants with array match", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/update": {
+            put: {
+              operationId: "updateResource",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      anyOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            target: { type: "string", enum: ["url"] },
+                            url: { type: "string" },
+                          },
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            target: { type: "string", enum: ["file"] },
+                            path: { type: "string" },
+                            mimeType: { type: "string" },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "x-gevanni-scenarios": [
+          {
+            id: "updateBoth",
+            steps: [{ id: "updateResource", match: [{ target: "url" }, { target: "file" }] }],
+          },
+        ],
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      const src = result[0].source as OpenApiScenarioSource;
+      const schema = src.steps[0].operation.requestBody?.schema;
+      expect(schema?.properties).toMatchObject({
+        url: { type: "string" },
+        path: { type: "string" },
+        mimeType: { type: "string" },
+      });
+    });
+
+    it("skips step when match finds no variant", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            post: {
+              operationId: "createPet",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      oneOf: [
+                        {
+                          type: "object",
+                          properties: { petType: { type: "string", enum: ["cat"] } },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "x-gevanni-scenarios": [
+          { id: "createDog", steps: [{ id: "createPet", match: { petType: "dog" } }] },
+        ],
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      // match did not resolve → uses default first variant (no error thrown)
+      expect(result).toHaveLength(1);
+    });
+
+    it("resolves nested oneOf with nested match", async () => {
+      const spec = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {
+          "/thing": {
+            post: {
+              operationId: "createThing",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      oneOf: [
+                        {
+                          type: "object",
+                          properties: {
+                            type: { type: "string", const: "vehicle" },
+                            detail: {
+                              oneOf: [
+                                {
+                                  type: "object",
+                                  properties: {
+                                    kind: { type: "string", const: "car" },
+                                    doors: { type: "integer" },
+                                  },
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    kind: { type: "string", const: "bike" },
+                                    wheels: { type: "integer" },
+                                  },
+                                },
+                              ],
+                            },
+                          },
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            type: { type: "string", const: "building" },
+                            floors: { type: "integer" },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "x-gevanni-scenarios": [
+          {
+            id: "createVehicleCar",
+            steps: [{ id: "createThing", match: { type: "vehicle", detail: { kind: "car" } } }],
+          },
+        ],
+      };
+
+      const f = writeTmpFile(JSON.stringify(spec));
+      const result = await loader.load(f);
+      cleanup(f);
+
+      expect(result).toHaveLength(1);
+      const src = result[0].source as OpenApiScenarioSource;
+      expect(src.steps[0].operation.requestBody?.schema).toMatchObject({
+        properties: {
+          type: { type: "string", const: "vehicle" },
         },
       });
     });

@@ -35,6 +35,7 @@ export interface OpenApiOperation {
   summary?: string;
   parameters: OpenApiParameter[];
   requestBody?: OpenApiRequestBody;
+  bodyVariants?: OpenApiRequestBody[];
   links?: OpenApiLink[];
 }
 
@@ -314,22 +315,11 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
         links: links.length > 0 ? links : undefined,
       };
 
-      if (bodyVariants.length <= 1) {
-        operations.push({ ...base, requestBody: bodyVariants[0] });
-      } else {
-        for (let vi = 0; vi < bodyVariants.length; vi++) {
-          operations.push({
-            ...base,
-            requestBody: bodyVariants[vi],
-            operationId: base.operationId
-              ? `${base.operationId}_variant${vi + 1}`
-              : undefined,
-            summary: base.summary
-              ? `${base.summary} (variant ${vi + 1})`
-              : undefined,
-          });
-        }
-      }
+      operations.push({
+        ...base,
+        requestBody: bodyVariants[0],
+        bodyVariants: bodyVariants.length > 1 ? bodyVariants : undefined,
+      });
     }
   }
 
@@ -338,8 +328,11 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
 
 // --- Scenario building from x-gevanni-scenarios ---
 
+export type MatchExpr = Record<string, unknown> | Record<string, unknown>[] | number;
+
 interface StepDef {
   ref: string;
+  match?: MatchExpr;
 }
 
 function parseStepDefs(raw: unknown): StepDef[] {
@@ -351,7 +344,14 @@ function parseStepDefs(raw: unknown): StepDef[] {
     } else if (isObject(entry)) {
       const ref = entry.id ?? entry.operationId;
       if (typeof ref !== "string") continue;
-      defs.push({ ref });
+      const match = entry.match;
+      defs.push({
+        ref,
+        match:
+          typeof match === "number" || isObject(match) || Array.isArray(match)
+            ? (match as MatchExpr)
+            : undefined,
+      });
     }
   }
   return defs;
@@ -389,16 +389,90 @@ function resolveStepDefs(
   for (let i = 0; i < defs.length; i++) {
     const op = byId.get(defs[i].ref);
     if (!op) continue;
+
+    let resolvedOp = op;
+    const stepMatch = defs[i].match;
+    if (stepMatch !== undefined && op.bodyVariants) {
+      const resolved = resolveMatch(op.bodyVariants, stepMatch);
+      if (resolved) {
+        resolvedOp = { ...op, requestBody: resolved };
+      }
+    }
+
     const link: OpenApiLink | undefined =
       i < defs.length - 1
-        ? op.links?.find((l) => l.targetOperationId === defs[i + 1].ref)
+        ? resolvedOp.links?.find((l) => l.targetOperationId === defs[i + 1].ref)
         : undefined;
     steps.push({
-      operation: op,
+      operation: resolvedOp,
       link,
     });
   }
   return steps;
+}
+
+// --- Match resolution ---
+
+function matchesVariant(
+  schema: Record<string, unknown> | undefined,
+  criterion: Record<string, unknown>,
+): boolean {
+  if (!schema || !isObject(schema.properties)) return false;
+  for (const [key, value] of Object.entries(criterion)) {
+    const prop = schema.properties[key];
+    if (!isObject(prop)) return false;
+    if (isObject(value)) {
+      const innerVariants = prop.oneOf ?? prop.anyOf;
+      if (!Array.isArray(innerVariants)) return false;
+      if (!innerVariants.some((v) => {
+        const d = isObject(v) ? v : undefined;
+        return d && matchesVariant(d as Record<string, unknown>, value);
+      })) return false;
+    } else {
+      if (Array.isArray(prop.enum) && !prop.enum.includes(value)) return false;
+      if (prop.const !== undefined && prop.const !== value) return false;
+      if (!Array.isArray(prop.enum) && prop.const === undefined) return false;
+    }
+  }
+  return true;
+}
+
+function mergeRequestBodyVariants(variants: OpenApiRequestBody[]): OpenApiRequestBody {
+  if (variants.length === 0) throw new Error("No variants to merge");
+  const merged = { ...variants[0] };
+  const mergedProps: Record<string, unknown> = {};
+  for (const v of variants) {
+    if (v.schema?.properties && isObject(v.schema.properties)) {
+      Object.assign(mergedProps, v.schema.properties);
+    }
+  }
+  if (Object.keys(mergedProps).length > 0) {
+    merged.schema = { ...merged.schema, type: "object", properties: mergedProps };
+  }
+  return merged;
+}
+
+function resolveMatch(
+  variants: OpenApiRequestBody[],
+  match: MatchExpr,
+): OpenApiRequestBody | undefined {
+  if (typeof match === "number") {
+    return variants[match];
+  }
+
+  const criteria = Array.isArray(match) ? match : [match];
+  const matched: OpenApiRequestBody[] = [];
+
+  for (const c of criteria) {
+    const found = variants.find((v) =>
+      matchesVariant(v.schema as Record<string, unknown> | undefined, c),
+    );
+    if (found) matched.push(found);
+  }
+
+  if (matched.length === 0) return undefined;
+  if (matched.length === 1) return matched[0];
+  return mergeRequestBodyVariants(matched);
 }
 
 export function buildScenariosFromExtension(
