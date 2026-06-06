@@ -1,5 +1,10 @@
 import crypto from "node:crypto";
-import { ScanId, SignatureJobId, ErrorMessage, ReplayId } from "../types/branded.ts";
+import {
+  ScanId,
+  SignatureJobId,
+  ErrorMessage,
+  ReplayId,
+} from "../types/branded.ts";
 import type {
   SignatureJob,
   ScanState,
@@ -8,7 +13,11 @@ import type {
   Exchange,
   AuditMutation,
 } from "../types/models.ts";
-import { SignatureJobStatus, ScanStatus, ReplayResult } from "../types/models.ts";
+import {
+  SignatureJobStatus,
+  ScanStatus,
+  ReplayResult,
+} from "../types/models.ts";
 import type { RuntimeContext } from "./runtime-context.ts";
 import type { AuditItem } from "./audit-item.ts";
 import {
@@ -102,6 +111,9 @@ export class Orchestrator {
         const parameters: AuditParameter[] = parseResults.flat();
         logger.debug(
           `Found ${parameters.length} audit parameters for ${scenario.name}`,
+        );
+        logger.debug(
+          `Parameters: ${parameters.map((p) => `${JSON.stringify(p.location)}=${p.originalValue}`).join(", ")}`,
         );
 
         // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
@@ -207,7 +219,6 @@ export class Orchestrator {
 
     // 3. Run jobs with concurrency
     await runWithConcurrency(jobs, concurrency, async (job: SignatureJob) => {
-
       // Update job status to running
       await commandBus.dispatch(
         new UpdateJobCommand(job.id, {

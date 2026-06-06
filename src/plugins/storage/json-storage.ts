@@ -32,6 +32,21 @@ import {
 
 // --- Helpers ---
 
+function reviveBuffer(body: unknown): Buffer | null {
+  if (body == null) return null;
+  if (Buffer.isBuffer(body)) return body;
+  if (
+    typeof body === "object" &&
+    "type" in body &&
+    (body as { type: string }).type === "Buffer" &&
+    "data" in body &&
+    Array.isArray((body as { data: unknown }).data)
+  ) {
+    return Buffer.from((body as { data: number[] }).data);
+  }
+  return Buffer.from(String(body));
+}
+
 async function ensureDir(dir: string): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
 }
@@ -249,7 +264,18 @@ export class JsonStoragePlugin implements StoragePlugin {
 
     bus.register(LoadExchangesCommand, async (cmd) => {
       const path = exchangesPath(cmd.replayId);
-      return (await readJsonFile<Exchange[]>(path)) ?? [];
+      const exchanges = (await readJsonFile<Exchange[]>(path)) ?? [];
+      return exchanges.map((e) => ({
+        ...e,
+        request: {
+          ...e.request,
+          body: reviveBuffer(e.request.body),
+        },
+        response: {
+          ...e.response,
+          body: reviveBuffer(e.response.body),
+        },
+      }));
     });
 
     // Ensure base output directory exists
