@@ -470,7 +470,7 @@ x-gevanni-scenarios:
     });
   });
 
-  describe("oneOf/anyOf request bodies", () => {
+  describe("oneOf request bodies", () => {
     it("selects oneOf variant using match", async () => {
       const spec = {
         openapi: "3.0.0",
@@ -536,50 +536,6 @@ x-gevanni-scenarios:
           bark: { type: "string" },
         },
       });
-    });
-
-    it("selects anyOf variant using match", async () => {
-      const spec = {
-        openapi: "3.0.0",
-        info: { title: "Test", version: "1.0.0" },
-        paths: {
-          "/notify": {
-            post: {
-              operationId: "sendNotification",
-              requestBody: {
-                content: {
-                  "application/json": {
-                    schema: {
-                      anyOf: [
-                        {
-                          type: "object",
-                          properties: { channel: { type: "string", enum: ["email"] } },
-                        },
-                        {
-                          type: "object",
-                          properties: { channel: { type: "string", enum: ["sms"] } },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        "x-gevanni-scenarios": [
-          { id: "notify_email", steps: [{ id: "sendNotification", match: { channel: "email" } }] },
-          { id: "notify_sms", steps: [{ id: "sendNotification", match: { channel: "sms" } }] },
-        ],
-      };
-
-      const f = writeTmpFile(JSON.stringify(spec));
-      const result = await loader.load(f);
-      cleanup(f);
-
-      expect(result).toHaveLength(2);
-      expect(result[0].name).toBe("notify_email");
-      expect(result[1].name).toBe("notify_sms");
     });
 
     it("resolves allOf within request body schema", async () => {
@@ -913,64 +869,6 @@ x-gevanni-scenarios:
           petType: { type: "string", enum: ["cat"] },
           meow: { type: "string" },
         },
-      });
-    });
-
-    it("merges multiple anyOf variants with array match", async () => {
-      const spec = {
-        openapi: "3.0.0",
-        info: { title: "Test", version: "1.0.0" },
-        paths: {
-          "/update": {
-            put: {
-              operationId: "updateResource",
-              requestBody: {
-                content: {
-                  "application/json": {
-                    schema: {
-                      anyOf: [
-                        {
-                          type: "object",
-                          properties: {
-                            target: { type: "string", enum: ["url"] },
-                            url: { type: "string" },
-                          },
-                        },
-                        {
-                          type: "object",
-                          properties: {
-                            target: { type: "string", enum: ["file"] },
-                            path: { type: "string" },
-                            mimeType: { type: "string" },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        "x-gevanni-scenarios": [
-          {
-            id: "updateBoth",
-            steps: [{ id: "updateResource", match: [{ target: "url" }, { target: "file" }] }],
-          },
-        ],
-      };
-
-      const f = writeTmpFile(JSON.stringify(spec));
-      const result = await loader.load(f);
-      cleanup(f);
-
-      expect(result).toHaveLength(1);
-      const src = result[0].source as OpenApiScenarioSource;
-      const schema = src.steps[0].operation.requestBody?.schema;
-      expect(schema?.properties).toMatchObject({
-        url: { type: "string" },
-        path: { type: "string" },
-        mimeType: { type: "string" },
       });
     });
 
@@ -1426,14 +1324,6 @@ describe("defaultValueForSchema", () => {
         ],
       }),
     ).toEqual({ email: "test" });
-  });
-
-  it("resolves anyOf by using the first variant", () => {
-    expect(
-      defaultValueForSchema({
-        anyOf: [{ type: "integer" }, { type: "string" }],
-      }),
-    ).toBe(1);
   });
 
   it("generates defaults for object properties", () => {

@@ -107,7 +107,7 @@ function expandSchemaVariants(schema: unknown, resolver: RefResolver): Record<st
   if (!deref) return [{}];
   const resolved = resolveSchema(deref);
   if (!resolved) return [{}];
-  const variants = resolved.oneOf ?? resolved.anyOf;
+  const variants = resolved.oneOf;
   if (!Array.isArray(variants)) return [resolved];
   return variants
     .map((v) => {
@@ -131,8 +131,8 @@ export function defaultValueForSchema(
     return defaultValueForSchema(mergeAllOf(schema.allOf));
   }
 
-  if (Array.isArray(schema.oneOf) || Array.isArray(schema.anyOf)) {
-    const variants = (schema.oneOf ?? schema.anyOf) as unknown[];
+  if (Array.isArray(schema.oneOf)) {
+    const variants = schema.oneOf as unknown[];
     const first = variants[0];
     return first ? defaultValueForSchema(first as { type?: string; [key: string]: unknown }) : "test";
   }
@@ -422,7 +422,7 @@ function matchesVariant(
     const prop = schema.properties[key];
     if (!isObject(prop)) return false;
     if (isObject(value)) {
-      const innerVariants = prop.oneOf ?? prop.anyOf;
+      const innerVariants = prop.oneOf;
       if (!Array.isArray(innerVariants)) return false;
       if (!innerVariants.some((v) => {
         const d = isObject(v) ? v : undefined;
