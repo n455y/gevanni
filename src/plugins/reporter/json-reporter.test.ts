@@ -6,14 +6,21 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { JsonReporterPlugin } from "./json-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { serializeSignatureJob, serializeScanState, type SignatureJob, type ScanState, SignatureJobStatus, ScanStatus } from "../../types/models.ts";
+import {
+  serializeSignatureJob,
+  serializeScanState,
+  type SignatureJob,
+  type ScanState,
+  SignatureJobStatus,
+  ScanStatus,
+} from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
   SignatureJobId,
   ScenarioId,
   ExchangeId,
-  SignatureId,
+
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
@@ -32,9 +39,9 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     id: SignatureJobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    signatureName: SignatureId("reflected-xss"),
+    signatureName: "signature:reflected-xss",
     groups: [],
-parameter: new QueryParameter({ name: "" }, "", []),
+    parameter: new QueryParameter({ name: "" }, "", []),
     status: SignatureJobStatus.Completed,
     finding: null,
     error: null,
@@ -47,7 +54,12 @@ parameter: new QueryParameter({ name: "" }, "", []),
 // --- Test setup ---
 let tempDir: string;
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(async () => {
   tempDir = join(
@@ -75,13 +87,9 @@ describe("JsonReporterPlugin", () => {
     const scanState = makeScanState({
       id: ScanId("scan-abc"),
     });
-    const jobs: SignatureJob[] = [
-      makeJob({ id: SignatureJobId("job-1") }),
-    ];
+    const jobs: SignatureJob[] = [makeJob({ id: SignatureJobId("job-1") })];
 
-    await commandBus.broadcast(
-      new GenerateReportCommand({ scanState, jobs }),
-    );
+    await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs }));
 
     const raw = await fs.readFile(outputPath, "utf-8");
     const report = JSON.parse(raw);
@@ -140,8 +148,17 @@ describe("JsonReporterPlugin", () => {
         status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: true,
-          evidence: { judgmentId: "payload-reflection", exchanges: [], evidenceExchanges: [] },
-          request: { method: "GET", url: "https://example.com", headers: {}, body: null },
+          evidence: {
+            judgmentId: "payload-reflection",
+            exchanges: [],
+            evidenceExchanges: [],
+          },
+          request: {
+            method: "GET",
+            url: "https://example.com",
+            headers: {},
+            body: null,
+          },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
@@ -150,8 +167,17 @@ describe("JsonReporterPlugin", () => {
         status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: false,
-          evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
-          request: { method: "GET", url: "https://example.com", headers: {}, body: null },
+          evidence: {
+            judgmentId: "sql-error-pattern",
+            exchanges: [],
+            evidenceExchanges: [],
+          },
+          request: {
+            method: "GET",
+            url: "https://example.com",
+            headers: {},
+            body: null,
+          },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
@@ -165,16 +191,23 @@ describe("JsonReporterPlugin", () => {
         status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: true,
-          evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
-          request: { method: "POST", url: "https://example.com/api", headers: {}, body: null },
+          evidence: {
+            judgmentId: "sql-error-pattern",
+            exchanges: [],
+            evidenceExchanges: [],
+          },
+          request: {
+            method: "POST",
+            url: "https://example.com/api",
+            headers: {},
+            body: null,
+          },
           response: { statusCode: 500, headers: {}, body: null },
         },
       }),
     ];
 
-    await commandBus.broadcast(
-      new GenerateReportCommand({ scanState, jobs }),
-    );
+    await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs }));
 
     const raw = await fs.readFile(outputPath, "utf-8");
     const report = JSON.parse(raw);

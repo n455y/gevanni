@@ -11,8 +11,6 @@ export type ExchangeId = Brand<string, "ExchangeId">;
 export const ExchangeId = (id: string) => id as ExchangeId;
 export type ReplayId = Brand<string, "ReplayId">;
 export const ReplayId = (id: string) => id as ReplayId;
-export type SignatureId = Brand<string, "SignatureId">;
-export const SignatureId = (id: string) => id as SignatureId;
 export type SignatureGroupId = Brand<string, "SignatureGroupId">;
 export const SignatureGroupId = (id: string) => id as SignatureGroupId;
 
@@ -34,7 +32,6 @@ export function defineMutationType<P extends Payload = Payload>(
 ): MutationType<P> {
   return name as any;
 }
-
 
 // --- Semantic ---
 export type ErrorMessage = Brand<string, "ErrorMessage">;

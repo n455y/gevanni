@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -19,7 +16,7 @@ export const NOSQL_ERROR_PATTERNS: RegExp[] = [
 ];
 
 export class NosqlInjectionPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("nosql-injection");
+  readonly name = "signature:nosql-injection";
   protected readonly groups = [SignatureGroupId("nosql-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
@@ -32,7 +29,9 @@ export class NosqlInjectionPlugin extends MutationFilteredSignaturePlugin {
     const result = await replay([instruction]);
     const allExchanges = result.allExchanges;
     const matches = allExchanges.filter((ex) =>
-      NOSQL_ERROR_PATTERNS.some((p) => p.test(ex.response.body?.toString() ?? "")),
+      NOSQL_ERROR_PATTERNS.some((p) =>
+        p.test(ex.response.body?.toString() ?? ""),
+      ),
     );
     const evidence: Evidence = {
       judgmentId: "nosql-error-pattern",

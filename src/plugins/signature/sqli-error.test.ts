@@ -15,7 +15,11 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
@@ -80,7 +84,7 @@ describe("SqliErrorPlugin", () => {
     expect(results).toHaveLength(1);
     const items = results[0];
     expect(items).toHaveLength(1);
-    expect(items[0].signatureName).toBe("sqli-error");
+    expect(items[0].signatureName).toBe("signature:sqli-error");
     expect(items[0].parameter).toEqual(targets[0]);
   });
 
@@ -129,7 +133,7 @@ describe("SqliErrorPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: parameter,
         replay: mockReplay,
@@ -168,7 +172,7 @@ describe("SqliErrorPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: parameter,
         replay: mockReplay,
@@ -206,7 +210,7 @@ describe("SqliErrorPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: parameter,
         replay: mockReplay,
@@ -245,7 +249,7 @@ describe("SqliErrorPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: parameter,
         replay: mockReplay,
@@ -282,7 +286,7 @@ describe("SqliErrorPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: parameter,
         replay: mockReplay,
@@ -319,7 +323,7 @@ describe("SqliErrorPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: parameter,
         replay: mockReplay,
@@ -358,7 +362,7 @@ describe("SqliErrorPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: parameter,
         replay: mockReplay,

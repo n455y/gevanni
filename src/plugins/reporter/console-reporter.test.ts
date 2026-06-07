@@ -3,14 +3,19 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { ConsoleReporterPlugin } from "./console-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
-import { type SignatureJob, type ScanState, SignatureJobStatus, ScanStatus } from "../../types/models.ts";
+import {
+  type SignatureJob,
+  type ScanState,
+  SignatureJobStatus,
+  ScanStatus,
+} from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
   SignatureJobId,
   ScenarioId,
   ExchangeId,
-  SignatureId,
+
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
@@ -29,9 +34,9 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     id: SignatureJobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    signatureName: SignatureId("reflected-xss"),
+    signatureName: "signature:reflected-xss",
     groups: [],
-parameter: new QueryParameter({ name: "" }, "", []),
+    parameter: new QueryParameter({ name: "" }, "", []),
     status: SignatureJobStatus.Completed,
     finding: null,
     error: null,
@@ -43,7 +48,12 @@ parameter: new QueryParameter({ name: "" }, "", []),
 
 // --- Tests ---
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(async () => {
   commandBus = new InMemoryCommandBus();
@@ -65,7 +75,9 @@ describe("ConsoleReporterPlugin", () => {
       startedAt: new Date("2025-06-01T12:00:00Z"),
     });
 
-    await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs: [] }));
+    await commandBus.broadcast(
+      new GenerateReportCommand({ scanState, jobs: [] }),
+    );
 
     expect(logSpy).toHaveBeenCalledOnce();
     const output = logSpy.mock.calls[0][0] as string;
@@ -84,16 +96,42 @@ describe("ConsoleReporterPlugin", () => {
     const scanState = makeScanState();
     const vulnerableJob = makeJob({
       id: SignatureJobId("job-vuln"),
-      signatureName: SignatureId("reflected-xss"),
+      signatureName: "signature:reflected-xss",
       status: SignatureJobStatus.Completed,
-    groups: [],
-parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
+      groups: [],
+      parameter: new QueryParameter(
+        { name: "q" },
+        "<script>alert(1)</script>",
+        [],
+      ),
       finding: {
         vulnerable: true,
         evidence: {
           judgmentId: "payload-reflection",
-          exchanges: [{ id: ExchangeId("ex-0"), request: { method: "GET", url: "https://example.com/search?q=%3Cscript%3E", headers: {}, body: null }, response: { statusCode: 200, headers: {}, body: null } }],
-          evidenceExchanges: [{ id: ExchangeId("ex-0"), request: { method: "GET", url: "https://example.com/search?q=%3Cscript%3E", headers: {}, body: null }, response: { statusCode: 200, headers: {}, body: null } }],
+          exchanges: [
+            {
+              id: ExchangeId("ex-0"),
+              request: {
+                method: "GET",
+                url: "https://example.com/search?q=%3Cscript%3E",
+                headers: {},
+                body: null,
+              },
+              response: { statusCode: 200, headers: {}, body: null },
+            },
+          ],
+          evidenceExchanges: [
+            {
+              id: ExchangeId("ex-0"),
+              request: {
+                method: "GET",
+                url: "https://example.com/search?q=%3Cscript%3E",
+                headers: {},
+                body: null,
+              },
+              response: { statusCode: 200, headers: {}, body: null },
+            },
+          ],
         },
         request: {
           method: "GET",
@@ -115,10 +153,14 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     const output = logSpy.mock.calls[0][0] as string;
 
-    expect(output).toContain("[VULNERABLE] reflected-xss");
+    expect(output).toContain("[VULNERABLE] signature:reflected-xss");
     expect(output).toContain("Target:");
-    expect(output).toContain("Evidence: payload-reflection (1 evidence exchanges)");
-    expect(output).toContain("Request: GET https://example.com/search?q=%3Cscript%3E");
+    expect(output).toContain(
+      "Evidence: payload-reflection (1 evidence exchanges)",
+    );
+    expect(output).toContain(
+      "Request: GET https://example.com/search?q=%3Cscript%3E",
+    );
 
     logSpy.mockRestore();
   });
@@ -129,12 +171,21 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const scanState = makeScanState();
     const safeJob = makeJob({
       id: SignatureJobId("job-safe"),
-      signatureName: SignatureId("sqli-error"),
+      signatureName: "signature:sqli-error",
       status: SignatureJobStatus.Completed,
       finding: {
         vulnerable: false,
-        evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
-        request: { method: "POST", url: "https://example.com/login", headers: {}, body: null },
+        evidence: {
+          judgmentId: "sql-error-pattern",
+          exchanges: [],
+          evidenceExchanges: [],
+        },
+        request: {
+          method: "POST",
+          url: "https://example.com/login",
+          headers: {},
+          body: null,
+        },
         response: { statusCode: 200, headers: {}, body: null },
       },
     });
@@ -145,7 +196,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     const output = logSpy.mock.calls[0][0] as string;
 
-    expect(output).toContain("[SAFE] sqli-error");
+    expect(output).toContain("[SAFE] signature:sqli-error");
     expect(output).toContain("Target:");
     expect(output).not.toContain("Evidence:");
     expect(output).not.toContain("Request: POST");
@@ -159,7 +210,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
     const scanState = makeScanState();
     const errorJob = makeJob({
       id: SignatureJobId("job-err"),
-      signatureName: SignatureId("reflected-xss"),
+      signatureName: "signature:reflected-xss",
       status: SignatureJobStatus.Error,
       finding: null,
       error: "Connection refused" as any,
@@ -171,7 +222,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
 
     const output = logSpy.mock.calls[0][0] as string;
 
-    expect(output).toContain("[ERROR] reflected-xss");
+    expect(output).toContain("[ERROR] signature:reflected-xss");
     expect(output).toContain("Error: Connection refused");
 
     logSpy.mockRestore();
@@ -187,8 +238,17 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
         status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: true,
-          evidence: { judgmentId: "payload-reflection", exchanges: [], evidenceExchanges: [] },
-          request: { method: "GET", url: "https://example.com", headers: {}, body: null },
+          evidence: {
+            judgmentId: "payload-reflection",
+            exchanges: [],
+            evidenceExchanges: [],
+          },
+          request: {
+            method: "GET",
+            url: "https://example.com",
+            headers: {},
+            body: null,
+          },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
@@ -197,8 +257,17 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
         status: SignatureJobStatus.Completed,
         finding: {
           vulnerable: false,
-          evidence: { judgmentId: "sql-error-pattern", exchanges: [], evidenceExchanges: [] },
-          request: { method: "GET", url: "https://example.com", headers: {}, body: null },
+          evidence: {
+            judgmentId: "sql-error-pattern",
+            exchanges: [],
+            evidenceExchanges: [],
+          },
+          request: {
+            method: "GET",
+            url: "https://example.com",
+            headers: {},
+            body: null,
+          },
           response: { statusCode: 200, headers: {}, body: null },
         },
       }),
@@ -209,9 +278,7 @@ parameter: new QueryParameter({ name: "q" }, "<script>alert(1)</script>", []),
       }),
     ];
 
-    await commandBus.broadcast(
-      new GenerateReportCommand({ scanState, jobs }),
-    );
+    await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs }));
 
     const output = logSpy.mock.calls[0][0] as string;
 

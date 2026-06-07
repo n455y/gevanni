@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -9,7 +6,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 import { DiffCommand } from "../../commands/diff.ts";
 
 export class SqliDiffPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("sqli-diff");
+  readonly name = "signature:sqli-diff";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 

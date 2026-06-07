@@ -1,4 +1,4 @@
-import { SignatureGroupId, SignatureId } from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -14,7 +14,7 @@ export const SQL_ERROR_PATTERNS: RegExp[] = [
 ];
 
 export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("sqli-error");
+  readonly name = "signature:sqli-error";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 

@@ -18,7 +18,14 @@ import {
   SaveExchangeCommand,
   LoadExchangesCommand,
 } from "../../commands/exchange.ts";
-import { type SignatureJob, type ScanState, type Scenario, type Exchange, SignatureJobStatus, ScanStatus } from "../../types/models.ts";
+import {
+  type SignatureJob,
+  type ScanState,
+  type Scenario,
+  type Exchange,
+  SignatureJobStatus,
+  ScanStatus,
+} from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import {
   ScanId,
@@ -26,7 +33,7 @@ import {
   ScenarioId,
   ExchangeId,
   ReplayId,
-  SignatureId,
+
 } from "../../types/branded.ts";
 
 // --- Fixture factories ---
@@ -35,7 +42,7 @@ function makeJob(overrides: Partial<SignatureJob> = {}): SignatureJob {
     id: SignatureJobId("job-1"),
     scanId: ScanId("test-scan-id"),
     scenarioId: ScenarioId("scan-1"),
-    signatureName: SignatureId("sig-1"),
+    signatureName: "signature:sig-1",
     groups: [],
     parameter: new QueryParameter({ name: "" }, "", []),
     status: SignatureJobStatus.Pending,
@@ -71,7 +78,12 @@ function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
 // --- Test setup ---
 let tempDir: string;
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(async () => {
   tempDir = join(
@@ -113,7 +125,10 @@ describe("JsonStoragePlugin", () => {
 
     it("saves multiple jobs and retrieves each", async () => {
       const job1 = makeJob({ id: SignatureJobId("job-1") });
-      const job2 = makeJob({ id: SignatureJobId("job-2"), signatureName: SignatureId("sig-2") });
+      const job2 = makeJob({
+        id: SignatureJobId("job-2"),
+        signatureName: "signature:sig-2",
+      });
 
       await commandBus.dispatch(new SaveJobCommand(job1));
       await commandBus.dispatch(new SaveJobCommand(job2));
@@ -246,7 +261,10 @@ describe("JsonStoragePlugin", () => {
       await commandBus.dispatch(new SaveJobCommand(completedJob));
 
       const jobs: SignatureJob[] = await commandBus.dispatch(
-        new LoadJobsByStatusCommand(scanId, [SignatureJobStatus.Pending, SignatureJobStatus.Completed]),
+        new LoadJobsByStatusCommand(scanId, [
+          SignatureJobStatus.Pending,
+          SignatureJobStatus.Completed,
+        ]),
       );
       expect(jobs).toHaveLength(2);
     });
@@ -285,7 +303,7 @@ describe("JsonStoragePlugin", () => {
     });
 
     it("preserves fields not included in updates", async () => {
-      const job = makeJob({ signatureName: SignatureId("original") });
+      const job = makeJob({ signatureName: "signature:original" });
       await commandBus.dispatch(new SaveJobCommand(job));
 
       await commandBus.dispatch(
@@ -297,7 +315,7 @@ describe("JsonStoragePlugin", () => {
       const loaded: SignatureJob | null = await commandBus.dispatch(
         new LoadJobCommand(job.id),
       );
-      expect(loaded!.signatureName).toBe("original");
+      expect(loaded!.signatureName).toBe("signature:original");
       expect(loaded!.status).toBe(SignatureJobStatus.Completed);
     });
 
@@ -390,9 +408,7 @@ describe("JsonStoragePlugin", () => {
 
     it("throws when scenario not found", async () => {
       await expect(
-        commandBus.dispatch(
-          new LoadScenarioCommand(ScenarioId("nonexistent")),
-        ),
+        commandBus.dispatch(new LoadScenarioCommand(ScenarioId("nonexistent"))),
       ).rejects.toThrow("Scenario not found");
     });
   });

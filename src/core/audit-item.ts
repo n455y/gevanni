@@ -1,8 +1,8 @@
 import type { AuditParameter } from "../types/models.ts";
-import type { SignatureGroupId, SignatureId } from "../types/branded.ts";
+import type { SignatureGroupId } from "../types/branded.ts";
 
 interface AuditItem {
-  readonly signatureName: SignatureId;
+  readonly signatureName: `signature:${string}`;
   readonly parameter: AuditParameter;
   readonly groups: SignatureGroupId[];
 }

@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { NosqlInjectionPlugin, NOSQL_ERROR_PATTERNS } from "./nosql-injection.ts";
+import {
+  NosqlInjectionPlugin,
+  NOSQL_ERROR_PATTERNS,
+} from "./nosql-injection.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type {
@@ -14,11 +17,20 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
@@ -74,7 +86,7 @@ describe("NosqlInjectionPlugin", () => {
     expect(results).toHaveLength(1);
     const items = results[0];
     expect(items).toHaveLength(1);
-    expect(items[0].signatureName).toBe("nosql-injection");
+    expect(items[0].signatureName).toBe("signature:nosql-injection");
     expect(items[0].parameter).toEqual(targets[0]);
   });
 
@@ -108,26 +120,30 @@ describe("NosqlInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("MongoError: SyntaxError: Unexpected token"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("MongoError: SyntaxError: Unexpected token"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("nosql-injection"),
+        signatureName: "signature:nosql-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("nosql-error-pattern");
@@ -143,26 +159,30 @@ describe("NosqlInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("Invalid BSON document"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("Invalid BSON document"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("nosql-injection"),
+        signatureName: "signature:nosql-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -176,26 +196,30 @@ describe("NosqlInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("CouchDB error: bad request"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("CouchDB error: bad request"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("nosql-injection"),
+        signatureName: "signature:nosql-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -209,26 +233,30 @@ describe("NosqlInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: Buffer.from("normal response with no errors"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: Buffer.from("normal response with no errors"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("nosql-injection"),
+        signatureName: "signature:nosql-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.judgmentId).toBe("nosql-error-pattern");
@@ -244,26 +272,30 @@ describe("NosqlInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: null,
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: null,
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("nosql-injection"),
+        signatureName: "signature:nosql-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
   });
@@ -271,11 +303,19 @@ describe("NosqlInjectionPlugin", () => {
   it("includes all required NoSQL error patterns", () => {
     expect(NOSQL_ERROR_PATTERNS).toHaveLength(8);
     expect(NOSQL_ERROR_PATTERNS[0].test("MongoError: SyntaxError")).toBe(true);
-    expect(NOSQL_ERROR_PATTERNS[1].test("Mongo::Error::OperationFailure")).toBe(true);
+    expect(NOSQL_ERROR_PATTERNS[1].test("Mongo::Error::OperationFailure")).toBe(
+      true,
+    );
     expect(NOSQL_ERROR_PATTERNS[2].test("MongoDB driver error")).toBe(true);
-    expect(NOSQL_ERROR_PATTERNS[3].test("mongo exception: some error")).toBe(true);
-    expect(NOSQL_ERROR_PATTERNS[4].test("CouchDB error: bad request")).toBe(true);
-    expect(NOSQL_ERROR_PATTERNS[5].test("Cassandra error: invalid query")).toBe(true);
+    expect(NOSQL_ERROR_PATTERNS[3].test("mongo exception: some error")).toBe(
+      true,
+    );
+    expect(NOSQL_ERROR_PATTERNS[4].test("CouchDB error: bad request")).toBe(
+      true,
+    );
+    expect(NOSQL_ERROR_PATTERNS[5].test("Cassandra error: invalid query")).toBe(
+      true,
+    );
     expect(NOSQL_ERROR_PATTERNS[6].test("Invalid BSON document")).toBe(true);
     expect(NOSQL_ERROR_PATTERNS[7].test("BSONError: invalid key")).toBe(true);
   });

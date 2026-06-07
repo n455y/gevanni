@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -10,7 +7,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 const MARKER = "gevanni_cm7j";
 
 export class OsCommandInjectionPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("os-command-injection");
+  readonly name = "signature:os-command-injection";
   protected readonly groups = [SignatureGroupId("os-command-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 

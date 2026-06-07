@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -18,9 +15,11 @@ function containsFileContent(body: string): boolean {
 }
 
 export class PathTraversalPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("path-traversal");
+  readonly name = "signature:path-traversal";
   protected readonly groups = [SignatureGroupId("path-traversal")];
-  protected readonly mutationTypes = [BuiltinMutationType.ReplaceValue] as const;
+  protected readonly mutationTypes = [
+    BuiltinMutationType.ReplaceValue,
+  ] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const payloads = [

@@ -7,7 +7,6 @@ import type {
   Payload,
   ErrorMessage,
   MutationType,
-  SignatureId,
   SignatureGroupId,
 } from "./branded.ts";
 import { SerializableBase, type SerializableValue } from "./serializable.ts";
@@ -21,7 +20,8 @@ export const SignatureJobStatus = {
   Skipped: "skipped",
   Error: "error",
 } as const;
-export type SignatureJobStatus = (typeof SignatureJobStatus)[keyof typeof SignatureJobStatus];
+export type SignatureJobStatus =
+  (typeof SignatureJobStatus)[keyof typeof SignatureJobStatus];
 
 export const ScanStatus = {
   Planning: "planning",
@@ -190,7 +190,7 @@ export interface SignatureJob {
   id: SignatureJobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
-  signatureName: SignatureId;
+  signatureName: `signature:${string}`;
   groups: SignatureGroupId[];
   parameter: AuditParameter;
   status: SignatureJobStatus;
@@ -252,7 +252,7 @@ export interface SerializedSignatureJob {
   id: SignatureJobId;
   scanId: ScanId;
   scenarioId: ScenarioId;
-  signatureName: SignatureId;
+  signatureName: `signature:${string}`;
   groups: SignatureGroupId[];
   parameter: { base: string; kind: string; serialized: SerializableValue };
   status: SignatureJobStatus;
@@ -262,7 +262,9 @@ export interface SerializedSignatureJob {
   updatedAt: number;
 }
 
-export function serializeSignatureJob(job: SignatureJob): SerializedSignatureJob {
+export function serializeSignatureJob(
+  job: SignatureJob,
+): SerializedSignatureJob {
   return {
     ...job,
     parameter: job.parameter.serialize(),
@@ -271,7 +273,9 @@ export function serializeSignatureJob(job: SignatureJob): SerializedSignatureJob
   };
 }
 
-export function deserializeSignatureJob(data: SerializedSignatureJob): SignatureJob {
+export function deserializeSignatureJob(
+  data: SerializedSignatureJob,
+): SignatureJob {
   return {
     ...data,
     parameter: AuditParameter.deserialize(data.parameter),

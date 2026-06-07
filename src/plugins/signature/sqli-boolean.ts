@@ -1,14 +1,11 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("sqli-boolean");
+  readonly name = "signature:sqli-boolean";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
@@ -32,8 +29,7 @@ export class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
       ...trueResult.allExchanges,
       ...falseResult.allExchanges,
     ];
-    const vulnerable =
-      trueBody !== falseBody || trueStatus !== falseStatus;
+    const vulnerable = trueBody !== falseBody || trueStatus !== falseStatus;
     const evidenceExchanges = vulnerable
       ? [trueResult.exchange, falseResult.exchange]
       : [];

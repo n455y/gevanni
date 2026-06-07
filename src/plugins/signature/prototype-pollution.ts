@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -19,7 +16,7 @@ export const PROTOTYPE_POLLUTION_PATTERNS: RegExp[] = [
 ];
 
 export class PrototypePollutionPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("prototype-pollution");
+  readonly name = "signature:prototype-pollution";
   protected readonly groups = [SignatureGroupId("prototype-pollution")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
@@ -41,7 +38,9 @@ export class PrototypePollutionPlugin extends MutationFilteredSignaturePlugin {
       allExchanges.push(...result.allExchanges);
       matches.push(
         ...result.allExchanges.filter((ex) =>
-          PROTOTYPE_POLLUTION_PATTERNS.some((p) => p.test(ex.response.body?.toString() ?? "")),
+          PROTOTYPE_POLLUTION_PATTERNS.some((p) =>
+            p.test(ex.response.body?.toString() ?? ""),
+          ),
         ),
       );
       if (matches.length > 0) break;

@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { PrototypePollutionPlugin, PROTOTYPE_POLLUTION_PATTERNS } from "./prototype-pollution.ts";
+import {
+  PrototypePollutionPlugin,
+  PROTOTYPE_POLLUTION_PATTERNS,
+} from "./prototype-pollution.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type {
@@ -14,11 +17,20 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
@@ -74,7 +86,7 @@ describe("PrototypePollutionPlugin", () => {
     expect(results).toHaveLength(1);
     const items = results[0];
     expect(items).toHaveLength(1);
-    expect(items[0].signatureName).toBe("prototype-pollution");
+    expect(items[0].signatureName).toBe("signature:prototype-pollution");
     expect(items[0].parameter).toEqual(targets[0]);
   });
 
@@ -108,26 +120,32 @@ describe("PrototypePollutionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("q", "test");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("TypeError: Cannot set property 'isAdmin' of undefined"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from(
+            "TypeError: Cannot set property 'isAdmin' of undefined",
+          ),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("prototype-pollution"),
+        signatureName: "signature:prototype-pollution",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("prototype-pollution-pattern");
@@ -143,26 +161,30 @@ describe("PrototypePollutionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("q", "test");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("RangeError: Maximum call stack size exceeded"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("RangeError: Maximum call stack size exceeded"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("prototype-pollution"),
+        signatureName: "signature:prototype-pollution",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -176,26 +198,30 @@ describe("PrototypePollutionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("q", "test");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: Buffer.from("normal response with no errors"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: Buffer.from("normal response with no errors"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("prototype-pollution"),
+        signatureName: "signature:prototype-pollution",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.judgmentId).toBe("prototype-pollution-pattern");
@@ -211,26 +237,30 @@ describe("PrototypePollutionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("q", "test");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: null,
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: null,
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("prototype-pollution"),
+        signatureName: "signature:prototype-pollution",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
   });
@@ -238,13 +268,17 @@ describe("PrototypePollutionPlugin", () => {
   it("includes all required prototype pollution patterns", () => {
     expect(PROTOTYPE_POLLUTION_PATTERNS).toHaveLength(6);
     expect(
-      PROTOTYPE_POLLUTION_PATTERNS[0].test("Cannot set property 'x' of undefined"),
+      PROTOTYPE_POLLUTION_PATTERNS[0].test(
+        "Cannot set property 'x' of undefined",
+      ),
     ).toBe(true);
     expect(
       PROTOTYPE_POLLUTION_PATTERNS[1].test("Object.prototype.hasOwnProperty"),
     ).toBe(true);
     expect(
-      PROTOTYPE_POLLUTION_PATTERNS[2].test("TypeError: config.trim is not a function"),
+      PROTOTYPE_POLLUTION_PATTERNS[2].test(
+        "TypeError: config.trim is not a function",
+      ),
     ).toBe(true);
     expect(
       PROTOTYPE_POLLUTION_PATTERNS[3].test("JSON.parse: unexpected character"),

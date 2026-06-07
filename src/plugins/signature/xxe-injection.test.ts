@@ -14,11 +14,20 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
@@ -74,7 +83,7 @@ describe("XxeInjectionPlugin", () => {
     expect(results).toHaveLength(1);
     const items = results[0];
     expect(items).toHaveLength(2);
-    expect(items[0].signatureName).toBe("xxe-injection");
+    expect(items[0].signatureName).toBe("signature:xxe-injection");
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -108,26 +117,32 @@ describe("XxeInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("xml", "<foo/>");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("SAXParseException: The entity \"xxe\" was referenced, but not declared."),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from(
+            'SAXParseException: The entity "xxe" was referenced, but not declared.',
+          ),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("xxe-injection"),
+        signatureName: "signature:xxe-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("xxe-error-pattern");
@@ -143,26 +158,30 @@ describe("XxeInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("xml", "<foo/>");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("XML Parsing Error: not well-formed"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("XML Parsing Error: not well-formed"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("xxe-injection"),
+        signatureName: "signature:xxe-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -176,26 +195,30 @@ describe("XxeInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("xml", "<foo/>");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("External entity is not allowed in this context"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("External entity is not allowed in this context"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("xxe-injection"),
+        signatureName: "signature:xxe-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -209,26 +232,30 @@ describe("XxeInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("xml", "<foo/>");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: Buffer.from("<result>ok</result>"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: Buffer.from("<result>ok</result>"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("xxe-injection"),
+        signatureName: "signature:xxe-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.judgmentId).toBe("xxe-error-pattern");
@@ -244,43 +271,69 @@ describe("XxeInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("xml", "<foo/>");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: null,
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: null,
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("xxe-injection"),
+        signatureName: "signature:xxe-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
   });
 
   it("includes all required XXE error patterns", () => {
     expect(XXE_ERROR_PATTERNS).toHaveLength(12);
-    expect(XXE_ERROR_PATTERNS[0].test("SAXParseException: not well-formed")).toBe(true);
-    expect(XXE_ERROR_PATTERNS[1].test("SAXParser exception occurred")).toBe(true);
+    expect(
+      XXE_ERROR_PATTERNS[0].test("SAXParseException: not well-formed"),
+    ).toBe(true);
+    expect(XXE_ERROR_PATTERNS[1].test("SAXParser exception occurred")).toBe(
+      true,
+    );
     expect(XXE_ERROR_PATTERNS[2].test("XML parser error at line 1")).toBe(true);
-    expect(XXE_ERROR_PATTERNS[3].test("XML Parsing Error: syntax error")).toBe(true);
-    expect(XXE_ERROR_PATTERNS[4].test("org.xml.sax.SAXParseException")).toBe(true);
-    expect(XXE_ERROR_PATTERNS[5].test("javax.xml.parsers.ParserConfigurationException")).toBe(true);
-    expect(XXE_ERROR_PATTERNS[6].test("System.Xml.XmlException: root element missing")).toBe(true);
-    expect(XXE_ERROR_PATTERNS[7].test("libxml2 error: internal error")).toBe(true);
+    expect(XXE_ERROR_PATTERNS[3].test("XML Parsing Error: syntax error")).toBe(
+      true,
+    );
+    expect(XXE_ERROR_PATTERNS[4].test("org.xml.sax.SAXParseException")).toBe(
+      true,
+    );
+    expect(
+      XXE_ERROR_PATTERNS[5].test(
+        "javax.xml.parsers.ParserConfigurationException",
+      ),
+    ).toBe(true);
+    expect(
+      XXE_ERROR_PATTERNS[6].test(
+        "System.Xml.XmlException: root element missing",
+      ),
+    ).toBe(true);
+    expect(XXE_ERROR_PATTERNS[7].test("libxml2 error: internal error")).toBe(
+      true,
+    );
     expect(XXE_ERROR_PATTERNS[8].test("XML_E_INVALID_UNICODE")).toBe(true);
     expect(XXE_ERROR_PATTERNS[9].test("not well-formed xml")).toBe(true);
     expect(XXE_ERROR_PATTERNS[10].test("entity foo not defined")).toBe(true);
-    expect(XXE_ERROR_PATTERNS[11].test("External entity is not allowed in this context")).toBe(true);
+    expect(
+      XXE_ERROR_PATTERNS[11].test(
+        "External entity is not allowed in this context",
+      ),
+    ).toBe(true);
   });
 });

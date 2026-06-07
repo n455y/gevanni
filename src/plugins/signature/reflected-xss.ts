@@ -1,14 +1,11 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("reflected-xss");
+  readonly name = "signature:reflected-xss";
   protected readonly groups = [SignatureGroupId("xss")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
@@ -20,8 +17,8 @@ export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
     );
     const result = await replay([instruction]);
     const allExchanges = result.allExchanges;
-    const reflected = allExchanges.filter(
-      (ex) => (ex.response.body?.toString() ?? "").includes(payload),
+    const reflected = allExchanges.filter((ex) =>
+      (ex.response.body?.toString() ?? "").includes(payload),
     );
     const evidence: Evidence = {
       judgmentId: "payload-reflection",

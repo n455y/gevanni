@@ -14,11 +14,20 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
@@ -74,7 +83,7 @@ describe("CrlfInjectionPlugin", () => {
     expect(results).toHaveLength(1);
     const items = results[0];
     expect(items).toHaveLength(1);
-    expect(items[0].signatureName).toBe("crlf-injection");
+    expect(items[0].signatureName).toBe("signature:crlf-injection");
     expect(items[0].parameter).toEqual(targets[0]);
   });
 
@@ -108,26 +117,30 @@ describe("CrlfInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("url", "/page");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: { "X-Injected": "gevanni_crlf" },
-        body: Buffer.from("normal response"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: { "X-Injected": "gevanni_crlf" },
+          body: Buffer.from("normal response"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("crlf-injection"),
+        signatureName: "signature:crlf-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("header-injection");
@@ -143,26 +156,30 @@ describe("CrlfInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("url", "/page");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 302,
-        headers: { "Location": "/page\r\nX-Injected: gevanni_crlf" },
-        body: Buffer.from(""),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 302,
+          headers: { Location: "/page\r\nX-Injected: gevanni_crlf" },
+          body: Buffer.from(""),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("crlf-injection"),
+        signatureName: "signature:crlf-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -176,26 +193,30 @@ describe("CrlfInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("url", "/page");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: { "Content-Type": "text/html" },
-        body: Buffer.from("normal response without injected headers"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: { "Content-Type": "text/html" },
+          body: Buffer.from("normal response without injected headers"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("crlf-injection"),
+        signatureName: "signature:crlf-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.judgmentId).toBe("header-injection");
@@ -211,26 +232,30 @@ describe("CrlfInjectionPlugin", () => {
     });
 
     const parameter = makeQueryParameter("url", "/page");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: null,
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: null,
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("crlf-injection"),
+        signatureName: "signature:crlf-injection",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
   });

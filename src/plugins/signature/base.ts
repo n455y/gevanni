@@ -2,17 +2,15 @@ import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/index.ts";
 import type { AuditResult } from "../../commands/run-audit.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
+import type { SignaturePlugin, PluginContext } from "../../core/plugin.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import type { AuditParameter, Finding } from "../../types/models.ts";
-import { type SignatureId, SignatureGroupId } from "../../types/branded.ts";
+import type { SignatureGroupId } from "../../types/branded.ts";
 
-export interface SignaturePlugin extends Plugin {
-  readonly name: SignatureId;
-}
+export type { SignaturePlugin };
 
 export abstract class SignaturePluginBase implements SignaturePlugin {
-  abstract readonly name: SignatureId;
+  abstract readonly name: `signature:${string}`;
   protected abstract readonly groups: SignatureGroupId[];
   protected commandBus!: CommandBus;
 
@@ -25,11 +23,13 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
   protected isAlreadyChecked(context: RunAuditContext): boolean {
     const paramKey = `${context.scenarioId}:${JSON.stringify(context.parameter.location)}`;
     const sameParamJobs = context.completedJobs.filter(
-      (job) => `${job.scenarioId}:${JSON.stringify(job.parameter.location)}` === paramKey,
+      (job) =>
+        `${job.scenarioId}:${JSON.stringify(job.parameter.location)}` ===
+        paramKey,
     );
     return this.groups.every((cat) =>
-      sameParamJobs.some((job) =>
-        job.groups.includes(cat) && job.finding?.vulnerable === true,
+      sameParamJobs.some(
+        (job) => job.groups.includes(cat) && job.finding?.vulnerable === true,
       ),
     );
   }

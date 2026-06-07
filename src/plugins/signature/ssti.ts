@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -21,7 +18,7 @@ const SSTI_PAYLOADS: SstiPayload[] = [
 ];
 
 export class SstiPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("ssti");
+  readonly name = "signature:ssti";
   protected readonly groups = [SignatureGroupId("ssti")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 

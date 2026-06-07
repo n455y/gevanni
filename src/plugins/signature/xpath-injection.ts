@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -17,7 +14,7 @@ export const XPATH_ERROR_PATTERNS: RegExp[] = [
 ];
 
 export class XpathInjectionPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("xpath-injection");
+  readonly name = "signature:xpath-injection";
   protected readonly groups = [SignatureGroupId("xpath-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
@@ -30,7 +27,9 @@ export class XpathInjectionPlugin extends MutationFilteredSignaturePlugin {
     const result = await replay([instruction]);
     const allExchanges = result.allExchanges;
     const matches = allExchanges.filter((ex) =>
-      XPATH_ERROR_PATTERNS.some((p) => p.test(ex.response.body?.toString() ?? "")),
+      XPATH_ERROR_PATTERNS.some((p) =>
+        p.test(ex.response.body?.toString() ?? ""),
+      ),
     );
     const evidence: Evidence = {
       judgmentId: "xpath-error-pattern",

@@ -13,24 +13,34 @@ import type {
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 import { ExactDiffPlugin } from "../diff/exact.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
 function makeQueryParameter(name: string, value: string): AuditParameter {
-  return new QueryParameter({ name }, value, [
-    BuiltinMutationType.AppendValue,
-  ]);
+  return new QueryParameter({ name }, value, [BuiltinMutationType.AppendValue]);
 }
 
-function makeJsonPrimitiveParam(path: string[], value: unknown): AuditParameter {
+function makeJsonPrimitiveParam(
+  path: string[],
+  value: unknown,
+): AuditParameter {
   return new JsonPrimitiveParameter({ path }, value as JsonPrimitive, [
     BuiltinMutationType.ReplaceValue,
   ]);
@@ -46,8 +56,16 @@ const mockRequest: HttpRequest = {
 async function setupPlugins() {
   const diffPlugin = new ExactDiffPlugin();
   const sqliPlugin = new SqliDiffPlugin();
-  await diffPlugin.init({ commandBus, eventBus: new InMemoryEventBus(), logger: noopLogger });
-  await sqliPlugin.init({ commandBus, eventBus: new InMemoryEventBus(), logger: noopLogger });
+  await diffPlugin.init({
+    commandBus,
+    eventBus: new InMemoryEventBus(),
+    logger: noopLogger,
+  });
+  await sqliPlugin.init({
+    commandBus,
+    eventBus: new InMemoryEventBus(),
+    logger: noopLogger,
+  });
 }
 
 describe("SqliDiffPlugin", () => {
@@ -65,7 +83,7 @@ describe("SqliDiffPlugin", () => {
 
     const items = results.find((r) => r.length > 0) ?? [];
     expect(items).toHaveLength(1);
-    expect(items[0].signatureName).toBe(SignatureId("sqli-diff"));
+    expect(items[0].signatureName).toBe("signature:sqli-diff");
   });
 
   it("detects SQL injection when responses differ via diff judgment", async () => {
@@ -76,9 +94,7 @@ describe("SqliDiffPlugin", () => {
     const mockReplay = async () => {
       callCount++;
       const body =
-        callCount === 1
-          ? '{"id":1,"name":"Alice"}'
-          : '{"id":0,"name":null}';
+        callCount === 1 ? '{"id":1,"name":"Alice"}' : '{"id":0,"name":null}';
       return new ReplayResult({
         id: ExchangeId("test-exchange-id"),
         request: mockRequest,
@@ -92,14 +108,17 @@ describe("SqliDiffPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-diff"),
+        signatureName: "signature:sqli-diff",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("diff-based");
@@ -123,14 +142,17 @@ describe("SqliDiffPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-diff"),
+        signatureName: "signature:sqli-diff",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.evidenceExchanges).toHaveLength(0);

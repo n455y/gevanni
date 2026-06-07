@@ -14,20 +14,27 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
 function makeQueryParameter(name: string, value: string): AuditParameter {
-  return new QueryParameter({ name }, value, [
-    BuiltinMutationType.AppendValue,
-  ]);
+  return new QueryParameter({ name }, value, [BuiltinMutationType.AppendValue]);
 }
 
 function makeJsonPrimitiveParam(
@@ -73,7 +80,7 @@ describe("SqliTimePlugin", () => {
     expect(results).toHaveLength(1);
     const items = results[0];
     expect(items).toHaveLength(1);
-    expect(items[0].signatureName).toBe(SignatureId("sqli-time"));
+    expect(items[0].signatureName).toBe("signature:sqli-time");
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -123,7 +130,7 @@ describe("SqliTimePlugin", () => {
 
     const findingsPromise = commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-time"),
+        signatureName: "signature:sqli-time",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
@@ -131,7 +138,10 @@ describe("SqliTimePlugin", () => {
       }),
     );
     const findings = await findingsPromise;
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("time-based-delay");
@@ -162,14 +172,17 @@ describe("SqliTimePlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-time"),
+        signatureName: "signature:sqli-time",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.evidenceExchanges).toHaveLength(0);

@@ -39,6 +39,10 @@ export interface MutationPlugin extends Plugin {
   readonly name: `mutation:${string}`;
 }
 
+export interface SignaturePlugin extends Plugin {
+  readonly name: `signature:${string}`;
+}
+
 export interface PluginRegistry {
   register(plugin: Plugin): void;
   initializeAll(context: RuntimeContext): Promise<Plugin[]>;

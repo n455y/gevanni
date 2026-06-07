@@ -14,20 +14,27 @@ import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
 import { JsonPrimitiveParameter } from "../parameter/json.ts";
 import { HeaderParameter } from "../parameter/header.ts";
-import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
+
+} from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
 });
 
 function makeQueryParameter(name: string, value: string): AuditParameter {
-  return new QueryParameter({ name }, value, [
-    BuiltinMutationType.AppendValue,
-  ]);
+  return new QueryParameter({ name }, value, [BuiltinMutationType.AppendValue]);
 }
 
 function makeJsonPrimitiveParam(
@@ -73,7 +80,7 @@ describe("SqliBooleanPlugin", () => {
     expect(results).toHaveLength(1);
     const items = results[0];
     expect(items).toHaveLength(1);
-    expect(items[0].signatureName).toBe(SignatureId("sqli-boolean"));
+    expect(items[0].signatureName).toBe("signature:sqli-boolean");
   });
 
   it("does not create definitions for non-matching parameter types", async () => {
@@ -110,9 +117,7 @@ describe("SqliBooleanPlugin", () => {
     const mockReplay = async () => {
       callCount++;
       const body =
-        callCount === 1
-          ? '{"id":1,"name":"Alice"}'
-          : '{"id":0,"name":null}';
+        callCount === 1 ? '{"id":1,"name":"Alice"}' : '{"id":0,"name":null}';
       return new ReplayResult({
         id: ExchangeId("test-exchange-id"),
         request: mockRequest,
@@ -126,14 +131,17 @@ describe("SqliBooleanPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-boolean"),
+        signatureName: "signature:sqli-boolean",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("boolean-based-differential");
@@ -165,14 +173,17 @@ describe("SqliBooleanPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-boolean"),
+        signatureName: "signature:sqli-boolean",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -199,14 +210,17 @@ describe("SqliBooleanPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-boolean"),
+        signatureName: "signature:sqli-boolean",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.evidenceExchanges).toHaveLength(0);
@@ -234,14 +248,17 @@ describe("SqliBooleanPlugin", () => {
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-boolean"),
+        signatureName: "signature:sqli-boolean",
         scenarioId: ScenarioId("test-scenario"),
         parameter,
         replay: mockReplay,
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
   });

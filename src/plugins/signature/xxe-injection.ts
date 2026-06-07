@@ -1,7 +1,4 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
+import { SignatureGroupId } from "../../types/branded.ts";
 import type { Evidence } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
@@ -23,9 +20,11 @@ export const XXE_ERROR_PATTERNS: RegExp[] = [
 ];
 
 export class XxeInjectionPlugin extends MutationFilteredSignaturePlugin {
-  readonly name = SignatureId("xxe-injection");
+  readonly name = "signature:xxe-injection";
   protected readonly groups = [SignatureGroupId("xxe-injection")];
-  protected readonly mutationTypes = [BuiltinMutationType.ReplaceValue] as const;
+  protected readonly mutationTypes = [
+    BuiltinMutationType.ReplaceValue,
+  ] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
     const payload = BuiltinPayload.String(
@@ -38,7 +37,9 @@ export class XxeInjectionPlugin extends MutationFilteredSignaturePlugin {
     const result = await replay([instruction]);
     const allExchanges = result.allExchanges;
     const matches = allExchanges.filter((ex) =>
-      XXE_ERROR_PATTERNS.some((p) => p.test(ex.response.body?.toString() ?? "")),
+      XXE_ERROR_PATTERNS.some((p) =>
+        p.test(ex.response.body?.toString() ?? ""),
+      ),
     );
     const evidence: Evidence = {
       judgmentId: "xxe-error-pattern",

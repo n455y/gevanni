@@ -6,21 +6,33 @@ import { SqliBooleanPlugin } from "./sqli-boolean.ts";
 import { SqliErrorPlugin } from "./sqli-error.ts";
 import { ReflectedXssPlugin } from "./reflected-xss.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
-import type { AuditParameter, Finding, SignatureJob } from "../../types/models.ts";
+import type {
+  AuditParameter,
+  Finding,
+  SignatureJob,
+} from "../../types/models.ts";
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
-import { ExchangeId, ScenarioId, SignatureId, SignatureGroupId } from "../../types/branded.ts";
+import {
+  ExchangeId,
+  ScenarioId,
 
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+  SignatureGroupId,
+} from "../../types/branded.ts";
+
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 function makeQueryParameter(name: string, value: string): AuditParameter {
-  return new QueryParameter({ name }, value, [
-    BuiltinMutationType.AppendValue,
-  ]);
+  return new QueryParameter({ name }, value, [BuiltinMutationType.AppendValue]);
 }
 
 function makeCompletedJob(
-  signatureName: string,
+  signatureName: `signature:${string}`,
   vulnerable: boolean,
   groups: SignatureGroupId[] = [],
 ): SignatureJob {
@@ -28,7 +40,7 @@ function makeCompletedJob(
     id: "job-id" as any,
     scanId: "scan-id" as any,
     scenarioId: ScenarioId("test-scenario"),
-    signatureName: SignatureId(signatureName),
+    signatureName,
     groups,
     parameter: makeQueryParameter("id", "1"),
     status: "completed" as any,
@@ -69,15 +81,18 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: makeQueryParameter("id", "1"),
-        replay: async () => new ReplayResult({
-          id: ExchangeId("test"),
-          request: { method: "GET", url: "", headers: {}, body: null },
-          response: { statusCode: 200, headers: {}, body: null },
-        }),
-        completedJobs: [makeCompletedJob("sqli-boolean", true, [SignatureGroupId("sqli")])],
+        replay: async () =>
+          new ReplayResult({
+            id: ExchangeId("test"),
+            request: { method: "GET", url: "", headers: {}, body: null },
+            response: { statusCode: 200, headers: {}, body: null },
+          }),
+        completedJobs: [
+          makeCompletedJob("signature:sqli-boolean", true, [SignatureGroupId("sqli")]),
+        ],
       }),
     );
 
@@ -101,15 +116,18 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: makeQueryParameter("id", "1"),
-        replay: async () => new ReplayResult({
-          id: ExchangeId("test"),
-          request: { method: "GET", url: "", headers: {}, body: null },
-          response: { statusCode: 200, headers: {}, body: null },
-        }),
-        completedJobs: [makeCompletedJob("sqli-boolean", false, [SignatureGroupId("sqli")])],
+        replay: async () =>
+          new ReplayResult({
+            id: ExchangeId("test"),
+            request: { method: "GET", url: "", headers: {}, body: null },
+            response: { statusCode: 200, headers: {}, body: null },
+          }),
+        completedJobs: [
+          makeCompletedJob("signature:sqli-boolean", false, [SignatureGroupId("sqli")]),
+        ],
       }),
     );
 
@@ -133,15 +151,16 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: makeQueryParameter("id", "1"),
-        replay: async () => new ReplayResult({
-          id: ExchangeId("test"),
-          request: { method: "GET", url: "", headers: {}, body: null },
-          response: { statusCode: 200, headers: {}, body: null },
-        }),
-        completedJobs: [makeCompletedJob("reflected-xss", true)],
+        replay: async () =>
+          new ReplayResult({
+            id: ExchangeId("test"),
+            request: { method: "GET", url: "", headers: {}, body: null },
+            response: { statusCode: 200, headers: {}, body: null },
+          }),
+        completedJobs: [makeCompletedJob("signature:reflected-xss", true)],
       }),
     );
 
@@ -158,14 +177,15 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
-        signatureName: SignatureId("sqli-error"),
+        signatureName: "signature:sqli-error",
         scenarioId: ScenarioId("test-scenario"),
         parameter: makeQueryParameter("id", "1"),
-        replay: async () => new ReplayResult({
-          id: ExchangeId("test"),
-          request: { method: "GET", url: "", headers: {}, body: null },
-          response: { statusCode: 200, headers: {}, body: null },
-        }),
+        replay: async () =>
+          new ReplayResult({
+            id: ExchangeId("test"),
+            request: { method: "GET", url: "", headers: {}, body: null },
+            response: { statusCode: 200, headers: {}, body: null },
+          }),
         completedJobs: [],
       }),
     );
@@ -175,12 +195,19 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
   describe("multiple groups", () => {
     class MultiGroupPlugin extends SignaturePluginBase {
-      readonly name = SignatureId("multi-cat-test");
-      protected readonly groups = [SignatureGroupId("cat-a"), SignatureGroupId("cat-b")];
+      readonly name = "signature:multi-cat-test";
+      protected readonly groups = [
+        SignatureGroupId("cat-a"),
+        SignatureGroupId("cat-b"),
+      ];
       protected async runAudit() {
         return {
           vulnerable: false,
-          evidence: { judgmentId: "test", exchanges: [], evidenceExchanges: [] },
+          evidence: {
+            judgmentId: "test",
+            exchanges: [],
+            evidenceExchanges: [],
+          },
           request: { method: "GET", url: "", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         };
@@ -188,12 +215,16 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
     }
 
     class SingleGroupPlugin extends SignaturePluginBase {
-      readonly name = SignatureId("cat-a-member");
+      readonly name = "signature:cat-a-member";
       protected readonly groups = [SignatureGroupId("cat-a")];
       protected async runAudit() {
         return {
           vulnerable: false,
-          evidence: { judgmentId: "test", exchanges: [], evidenceExchanges: [] },
+          evidence: {
+            judgmentId: "test",
+            exchanges: [],
+            evidenceExchanges: [],
+          },
           request: { method: "GET", url: "", headers: {}, body: null },
           response: { statusCode: 200, headers: {}, body: null },
         };
@@ -218,17 +249,21 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
       const results = await commandBus.dispatch(
         new RunAuditCommand({
-          signatureName: SignatureId("multi-cat-test"),
-        scenarioId: ScenarioId("test-scenario"),
+          signatureName: "signature:multi-cat-test",
+          scenarioId: ScenarioId("test-scenario"),
           parameter: makeQueryParameter("id", "1"),
-          replay: async () => new ReplayResult({
-            id: ExchangeId("test"),
-            request: { method: "GET", url: "", headers: {}, body: null },
-            response: { statusCode: 200, headers: {}, body: null },
-          }),
+          replay: async () =>
+            new ReplayResult({
+              id: ExchangeId("test"),
+              request: { method: "GET", url: "", headers: {}, body: null },
+              response: { statusCode: 200, headers: {}, body: null },
+            }),
           completedJobs: [
-            makeCompletedJob("cat-a-member", true, [SignatureGroupId("cat-a")]),
-            makeCompletedJob("multi-cat-test", true, [SignatureGroupId("cat-a"), SignatureGroupId("cat-b")]),
+            makeCompletedJob("signature:cat-a-member", true, [SignatureGroupId("cat-a")]),
+            makeCompletedJob("signature:multi-cat-test", true, [
+              SignatureGroupId("cat-a"),
+              SignatureGroupId("cat-b"),
+            ]),
           ],
         }),
       );
@@ -253,16 +288,17 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
       const results = await commandBus.dispatch(
         new RunAuditCommand({
-          signatureName: SignatureId("multi-cat-test"),
-        scenarioId: ScenarioId("test-scenario"),
+          signatureName: "signature:multi-cat-test",
+          scenarioId: ScenarioId("test-scenario"),
           parameter: makeQueryParameter("id", "1"),
-          replay: async () => new ReplayResult({
-            id: ExchangeId("test"),
-            request: { method: "GET", url: "", headers: {}, body: null },
-            response: { statusCode: 200, headers: {}, body: null },
-          }),
+          replay: async () =>
+            new ReplayResult({
+              id: ExchangeId("test"),
+              request: { method: "GET", url: "", headers: {}, body: null },
+              response: { statusCode: 200, headers: {}, body: null },
+            }),
           completedJobs: [
-            makeCompletedJob("cat-a-member", true, [SignatureGroupId("cat-a")]),
+            makeCompletedJob("signature:cat-a-member", true, [SignatureGroupId("cat-a")]),
             // cat-b has no vulnerable detection
           ],
         }),
