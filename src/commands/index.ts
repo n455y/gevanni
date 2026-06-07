@@ -8,4 +8,5 @@ export * from "./report.ts";
 export * from "./exchange.ts";
 export * from "./run-audit.ts";
 export * from "./proxy.ts";
+export * from "./diff.ts";
 

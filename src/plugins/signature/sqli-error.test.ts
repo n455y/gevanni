@@ -19,7 +19,12 @@ import { ExchangeId, ScenarioId, SignatureId } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
 
 let commandBus: InMemoryCommandBus;
-const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+const noopLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+};
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
@@ -109,17 +114,18 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from(
-          "You have an error in your SQL syntax. MySQL server version 5.7",
-        ),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from(
+            "You have an error in your SQL syntax. MySQL server version 5.7",
+          ),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
@@ -130,11 +136,14 @@ describe("SqliErrorPlugin", () => {
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("sql-error-pattern");
-    expect(finding.evidence.evidenceExchanges).toHaveLength(1);
+    expect(finding.evidence.evidenceExchanges).toHaveLength(2);
   });
 
   it("detects PostgreSQL SQL error in response body", async () => {
@@ -146,15 +155,16 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("PostgreSQL ERROR: syntax error at or near"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("PostgreSQL ERROR: syntax error at or near"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
@@ -165,7 +175,10 @@ describe("SqliErrorPlugin", () => {
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
     expect(finding.evidence.judgmentId).toBe("sql-error-pattern");
@@ -180,15 +193,16 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from("ORA-01722 invalid number"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from("ORA-01722 invalid number"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
@@ -199,7 +213,10 @@ describe("SqliErrorPlugin", () => {
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -213,17 +230,18 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from(
-          "Microsoft OLE DB Provider for ODBC SQL Server error",
-        ),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from(
+            "Microsoft OLE DB Provider for ODBC SQL Server error",
+          ),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
@@ -234,7 +252,10 @@ describe("SqliErrorPlugin", () => {
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -248,15 +269,16 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 500,
-        headers: {},
-        body: Buffer.from('SQLITE_ERROR: near "OR": syntax error'),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 500,
+          headers: {},
+          body: Buffer.from('SQLITE_ERROR: near "OR": syntax error'),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
@@ -267,7 +289,10 @@ describe("SqliErrorPlugin", () => {
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(true);
   });
@@ -281,15 +306,16 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: Buffer.from("normal response with no errors"),
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: Buffer.from("normal response with no errors"),
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
@@ -300,10 +326,13 @@ describe("SqliErrorPlugin", () => {
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
-    expect(finding.evidence.judgmentId).toBe("sql-error-pattern");
+    expect(finding.evidence.judgmentId).toBe("diff-based");
     expect(finding.evidence.evidenceExchanges).toHaveLength(0);
   });
 
@@ -316,15 +345,16 @@ describe("SqliErrorPlugin", () => {
     });
 
     const parameter = makeQueryParameter("id", "1");
-    const mockReplay = async () => new ReplayResult({
-      id: ExchangeId("test-exchange-id"),
-      request: mockRequest,
-      response: {
-        statusCode: 200,
-        headers: {},
-        body: null,
-      },
-    });
+    const mockReplay = async () =>
+      new ReplayResult({
+        id: ExchangeId("test-exchange-id"),
+        request: mockRequest,
+        response: {
+          statusCode: 200,
+          headers: {},
+          body: null,
+        },
+      });
 
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
@@ -335,7 +365,10 @@ describe("SqliErrorPlugin", () => {
         completedJobs: [],
       }),
     );
-    const { finding } = findings[0] as { status: "completed"; finding: Finding };
+    const { finding } = findings[0] as {
+      status: "completed";
+      finding: Finding;
+    };
 
     expect(finding.vulnerable).toBe(false);
   });

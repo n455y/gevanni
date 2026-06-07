@@ -10,6 +10,10 @@ import { CookieParserPlugin, CookieMutationPlugin } from "./plugins/parameter/co
 import { ReflectedXssPlugin } from "./plugins/signature/reflected-xss.ts";
 import { SqliErrorPlugin } from "./plugins/signature/sqli-error.ts";
 import { SqliBooleanPlugin } from "./plugins/signature/sqli-boolean.ts";
+import { SqliDiffPlugin } from "./plugins/signature/sqli-diff.ts";
+import { ExactDiffPlugin } from "./plugins/diff/exact.ts";
+import { JsonDiffPlugin } from "./plugins/diff/json.ts";
+import { HtmlDiffPlugin } from "./plugins/diff/html.ts";
 import { SqliTimePlugin } from "./plugins/signature/sqli-time.ts";
 import { SqliUnionPlugin } from "./plugins/signature/sqli-union.ts";
 import { LdapInjectionPlugin } from "./plugins/signature/ldap-injection.ts";
@@ -48,6 +52,10 @@ const builtinPlugins: PluginFactory[] = [
   () => new ReflectedXssPlugin(),
   () => new SqliErrorPlugin(),
   () => new SqliBooleanPlugin(),
+  () => new SqliDiffPlugin(),
+  () => new JsonDiffPlugin(),
+  () => new HtmlDiffPlugin(),
+  () => new ExactDiffPlugin(),
   () => new SqliTimePlugin(),
   () => new SqliUnionPlugin(),
   () => new LdapInjectionPlugin(),

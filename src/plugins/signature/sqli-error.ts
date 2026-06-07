@@ -1,11 +1,9 @@
-import {
-  SignatureGroupId,
-  SignatureId,
-} from "../../types/branded.ts";
-import type { Evidence } from "../../types/models.ts";
+import { SignatureGroupId, SignatureId } from "../../types/branded.ts";
+import type { Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
+import { DiffCommand } from "../../commands/diff.ts";
 
 export const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
@@ -21,26 +19,56 @@ export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
   protected async runAudit({ parameter, replay }: RunAuditContext) {
-    const payload = BuiltinPayload.String("' OR 1=1--");
-    const instruction = parameter.createMutation(
-      payload,
-      BuiltinMutationType.AppendValue,
-    );
-    const result = await replay([instruction]);
-    const allExchanges = result.allExchanges;
+    const safePayload = BuiltinPayload.String("''");
+    const safeResult = await replay([
+      parameter.createMutation(safePayload, BuiltinMutationType.AppendValue),
+    ]);
+
+    const unsafePayload = BuiltinPayload.String("'''");
+    const unsafeResult = await replay([
+      parameter.createMutation(unsafePayload, BuiltinMutationType.AppendValue),
+    ]);
+
+    const allExchanges: Exchange[] = [
+      ...safeResult.allExchanges,
+      ...unsafeResult.allExchanges,
+    ];
+
     const matches = allExchanges.filter((ex) =>
-      SQL_ERROR_PATTERNS.some((p) => p.test(ex.response.body?.toString() ?? "")),
+      SQL_ERROR_PATTERNS.some((p) =>
+        p.test(ex.response.body?.toString() ?? ""),
+      ),
     );
-    const evidence: Evidence = {
-      judgmentId: "sql-error-pattern",
-      exchanges: allExchanges,
-      evidenceExchanges: matches,
-    };
+
+    if (matches.length > 0) {
+      return {
+        vulnerable: true,
+        evidence: {
+          judgmentId: "sql-error-pattern",
+          exchanges: allExchanges,
+          evidenceExchanges: matches,
+        },
+        request: unsafeResult.exchange.request,
+        response: unsafeResult.exchange.response,
+      };
+    }
+
+    const judgment = await this.commandBus.pipe(
+      new DiffCommand([
+        { label: "safe", exchange: safeResult.exchange },
+        { label: "unsafe", exchange: unsafeResult.exchange },
+      ]),
+    );
+
     return {
-      vulnerable: matches.length > 0,
-      evidence,
-      request: result.exchange.request,
-      response: result.exchange.response,
+      vulnerable: judgment.different,
+      evidence: {
+        judgmentId: "diff-based",
+        exchanges: allExchanges,
+        evidenceExchanges: judgment.evidenceExchanges,
+      },
+      request: unsafeResult.exchange.request,
+      response: unsafeResult.exchange.response,
     };
   }
 }
