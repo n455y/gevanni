@@ -1,4 +1,4 @@
-import type { Plugin } from "./core/plugin.ts";
+import type { Plugin, PluginRegistry } from "./core/plugin.ts";
 import { PostmanPlugin } from "./plugins/scenario/postman.ts";
 import { OpenApiPlugin } from "./plugins/scenario/openapi.ts";
 import { HttpProxyPlugin, type HttpProxyConfig } from "./plugins/proxy/http-proxy.ts";
@@ -76,3 +76,12 @@ const builtinPlugins: PluginFactory[] = [
 export const builtinPluginFactories = new Map<string, PluginFactory>(
   builtinPlugins.map((factory) => [factory({} as Record<string, unknown>).name, factory]),
 );
+
+export function registerAllBuiltinPlugins(
+  registry: PluginRegistry,
+  overrides?: Record<string, Record<string, unknown>>,
+): void {
+  for (const [name, factory] of builtinPluginFactories) {
+    registry.register(factory(overrides?.[name] ?? ({} as Record<string, unknown>)));
+  }
+}

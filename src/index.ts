@@ -23,3 +23,4 @@ export {
   type AuditItem,
 } from "./core/index.ts";
 export * from "./commands/index.ts";
+export { builtinPluginFactories, registerAllBuiltinPlugins } from "./builtin.ts";

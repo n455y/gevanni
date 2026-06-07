@@ -94,11 +94,38 @@ export async function startMutationProxy(
     { algorithm: "sha256", notAfterDate },
   );
 
+  async function saveFailedExchange(
+    exchangeId: ExchangeId,
+    replayId: ReplayId,
+    request: HttpRequest,
+    errorMessage: string,
+    res: http.ServerResponse,
+  ): Promise<void> {
+    const exchange: Exchange = {
+      id: exchangeId,
+      request,
+      response: {
+        statusCode: 502,
+        headers: {},
+        body: Buffer.from(`Proxy error: ${errorMessage}`),
+      },
+    };
+    await commandBus.dispatch(new SaveExchangeCommand(replayId, exchange));
+    if (!res.headersSent) {
+      res.writeHead(502);
+    }
+    res.end(`Proxy error: ${errorMessage}`);
+  }
+
   const requestHandler = async (
     req: http.IncomingMessage,
     res: http.ServerResponse,
   ) => {
     const isHttps = req.socket instanceof TLSSocket;
+    let exchangeId: ExchangeId | undefined;
+    let replayId!: ReplayId;
+    let mutated!: HttpRequest;
+
     try {
       const chunks: Buffer[] = [];
       for await (const chunk of req) {
@@ -114,12 +141,12 @@ export async function startMutationProxy(
       }
       delete headers["proxy-connection"];
 
-      const exchangeId = headers["x-gevanni-exchange-id"]
+      exchangeId = headers["x-gevanni-exchange-id"]
         ? ExchangeId(headers["x-gevanni-exchange-id"])
         : undefined;
       delete headers["x-gevanni-exchange-id"];
 
-      const replayId = ReplayId(headers["x-gevanni-replay-id"]!);
+      replayId = ReplayId(headers["x-gevanni-replay-id"]!);
       delete headers["x-gevanni-replay-id"];
 
       const shouldMutate = headers["x-gevanni-mutate"] === "true";
@@ -134,7 +161,7 @@ export async function startMutationProxy(
         body,
       };
 
-      const mutated = shouldMutate
+      mutated = shouldMutate
         ? await commandBus.pipe<HttpRequest>(
             new ApplyMutationCommand(httpRequest, mutations),
           )
@@ -150,68 +177,82 @@ export async function startMutationProxy(
           : new HttpProxyAgent(upstreamProxyUrl)
         : undefined;
 
-      const proxyReq = lib.request(
-        {
-          hostname: targetUrl.hostname,
-          port: targetUrl.port || (targetIsHttps ? 443 : 80),
-          path: targetUrl.pathname + targetUrl.search,
-          method: mutated.method,
-          headers: { ...mutated.headers, host: targetUrl.host },
-          rejectUnauthorized: false,
-          autoSelectFamily: false,
-          ...(targetAgent ? { agent: targetAgent } : {}),
-        } as https.RequestOptions,
-        (proxyRes) => {
-          if (exchangeId) {
-            const chunks: Buffer[] = [];
-            proxyRes.on("data", (chunk: Buffer) => chunks.push(chunk));
-            proxyRes.on("end", async () => {
-              const responseBody =
-                chunks.length > 0 ? Buffer.concat(chunks) : null;
+      let proxyReq: http.ClientRequest;
+      try {
+        proxyReq = lib.request(
+          {
+            hostname: targetUrl.hostname,
+            port: targetUrl.port || (targetIsHttps ? 443 : 80),
+            path: targetUrl.pathname + targetUrl.search,
+            method: mutated.method,
+            headers: { ...mutated.headers, host: targetUrl.host },
+            rejectUnauthorized: false,
+            autoSelectFamily: false,
+            ...(targetAgent ? { agent: targetAgent } : {}),
+          } as https.RequestOptions,
+          (proxyRes) => {
+            if (exchangeId) {
+              const chunks: Buffer[] = [];
+              proxyRes.on("data", (chunk: Buffer) => chunks.push(chunk));
+              proxyRes.on("end", async () => {
+                const responseBody =
+                  chunks.length > 0 ? Buffer.concat(chunks) : null;
 
-              const responseHeaders: Record<string, string> = {};
-              for (const [key, value] of Object.entries(proxyRes.headers)) {
-                if (typeof value === "string") {
-                  responseHeaders[key] = value;
-                } else if (Array.isArray(value)) {
-                  responseHeaders[key] = value.join(", ");
+                const responseHeaders: Record<string, string> = {};
+                for (const [key, value] of Object.entries(proxyRes.headers)) {
+                  if (typeof value === "string") {
+                    responseHeaders[key] = value;
+                  } else if (Array.isArray(value)) {
+                    responseHeaders[key] = value.join(", ");
+                  }
                 }
-              }
 
-              const exchange: Exchange = {
-                id: exchangeId,
-                request: mutated,
-                response: {
-                  statusCode: proxyRes.statusCode ?? 0,
-                  headers: responseHeaders,
-                  body: responseBody,
-                },
-              };
-              await commandBus.dispatch(
-                new SaveExchangeCommand(replayId, exchange),
-              );
+                const exchange: Exchange = {
+                  id: exchangeId!,
+                  request: mutated,
+                  response: {
+                    statusCode: proxyRes.statusCode ?? 0,
+                    headers: responseHeaders,
+                    body: responseBody,
+                  },
+                };
+                await commandBus.dispatch(
+                  new SaveExchangeCommand(replayId, exchange),
+                );
 
+                res.writeHead(
+                  proxyRes.statusCode!,
+                  proxyRes.headers as Record<string, string>,
+                );
+                res.end(responseBody ?? Buffer.alloc(0));
+              });
+            } else {
               res.writeHead(
                 proxyRes.statusCode!,
                 proxyRes.headers as Record<string, string>,
               );
-              res.end(responseBody ?? Buffer.alloc(0));
-            });
-          } else {
-            res.writeHead(
-              proxyRes.statusCode!,
-              proxyRes.headers as Record<string, string>,
-            );
-            proxyRes.pipe(res);
-          }
-        },
-      );
+              proxyRes.pipe(res);
+            }
+          },
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (exchangeId) {
+          await saveFailedExchange(exchangeId, replayId, mutated, msg, res);
+        } else {
+          if (!res.headersSent) res.writeHead(502);
+          res.end(`Proxy error: ${msg}`);
+        }
+        return;
+      }
 
       proxyReq.on("error", (err) => {
-        if (!res.headersSent) {
-          res.writeHead(502);
+        if (exchangeId) {
+          saveFailedExchange(exchangeId, replayId, mutated, err.message, res);
+        } else {
+          if (!res.headersSent) res.writeHead(502);
+          res.end(`Proxy error: ${err.message}`);
         }
-        res.end(`Proxy error: ${err.message}`);
       });
 
       if (mutated.body) {
@@ -219,10 +260,13 @@ export async function startMutationProxy(
       }
       proxyReq.end();
     } catch (err) {
-      if (!res.headersSent) {
-        res.writeHead(500);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (exchangeId && replayId && mutated) {
+        await saveFailedExchange(exchangeId, replayId, mutated, msg, res);
+      } else {
+        if (!res.headersSent) res.writeHead(502);
+        res.end(`Proxy error: ${msg}`);
       }
-      res.end(`Proxy error: ${err}`);
     }
   };
 
