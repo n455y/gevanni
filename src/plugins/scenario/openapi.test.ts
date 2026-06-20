@@ -284,7 +284,7 @@ describe("buildScenariosFromExtension (diff config)", () => {
     });
     const sources = build(doc);
 
-    expect(sources[0].diff).toEqual({ strategy: "json" });
+    expect(sources[0].diff).toEqual({ type: "json" });
   });
 
   it("resolves diff per scenario independently across multiple scenarios", () => {
@@ -296,7 +296,7 @@ describe("buildScenariosFromExtension (diff config)", () => {
     });
     const sources = build(doc);
 
-    expect(sources[0].diff?.strategy).toBe("json");
+    expect(sources[0].diff?.type).toBe("json");
     expect(sources[1].diff).toBeUndefined();
   });
 
@@ -308,7 +308,7 @@ describe("buildScenariosFromExtension (diff config)", () => {
         ],
       });
       const sources = build(doc);
-      expect(sources[0].diff?.strategy).toBe(strategy);
+      expect(sources[0].diff?.type).toBe(strategy);
     }
   });
 

@@ -22,7 +22,11 @@ export class JsonDiffPlugin implements DiffPlugin {
 
   async init(_context: PluginContext): Promise<void> {}
 
-  compare(left: Exchange, right: Exchange): DiffResult {
+  compare(
+    left: Exchange,
+    right: Exchange,
+    _options?: Record<string, unknown>,
+  ): DiffResult {
     if (!isJsonContentType(left) || !isJsonContentType(right)) {
       return { hasDifferent: false };
     }

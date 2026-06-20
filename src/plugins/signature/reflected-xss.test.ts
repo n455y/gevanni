@@ -31,7 +31,7 @@ function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
     type: ScenarioType("test"),
     source: null,
     representation: "Test Scenario",
-    diffStrategy: "exact",
+    diffStrategy: { type: "exact" },
     ...overrides,
   };
 }

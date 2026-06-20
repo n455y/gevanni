@@ -6,5 +6,9 @@ export interface DiffResult {
 }
 
 export interface DiffPlugin extends Plugin {
-  compare(left: Exchange, right: Exchange): DiffResult;
+  compare(
+    left: Exchange,
+    right: Exchange,
+    options?: Record<string, unknown>,
+  ): DiffResult;
 }

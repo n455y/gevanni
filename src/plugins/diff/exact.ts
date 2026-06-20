@@ -7,7 +7,11 @@ export class ExactDiffPlugin implements DiffPlugin {
 
   async init(_context: PluginContext): Promise<void> {}
 
-  compare(left: Exchange, right: Exchange): DiffResult {
+  compare(
+    left: Exchange,
+    right: Exchange,
+    _options?: Record<string, unknown>,
+  ): DiffResult {
     const leftBody = left.response.body?.toString() ?? "";
     const rightBody = right.response.body?.toString() ?? "";
     const different =

@@ -23,7 +23,11 @@ export class HtmlDiffPlugin implements DiffPlugin {
 
   async init(_context: PluginContext): Promise<void> {}
 
-  compare(left: Exchange, right: Exchange): DiffResult {
+  compare(
+    left: Exchange,
+    right: Exchange,
+    _options?: Record<string, unknown>,
+  ): DiffResult {
     if (!isHtmlContentType(left) || !isHtmlContentType(right)) {
       return { hasDifferent: false };
     }

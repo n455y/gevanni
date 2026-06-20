@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import crypto from "node:crypto";
 import yaml from "js-yaml";
-import type { Scenario } from "../../types/models.ts";
+import type { DiffStrategyConfig, DiffStrategyType, Scenario } from "../../types/models.ts";
 import { ScenarioId } from "../../types/branded.ts";
 import { ScenarioType } from "../../types/branded.ts";
 
@@ -48,24 +48,23 @@ export interface OpenApiSecondOrder {
   steps: OpenApiStep[];
 }
 
-export interface OpenApiDiffConfig {
-  strategy: string;
-  options?: Record<string, unknown>;
-}
-
 export interface OpenApiScenarioSource {
   steps: OpenApiStep[];
   scannable: boolean;
-  diff?: OpenApiDiffConfig;
+  diff?: DiffStrategyConfig;
   secondOrders?: OpenApiSecondOrder[];
 }
 
-const KNOWN_DIFF_STRATEGIES = new Set(["exact", "json", "html"]);
+const KNOWN_DIFF_STRATEGIES = new Set<DiffStrategyType>([
+  "exact",
+  "json",
+  "html",
+]);
 
 function parseDiffConfig(
   raw: unknown,
   context: string,
-): OpenApiDiffConfig | undefined {
+): DiffStrategyConfig | undefined {
   if (raw === undefined) return undefined;
   if (!isObject(raw)) {
     throw new Error(
@@ -78,12 +77,15 @@ function parseDiffConfig(
       `${context}: diff.strategy must be a string`,
     );
   }
-  if (!KNOWN_DIFF_STRATEGIES.has(strategy)) {
+  if (!KNOWN_DIFF_STRATEGIES.has(strategy as DiffStrategyType)) {
     throw new Error(
       `${context}: unknown diff strategy "${strategy}". Known strategies: ${[...KNOWN_DIFF_STRATEGIES].join(", ")}`,
     );
   }
-  return { strategy };
+  const options = isObject(raw.options)
+    ? (raw.options as Record<string, unknown>)
+    : undefined;
+  return { type: strategy as DiffStrategyType, options };
 }
 
 // --- Helpers ---
@@ -629,7 +631,7 @@ export async function loadOpenApiScenarios(source: unknown): Promise<Scenario[]>
       type: OpenApiScenarioType,
       source,
       representation: lines.join("\n"),
-      diffStrategy: source.diff?.strategy ?? "exact",
+      diffStrategy: source.diff ?? { type: "exact" },
     };
   });
 }

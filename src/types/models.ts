@@ -59,6 +59,15 @@ export const BuiltinMutationType = {
   PrependValue: defineMutationType<StringPayload>("PrependValue"),
 } as const;
 
+// --- Diff strategy ---
+
+export type DiffStrategyType = "exact" | "json" | "html";
+
+export interface DiffStrategyConfig {
+  type: DiffStrategyType;
+  options?: Record<string, unknown>;
+}
+
 // --- Scenario ---
 export interface Scenario {
   id: ScenarioId;
@@ -66,7 +75,7 @@ export interface Scenario {
   type: ScenarioType;
   source: unknown;
   representation: string;
-  diffStrategy: string;
+  diffStrategy: DiffStrategyConfig;
 }
 
 // --- JSON types ---

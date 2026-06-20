@@ -4,7 +4,7 @@ import type { AuditResult } from "../../commands/run-audit.ts";
 import type { CommandBus } from "../../core/command-bus.ts";
 import type { SignaturePlugin, PluginContext, PluginRegistry } from "../../core/plugin.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
-import type { AuditParameter, Exchange, Finding } from "../../types/models.ts";
+import type { AuditParameter, DiffStrategyConfig, Exchange, Finding } from "../../types/models.ts";
 import type { SignatureGroupId } from "../../types/branded.ts";
 import type { DiffPlugin, DiffResult } from "../diff/base.ts";
 
@@ -39,20 +39,22 @@ export abstract class SignaturePluginBase implements SignaturePlugin {
   protected compareDiff(
     left: Exchange,
     right: Exchange,
-    strategy: string,
+    config: DiffStrategyConfig,
   ): DiffResult {
     if (!this.pluginRegistry) {
       throw new Error(
         `${this.name}: pluginRegistry is not available (expected to be set via PluginContext)`,
       );
     }
-    const plugin = this.pluginRegistry.getByName<DiffPlugin>(`diff:${strategy}`);
+    const plugin = this.pluginRegistry.getByName<DiffPlugin>(
+      `diff:${config.type}`,
+    );
     if (!plugin) {
       throw new Error(
-        `${this.name}: unknown diff strategy "${strategy}". Known: exact, json, html`,
+        `${this.name}: unknown diff strategy "${config.type}". Known: exact, json, html`,
       );
     }
-    return plugin.compare(left, right);
+    return plugin.compare(left, right, config.options);
   }
 
   async init(context: PluginContext): Promise<void> {

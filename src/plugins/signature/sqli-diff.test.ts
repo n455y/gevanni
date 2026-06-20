@@ -31,7 +31,7 @@ function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
     type: ScenarioType("test"),
     source: null,
     representation: "Test Scenario",
-    diffStrategy: "exact",
+    diffStrategy: { type: "exact" },
     ...overrides,
   };
 }
@@ -212,7 +212,7 @@ describe("SqliDiffPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-diff",
-        scenario: makeScenario({ diffStrategy: "json" }),
+        scenario: makeScenario({ diffStrategy: { type: "json" } }),
         parameter,
         replay: mockReplay,
         completedJobs: [],
