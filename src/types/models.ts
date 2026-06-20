@@ -66,6 +66,7 @@ export interface Scenario {
   type: ScenarioType;
   source: unknown;
   representation: string;
+  diffStrategy: string;
 }
 
 // --- JSON types ---

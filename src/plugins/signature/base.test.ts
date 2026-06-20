@@ -1,14 +1,17 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { PluginRegistryImpl } from "../../core/plugin.ts";
 import { SignaturePluginBase } from "./base.ts";
 import { SqliBooleanPlugin } from "./sqli-boolean.ts";
 import { SqliErrorPlugin } from "./sqli-error.ts";
 import { ReflectedXssPlugin } from "./reflected-xss.ts";
+import { ExactDiffPlugin } from "../diff/exact.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type {
   AuditParameter,
   Finding,
+  Scenario,
   SignatureJob,
 } from "../../types/models.ts";
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
@@ -16,9 +19,21 @@ import { QueryParameter } from "../parameter/query.ts";
 import {
   ExchangeId,
   ScenarioId,
-
+  ScenarioType,
   SignatureGroupId,
 } from "../../types/branded.ts";
+
+function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
+  return {
+    id: ScenarioId("test-scenario"),
+    name: "Test Scenario",
+    type: ScenarioType("test"),
+    source: null,
+    representation: "Test Scenario",
+    diffStrategy: "exact",
+    ...overrides,
+  };
+}
 
 const noopLogger = {
   debug: () => {},
@@ -58,31 +73,35 @@ function makeCompletedJob(
 
 describe("SignaturePluginBase isAlreadyChecked", () => {
   let commandBus: InMemoryCommandBus;
+  let registry: PluginRegistryImpl;
 
   beforeEach(() => {
     commandBus = new InMemoryCommandBus();
+    registry = new PluginRegistryImpl();
+    registry.register(new ExactDiffPlugin());
   });
+
+  function makeContext() {
+    return {
+      commandBus,
+      eventBus: new InMemoryEventBus(),
+      logger: noopLogger,
+      pluginRegistry: registry,
+    };
+  }
 
   it("skips when same group already found vulnerability", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await plugin.init(makeContext());
 
     // Register sqli-boolean too so its group is in the registry
     const booleanPlugin = new SqliBooleanPlugin();
-    await booleanPlugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await booleanPlugin.init(makeContext());
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: makeQueryParameter("id", "1"),
         replay: async () =>
           new ReplayResult({
@@ -101,23 +120,15 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
   it("does not skip when same group found no vulnerability", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await plugin.init(makeContext());
 
     const booleanPlugin = new SqliBooleanPlugin();
-    await booleanPlugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await booleanPlugin.init(makeContext());
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: makeQueryParameter("id", "1"),
         replay: async () =>
           new ReplayResult({
@@ -136,23 +147,15 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
   it("does not skip when different group found vulnerability", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await plugin.init(makeContext());
 
     const xssPlugin = new ReflectedXssPlugin();
-    await xssPlugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await xssPlugin.init(makeContext());
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: makeQueryParameter("id", "1"),
         replay: async () =>
           new ReplayResult({
@@ -169,16 +172,12 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
   it("does not skip when no completed jobs", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await plugin.init(makeContext());
 
     const results = await commandBus.dispatch(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: makeQueryParameter("id", "1"),
         replay: async () =>
           new ReplayResult({
@@ -233,24 +232,16 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
     it("skips when all groups have detected vulnerability", async () => {
       const plugin = new MultiGroupPlugin();
-      await plugin.init({
-        commandBus,
-        eventBus: new InMemoryEventBus(),
-        logger: noopLogger,
-      });
+      await plugin.init(makeContext());
 
       // Register a plugin in cat-a
       const catAPlugin = new SingleGroupPlugin();
-      await catAPlugin.init({
-        commandBus,
-        eventBus: new InMemoryEventBus(),
-        logger: noopLogger,
-      });
+      await catAPlugin.init(makeContext());
 
       const results = await commandBus.dispatch(
         new RunAuditCommand({
           signatureName: "signature:multi-cat-test",
-          scenarioId: ScenarioId("test-scenario"),
+          scenario: makeScenario(),
           parameter: makeQueryParameter("id", "1"),
           replay: async () =>
             new ReplayResult({
@@ -273,23 +264,15 @@ describe("SignaturePluginBase isAlreadyChecked", () => {
 
     it("does not skip when only some groups have detected vulnerability", async () => {
       const plugin = new MultiGroupPlugin();
-      await plugin.init({
-        commandBus,
-        eventBus: new InMemoryEventBus(),
-        logger: noopLogger,
-      });
+      await plugin.init(makeContext());
 
       const catAPlugin = new SingleGroupPlugin();
-      await catAPlugin.init({
-        commandBus,
-        eventBus: new InMemoryEventBus(),
-        logger: noopLogger,
-      });
+      await catAPlugin.init(makeContext());
 
       const results = await commandBus.dispatch(
         new RunAuditCommand({
           signatureName: "signature:multi-cat-test",
-          scenarioId: ScenarioId("test-scenario"),
+          scenario: makeScenario(),
           parameter: makeQueryParameter("id", "1"),
           replay: async () =>
             new ReplayResult({

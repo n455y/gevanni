@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
+import { PluginRegistryImpl } from "../../core/plugin.ts";
 import { SqliErrorPlugin, SQL_ERROR_PATTERNS } from "./sqli-error.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
@@ -10,6 +11,7 @@ import type {
   JsonPrimitive,
   Finding,
   Exchange,
+  Scenario,
 } from "../../types/models.ts";
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
@@ -18,11 +20,25 @@ import { HeaderParameter } from "../parameter/header.ts";
 import {
   ExchangeId,
   ScenarioId,
-
+  ScenarioType,
 } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
+import { ExactDiffPlugin } from "../diff/exact.ts";
+
+function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
+  return {
+    id: ScenarioId("test-scenario"),
+    name: "Test Scenario",
+    type: ScenarioType("test"),
+    source: null,
+    representation: "Test Scenario",
+    diffStrategy: "exact",
+    ...overrides,
+  };
+}
 
 let commandBus: InMemoryCommandBus;
+let registry: PluginRegistryImpl;
 const noopLogger = {
   debug: () => {},
   info: () => {},
@@ -32,7 +48,18 @@ const noopLogger = {
 
 beforeEach(() => {
   commandBus = new InMemoryCommandBus();
+  registry = new PluginRegistryImpl();
+  registry.register(new ExactDiffPlugin());
 });
+
+async function initPlugin(plugin: SqliErrorPlugin) {
+  await plugin.init({
+    commandBus,
+    eventBus: new InMemoryEventBus(),
+    logger: noopLogger,
+    pluginRegistry: registry,
+  });
+}
 
 function makeQueryParameter(name: string, value: string): AuditParameter {
   return new QueryParameter({ name }, value, [
@@ -66,11 +93,7 @@ const mockRequest: HttpRequest = {
 describe("SqliErrorPlugin", () => {
   it("creates definitions only for parameters with StandardMutationType.AppendValue tamper", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const targets = [
       makeQueryParameter("id", "1"),
@@ -90,11 +113,7 @@ describe("SqliErrorPlugin", () => {
 
   it("does not create definitions for non-matching parameter types", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const targets = [
       makeJsonPrimitiveParam(["user", "id"], 1),
@@ -111,11 +130,7 @@ describe("SqliErrorPlugin", () => {
 
   it("detects MySQL SQL error in response body", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const parameter = makeQueryParameter("id", "1");
     const mockReplay = async () =>
@@ -134,7 +149,7 @@ describe("SqliErrorPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -152,11 +167,7 @@ describe("SqliErrorPlugin", () => {
 
   it("detects PostgreSQL SQL error in response body", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const parameter = makeQueryParameter("id", "1");
     const mockReplay = async () =>
@@ -173,7 +184,7 @@ describe("SqliErrorPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -190,11 +201,7 @@ describe("SqliErrorPlugin", () => {
 
   it("detects Oracle SQL error in response body", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const parameter = makeQueryParameter("id", "1");
     const mockReplay = async () =>
@@ -211,7 +218,7 @@ describe("SqliErrorPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -227,11 +234,7 @@ describe("SqliErrorPlugin", () => {
 
   it("detects SQL Server error in response body", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const parameter = makeQueryParameter("id", "1");
     const mockReplay = async () =>
@@ -250,7 +253,7 @@ describe("SqliErrorPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -266,11 +269,7 @@ describe("SqliErrorPlugin", () => {
 
   it("detects SQLite error in response body", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const parameter = makeQueryParameter("id", "1");
     const mockReplay = async () =>
@@ -287,7 +286,7 @@ describe("SqliErrorPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -303,11 +302,7 @@ describe("SqliErrorPlugin", () => {
 
   it("does not report vulnerability when no SQL error in response", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const parameter = makeQueryParameter("id", "1");
     const mockReplay = async () =>
@@ -324,7 +319,7 @@ describe("SqliErrorPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -337,16 +332,12 @@ describe("SqliErrorPlugin", () => {
 
     expect(finding.vulnerable).toBe(false);
     expect(finding.evidence.judgmentId).toBe("diff-based");
-    expect(finding.evidence.evidenceExchanges).toHaveLength(0);
+    expect(finding.evidence.evidenceExchanges).toHaveLength(2);
   });
 
   it("handles null response body", async () => {
     const plugin = new SqliErrorPlugin();
-    await plugin.init({
-      commandBus,
-      eventBus: new InMemoryEventBus(),
-      logger: noopLogger,
-    });
+    await initPlugin(plugin);
 
     const parameter = makeQueryParameter("id", "1");
     const mockReplay = async () =>
@@ -363,7 +354,7 @@ describe("SqliErrorPlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-error",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter: parameter,
         replay: mockReplay,
         completedJobs: [],

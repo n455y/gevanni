@@ -1,6 +1,6 @@
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
-import { DiffCommand, type DiffResult } from "../../commands/diff.ts";
+import type { PluginContext } from "../../core/plugin.ts";
 import type { Exchange } from "../../types/models.ts";
+import type { DiffPlugin, DiffResult } from "./base.ts";
 
 function isJsonContentType(exchange: Exchange): boolean {
   const ct = exchange.response.headers["content-type"] ?? "";
@@ -17,48 +17,30 @@ function jsonStructure(obj: unknown): unknown {
   return result;
 }
 
-export class JsonDiffPlugin implements Plugin {
+export class JsonDiffPlugin implements DiffPlugin {
   readonly name = "diff:json";
 
-  async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(
-      DiffCommand,
-      async (cmd, acc): Promise<DiffResult> => {
-        if (acc.handled) return acc;
+  async init(_context: PluginContext): Promise<void> {}
 
-        const [first, second] = cmd.pairs;
-        if (!first || !second) return acc;
-        if (
-          !isJsonContentType(first.exchange) ||
-          !isJsonContentType(second.exchange)
-        )
-          return acc;
+  compare(left: Exchange, right: Exchange): DiffResult {
+    if (!isJsonContentType(left) || !isJsonContentType(right)) {
+      return { hasDifferent: false };
+    }
 
-        let structA: unknown;
-        let structB: unknown;
-        try {
-          structA = jsonStructure(
-            JSON.parse(first.exchange.response.body?.toString() ?? ""),
-          );
-          structB = jsonStructure(
-            JSON.parse(second.exchange.response.body?.toString() ?? ""),
-          );
-        } catch {
-          return acc;
-        }
+    let structA: unknown;
+    let structB: unknown;
+    try {
+      structA = JSON.parse(left.response.body?.toString() ?? "");
+      structB = JSON.parse(right.response.body?.toString() ?? "");
+    } catch {
+      return { hasDifferent: false };
+    }
 
-        const firstStatus = first.exchange.response.statusCode;
-        const secondStatus = second.exchange.response.statusCode;
-        const different =
-          JSON.stringify(structA) !== JSON.stringify(structB) ||
-          firstStatus !== secondStatus;
+    const different =
+      JSON.stringify(jsonStructure(structA)) !==
+        JSON.stringify(jsonStructure(structB)) ||
+      left.response.statusCode !== right.response.statusCode;
 
-        return {
-          handled: true,
-          different,
-          evidenceExchanges: different ? [first.exchange, second.exchange] : [],
-        };
-      },
-    );
+    return { hasDifferent: different };
   }
 }

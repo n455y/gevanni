@@ -7,6 +7,7 @@ export interface PluginContext {
   commandBus: CommandBus;
   eventBus: EventBus;
   logger: Logger;
+  pluginRegistry?: PluginRegistry;
 }
 
 export interface Plugin {
@@ -47,24 +48,26 @@ export interface PluginRegistry {
   register(plugin: Plugin): void;
   initializeAll(context: RuntimeContext): Promise<Plugin[]>;
   destroyAll(plugins: Plugin[]): Promise<void>;
+  getByName<T extends Plugin = Plugin>(name: string): T | undefined;
 }
 
 export class PluginRegistryImpl implements PluginRegistry {
-  private plugins: Plugin[] = [];
+  private plugins = new Map<string, Plugin>();
 
   register(plugin: Plugin): void {
-    this.plugins.push(plugin);
+    this.plugins.set(plugin.name, plugin);
   }
 
   async initializeAll(context: RuntimeContext): Promise<Plugin[]> {
-    for (const plugin of this.plugins) {
+    for (const plugin of this.plugins.values()) {
       await plugin.init({
         commandBus: context.commandBus,
         eventBus: context.eventBus,
         logger: context.logger,
+        pluginRegistry: this,
       });
     }
-    return this.plugins;
+    return Array.from(this.plugins.values());
   }
 
   async destroyAll(plugins: Plugin[]): Promise<void> {
@@ -73,5 +76,9 @@ export class PluginRegistryImpl implements PluginRegistry {
         await plugin.destroy();
       }
     }
+  }
+
+  getByName<T extends Plugin = Plugin>(name: string): T | undefined {
+    return this.plugins.get(name) as T | undefined;
   }
 }

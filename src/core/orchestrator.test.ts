@@ -168,6 +168,7 @@ describe("Orchestrator", () => {
           ],
         },
         representation: "  Test Scenario\n    GET https://example.com",
+        diffStrategy: "exact",
       };
 
       commandBus.register(ReplayCommand, async () => [
@@ -282,6 +283,7 @@ describe("Orchestrator", () => {
           ],
         },
         representation: "  test\n    GET https://example.com",
+        diffStrategy: "exact",
       }));
       commandBus.register(ReplayCommand, async () => [
         {
@@ -361,6 +363,7 @@ describe("Orchestrator", () => {
           ],
         },
         representation: "  test\n    GET https://example.com",
+        diffStrategy: "exact",
       }));
       commandBus.register(ReplayCommand, async () => [
         {
@@ -554,6 +557,7 @@ describe("Orchestrator", () => {
           ],
         },
         representation: "  test\n    GET https://example.com",
+        diffStrategy: "exact",
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "signature:sqli-error", async () => ({
@@ -655,6 +659,7 @@ describe("Orchestrator", () => {
           ],
         },
         representation: "  test\n    GET https://example.com",
+        diffStrategy: "exact",
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "signature:sqli-error", async () => ({
@@ -750,6 +755,7 @@ describe("Orchestrator", () => {
           ],
         },
         representation: "  test\n    GET https://example.com",
+        diffStrategy: "exact",
       }));
       commandBus.register(ReplayCommand, async () => [mockExchange]);
       commandBus.register(RunAuditCommand, "signature:sqli-error", async () => ({

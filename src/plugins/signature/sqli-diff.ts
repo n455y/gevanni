@@ -3,14 +3,17 @@ import type { Evidence, Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
-import { DiffCommand } from "../../commands/diff.ts";
 
 export class SqliDiffPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:sqli-diff";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
-  protected async runAudit({ parameter, replay }: RunAuditContext) {
+  protected async runAudit({
+    parameter,
+    replay,
+    scenario,
+  }: RunAuditContext) {
     const truePayload = BuiltinPayload.String("' AND 1=1--");
     const trueResult = await replay([
       parameter.createMutation(truePayload, BuiltinMutationType.AppendValue),
@@ -26,20 +29,19 @@ export class SqliDiffPlugin extends MutationFilteredSignaturePlugin {
       ...falseResult.allExchanges,
     ];
 
-    const judgment = await this.commandBus.pipe(
-      new DiffCommand([
-        { label: "true", exchange: trueResult.exchange },
-        { label: "false", exchange: falseResult.exchange },
-      ]),
+    const judgment = this.compareDiff(
+      trueResult.exchange,
+      falseResult.exchange,
+      scenario.diffStrategy,
     );
 
     const evidence: Evidence = {
       judgmentId: "diff-based",
       exchanges: allExchanges,
-      evidenceExchanges: judgment.evidenceExchanges,
+      evidenceExchanges: [trueResult.exchange, falseResult.exchange],
     };
     return {
-      vulnerable: judgment.different,
+      vulnerable: judgment.hasDifferent,
       evidence,
       request: trueResult.exchange.request,
       response: trueResult.exchange.response,

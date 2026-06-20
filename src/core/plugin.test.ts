@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { InMemoryCommandBus } from "./command-bus.ts";
 import { InMemoryEventBus } from "./event-bus.ts";
-import { PluginRegistryImpl, type Plugin, type PluginContext } from "./plugin.ts";
+import {
+  PluginRegistryImpl,
+  type Plugin,
+  type PluginContext,
+  type PluginRegistry,
+} from "./plugin.ts";
 import { RuntimeContext } from "./runtime-context.ts";
 import { SingleCommand } from "./command.ts";
 
@@ -105,5 +110,40 @@ describe("PluginRegistryImpl", () => {
     // Verify the injected commandBus is used
     const result = await commandBus.dispatch(new GreetCommand("world"));
     expect(result).toBe("Hi, world!");
+  });
+
+  it("looks up plugins by name via getByName", () => {
+    const registry = new PluginRegistryImpl();
+    const plugin = createTestPlugin("json-parser");
+    registry.register(plugin);
+
+    expect(registry.getByName("json-parser")).toBe(plugin);
+    expect(registry.getByName("missing")).toBeUndefined();
+  });
+
+  it("overwrites earlier plugin when same name is registered", () => {
+    const registry = new PluginRegistryImpl();
+    const first = createTestPlugin("json-parser");
+    const second = createTestPlugin("json-parser");
+    registry.register(first);
+    registry.register(second);
+
+    expect(registry.getByName("json-parser")).toBe(second);
+  });
+
+  it("exposes the registry to plugins via PluginContext", async () => {
+    const ctx = new RuntimeContext();
+    const registry = new PluginRegistryImpl();
+    let seen: PluginRegistry | undefined;
+    registry.register({
+      name: "json-parser",
+      async init(ctx: PluginContext) {
+        seen = ctx.pluginRegistry;
+      },
+    });
+
+    await registry.initializeAll(ctx);
+
+    expect(seen).toBe(registry);
   });
 });

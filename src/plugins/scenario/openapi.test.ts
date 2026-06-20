@@ -6,9 +6,12 @@ import {
   buildBody,
   resolveRuntimeExpression,
 } from "./openapi.ts";
-import type {
-  OpenApiOperation,
-  OpenApiRequestBody,
+import {
+  buildScenariosFromExtension,
+  extractOperations,
+  isOpenApi3,
+  type OpenApiOperation,
+  type OpenApiRequestBody,
 } from "../loader/openapi-loader.ts";
 import type { HttpResponse } from "../../types/models.ts";
 
@@ -231,5 +234,117 @@ describe("buildBody", () => {
     };
     expect(buildBody(body, {})).toBe("{}");
     expect(buildBody(body, undefined)).toBe("{}");
+  });
+});
+
+describe("buildScenariosFromExtension (diff config)", () => {
+  function makeDoc(opts: { scenarios: unknown[] }): unknown {
+    return {
+      openapi: "3.0.3",
+      info: { title: "test", version: "1.0" },
+      servers: [{ url: "http://localhost" }],
+      paths: {
+        "/items": {
+          get: {
+            operationId: "getItems",
+            responses: { "200": { description: "ok" } },
+          },
+        },
+        "/search": {
+          get: {
+            operationId: "search",
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      "x-gevanni-scenarios": opts.scenarios,
+    };
+  }
+
+  function build(doc: unknown) {
+    if (!isOpenApi3(doc)) throw new Error("test doc is not valid OpenAPI 3");
+    return buildScenariosFromExtension(doc, extractOperations(doc));
+  }
+
+  it("leaves diff undefined when the scenario does not specify it", () => {
+    const doc = makeDoc({
+      scenarios: [{ id: "s1", steps: ["getItems"] }],
+    });
+    const sources = build(doc);
+
+    expect(sources).toHaveLength(1);
+    expect(sources[0].diff).toBeUndefined();
+  });
+
+  it("uses scenario-level diff strategy", () => {
+    const doc = makeDoc({
+      scenarios: [
+        { id: "s1", diff: { strategy: "json" }, steps: ["getItems"] },
+      ],
+    });
+    const sources = build(doc);
+
+    expect(sources[0].diff).toEqual({ strategy: "json" });
+  });
+
+  it("resolves diff per scenario independently across multiple scenarios", () => {
+    const doc = makeDoc({
+      scenarios: [
+        { id: "withOverride", diff: { strategy: "json" }, steps: ["getItems"] },
+        { id: "withDefault", steps: ["getItems"] },
+      ],
+    });
+    const sources = build(doc);
+
+    expect(sources[0].diff?.strategy).toBe("json");
+    expect(sources[1].diff).toBeUndefined();
+  });
+
+  it("accepts each known strategy at scenario level", () => {
+    for (const strategy of ["exact", "json", "html"]) {
+      const doc = makeDoc({
+        scenarios: [
+          { id: `s-${strategy}`, diff: { strategy }, steps: ["getItems"] },
+        ],
+      });
+      const sources = build(doc);
+      expect(sources[0].diff?.strategy).toBe(strategy);
+    }
+  });
+
+  it("throws on unknown strategy at scenario level", () => {
+    const doc = makeDoc({
+      scenarios: [
+        { id: "s1", diff: { strategy: "magic" }, steps: ["getItems"] },
+      ],
+    });
+    expect(() => build(doc)).toThrow(/unknown diff strategy "magic"/);
+  });
+
+  it("throws when scenario diff is not an object", () => {
+    const doc = makeDoc({
+      scenarios: [
+        { id: "s1", diff: "json", steps: ["getItems"] },
+      ],
+    });
+    expect(() => build(doc)).toThrow(/expected an object/);
+  });
+
+  it("throws when scenario diff.strategy is missing", () => {
+    const doc = makeDoc({
+      scenarios: [
+        { id: "s1", diff: {}, steps: ["getItems"] },
+      ],
+    });
+    expect(() => build(doc)).toThrow(/diff\.strategy must be a string/);
+  });
+
+  it("includes known strategies in the error message", () => {
+    const doc = makeDoc({
+      scenarios: [
+        { id: "s1", diff: { strategy: "magic" }, steps: ["getItems"] },
+      ],
+    });
+    expect(() => build(doc)).toThrow(/exact, json, html/);
   });
 });

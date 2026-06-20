@@ -104,6 +104,7 @@ function makeScenario(overrides: {
       ],
     },
     representation: `  Test Scenario\n    ${method} ${url}`,
+    diffStrategy: "exact",
   };
 }
 
@@ -275,6 +276,7 @@ describe("runNewman", () => {
           ],
         },
         representation: `  Test Newman GET\n    GET http://127.0.0.1:${serverPort}/test`,
+        diffStrategy: "exact",
       };
 
       await expect(
@@ -301,6 +303,7 @@ describe("runNewman", () => {
         ],
       },
       representation: `  Test Newman POST\n    POST http://127.0.0.1:${serverPort}/submit`,
+      diffStrategy: "exact",
     };
 
     await expect(
@@ -344,6 +347,7 @@ describe("PostmanPlugin multi-request", () => {
           ],
         },
         representation: `  Multi Request\n    GET http://127.0.0.1:${serverPort}/setup\n    GET http://127.0.0.1:${serverPort}/main`,
+        diffStrategy: "exact",
       };
 
       const config: ReplayConfig = {

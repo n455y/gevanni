@@ -71,6 +71,7 @@ function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
     type: "xss" as any,
     source: null,
     representation: "  Test Scenario",
+    diffStrategy: "exact",
     ...overrides,
   };
 }

@@ -9,6 +9,7 @@ import type {
   HttpRequest,
   JsonPrimitive,
   Finding,
+  Scenario,
 } from "../../types/models.ts";
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
 import { QueryParameter } from "../parameter/query.ts";
@@ -17,9 +18,21 @@ import { HeaderParameter } from "../parameter/header.ts";
 import {
   ExchangeId,
   ScenarioId,
-
+  ScenarioType,
 } from "../../types/branded.ts";
 import type { AuditItem } from "../../core/audit-item.ts";
+
+function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
+  return {
+    id: ScenarioId("test-scenario"),
+    name: "Test Scenario",
+    type: ScenarioType("test"),
+    source: null,
+    representation: "Test Scenario",
+    diffStrategy: "exact",
+    ...overrides,
+  };
+}
 
 let commandBus: InMemoryCommandBus;
 const noopLogger = {
@@ -131,7 +144,7 @@ describe("SqliTimePlugin", () => {
     const findingsPromise = commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-time",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter,
         replay: mockReplay,
         completedJobs: [],
@@ -173,7 +186,7 @@ describe("SqliTimePlugin", () => {
     const findings = await commandBus.broadcast(
       new RunAuditCommand({
         signatureName: "signature:sqli-time",
-        scenarioId: ScenarioId("test-scenario"),
+        scenario: makeScenario(),
         parameter,
         replay: mockReplay,
         completedJobs: [],

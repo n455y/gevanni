@@ -1,6 +1,6 @@
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
-import { DiffCommand, type DiffResult } from "../../commands/diff.ts";
+import type { PluginContext } from "../../core/plugin.ts";
 import type { Exchange } from "../../types/models.ts";
+import type { DiffPlugin, DiffResult } from "./base.ts";
 
 function isHtmlContentType(exchange: Exchange): boolean {
   const ct = exchange.response.headers["content-type"] ?? "";
@@ -18,29 +18,22 @@ function normalizeHtml(html: string): string {
   return result.trim();
 }
 
-export class HtmlDiffPlugin implements Plugin {
+export class HtmlDiffPlugin implements DiffPlugin {
   readonly name = "diff:html";
 
-  async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(DiffCommand, async (cmd, acc): Promise<DiffResult> => {
-      if (acc.handled) return acc;
+  async init(_context: PluginContext): Promise<void> {}
 
-      const [first, second] = cmd.pairs;
-      if (!first || !second) return acc;
-      if (!isHtmlContentType(first.exchange) || !isHtmlContentType(second.exchange)) return acc;
+  compare(left: Exchange, right: Exchange): DiffResult {
+    if (!isHtmlContentType(left) || !isHtmlContentType(right)) {
+      return { hasDifferent: false };
+    }
 
-      const firstBody = normalizeHtml(first.exchange.response.body?.toString() ?? "");
-      const secondBody = normalizeHtml(second.exchange.response.body?.toString() ?? "");
-      const firstStatus = first.exchange.response.statusCode;
-      const secondStatus = second.exchange.response.statusCode;
+    const leftBody = normalizeHtml(left.response.body?.toString() ?? "");
+    const rightBody = normalizeHtml(right.response.body?.toString() ?? "");
+    const different =
+      leftBody !== rightBody ||
+      left.response.statusCode !== right.response.statusCode;
 
-      const different = firstBody !== secondBody || firstStatus !== secondStatus;
-
-      return {
-        handled: true,
-        different,
-        evidenceExchanges: different ? [first.exchange, second.exchange] : [],
-      };
-    });
+    return { hasDifferent: different };
   }
 }

@@ -234,11 +234,12 @@ export class Orchestrator {
         throw new Error(`No audit item found for job ${job.id}`);
       }
 
+      const scenario: Scenario = await commandBus.dispatch(
+        new LoadScenarioCommand(job.scenarioId),
+      );
+
       // Create replay function
       const replay = async (mutations: AuditMutation[]) => {
-        const scenario: Scenario = await commandBus.dispatch(
-          new LoadScenarioCommand(job.scenarioId),
-        );
         const proxy = await commandBus.dispatch(
           new CreateProxyCommand(mutations),
         );
@@ -261,7 +262,7 @@ export class Orchestrator {
       const result = await commandBus.dispatch(
         new RunAuditCommand({
           signatureName: item.signatureName,
-          scenarioId: job.scenarioId,
+          scenario,
           parameter: job.parameter,
           replay,
           completedJobs,

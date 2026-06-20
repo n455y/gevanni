@@ -3,7 +3,6 @@ import type { Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
-import { DiffCommand } from "../../commands/diff.ts";
 
 export const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQL syntax.*MySQL/i,
@@ -18,7 +17,11 @@ export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
 
-  protected async runAudit({ parameter, replay }: RunAuditContext) {
+  protected async runAudit({
+    parameter,
+    replay,
+    scenario,
+  }: RunAuditContext) {
     const safePayload = BuiltinPayload.String("''");
     const safeResult = await replay([
       parameter.createMutation(safePayload, BuiltinMutationType.AppendValue),
@@ -53,19 +56,18 @@ export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
       };
     }
 
-    const judgment = await this.commandBus.pipe(
-      new DiffCommand([
-        { label: "safe", exchange: safeResult.exchange },
-        { label: "unsafe", exchange: unsafeResult.exchange },
-      ]),
+    const judgment = this.compareDiff(
+      safeResult.exchange,
+      unsafeResult.exchange,
+      scenario.diffStrategy,
     );
 
     return {
-      vulnerable: judgment.different,
+      vulnerable: judgment.hasDifferent,
       evidence: {
         judgmentId: "diff-based",
         exchanges: allExchanges,
-        evidenceExchanges: judgment.evidenceExchanges,
+        evidenceExchanges: [safeResult.exchange, unsafeResult.exchange],
       },
       request: unsafeResult.exchange.request,
       response: unsafeResult.exchange.response,

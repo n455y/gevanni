@@ -48,10 +48,42 @@ export interface OpenApiSecondOrder {
   steps: OpenApiStep[];
 }
 
+export interface OpenApiDiffConfig {
+  strategy: string;
+  options?: Record<string, unknown>;
+}
+
 export interface OpenApiScenarioSource {
   steps: OpenApiStep[];
   scannable: boolean;
+  diff?: OpenApiDiffConfig;
   secondOrders?: OpenApiSecondOrder[];
+}
+
+const KNOWN_DIFF_STRATEGIES = new Set(["exact", "json", "html"]);
+
+function parseDiffConfig(
+  raw: unknown,
+  context: string,
+): OpenApiDiffConfig | undefined {
+  if (raw === undefined) return undefined;
+  if (!isObject(raw)) {
+    throw new Error(
+      `${context}: invalid diff config (expected an object, got ${typeof raw})`,
+    );
+  }
+  const strategy = raw.strategy;
+  if (typeof strategy !== "string") {
+    throw new Error(
+      `${context}: diff.strategy must be a string`,
+    );
+  }
+  if (!KNOWN_DIFF_STRATEGIES.has(strategy)) {
+    throw new Error(
+      `${context}: unknown diff strategy "${strategy}". Known strategies: ${[...KNOWN_DIFF_STRATEGIES].join(", ")}`,
+    );
+  }
+  return { strategy };
 }
 
 // --- Helpers ---
@@ -304,12 +336,13 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
       const parameters = [...pathLevelParams, ...opParams];
       const bodyVariants = extractRequestBodyVariants(operation.requestBody, resolver);
       const links = extractLinks(operation.responses);
+      const operationId = operation.operationId as string | undefined;
 
       const base = {
         baseUrl,
         method: method.toUpperCase(),
         path,
-        operationId: operation.operationId as string | undefined,
+        operationId,
         summary: operation.summary as string | undefined,
         parameters,
         links: links.length > 0 ? links : undefined,
@@ -510,13 +543,14 @@ export function buildScenariosFromExtension(
     const scannable = typeof entry.scannable === "boolean" ? entry.scannable : true;
     if (!scannable) continue;
 
+    const scenarioName = typeof entry.id === "string" ? entry.id : "(unnamed scenario)";
+    const diff = parseDiffConfig(entry.diff, `scenario "${scenarioName}"`);
+
     const secondOrders: OpenApiSecondOrder[] = [];
     if (Array.isArray(entry.secondOrders)) {
       for (const so of entry.secondOrders) {
         if (!isObject(so) || !Array.isArray(so.steps)) continue;
-        const soDefs = so.steps
-          .filter((s): s is string => typeof s === "string")
-          .map((s) => ({ ref: s }));
+        const soDefs = parseStepDefs(so.steps);
         const soExpanded = expandStepDefs(soDefs, scenarioDefs, byId);
         const soSteps = resolveStepDefs(soExpanded, byId);
         if (soSteps.length > 0) secondOrders.push({ steps: soSteps });
@@ -526,6 +560,7 @@ export function buildScenariosFromExtension(
     sources.push({
       steps,
       scannable,
+      diff,
       secondOrders: secondOrders.length > 0 ? secondOrders : undefined,
     });
   }
@@ -594,6 +629,7 @@ export async function loadOpenApiScenarios(source: unknown): Promise<Scenario[]>
       type: OpenApiScenarioType,
       source,
       representation: lines.join("\n"),
+      diffStrategy: source.diff?.strategy ?? "exact",
     };
   });
 }

@@ -75,6 +75,7 @@ export async function loadPostmanScenarios(source: unknown): Promise<Scenario[]>
       type: PostmanScenarioType,
       source: { items: [item] },
       representation: `  ${item.name ?? "unnamed"}\n    ${method} ${url}`,
+      diffStrategy: "exact",
     };
   });
 }

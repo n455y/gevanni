@@ -1,31 +1,19 @@
-import type { Plugin, PluginContext } from "../../core/plugin.ts";
-import { DiffCommand, type DiffResult } from "../../commands/diff.ts";
+import type { PluginContext } from "../../core/plugin.ts";
+import type { Exchange } from "../../types/models.ts";
+import type { DiffPlugin, DiffResult } from "./base.ts";
 
-export class ExactDiffPlugin implements Plugin {
+export class ExactDiffPlugin implements DiffPlugin {
   readonly name = "diff:exact";
 
-  async init(context: PluginContext): Promise<void> {
-    context.commandBus.register(DiffCommand, async (cmd, acc): Promise<DiffResult> => {
-      if (acc.handled) return acc;
+  async init(_context: PluginContext): Promise<void> {}
 
-      const [first, second] = cmd.pairs;
-      if (!first || !second) return acc;
+  compare(left: Exchange, right: Exchange): DiffResult {
+    const leftBody = left.response.body?.toString() ?? "";
+    const rightBody = right.response.body?.toString() ?? "";
+    const different =
+      leftBody !== rightBody ||
+      left.response.statusCode !== right.response.statusCode;
 
-      const firstBody = first.exchange.response.body?.toString() ?? "";
-      const secondBody = second.exchange.response.body?.toString() ?? "";
-      const firstStatus = first.exchange.response.statusCode;
-      const secondStatus = second.exchange.response.statusCode;
-
-      const different =
-        firstBody !== secondBody || firstStatus !== secondStatus;
-
-      return {
-        handled: true,
-        different,
-        evidenceExchanges: different
-          ? [first.exchange, second.exchange]
-          : [],
-      };
-    });
+    return { hasDifferent: different };
   }
 }
