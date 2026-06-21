@@ -10,13 +10,11 @@ import type {
   ScanState,
   Scenario,
   AuditParameter,
-  Exchange,
   AuditMutation,
 } from "../types/models.ts";
 import {
   SignatureJobStatus,
   ScanStatus,
-  ReplayResult,
 } from "../types/models.ts";
 import type { RuntimeContext } from "./runtime-context.ts";
 import type { AuditItem } from "./audit-item.ts";
@@ -94,19 +92,17 @@ export class Orchestrator {
 
         // b. Dispatch ReplayCommand with empty mutations to get original request
         const rid = ReplayId(crypto.randomUUID());
-        const replayResult = (
-          (await commandBus.dispatch(
-            new ReplayCommand(scenario, {
-              mutations: [],
-              proxyPort: planProxy.port,
-              replayId: rid,
-            }),
-          )) as Exchange[]
-        )[0];
+        const { exchange: originalExchange } = await commandBus.dispatch(
+          new ReplayCommand(scenario, {
+            mutations: [],
+            proxyPort: planProxy.port,
+            replayId: rid,
+          }),
+        );
 
         // b. Broadcast ParseRequestCommand to collect all AuditParameters
         const parseResults: AuditParameter[][] = await commandBus.broadcast(
-          new ParseRequestCommand(replayResult.request),
+          new ParseRequestCommand(originalExchange.request),
         );
         const parameters: AuditParameter[] = parseResults.flat();
         logger.debug(
@@ -244,15 +240,13 @@ export class Orchestrator {
           new CreateProxyCommand(mutations),
         );
         try {
-          const exchanges = await commandBus.dispatch(
+          return await commandBus.dispatch(
             new ReplayCommand(scenario, {
               mutations,
               proxyPort: proxy.port,
               replayId: ReplayId(crypto.randomUUID()),
             }),
           );
-          const [exchange, ...secondOrderExchanges] = exchanges;
-          return new ReplayResult(exchange, secondOrderExchanges);
         } finally {
           proxy.close();
         }

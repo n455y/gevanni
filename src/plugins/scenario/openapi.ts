@@ -1,4 +1,4 @@
-import type { Exchange, HttpResponse } from "../../types/models.ts";
+import { type Exchange, type HttpResponse, ReplayResult } from "../../types/models.ts";
 import { ExchangeId } from "../../types/branded.ts";
 import type { ReplayId } from "../../types/branded.ts";
 import type { ScenarioPlugin, PluginContext } from "../../core/plugin.ts";
@@ -235,7 +235,11 @@ export class OpenApiPlugin implements ScenarioPlugin {
           `No exchange captured for replayId: ${config.replayId}`,
         );
       }
-      return exchanges;
+      // 保存順 = 実行順 (main steps → secondOrder steps) により、
+      // 先頭が main exchange、残りが secondOrder exchanges となる。
+      // この順序契約はここ(ハンドラ)に局所化し、呼び出し側は配列順序を知らなくて済む。
+      const [exchange, ...secondOrderExchanges] = exchanges;
+      return new ReplayResult(exchange, secondOrderExchanges);
     });
   }
 }

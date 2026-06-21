@@ -19,6 +19,7 @@ import {
   SignatureJobStatus,
   ScanStatus,
   BuiltinMutationType,
+  ReplayResult,
 } from "../types/models.ts";
 import type { AuditParameter } from "../types/models.ts";
 import {
@@ -111,13 +112,13 @@ describe("Orchestrator", () => {
 
   describe("plan phase", () => {
     it("creates jobs and items for scenarios", async () => {
-      commandBus.register(ReplayCommand, async () => [
-        {
+      commandBus.register(ReplayCommand, async () =>
+        new ReplayResult({
           id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
-        },
-      ]);
+        }),
+      );
 
       commandBus.register(ParseRequestCommand, async () => mockTargets);
 
@@ -171,13 +172,13 @@ describe("Orchestrator", () => {
         diffStrategy: { type: "exact" },
       };
 
-      commandBus.register(ReplayCommand, async () => [
-        {
+      commandBus.register(ReplayCommand, async () =>
+        new ReplayResult({
           id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
-        },
-      ]);
+        }),
+      );
       commandBus.register(ParseRequestCommand, async () => mockTargets);
 
       const mockItem: AuditItem = {
@@ -214,13 +215,13 @@ describe("Orchestrator", () => {
     });
 
     it("saves scan state with planning status", async () => {
-      commandBus.register(ReplayCommand, async () => [
-        {
+      commandBus.register(ReplayCommand, async () =>
+        new ReplayResult({
           id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
-        },
-      ]);
+        }),
+      );
       commandBus.register(ParseRequestCommand, async () => []);
       commandBus.register(CreateAuditItemsCommand, async () => []);
       commandBus.register(SaveJobCommand, async () => {});
@@ -285,13 +286,13 @@ describe("Orchestrator", () => {
         representation: "  test\n    GET https://example.com",
         diffStrategy: { type: "exact" },
       }));
-      commandBus.register(ReplayCommand, async () => [
-        {
+      commandBus.register(ReplayCommand, async () =>
+        new ReplayResult({
           id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
-        },
-      ]);
+        }),
+      );
       commandBus.register(RunAuditCommand, "signature:mock-sig", async () => ({
         status: "completed",
         finding: mockFinding,
@@ -365,13 +366,13 @@ describe("Orchestrator", () => {
         representation: "  test\n    GET https://example.com",
         diffStrategy: { type: "exact" },
       }));
-      commandBus.register(ReplayCommand, async () => [
-        {
+      commandBus.register(ReplayCommand, async () =>
+        new ReplayResult({
           id: ExchangeId("ex-1"),
           request: mockRequest,
           response: mockResponse,
-        },
-      ]);
+        }),
+      );
       commandBus.register(RunAuditCommand, "signature:failing-sig", async () => {
         return {
           status: "error",
@@ -559,7 +560,7 @@ describe("Orchestrator", () => {
         representation: "  test\n    GET https://example.com",
         diffStrategy: { type: "exact" },
       }));
-      commandBus.register(ReplayCommand, async () => [mockExchange]);
+      commandBus.register(ReplayCommand, async () => new ReplayResult(mockExchange));
       commandBus.register(RunAuditCommand, "signature:sqli-error", async () => ({
         status: "completed",
         finding: vulnerableFinding,
@@ -661,7 +662,7 @@ describe("Orchestrator", () => {
         representation: "  test\n    GET https://example.com",
         diffStrategy: { type: "exact" },
       }));
-      commandBus.register(ReplayCommand, async () => [mockExchange]);
+      commandBus.register(ReplayCommand, async () => new ReplayResult(mockExchange));
       commandBus.register(RunAuditCommand, "signature:sqli-error", async () => ({
         status: "completed",
         finding: vulnerableFinding,
@@ -757,7 +758,7 @@ describe("Orchestrator", () => {
         representation: "  test\n    GET https://example.com",
         diffStrategy: { type: "exact" },
       }));
-      commandBus.register(ReplayCommand, async () => [mockExchange]);
+      commandBus.register(ReplayCommand, async () => new ReplayResult(mockExchange));
       commandBus.register(RunAuditCommand, "signature:sqli-error", async () => ({
         status: "completed",
         finding: vulnerableFinding,
