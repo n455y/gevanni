@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PostmanScenarioType } from "../plugins/scenario/postman.ts";
+import { OpenApiScenarioType } from "../plugins/scenario/openapi.ts";
 import { InMemoryCommandBus } from "./command-bus.ts";
 import { InMemoryEventBus } from "./event-bus.ts";
 import { RuntimeContext } from "./runtime-context.ts";
@@ -159,7 +159,7 @@ describe("Orchestrator", () => {
       const mockScenario: Scenario = {
         id: ScenarioId("sc-1"),
         name: "Test Scenario",
-        type: PostmanScenarioType,
+        type: OpenApiScenarioType,
         source: {
           items: [
             {
@@ -276,7 +276,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScenarioCommand, async () => ({
         id: mockJob.scenarioId,
         name: "test",
-        type: PostmanScenarioType,
+        type: OpenApiScenarioType,
         source: {
           items: [
             { request: { method: "GET", url: { raw: "https://example.com" } } },
@@ -356,7 +356,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScenarioCommand, async () => ({
         id: mockJob.scenarioId,
         name: "test",
-        type: PostmanScenarioType,
+        type: OpenApiScenarioType,
         source: {
           items: [
             { request: { method: "GET", url: { raw: "https://example.com" } } },
@@ -550,7 +550,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScenarioCommand, async () => ({
         id: scenarioId,
         name: "test",
-        type: PostmanScenarioType,
+        type: OpenApiScenarioType,
         source: {
           items: [
             { request: { method: "GET", url: { raw: "https://example.com" } } },
@@ -652,7 +652,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScenarioCommand, async () => ({
         id: scenarioId,
         name: "test",
-        type: PostmanScenarioType,
+        type: OpenApiScenarioType,
         source: {
           items: [
             { request: { method: "GET", url: { raw: "https://example.com" } } },
@@ -748,7 +748,7 @@ describe("Orchestrator", () => {
       commandBus.register(LoadScenarioCommand, async () => ({
         id: scenarioId,
         name: "test",
-        type: PostmanScenarioType,
+        type: OpenApiScenarioType,
         source: {
           items: [
             { request: { method: "GET", url: { raw: "https://example.com" } } },

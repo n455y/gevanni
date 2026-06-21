@@ -8,10 +8,9 @@ import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
 import { loadOpenApiScenarios } from "../plugins/loader/openapi-loader.ts";
-import { loadPostmanScenarios } from "../plugins/loader/postman-loader.ts";
 import type { Scenario } from "../types/models.ts";
 
-const scenarioLoaders = [loadOpenApiScenarios, loadPostmanScenarios];
+const scenarioLoaders = [loadOpenApiScenarios];
 
 async function loadScenarios(sources: unknown[]): Promise<Scenario[]> {
   const scenarios: Scenario[] = [];

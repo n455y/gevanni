@@ -55,7 +55,7 @@ describe("loadConfig", () => {
       logLevel: "debug",
       scenarioSources: ["./collections/"],
       plugins: [
-        { name: "scenario:postman", options: {} },
+        { name: "scenario:openapi", options: {} },
         { name: "reflected-xss", options: {} },
       ],
     });
@@ -66,7 +66,7 @@ describe("loadConfig", () => {
     expect(config.scenarioSources).toEqual(["./collections/"]);
     expect(config.plugins).toHaveLength(2);
     expect(config.plugins[0]).toEqual({
-      name: "scenario:postman",
+      name: "scenario:openapi",
       options: {},
     });
   });
@@ -149,7 +149,7 @@ describe("loadConfig", () => {
       logLevel: "debug",
       scenarioSources: ["./collections/"],
       plugins: [
-        { name: "scenario:postman", options: {} },
+        { name: "scenario:openapi", options: {} },
         { name: "proxy:http", options: {} },
         { name: "parser:query", options: {} },
         { name: "parser:json", options: {} },

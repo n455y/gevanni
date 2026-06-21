@@ -1,5 +1,4 @@
 import type { Plugin, PluginRegistry } from "./core/plugin.ts";
-import { PostmanPlugin } from "./plugins/scenario/postman.ts";
 import { OpenApiPlugin } from "./plugins/scenario/openapi.ts";
 import { HttpProxyPlugin, type HttpProxyConfig } from "./plugins/proxy/http-proxy.ts";
 import { QueryParserPlugin, QueryMutationPlugin } from "./plugins/parameter/query.ts";
@@ -34,7 +33,6 @@ import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./plugins/parameter/
 type PluginFactory = (options: Record<string, unknown>) => Plugin;
 
 const builtinPlugins: PluginFactory[] = [
-  () => new PostmanPlugin(),
   () => new OpenApiPlugin(),
   (opts) => new HttpProxyPlugin(opts as HttpProxyConfig),
   () => new QueryParserPlugin(),
