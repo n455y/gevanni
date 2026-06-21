@@ -20,7 +20,8 @@ export class OsCommandInjectionPlugin extends MutationFilteredSignaturePlugin {
     const result = await replay([instruction]);
     const allExchanges = result.allExchanges;
     const matches = allExchanges.filter((ex) =>
-      (ex.response.body?.toString() ?? "").includes(MARKER),
+      (ex.response.body?.toString() ?? "").includes(MARKER) &&
+      !(ex.response.headers?.["content-type"]?.includes("application/json")),
     );
     const evidence: Evidence = {
       judgmentId: "command-output-reflection",

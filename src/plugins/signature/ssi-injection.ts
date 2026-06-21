@@ -35,7 +35,8 @@ export class SsiInjectionPlugin extends MutationFilteredSignaturePlugin {
       allExchanges.push(...replayResult.allExchanges);
       matches.push(
         ...replayResult.allExchanges.filter((ex) =>
-          (ex.response.body?.toString() ?? "").includes(result),
+          (ex.response.body?.toString() ?? "").includes(result) &&
+          !(ex.response.headers?.["content-type"]?.includes("application/json")),
         ),
       );
       if (matches.length > 0) break;

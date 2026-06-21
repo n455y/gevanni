@@ -29,6 +29,12 @@ export class SqliDiffPlugin extends MutationFilteredSignaturePlugin {
       ...falseResult.allExchanges,
     ];
 
+    // Exclude JSON-only responses: SQL diff-based payloads on NoSQL endpoints
+    // can produce spurious value-level diffs in JSON (e.g. reflected orderId differs)
+    const trueCt = trueResult.exchange.response.headers?.["content-type"] ?? "";
+    const falseCt = falseResult.exchange.response.headers?.["content-type"] ?? "";
+    const bothJson = trueCt.includes("application/json") && falseCt.includes("application/json");
+
     const judgment = this.compareDiff(
       trueResult.exchange,
       falseResult.exchange,
@@ -41,7 +47,7 @@ export class SqliDiffPlugin extends MutationFilteredSignaturePlugin {
       evidenceExchanges: [trueResult.exchange, falseResult.exchange],
     };
     return {
-      vulnerable: judgment.hasDifferent,
+      vulnerable: judgment.hasDifferent && !bothJson,
       evidence,
       request: trueResult.exchange.request,
       response: trueResult.exchange.response,

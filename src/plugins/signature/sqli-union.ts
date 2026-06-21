@@ -38,7 +38,8 @@ export class SqliUnionPlugin extends MutationFilteredSignaturePlugin {
       allExchanges.push(...result.allExchanges);
 
       const found = result.allExchanges.filter((ex) =>
-        (ex.response.body?.toString() ?? "").includes(MARKER),
+        (ex.response.body?.toString() ?? "").includes(MARKER) &&
+        !(ex.response.headers?.["content-type"]?.includes("application/json")),
       );
       matches.push(...found);
       if (found.length > 0) break;

@@ -102,7 +102,7 @@ export class Orchestrator {
 
         // b. Broadcast ParseRequestCommand to collect all AuditParameters
         const parseResults: AuditParameter[][] = await commandBus.broadcast(
-          new ParseRequestCommand(originalExchange.request),
+          new ParseRequestCommand(originalExchange.request, scenario),
         );
         const parameters: AuditParameter[] = parseResults.flat();
         logger.debug(

@@ -24,12 +24,17 @@ export class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
     const falseBody = falseResult.exchange.response.body?.toString() ?? "";
     const trueStatus = trueResult.exchange.response.statusCode;
     const falseStatus = falseResult.exchange.response.statusCode;
+    // Exclude JSON-only responses: SQL boolean payloads on NoSQL endpoints can
+    // produce spurious value-level diffs in JSON (e.g. reflected orderId differs)
+    const trueCt = trueResult.exchange.response.headers?.["content-type"] ?? "";
+    const falseCt = falseResult.exchange.response.headers?.["content-type"] ?? "";
+    const bothJson = trueCt.includes("application/json") && falseCt.includes("application/json");
 
     const allExchanges: Exchange[] = [
       ...trueResult.allExchanges,
       ...falseResult.allExchanges,
     ];
-    const vulnerable = trueBody !== falseBody || trueStatus !== falseStatus;
+    const vulnerable = !bothJson && (trueBody !== falseBody || trueStatus !== falseStatus);
     const evidenceExchanges = vulnerable
       ? [trueResult.exchange, falseResult.exchange]
       : [];

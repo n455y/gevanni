@@ -29,6 +29,9 @@ import { JsonStoragePlugin, type JsonStorageConfig } from "./plugins/storage/jso
 import { ConsoleReporterPlugin } from "./plugins/reporter/console-reporter.ts";
 import { JsonReporterPlugin, type JsonReporterConfig } from "./plugins/reporter/json-reporter.ts";
 import { GraphQLParserPlugin, GraphQLMutationPlugin } from "./plugins/parameter/graphql.ts";
+import { PathParserPlugin, PathMutationPlugin } from "./plugins/parameter/path.ts";
+import { NosqlBooleanPlugin } from "./plugins/signature/nosql-boolean.ts";
+import { NosqlDiffPlugin } from "./plugins/signature/nosql-diff.ts";
 
 type PluginFactory = (options: Record<string, unknown>) => Plugin;
 
@@ -36,12 +39,14 @@ const builtinPlugins: PluginFactory[] = [
   () => new OpenApiPlugin(),
   (opts) => new HttpProxyPlugin(opts as HttpProxyConfig),
   () => new QueryParserPlugin(),
+  () => new PathParserPlugin(),
   () => new JsonParserPlugin(),
   () => new FormParserPlugin(),
   () => new HeaderParserPlugin(),
   () => new CookieParserPlugin(),
   () => new GraphQLParserPlugin(),
   () => new QueryMutationPlugin(),
+  () => new PathMutationPlugin(),
   () => new JsonMutationPlugin(),
   () => new FormMutationPlugin(),
   () => new HeaderMutationPlugin(),
@@ -62,6 +67,8 @@ const builtinPlugins: PluginFactory[] = [
   () => new SstiPlugin(),
   () => new XpathInjectionPlugin(),
   () => new NosqlInjectionPlugin(),
+  () => new NosqlBooleanPlugin(),
+  () => new NosqlDiffPlugin(),
   () => new XxeInjectionPlugin(),
   () => new CrlfInjectionPlugin(),
   () => new SsiInjectionPlugin(),

@@ -5,7 +5,7 @@ import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 const DELAY_SECONDS = 5;
-const TIME_THRESHOLD_MS = 4000;
+const TIME_THRESHOLD_MS = 7000;
 
 const TIME_PAYLOADS = [
   `'; WAITFOR DELAY '0:0:${DELAY_SECONDS}'--`,
