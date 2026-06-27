@@ -3,12 +3,13 @@ import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
 import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
-import { builtinPluginFactories } from "../builtin.ts";
+import { builtinPluginFactories, registerAllBuiltinPlugins } from "../builtin.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
 import { loadOpenApiScenarios } from "../plugins/loader/openapi-loader.ts";
 import type { Scenario } from "../types/models.ts";
+import { expandScenarioPaths } from "./scenario-paths.ts";
 
 const scenarioLoaders = [loadOpenApiScenarios];
 
@@ -48,6 +49,10 @@ function buildOverrides(
   return overrides;
 }
 
+function collect(value: string, previous: string[]): string[] {
+  return [...previous, value];
+}
+
 async function bootstrap(
   configPath?: string,
   cliOverrides?: Partial<{ logLevel: LogLevel; concurrency: number }>,
@@ -82,20 +87,43 @@ program
 // scan command
 program
   .command("scan")
-  .description("Run full vulnerability scan")
-  .option("--config <path>", "Config file path")
+  .description("Run full vulnerability scan from scenario source(s)")
+  .option(
+    "-s, --scenario <path>",
+    "Scenario source file/glob/dir (repeatable)",
+    collect,
+    [] as string[],
+  )
   .option("--verbose", "Debug logging")
   .option("--quiet", "Minimal logging")
   .option("--concurrency <n>", "Parallel workers")
-  .action(async (opts: CliOptions) => {
-    const overrides = buildOverrides(opts);
-    const { config, orchestrator } = await bootstrap(
-      opts.config,
-      overrides,
-    );
-    const scenarios = await loadScenarios(config.scenarioSources);
+  .action(async (opts: { scenario: string[]; verbose?: boolean; quiet?: boolean; concurrency?: string }) => {
+    if (opts.scenario.length === 0) {
+      console.error("error: required option '-s, --scenario <path>' not specified");
+      process.exit(1);
+    }
+
+    const logLevel = opts.verbose ? "debug" : opts.quiet ? "error" : "info";
+    const logger = createLogger(logLevel);
+    const ctx = new RuntimeContext({ logger });
+    const registry = new PluginRegistryImpl();
+
+    // 全ビルトインプラグインを登録。proxy:http の upstream は未指定 =
+    // シナリオの URL（OpenAPI の servers[0].url 起）のホストへ直接アクセス。
+    registerAllBuiltinPlugins(registry);
+    await registry.initializeAll(ctx);
+
+    const paths = expandScenarioPaths(opts.scenario);
+    if (paths.length === 0) {
+      logger.error("No scenario files found for the given --scenario input(s)");
+      process.exit(1);
+    }
+
+    const scenarios = await loadScenarios(paths);
+    const orchestrator = new Orchestrator({ context: ctx });
+    const concurrency = opts.concurrency ? parseInt(opts.concurrency, 10) : 5;
     const { scanId, items } = await orchestrator.plan(scenarios);
-    await orchestrator.scan(scanId, items, config.concurrency);
+    await orchestrator.scan(scanId, items, concurrency);
     await orchestrator.report(scanId);
   });
 
