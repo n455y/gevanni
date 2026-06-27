@@ -5,7 +5,9 @@ import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 const DELAY_SECONDS = 5;
-const TIME_THRESHOLD_MS = 7000;
+// Must stay below DELAY_SECONDS * 1000 so the induced sleep is actually
+// detected, while remaining above typical baseline response latency.
+const TIME_THRESHOLD_MS = DELAY_SECONDS * 1000 - 2000;
 
 const TIME_PAYLOADS = [
   `'; WAITFOR DELAY '0:0:${DELAY_SECONDS}'--`,
