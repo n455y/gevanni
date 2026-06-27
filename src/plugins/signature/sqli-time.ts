@@ -14,7 +14,7 @@ const TIME_PAYLOADS = [
   `' OR dbms_pipe.receive_message('a',${DELAY_SECONDS})--`,
 ];
 
-export class SqliTimePlugin extends MutationFilteredSignaturePlugin {
+export default class SqliTimePlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:sqli-time";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

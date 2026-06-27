@@ -319,7 +319,7 @@ export interface HttpProxyConfig {
   upstream?: string;
 }
 
-export class HttpProxyPlugin implements ProxyPlugin {
+export default class HttpProxyPlugin implements ProxyPlugin {
   readonly name = "proxy:http";
   private extraHeaders: Record<string, string>;
   private upstream?: string;

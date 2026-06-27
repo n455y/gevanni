@@ -5,12 +5,9 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import type { MutationType } from "../../types/branded.ts";
 import { AuditParameter, type HttpRequest, BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
-import {
-  FormMutation,
-  FormMutationPlugin,
-  FormParameter,
-  FormParserPlugin,
-} from "./form.ts";
+import FormParserPlugin from "./form/parser.ts";
+import FormMutationPlugin from "./form/mutation.ts";
+import { FormMutation, FormParameter } from "./form/model.ts";
 
 const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 

@@ -20,8 +20,8 @@ import type {
   HttpResponse,
 } from "../../types/models.ts";
 import { AuditMutation } from "../../types/models.ts";
-import { QueryParameter } from "../parameter/query.ts";
-import { HttpProxyPlugin, startMutationProxy } from "./http-proxy.ts";
+import { QueryParameter } from "../parameter/query/model.ts";
+import HttpProxyPlugin, { startMutationProxy } from "./http-proxy.ts";
 
 const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 

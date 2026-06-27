@@ -72,7 +72,7 @@ export interface JsonStorageConfig {
   outputDir?: string;
 }
 
-export class JsonStoragePlugin implements StoragePlugin {
+export default class JsonStoragePlugin implements StoragePlugin {
   readonly name = "storage:json";
   private outputDir: string;
   private fileLocks = new Map<string, Promise<void>>();

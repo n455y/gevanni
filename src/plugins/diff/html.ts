@@ -18,7 +18,7 @@ function normalizeHtml(html: string): string {
   return result.trim();
 }
 
-export class HtmlDiffPlugin implements DiffPlugin {
+export default class HtmlDiffPlugin implements DiffPlugin {
   readonly name = "diff:html";
 
   async init(_context: PluginContext): Promise<void> {}

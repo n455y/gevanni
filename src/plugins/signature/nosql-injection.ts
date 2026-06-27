@@ -15,7 +15,7 @@ export const NOSQL_ERROR_PATTERNS: RegExp[] = [
   /BSONError/i,
 ];
 
-export class NosqlInjectionPlugin extends MutationFilteredSignaturePlugin {
+export default class NosqlInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:nosql-injection";
   protected readonly groups = [SignatureGroupId("nosql-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

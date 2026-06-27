@@ -5,13 +5,10 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import type { MutationType } from "../../types/branded.ts";
 import { AuditParameter, type HttpRequest, BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
-import { JsonPrimitiveParameter } from "./json.ts";
-import {
-  QueryMutation,
-  QueryMutationPlugin,
-  QueryParameter,
-  QueryParserPlugin,
-} from "./query.ts";
+import { JsonPrimitiveParameter } from "./json/model.ts";
+import QueryParserPlugin from "./query/parser.ts";
+import QueryMutationPlugin from "./query/mutation.ts";
+import { QueryMutation, QueryParameter } from "./query/model.ts";
 
 const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 

@@ -19,7 +19,7 @@ function buildUnionPayloads(columns: number): string[] {
 
 export const UNION_PAYLOADS = buildUnionPayloads(10);
 
-export class SqliUnionPlugin extends MutationFilteredSignaturePlugin {
+export default class SqliUnionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:sqli-union";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

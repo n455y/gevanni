@@ -3,10 +3,10 @@ import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
 import { PluginRegistryImpl } from "../../core/plugin.ts";
 import { SignaturePluginBase } from "./base.ts";
-import { SqliBooleanPlugin } from "./sqli-boolean.ts";
-import { SqliErrorPlugin } from "./sqli-error.ts";
-import { ReflectedXssPlugin } from "./reflected-xss.ts";
-import { ExactDiffPlugin } from "../diff/exact.ts";
+import SqliBooleanPlugin from "./sqli-boolean.ts";
+import SqliErrorPlugin from "./sqli-error.ts";
+import ReflectedXssPlugin from "./reflected-xss.ts";
+import ExactDiffPlugin from "../diff/exact.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type {
   AuditParameter,
@@ -15,7 +15,7 @@ import type {
   SignatureJob,
 } from "../../types/models.ts";
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
-import { QueryParameter } from "../parameter/query.ts";
+import { QueryParameter } from "../parameter/query/model.ts";
 import {
   ExchangeId,
   ScenarioId,

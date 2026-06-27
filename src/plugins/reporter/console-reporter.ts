@@ -11,7 +11,7 @@ function formatParameter(job: SignatureJob): string {
   return `${p.constructor.name} ${loc} = ${String(p.originalValue)}`;
 }
 
-export class ConsoleReporterPlugin implements ReporterPlugin {
+export default class ConsoleReporterPlugin implements ReporterPlugin {
   readonly name = "reporter:console";
 
   async init(ctx: PluginContext): Promise<void> {

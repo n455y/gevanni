@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { JsonDiffPlugin } from "./json.ts";
+import JsonDiffPlugin from "./json.ts";
 import { ExchangeId } from "../../types/branded.ts";
 
 function makeJsonExchange(statusCode: number, body: string) {

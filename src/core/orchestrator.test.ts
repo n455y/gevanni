@@ -30,7 +30,7 @@ import {
 
   ErrorMessage,
 } from "../types/branded.ts";
-import { QueryParameter } from "../plugins/parameter/query.ts";
+import { QueryParameter } from "../plugins/parameter/query/model.ts";
 import {
   ReplayCommand,
   ParseRequestCommand,

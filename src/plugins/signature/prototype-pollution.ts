@@ -15,7 +15,7 @@ export const PROTOTYPE_POLLUTION_PATTERNS: RegExp[] = [
   /RangeError: Maximum call stack/i,
 ];
 
-export class PrototypePollutionPlugin extends MutationFilteredSignaturePlugin {
+export default class PrototypePollutionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:prototype-pollution";
   protected readonly groups = [SignatureGroupId("prototype-pollution")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

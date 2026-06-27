@@ -16,7 +16,7 @@ const SSI_PAYLOADS: SsiPayload[] = [
   { template: `<!--#exec cmd="echo ${MARKER}ssi"-->`, result: `${MARKER}ssi` },
 ];
 
-export class SsiInjectionPlugin extends MutationFilteredSignaturePlugin {
+export default class SsiInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:ssi-injection";
   protected readonly groups = [SignatureGroupId("ssi-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

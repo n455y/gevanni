@@ -212,7 +212,7 @@ function sendViaProxy(
 
 // --- Plugin ---
 
-export class OpenApiPlugin implements ScenarioPlugin {
+export default class OpenApiPlugin implements ScenarioPlugin {
   readonly name = "scenario:openapi";
 
   async init(context: PluginContext): Promise<void> {

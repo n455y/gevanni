@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { JsonReporterPlugin } from "./json-reporter.ts";
+import JsonReporterPlugin from "./json-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 import {
   serializeSignatureJob,
@@ -14,7 +14,7 @@ import {
   SignatureJobStatus,
   ScanStatus,
 } from "../../types/models.ts";
-import { QueryParameter } from "../parameter/query.ts";
+import { QueryParameter } from "../parameter/query/model.ts";
 import {
   ScanId,
   SignatureJobId,

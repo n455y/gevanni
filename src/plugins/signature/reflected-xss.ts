@@ -4,7 +4,7 @@ import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
-export class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
+export default class ReflectedXssPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:reflected-xss";
   protected readonly groups = [SignatureGroupId("xss")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

@@ -6,7 +6,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 const MARKER = "gevanni_cm7j";
 
-export class OsCommandInjectionPlugin extends MutationFilteredSignaturePlugin {
+export default class OsCommandInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:os-command-injection";
   protected readonly groups = [SignatureGroupId("os-command-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

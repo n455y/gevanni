@@ -12,7 +12,7 @@ export const LDAP_ERROR_PATTERNS: RegExp[] = [
   /Protocol error.*LDAP/i,
 ];
 
-export class LdapInjectionPlugin extends MutationFilteredSignaturePlugin {
+export default class LdapInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:ldap-injection";
   protected readonly groups = [SignatureGroupId("ldap-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

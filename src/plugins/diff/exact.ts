@@ -2,7 +2,7 @@ import type { PluginContext } from "../../core/plugin.ts";
 import type { Exchange } from "../../types/models.ts";
 import type { DiffPlugin, DiffResult } from "./base.ts";
 
-export class ExactDiffPlugin implements DiffPlugin {
+export default class ExactDiffPlugin implements DiffPlugin {
   readonly name = "diff:exact";
 
   async init(_context: PluginContext): Promise<void> {}

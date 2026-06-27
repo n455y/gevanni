@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { ConsoleReporterPlugin } from "./console-reporter.ts";
+import ConsoleReporterPlugin from "./console-reporter.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 import {
   type SignatureJob,
@@ -9,7 +9,7 @@ import {
   SignatureJobStatus,
   ScanStatus,
 } from "../../types/models.ts";
-import { QueryParameter } from "../parameter/query.ts";
+import { QueryParameter } from "../parameter/query/model.ts";
 import {
   ScanId,
   SignatureJobId,

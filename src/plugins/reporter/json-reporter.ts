@@ -46,7 +46,7 @@ function computeSummary(jobs: SignatureJob[]): ReportSummary {
   };
 }
 
-export class JsonReporterPlugin implements ReporterPlugin {
+export default class JsonReporterPlugin implements ReporterPlugin {
   readonly name = "reporter:json";
   private outputPath: string | undefined;
 

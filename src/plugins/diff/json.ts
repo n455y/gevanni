@@ -17,7 +17,7 @@ function jsonStructure(obj: unknown): unknown {
   return result;
 }
 
-export class JsonDiffPlugin implements DiffPlugin {
+export default class JsonDiffPlugin implements DiffPlugin {
   readonly name = "diff:json";
 
   async init(_context: PluginContext): Promise<void> {}

@@ -13,7 +13,7 @@ export const XPATH_ERROR_PATTERNS: RegExp[] = [
   /System\.Xml\.XPath/i,
 ];
 
-export class XpathInjectionPlugin extends MutationFilteredSignaturePlugin {
+export default class XpathInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:xpath-injection";
   protected readonly groups = [SignatureGroupId("xpath-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

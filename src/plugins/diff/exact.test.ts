@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ExactDiffPlugin } from "./exact.ts";
+import ExactDiffPlugin from "./exact.ts";
 import { ExchangeId } from "../../types/branded.ts";
 
 function makeExchange(statusCode: number, body: string) {

@@ -13,15 +13,15 @@ import type {
   HttpRequest,
   JsonValue,
 } from "../../types/models.ts";
+import GraphQLParserPlugin from "./graphql/parser.ts";
+import GraphQLMutationPlugin from "./graphql/mutation.ts";
 import {
-  GraphQLMutationPlugin,
-  GraphQLParserPlugin,
   GraphQLQueryMutation,
   GraphQLQueryParameter,
   GraphQLVariableMutation,
   GraphQLVariableParameter,
-} from "./graphql.ts";
-import { QueryParameter } from "./query.ts";
+} from "./graphql/model.ts";
+import { QueryParameter } from "./query/model.ts";
 
 type AnyGraphQLTarget = GraphQLQueryParameter | GraphQLVariableParameter;
 

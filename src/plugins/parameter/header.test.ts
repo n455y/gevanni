@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { HeaderParserPlugin } from "./header.ts";
+import HeaderParserPlugin from "./header/parser.ts";
 import { ParseRequestCommand } from "../../commands/parse-request.ts";
 import { AuditParameter, type HttpRequest, BuiltinMutationType } from "../../types/models.ts";
-import { HeaderParameter } from "./header.ts";
+import { HeaderParameter } from "./header/model.ts";
 
 const noopLogger = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
 

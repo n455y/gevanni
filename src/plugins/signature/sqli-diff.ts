@@ -4,7 +4,7 @@ import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
-export class SqliDiffPlugin extends MutationFilteredSignaturePlugin {
+export default class SqliDiffPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:sqli-diff";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

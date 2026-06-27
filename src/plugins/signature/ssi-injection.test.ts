@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { InMemoryCommandBus } from "../../core/command-bus.ts";
 import { InMemoryEventBus } from "../../core/event-bus.ts";
-import { SsiInjectionPlugin } from "./ssi-injection.ts";
+import SsiInjectionPlugin from "./ssi-injection.ts";
 import { CreateAuditItemsCommand } from "../../commands/create-audit-items.ts";
 import { RunAuditCommand } from "../../commands/run-audit.ts";
 import type {
@@ -12,9 +12,9 @@ import type {
   Scenario,
 } from "../../types/models.ts";
 import { ReplayResult, BuiltinMutationType } from "../../types/models.ts";
-import { QueryParameter } from "../parameter/query.ts";
-import { JsonPrimitiveParameter } from "../parameter/json.ts";
-import { HeaderParameter } from "../parameter/header.ts";
+import { QueryParameter } from "../parameter/query/model.ts";
+import { JsonPrimitiveParameter } from "../parameter/json/model.ts";
+import { HeaderParameter } from "../parameter/header/model.ts";
 import {
   ExchangeId,
   ScenarioId,

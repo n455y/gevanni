@@ -6,7 +6,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
 const MARKER = "gevanni_crlf";
 
-export class CrlfInjectionPlugin extends MutationFilteredSignaturePlugin {
+export default class CrlfInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:crlf-injection";
   protected readonly groups = [SignatureGroupId("crlf-injection")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

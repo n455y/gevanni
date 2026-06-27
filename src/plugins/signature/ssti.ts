@@ -17,7 +17,7 @@ const SSTI_PAYLOADS: SstiPayload[] = [
   { template: `<%=${MARKER}7*7%>`, result: `${MARKER}49` },
 ];
 
-export class SstiPlugin extends MutationFilteredSignaturePlugin {
+export default class SstiPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:ssti";
   protected readonly groups = [SignatureGroupId("ssti")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

@@ -14,7 +14,7 @@ function containsFileContent(body: string): boolean {
   return PATH_TRAVERSAL_PATTERNS.some((p) => p.test(body));
 }
 
-export class PathTraversalPlugin extends MutationFilteredSignaturePlugin {
+export default class PathTraversalPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:path-traversal";
   protected readonly groups = [SignatureGroupId("path-traversal")];
   protected readonly mutationTypes = [

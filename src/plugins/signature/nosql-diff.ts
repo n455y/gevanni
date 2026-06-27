@@ -11,7 +11,7 @@ import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
  * True payload:  ' || '1'=='1  → should return data
  * False payload: ' || '1'=='2  → should return empty
  */
-export class NosqlDiffPlugin extends MutationFilteredSignaturePlugin {
+export default class NosqlDiffPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:nosql-diff";
   protected readonly groups = [SignatureGroupId("nosql-injection")];
   protected readonly mutationTypes = [

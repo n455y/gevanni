@@ -4,7 +4,7 @@ import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { RunAuditContext } from "../../commands/run-audit.ts";
 import { MutationFilteredSignaturePlugin } from "./mutation-filtered.ts";
 
-export class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
+export default class SqliBooleanPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:sqli-boolean";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;

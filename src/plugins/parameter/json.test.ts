@@ -6,16 +6,16 @@ import { InMemoryEventBus } from "../../core/event-bus.ts";
 import type { MutationType } from "../../types/branded.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
 import type { AuditParameter, HttpRequest } from "../../types/models.ts";
+import JsonParserPlugin from "./json/parser.ts";
+import JsonMutationPlugin from "./json/mutation.ts";
 import {
   JsonArrayMutation,
   JsonArrayParameter,
-  JsonMutationPlugin,
   JsonObjectParameter,
-  JsonParserPlugin,
   JsonPrimitiveMutation,
   JsonPrimitiveParameter,
-} from "./json.ts";
-import { QueryParameter } from "./query.ts";
+} from "./json/model.ts";
+import { QueryParameter } from "./query/model.ts";
 
 type AnyJsonTarget =
   | JsonPrimitiveParameter

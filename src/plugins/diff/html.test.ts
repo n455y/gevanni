@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { HtmlDiffPlugin } from "./html.ts";
+import HtmlDiffPlugin from "./html.ts";
 import { ExchangeId } from "../../types/branded.ts";
 
 function makeHtmlExchange(statusCode: number, body: string) {

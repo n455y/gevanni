@@ -19,7 +19,7 @@ export const XXE_ERROR_PATTERNS: RegExp[] = [
   /External entity.*not allowed/i,
 ];
 
-export class XxeInjectionPlugin extends MutationFilteredSignaturePlugin {
+export default class XxeInjectionPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:xxe-injection";
   protected readonly groups = [SignatureGroupId("xxe-injection")];
   protected readonly mutationTypes = [

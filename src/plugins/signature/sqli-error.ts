@@ -12,7 +12,7 @@ export const SQL_ERROR_PATTERNS: RegExp[] = [
   /SQLITE_ERROR/i,
 ];
 
-export class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
+export default class SqliErrorPlugin extends MutationFilteredSignaturePlugin {
   readonly name = "signature:sqli-error";
   protected readonly groups = [SignatureGroupId("sqli")];
   protected readonly mutationTypes = [BuiltinMutationType.AppendValue] as const;
