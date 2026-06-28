@@ -44,12 +44,6 @@ export const BuiltinPayload = {
   Boolean: (v: boolean) => v as BooleanPayload,
   Null: () => null as NullPayload,
 } as const;
-export namespace BuiltinPayload {
-  export type String = StringPayload;
-  export type Number = NumberPayload;
-  export type Boolean = BooleanPayload;
-  export type Null = NullPayload;
-}
 
 // --- MutationType builtins ---
 
