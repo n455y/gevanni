@@ -6,7 +6,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "bin": {
-    "gevanni": "./dist/cli.js"
+    "gevanni": "./bin/gevanni.js"
   },
   "exports": {
     ".": "./src/index.ts"
