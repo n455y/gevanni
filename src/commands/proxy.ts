@@ -8,7 +8,9 @@ export interface MutationProxy {
 
 export class CreateProxyCommand extends SingleCommand<MutationProxy> {
   readonly type = "createProxy";
-  constructor(readonly mutations: AuditMutation[]) {
+  readonly mutations: AuditMutation[];
+  constructor(mutations: AuditMutation[]) {
     super();
+    this.mutations = mutations;
   }
 }
