@@ -13,6 +13,7 @@ import {
   type OpenApiOperation,
   type OpenApiRequestBody,
   type OpenApiScenarioSource,
+  type OpenApiSecurityScheme,
   defaultValueForSchema,
 } from "../loader/openapi-loader.ts";
 
@@ -104,10 +105,37 @@ export function buildUrl(
   return url;
 }
 
+function applySecurity(
+  headers: Record<string, string>,
+  security: string[] | undefined,
+  schemes: Record<string, OpenApiSecurityScheme> | undefined,
+  tokens: Record<string, string> | undefined,
+): void {
+  if (!security || !schemes) return;
+  for (const name of security) {
+    const scheme = schemes[name];
+    const token = tokens?.[name];
+    if (!scheme || !token) continue;
+    if (scheme.type === "http" && scheme.scheme === "bearer") {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else if (scheme.type === "oauth2") {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else if (
+      scheme.type === "apiKey" &&
+      scheme.in === "header" &&
+      scheme.name
+    ) {
+      headers[scheme.name] = token;
+    }
+  }
+}
+
 export function buildHeaders(
   op: OpenApiOperation,
   replayId: ReplayId,
   overrides?: Record<string, string>,
+  securitySchemes?: Record<string, OpenApiSecurityScheme>,
+  tokens?: Record<string, string>,
 ): Record<string, string> {
   const headers: Record<string, string> = {
     "X-Gevanni-Replay-Id": replayId,
@@ -120,6 +148,8 @@ export function buildHeaders(
         String(defaultValueForSchema(param.schema, param.example));
     }
   }
+
+  applySecurity(headers, op.security, securitySchemes, tokens);
 
   if (op.requestBody) {
     headers["Content-Type"] = op.requestBody.contentType;
@@ -221,10 +251,10 @@ export default class OpenApiPlugin implements ScenarioPlugin {
       const { scenario, config } = cmd;
       const source = scenario.source as OpenApiScenarioSource;
 
-      await executeSteps(source.steps, config);
+      await executeSteps(source.steps, config, source.securitySchemes);
 
       for (const so of source.secondOrders ?? []) {
-        await executeSteps(so.steps, config);
+        await executeSteps(so.steps, config, source.securitySchemes);
       }
 
       const exchanges = await commandBus.dispatch<Exchange[]>(
@@ -247,16 +277,24 @@ export default class OpenApiPlugin implements ScenarioPlugin {
 async function executeSteps(
   steps: import("../loader/openapi-loader.ts").OpenApiStep[],
   config: import("../../commands/replay.ts").ReplayConfig,
+  securitySchemes?: Record<string, OpenApiSecurityScheme>,
 ): Promise<void> {
   const overridesMap: Record<string, string> = {};
   const bodyOverridesMap: Record<string, string> = {};
+  const tokensByScheme: Record<string, string> = {};
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     const isLast = i === steps.length - 1;
 
     const url = buildUrl(step.operation, overridesMap);
-    const headers = buildHeaders(step.operation, config.replayId, overridesMap);
+    const headers = buildHeaders(
+      step.operation,
+      config.replayId,
+      overridesMap,
+      securitySchemes,
+      tokensByScheme,
+    );
     const body = buildBody(step.operation.requestBody, bodyOverridesMap);
 
     if (isLast) {
@@ -271,6 +309,15 @@ async function executeSteps(
       body,
       config.proxyPort,
     );
+
+    // securitySchemes の x-gevanni-token で token を抽出（token を返す step の response）
+    if (securitySchemes) {
+      for (const [schemeName, scheme] of Object.entries(securitySchemes)) {
+        if (!scheme.tokenExpr) continue;
+        const tok = resolveRuntimeExpression(scheme.tokenExpr, response);
+        if (tok) tokensByScheme[schemeName] = tok;
+      }
+    }
 
     if (step.link) {
       for (const [paramName, expr] of Object.entries(step.link.parameters)) {

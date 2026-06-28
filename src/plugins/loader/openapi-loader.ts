@@ -37,6 +37,19 @@ export interface OpenApiOperation {
   requestBody?: OpenApiRequestBody;
   bodyVariants?: OpenApiRequestBody[];
   links?: OpenApiLink[];
+  security?: string[];
+}
+
+// components/securitySchemes/<name> の解決に必要な情報。
+// x-gevanni-token を持つ scheme は、scenario 内で token を返す step の
+// レスポンスから token を抽出し、その scheme で保護された以降の operation へ
+// type/scheme に応じた送信形式（Bearer 等）で自動注入される。
+export interface OpenApiSecurityScheme {
+  type: string;
+  scheme?: string;
+  in?: string;
+  name?: string;
+  tokenExpr?: string;
 }
 
 export interface OpenApiStep {
@@ -53,6 +66,7 @@ export interface OpenApiScenarioSource {
   scannable: boolean;
   diff?: DiffStrategyConfig;
   secondOrders?: OpenApiSecondOrder[];
+  securitySchemes?: Record<string, OpenApiSecurityScheme>;
 }
 
 const KNOWN_DIFF_STRATEGIES = new Set<DiffStrategyType>([
@@ -242,6 +256,40 @@ function isOpenApi3(data: unknown): data is OpenApiDoc {
   return typeof data.openapi === "string" && data.openapi.startsWith("3.");
 }
 
+function extractSecurity(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const names: string[] = [];
+  for (const item of raw) {
+    if (isObject(item)) {
+      for (const key of Object.keys(item)) names.push(key);
+    }
+  }
+  return names.length > 0 ? names : undefined;
+}
+
+function extractSecuritySchemes(
+  doc: OpenApiDoc,
+): Record<string, OpenApiSecurityScheme> | undefined {
+  const components = (doc as { components?: unknown }).components;
+  const raw = isObject(components)
+    ? (components as Record<string, unknown>).securitySchemes
+    : undefined;
+  if (!isObject(raw)) return undefined;
+  const result: Record<string, OpenApiSecurityScheme> = {};
+  for (const [name, def] of Object.entries(raw)) {
+    if (!isObject(def)) continue;
+    const tokenExpr = def["x-gevanni-token"];
+    result[name] = {
+      type: typeof def.type === "string" ? def.type : "",
+      scheme: typeof def.scheme === "string" ? def.scheme : undefined,
+      in: typeof def.in === "string" ? def.in : undefined,
+      name: typeof def.name === "string" ? def.name : undefined,
+      tokenExpr: typeof tokenExpr === "string" ? tokenExpr : undefined,
+    };
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 function extractParameters(rawList: unknown, resolver: RefResolver): OpenApiParameter[] {
   const params: OpenApiParameter[] = [];
   if (!Array.isArray(rawList)) return params;
@@ -339,6 +387,7 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
       const bodyVariants = extractRequestBodyVariants(operation.requestBody, resolver);
       const links = extractLinks(operation.responses);
       const operationId = operation.operationId as string | undefined;
+      const security = extractSecurity(operation.security);
 
       const base = {
         baseUrl,
@@ -348,6 +397,7 @@ function extractOperations(doc: OpenApiDoc): OpenApiOperation[] {
         summary: operation.summary as string | undefined,
         parameters,
         links: links.length > 0 ? links : undefined,
+        security,
       };
 
       operations.push({
@@ -518,6 +568,8 @@ export function buildScenariosFromExtension(
   const ext = doc["x-gevanni-scenarios"];
   if (!Array.isArray(ext)) return [];
 
+  const securitySchemes = extractSecuritySchemes(doc as OpenApiDoc);
+
   const byId = new Map<string, OpenApiOperation>();
   for (const op of operations) {
     if (op.operationId) byId.set(op.operationId, op);
@@ -564,6 +616,7 @@ export function buildScenariosFromExtension(
       scannable,
       diff,
       secondOrders: secondOrders.length > 0 ? secondOrders : undefined,
+      securitySchemes,
     });
   }
 

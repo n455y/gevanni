@@ -20,6 +20,7 @@ const EXCLUDED_HEADERS = [
   "transfer-encoding",
   "connection",
   "cookie",
+  "authorization",
 ];
 
 function parseHeaderParameters(request: HttpRequest): AuditParameter[] {
