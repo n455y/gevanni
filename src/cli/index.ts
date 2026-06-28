@@ -7,18 +7,20 @@ import { builtinPluginFactories, registerAllBuiltinPlugins } from "../builtin.ts
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
-import { loadOpenApiScenarios } from "../plugins/loader/openapi-loader.ts";
+import type { ScenarioLoaderPlugin } from "../core/plugin.ts";
 import type { Scenario } from "../types/models.ts";
-import { expandScenarioPaths } from "./scenario-paths.ts";
+import { loadScenariosFromSpecs } from "./scenario-spec.ts";
 
-const scenarioLoaders = [loadOpenApiScenarios];
-
-async function loadScenarios(sources: unknown[]): Promise<Scenario[]> {
+// config 経路（plan/resume/report）用: scenarioSources を全 scenario-loader で自動判定。
+// 形式や挙動は従来（空配列フォールバック）を維持する。
+async function loadScenarios(
+  sources: unknown[],
+  loaders: ScenarioLoaderPlugin[],
+): Promise<Scenario[]> {
   const scenarios: Scenario[] = [];
   for (const source of sources) {
-    for (const loader of scenarioLoaders) {
-      const loaded = await loader(source);
-      scenarios.push(...loaded);
+    for (const loader of loaders) {
+      scenarios.push(...(await loader.loadScenarios(source)));
     }
   }
   return scenarios;
@@ -69,12 +71,15 @@ async function bootstrap(
     }
     registry.register(factory(pc.options));
   }
-  await registry.initializeAll(ctx);
+  const plugins = await registry.initializeAll(ctx);
+  const loaders = plugins.filter(
+    (p): p is ScenarioLoaderPlugin => p.name.startsWith("scenario-loader:"),
+  );
 
   const orchestrator = new Orchestrator({
     context: ctx,
   });
-  return { config, logger, ctx, registry, orchestrator };
+  return { config, logger, ctx, registry, orchestrator, loaders };
 }
 
 // CLI setup
@@ -89,8 +94,8 @@ program
   .command("scan")
   .description("Run full vulnerability scan from scenario source(s)")
   .option(
-    "-s, --scenario <path>",
-    "Scenario source file/glob/dir (repeatable)",
+    "-s, --scenario <name>:<path>",
+    "Scenario source as <loader-name>:<path>, e.g. openapi:./spec.yaml (repeatable, glob/dir ok)",
     collect,
     [] as string[],
   )
@@ -99,7 +104,7 @@ program
   .option("--concurrency <n>", "Parallel workers")
   .action(async (opts: { scenario: string[]; verbose?: boolean; quiet?: boolean; concurrency?: string }) => {
     if (opts.scenario.length === 0) {
-      console.error("error: required option '-s, --scenario <path>' not specified");
+      console.error("error: required option '-s, --scenario <name>:<path>' not specified");
       process.exit(1);
     }
 
@@ -113,13 +118,12 @@ program
     registerAllBuiltinPlugins(registry);
     await registry.initializeAll(ctx);
 
-    const paths = expandScenarioPaths(opts.scenario);
-    if (paths.length === 0) {
-      logger.error("No scenario files found for the given --scenario input(s)");
+    const scenarios = await loadScenariosFromSpecs(opts.scenario, registry);
+    if (scenarios.length === 0) {
+      logger.error("No scenarios loaded from the given --scenario input(s)");
       process.exit(1);
     }
 
-    const scenarios = await loadScenarios(paths);
     const orchestrator = new Orchestrator({ context: ctx });
     const concurrency = opts.concurrency ? parseInt(opts.concurrency, 10) : 5;
     const { scanId, items } = await orchestrator.plan(scenarios);
@@ -135,11 +139,11 @@ program
   .option("--verbose", "Debug logging")
   .option("--quiet", "Minimal logging")
   .action(async (opts: CliOptions) => {
-    const { config, orchestrator } = await bootstrap(
+    const { config, orchestrator, loaders } = await bootstrap(
       opts.config,
       buildOverrides(opts),
     );
-    const scenarios = await loadScenarios(config.scenarioSources);
+    const scenarios = await loadScenarios(config.scenarioSources, loaders);
     await orchestrator.plan(scenarios);
   });
 
