@@ -10,6 +10,7 @@ import {
   defaultValueForSchema,
   isOpenApi3,
 } from "./openapi-loader.ts";
+import OpenApiLoaderPlugin from "./openapi-loader.ts";
 
 describe("OpenApiLoader", () => {
   const loader = { load: loadOpenApiScenarios };
@@ -1427,5 +1428,27 @@ describe("scannable", () => {
     cleanup(f);
 
     expect(result).toHaveLength(0);
+  });
+});
+
+describe("OpenApiLoaderPlugin", () => {
+  it("has the scenario-loader:openapi name", () => {
+    const plugin = new OpenApiLoaderPlugin();
+    expect(plugin.name).toBe("scenario-loader:openapi");
+  });
+
+  it("init is a no-op that resolves", async () => {
+    const plugin = new OpenApiLoaderPlugin();
+    await expect(plugin.init({} as never)).resolves.toBeUndefined();
+  });
+
+  it("delegates loadScenarios to loadOpenApiScenarios: non-string source → []", async () => {
+    const plugin = new OpenApiLoaderPlugin();
+    expect(await plugin.loadScenarios(42)).toEqual([]);
+  });
+
+  it("delegates loadScenarios to loadOpenApiScenarios: missing path → []", async () => {
+    const plugin = new OpenApiLoaderPlugin();
+    expect(await plugin.loadScenarios("/nonexistent/spec.yaml")).toEqual([]);
   });
 });

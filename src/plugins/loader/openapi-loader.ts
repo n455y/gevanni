@@ -4,6 +4,7 @@ import yaml from "js-yaml";
 import type { DiffStrategyConfig, DiffStrategyType, Scenario } from "../../types/models.ts";
 import { ScenarioId } from "../../types/branded.ts";
 import { ScenarioType } from "../../types/branded.ts";
+import type { ScenarioLoaderPlugin, PluginContext } from "../../core/plugin.ts";
 
 // --- OpenAPI 3.x types (subset) ---
 
@@ -687,4 +688,19 @@ export async function loadOpenApiScenarios(source: unknown): Promise<Scenario[]>
       diffStrategy: source.diff ?? { type: "exact" },
     };
   });
+}
+
+// --- Loader plugin ---
+// シナリオ読み込み（ファイル → Scenario[]）を担うプラグイン。
+// 実行側（scenario:openapi、ReplayCommand ハンドラ）とは別責務・別名前空間。
+// 解析ロジックは既存の loadOpenApiScenarios 関数に委譲し、ここでは wrap するだけ。
+export default class OpenApiLoaderPlugin implements ScenarioLoaderPlugin {
+  readonly name = "scenario-loader:openapi";
+
+  // loader は commandBus に何も登録しない（読み込み専用）
+  async init(_context: PluginContext): Promise<void> {}
+
+  async loadScenarios(source: unknown): Promise<Scenario[]> {
+    return loadOpenApiScenarios(source);
+  }
 }
