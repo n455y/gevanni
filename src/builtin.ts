@@ -1,5 +1,6 @@
 import type { Plugin, PluginRegistry } from "./core/plugin.ts";
 import OpenApiPlugin from "./plugins/scenario/openapi.ts";
+import OpenApiLoaderPlugin from "./plugins/loader/openapi-loader.ts";
 import HttpProxyPlugin, { type HttpProxyConfig } from "./plugins/proxy/http-proxy.ts";
 import QueryParserPlugin from "./plugins/parameter/query/parser.ts";
 import QueryMutationPlugin from "./plugins/parameter/query/mutation.ts";
@@ -44,6 +45,7 @@ type PluginFactory = (options: Record<string, unknown>) => Plugin;
 
 const builtinPlugins: PluginFactory[] = [
   () => new OpenApiPlugin(),
+  () => new OpenApiLoaderPlugin(),
   (opts) => new HttpProxyPlugin(opts as HttpProxyConfig),
   () => new QueryParserPlugin(),
   () => new PathParserPlugin(),
