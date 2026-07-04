@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { PluginRegistryImpl } from "../core/plugin.ts";
-import { RuntimeContext } from "../core/runtime-context.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 
 describe("loadPlugins", () => {
@@ -138,6 +137,20 @@ describe("loadPlugins", () => {
 
     await expect(
       loadPlugins(["./not-class.ts"], registry, tmpDir),
+    ).rejects.toThrow("is not a class");
+  });
+
+  it("throws error for plain function default export (not a class)", async () => {
+    const registry = new PluginRegistryImpl();
+    const pluginCode = `
+      export default function NotAClass() {
+        return { name: "test:plugin" };
+      }
+    `;
+    writePluginFile(tmpDir, "plain-fn.ts", pluginCode);
+
+    await expect(
+      loadPlugins(["./plain-fn.ts"], registry, tmpDir),
     ).rejects.toThrow("is not a class");
   });
 

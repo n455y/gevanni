@@ -62,7 +62,7 @@ async function loadPluginClass(
   const Cls = (mod as { default: unknown }).default;
 
   // クラス（コンストラクタ）をチェック
-  if (typeof Cls !== "function") {
+  if (typeof Cls !== "function" || Cls.toString().startsWith("class") === false) {
     throw new Error(
       `Default export of "${resolvedPath}" is not a class (constructor)`,
     );
