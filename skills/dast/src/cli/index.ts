@@ -3,7 +3,8 @@ import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
 import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
-import { builtinPluginFactories, registerAllBuiltinPlugins } from "../builtin.ts";
+import { loadPlugins } from "../config/plugin-loader.ts";
+import { registerAllBuiltinPlugins } from "../builtin.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
@@ -59,18 +60,12 @@ async function bootstrap(
   configPath?: string,
   cliOverrides?: Partial<{ logLevel: LogLevel; concurrency: number }>,
 ) {
-  const config = loadConfig(configPath, cliOverrides);
+  const { config, configDir } = loadConfig(configPath, cliOverrides);
   const logger = createLogger(config.logLevel);
   const ctx = new RuntimeContext({ logger });
   const registry = new PluginRegistryImpl();
 
-  for (const pc of config.plugins) {
-    const factory = builtinPluginFactories.get(pc.name);
-    if (!factory) {
-      throw new Error(`Unknown plugin: ${pc.name}`);
-    }
-    registry.register(factory(pc.options));
-  }
+  await loadPlugins(config.plugins, registry, configDir);
   const plugins = await registry.initializeAll(ctx);
   const loaders = plugins.filter(
     (p): p is ScenarioLoaderPlugin => p.name.startsWith("scenario-loader:"),
