@@ -1,11 +1,11 @@
 {
   "name": "gevanni",
   "version": "1.0.0",
-  "description": "Web application security scanning plugin with DAST, SAST, and OpenAPI scenario generation",
+  "description": "Web application security scanning plugin with DAST, SAST, and scenario generation",
   "author": "Genki Sakanashi",
   "skills": [
     "skills/dast",
     "skills/sast",
-    "skills/openapi-scenario-generator"
+    "skills/generate-scenario"
   ]
 }

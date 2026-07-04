@@ -29,3 +29,42 @@ npm run gevanni -- scan -s openapi:./spec.yaml
 ```ts
 import { builtinPluginFactories } from "gevanni";
 ```
+
+## Claude Code Plugin
+
+gevanni is also available as a Claude Code plugin for security scanning directly within your development environment.
+
+### Plugin Installation
+
+Install the plugin from GitHub:
+
+```bash
+claude plugin install github.com/username/gevanni
+```
+
+Replace `username` with your GitHub username or organization.
+
+### Plugin Usage
+
+Once installed, you can use the following slash commands:
+
+```bash
+/gevanni:dast [target]
+```
+Run Dynamic Application Security Testing against a target URL or application.
+
+```bash
+/gevanni:sast [source]
+```
+Run Static Application Security Testing against source code.
+
+```bash
+/gevanni:generate-scenario [type]:[path]
+```
+Generate test scenarios from various API specifications (OpenAPI, GraphQL, gRPC).
+
+### Available Skills
+
+- **dast** - Dynamic application security testing
+- **sast** - Static application security testing
+- **generate-scenario** - Scenario generation for various API types (OpenAPI, GraphQL, gRPC)

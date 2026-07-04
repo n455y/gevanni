@@ -1,11 +1,6 @@
----
-name: openapi-scenario-generator
-description: Analyze web application source code and generate gevanni-compatible OpenAPI scenario definitions (x-gevanni-scenarios). Use this skill when the user wants to create or update OpenAPI spec files with vulnerability scanning scenarios for the gevanni scanner, or when they ask to generate test scenarios from their API source code.
----
+# OpenAPI Scenario Generator
 
-# Generate OpenAPI Scenarios for Gevanni
-
-Analyze source code and generate gevanni-compatible `x-gevanni-scenarios` entries for the OpenAPI spec.
+Generate gevanni-compatible `x-gevanni-scenarios` entries for OpenAPI specs.
 
 ## Arguments
 
@@ -15,7 +10,7 @@ Analyze source code and generate gevanni-compatible `x-gevanni-scenarios` entrie
 
 ### Step 1: Discover project context
 
-1. Find existing OpenAPI spec files (`.openapi.yaml`, `.openapi.yml`, `.openapi.json`) in the project root and `examples/` directory.
+1. Find existing OpenAPI spec files (`.openapi.yaml`, `.openapi.yml`, `.openapi.json`) in the project root and `.gevanni/scenarios/` directory.
 2. Read any existing spec to understand defined operations.
 3. Read the source code at the path given in `$ARGUMENTS` to discover HTTP endpoints.
 
@@ -101,7 +96,7 @@ While building the operation list, check for gevanni limitations:
            scheme: bearer
            x-gevanni-token: $response.body#/authentication/token # JSON pointer to the token in the login response
      ```
-     `x-gevanni-token` is a runtime expression evaluated against each step's response; the first step whose response yields a value (e.g. `login`) becomes the token source. Works for `http:bearer` and `oauth2` (→ `Authorization: Bearer <token>`) and `apiKey` with `in: header` (→ the configured header).
+   - `x-gevanni-token` is a runtime expression evaluated against each step's response; the first step whose response yields a value (e.g. `login`) becomes the token source. Works for `http:bearer` and `oauth2` (→ `Authorization: Bearer <token>`) and `apiKey` with `in: header` (→ the configured header).
    - Define the token-returning operation (e.g. `POST /rest/user/login`) with credentials in its requestBody `example`.
    - Tag protected operations with `security: bearerAuth` (standard OpenAPI). **Do not** add an `Authorization` header parameter.
    - Make each protected scenario start with the token step: `steps: [login, <auth-op>]`.
@@ -125,7 +120,7 @@ Rules:
 
 #### If no spec exists
 
-Create a new OpenAPI 3.0 spec at `examples/<project-name>.openapi.yaml` with:
+Create a new OpenAPI 3.0 spec at `.gevanni/scenarios/openapi.yaml` with:
 
 - `openapi: "3.0.0"`
 - `info.title` and `info.version`
@@ -133,12 +128,16 @@ Create a new OpenAPI 3.0 spec at `examples/<project-name>.openapi.yaml` with:
 - `paths` with all discovered operations — **each with a unique operationId** (see rules above)
 - `x-gevanni-scenarios` section
 
+Ensure the `.gevanni/scenarios/` directory exists before writing the spec.
+
 #### If a spec already exists
 
+- Check `.gevanni/scenarios/openapi.yaml` for existing spec
 - Preserve all existing content
 - Add missing operations to `paths`
 - Add missing scenarios to `x-gevanni-scenarios`
 - Do not remove or modify existing scenarios unless the user asks
+- Write the updated spec to `.gevanni/scenarios/openapi.yaml`
 
 ### Step 3.5: Coverage planning — ensure every scannable operation has a scenario
 
