@@ -138,7 +138,9 @@ program
       opts.config,
       buildOverrides(opts),
     );
-    const scenarios = await loadScenarios(config.scenarioSources, loaders);
+    // scenarios → "type:file" 形式に変換
+    const scenarioSpecs = config.scenarios.map((s) => `${s.type}:${s.file}`);
+    const scenarios = await loadScenarios(scenarioSpecs, loaders);
     await orchestrator.plan(scenarios);
   });
 
@@ -181,7 +183,13 @@ program
   .action(async (opts: CliOptions) => {
     const { config } = await bootstrap(opts.config);
     for (const plugin of config.plugins) {
-      console.log(plugin.name);
+      if (plugin === ":builtin:") {
+        console.log(":builtin: (all builtin plugins)");
+      } else if (typeof plugin === "string") {
+        console.log(plugin);
+      } else {
+        console.log(`${plugin.file} with options`);
+      }
     }
   });
 
