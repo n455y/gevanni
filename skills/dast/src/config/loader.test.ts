@@ -23,12 +23,12 @@ describe("loadConfig", () => {
 
   it("returns defaults when config file does not exist", () => {
     const configPath = path.join(tmpDir, "nonexistent.json");
-    const config = loadConfig(configPath);
+    const { config } = loadConfig(configPath);
     expect(config).toEqual({
       concurrency: 5,
       logLevel: "info",
       plugins: [],
-      scenarioSources: [],
+      scenarios: [],
     });
   });
 
@@ -37,12 +37,12 @@ describe("loadConfig", () => {
     const originalCwd = process.cwd();
     process.chdir(tmpDir);
     try {
-      const config = loadConfig();
+      const { config } = loadConfig();
       expect(config).toEqual({
         concurrency: 5,
         logLevel: "info",
         plugins: [],
-        scenarioSources: [],
+        scenarios: [],
       });
     } finally {
       process.chdir(originalCwd);
@@ -53,22 +53,23 @@ describe("loadConfig", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarioSources: ["./collections/"],
+      scenarios: [
+        { type: "openapi", file: "./spec.yaml" },
+      ],
       plugins: [
-        { name: "scenario:openapi", options: {} },
-        { name: "reflected-xss", options: {} },
+        ":builtin:",
       ],
     });
 
-    const config = loadConfig(configPath);
+    const { config } = loadConfig(configPath);
     expect(config.concurrency).toBe(3);
     expect(config.logLevel).toBe("debug");
-    expect(config.scenarioSources).toEqual(["./collections/"]);
-    expect(config.plugins).toHaveLength(2);
-    expect(config.plugins[0]).toEqual({
-      name: "scenario:openapi",
-      options: {},
-    });
+    expect(config.scenarios).toEqual([
+      { type: "openapi", file: "./spec.yaml" },
+    ]);
+    expect(config.plugins).toEqual([
+      ":builtin:",
+    ]);
   });
 
   it("uses defaults for missing fields in config file", () => {
@@ -76,22 +77,26 @@ describe("loadConfig", () => {
       concurrency: 10,
     });
 
-    const config = loadConfig(configPath);
+    const { config } = loadConfig(configPath);
     expect(config.concurrency).toBe(10);
     expect(config.logLevel).toBe("info");
     expect(config.plugins).toEqual([]);
-    expect(config.scenarioSources).toEqual([]);
+    expect(config.scenarios).toEqual([]);
   });
 
   it("CLI overrides take precedence over file values", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarioSources: ["./collections/"],
-      plugins: [{ name: "proxy:http", options: {} }],
+      scenarios: [
+        { type: "openapi", file: "./spec.yaml" },
+      ],
+      plugins: [
+        "./.gevanni/plugins/custom.ts",
+      ],
     });
 
-    const config = loadConfig(configPath, {
+    const { config } = loadConfig(configPath, {
       concurrency: 20,
       logLevel: "error",
     });
@@ -99,22 +104,23 @@ describe("loadConfig", () => {
     expect(config.concurrency).toBe(20);
     expect(config.logLevel).toBe("error");
     // File values used for non-overridden fields
-    expect(config.scenarioSources).toEqual(["./collections/"]);
+    expect(config.scenarios).toEqual([
+      { type: "openapi", file: "./spec.yaml" },
+    ]);
     expect(config.plugins).toEqual([
-      { name: "proxy:http", options: {} },
+      "./.gevanni/plugins/custom.ts",
     ]);
   });
 
   it("CLI overrides take precedence even over defaults when no file exists", () => {
     const configPath = path.join(tmpDir, "nonexistent.json");
-    const config = loadConfig(configPath, {
+    const { config } = loadConfig(configPath, {
       concurrency: 100,
-      scenarioSources: ["./custom/"],
     });
 
     expect(config.concurrency).toBe(100);
     expect(config.logLevel).toBe("info");
-    expect(config.scenarioSources).toEqual(["./custom/"]);
+    expect(config.scenarios).toEqual([]);
     expect(config.plugins).toEqual([]);
   });
 
@@ -122,24 +128,24 @@ describe("loadConfig", () => {
     const configPath = path.join(tmpDir, "gevanni.json");
     fs.writeFileSync(configPath, "not valid json{{{", "utf-8");
 
-    const config = loadConfig(configPath);
+    const { config } = loadConfig(configPath);
     expect(config).toEqual({
       concurrency: 5,
       logLevel: "info",
       plugins: [],
-      scenarioSources: [],
+      scenarios: [],
     });
   });
 
   it("handles empty JSON object", () => {
     const configPath = writeConfig(tmpDir, {});
 
-    const config = loadConfig(configPath);
+    const { config } = loadConfig(configPath);
     expect(config).toEqual({
       concurrency: 5,
       logLevel: "info",
       plugins: [],
-      scenarioSources: [],
+      scenarios: [],
     });
   });
 
@@ -147,28 +153,22 @@ describe("loadConfig", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarioSources: ["./collections/"],
+      scenarios: [
+        { type: "openapi", file: "./spec.yaml" },
+      ],
       plugins: [
-        { name: "scenario:openapi", options: {} },
-        { name: "proxy:http", options: {} },
-        { name: "parser:query", options: {} },
-        { name: "parser:json", options: {} },
-        { name: "parser:form", options: {} },
-        { name: "mutation:query", options: {} },
-        { name: "mutation:json", options: {} },
-        { name: "mutation:form", options: {} },
-        { name: "reflected-xss", options: {} },
-        { name: "sqli-error", options: {} },
-        { name: "storage:json", options: {} },
-        { name: "reporter:console", options: {} },
-        { name: "reporter:json", options: {} },
+        ":builtin:",
+        "./.gevanni/plugins/custom.ts",
+        { file: "./.gevanni/plugins/custom-with-opts.ts", options: { key: "value" } },
       ],
     });
 
-    const config = loadConfig(configPath);
+    const { config } = loadConfig(configPath);
     expect(config.concurrency).toBe(3);
     expect(config.logLevel).toBe("debug");
-    expect(config.scenarioSources).toEqual(["./collections/"]);
-    expect(config.plugins).toHaveLength(13);
+    expect(config.scenarios).toEqual([
+      { type: "openapi", file: "./spec.yaml" },
+    ]);
+    expect(config.plugins).toHaveLength(3);
   });
 });
