@@ -1,19 +1,39 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { PluginConfig } from "../types/models.ts";
 import type { LogLevel } from "../core/logger.ts";
+
+/**
+ * プラグイン指定の形式
+ * - ":builtin:": 全ビルトインプラグイン
+ * - string: ファイルパス (./.gevanni/plugins/custom.ts)
+ * - {file, options}: options 付きファイル指定
+ */
+export type PluginSpec =
+  | ":builtin:"
+  | string
+  | { file: string; options: Record<string, unknown> };
+
+/**
+ * シナリオ指定の形式
+ * - type: "openapi", "graphql", etc.
+ * - file: ファイルパス
+ */
+export interface ScenarioSpec {
+  type: string;
+  file: string;
+}
 
 export interface ResolvedConfig {
   concurrency: number;
-  plugins: PluginConfig[];
-  scenarioSources: unknown[];
+  plugins: PluginSpec[];
+  scenarios: ScenarioSpec[];
   logLevel: LogLevel;
 }
 
 export interface RawConfig {
   concurrency?: number;
-  plugins?: PluginConfig[];
-  scenarioSources?: unknown[];
+  plugins?: PluginSpec[];
+  scenarios?: ScenarioSpec[];
   logLevel?: LogLevel;
 }
 
@@ -24,7 +44,7 @@ const DEFAULT_CONFIG: ResolvedConfig = {
   concurrency: DEFAULT_CONCURRENCY,
   logLevel: DEFAULT_LOG_LEVEL,
   plugins: [],
-  scenarioSources: [],
+  scenarios: [],
 };
 
 export function loadConfig(
@@ -46,7 +66,7 @@ export function loadConfig(
     concurrency: cliOverrides?.concurrency ?? fileConfig.concurrency ?? DEFAULT_CONFIG.concurrency,
     logLevel: cliOverrides?.logLevel ?? fileConfig.logLevel ?? DEFAULT_CONFIG.logLevel,
     plugins: cliOverrides?.plugins ?? fileConfig.plugins ?? DEFAULT_CONFIG.plugins,
-    scenarioSources: cliOverrides?.scenarioSources ?? fileConfig.scenarioSources ?? DEFAULT_CONFIG.scenarioSources,
+    scenarios: cliOverrides?.scenarios ?? fileConfig.scenarios ?? DEFAULT_CONFIG.scenarios,
   };
 
   return resolved;
