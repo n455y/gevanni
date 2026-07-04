@@ -116,10 +116,12 @@ describe("loadConfig", () => {
     const configPath = path.join(tmpDir, "nonexistent.json");
     const { config } = loadConfig(configPath, {
       concurrency: 100,
+      logLevel: "debug",
     });
 
     expect(config.concurrency).toBe(100);
-    expect(config.logLevel).toBe("info");
+    expect(config.logLevel).toBe("debug");
+    // fields not overridable from CLI fall back to defaults
     expect(config.scenarios).toEqual([]);
     expect(config.plugins).toEqual([]);
   });
