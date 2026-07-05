@@ -275,7 +275,8 @@ program
       } else if (typeof plugin === "string") {
         console.log(plugin);
       } else {
-        console.log(`${plugin.file} with options`);
+        const label = "file" in plugin ? plugin.file : plugin.name;
+        console.log(`${label} with options`);
       }
     }
   });
