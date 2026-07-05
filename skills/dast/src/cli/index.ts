@@ -5,8 +5,11 @@ import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
 import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
-import { loadPlugins, discoverPluginFiles, resolvePluginPath } from "../config/plugin-loader.ts";
-import { registerAllBuiltinPlugins } from "../builtin.ts";
+import {
+  loadPlugins,
+  discoverPluginFiles,
+  resolvePluginPath,
+} from "../config/plugin-loader.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
 import type { LogLevel } from "../core/logger.ts";
@@ -125,8 +128,8 @@ async function bootstrap(
   await loadPlugins(allPlugins, registry, searchDirs);
   const plugins = await registry.initializeAll(ctx);
   ctx.pluginRegistry = registry;
-  const loaders = plugins.filter(
-    (p): p is ScenarioLoaderPlugin => p.name.startsWith("scenario-loader:"),
+  const loaders = plugins.filter((p): p is ScenarioLoaderPlugin =>
+    p.name.startsWith("scenario-loader:"),
   );
 
   const orchestrator = new Orchestrator({
@@ -162,64 +165,46 @@ program
     collect,
     [] as string[],
   )
-  .action(async (opts: { config?: string; scenario: string[]; verbose?: boolean; quiet?: boolean; concurrency?: string; reporter: string[] }) => {
-    // モード決定: config.json 使用時
-    if (opts.config) {
-      const { config, configDir, orchestrator, registry } = await bootstrap(opts.config, buildOverrides(opts));
+  .action(
+    async (opts: {
+      config?: string;
+      scenario: string[];
+      verbose?: boolean;
+      quiet?: boolean;
+      concurrency?: string;
+      reporter: string[];
+    }) => {
+      const { config, configDir, logger, orchestrator, registry } =
+        await bootstrap(opts.config, buildOverrides(opts));
 
-      // config.scenarios を scenario specs に変換（configDirを考慮）
-      const scenarioSpecs = config.scenarios.map((s) => {
-        const resolvedPath = path.resolve(configDir, s.file);
-        return `${s.type}:${resolvedPath}`;
-      });
+      // シナリオソース: --scenario フラグがあれば CLI 指定を優先、なければ config から
+      const scenarioSpecs: string[] =
+        opts.scenario.length > 0
+          ? opts.scenario
+          : config.scenarios.map((s) => {
+              const resolvedPath = path.resolve(configDir, s.file);
+              return `${s.type}:${resolvedPath}`;
+            });
 
-      // シナリオ読み込み（registryからloaderを取得）
-      const scenarios = await loadScenariosFromSpecs(scenarioSpecs, registry);
-
-      if (scenarios.length === 0) {
-        const logger = createLogger(config.logLevel);
-        logger.error("No scenarios loaded from config file");
+      if (scenarioSpecs.length === 0) {
+        logger.error(
+          "No scenario sources specified. Use --scenario or configure scenarios in config file.",
+        );
         process.exit(1);
       }
 
-      // スキャン実行
+      const scenarios = await loadScenariosFromSpecs(scenarioSpecs, registry);
+      if (scenarios.length === 0) {
+        logger.error("No scenarios loaded from the given source(s)");
+        process.exit(1);
+      }
+
       const reporterConfigs = parseReporterFlags(opts.reporter ?? []);
       const { scanId, items } = await orchestrator.plan(scenarios);
       await orchestrator.scan(scanId, items, config.concurrency);
       await orchestrator.report(scanId, reporterConfigs);
-      return;
-    }
-
-    // モード2: CLIオプション直接指定時（既存の実装）
-    if (opts.scenario.length === 0) {
-      console.error("error: required option '-s, --scenario <name>:<path>' not specified");
-      process.exit(1);
-    }
-
-    const logLevel = opts.verbose ? "debug" : opts.quiet ? "error" : "info";
-    const logger = createLogger(logLevel);
-    const ctx = new RuntimeContext({ logger });
-    const registry = new PluginRegistryImpl();
-
-    // 全ビルトインプラグインを登録。proxy:http の upstream は未指定 =
-    // シナリオの URL（OpenAPI の servers[0].url 起）のホストへ直接アクセス。
-    registerAllBuiltinPlugins(registry);
-    await registry.initializeAll(ctx);
-    ctx.pluginRegistry = registry;
-
-    const scenarios = await loadScenariosFromSpecs(opts.scenario, registry);
-    if (scenarios.length === 0) {
-      logger.error("No scenarios loaded from the given --scenario input(s)");
-      process.exit(1);
-    }
-
-    const orchestrator = new Orchestrator({ context: ctx });
-    const concurrency = opts.concurrency ? parseInt(opts.concurrency, 10) : 5;
-    const reporterConfigs = parseReporterFlags(opts.reporter ?? []);
-    const { scanId, items } = await orchestrator.plan(scenarios);
-    await orchestrator.scan(scanId, items, concurrency);
-    await orchestrator.report(scanId, reporterConfigs);
-  });
+    },
+  );
 
 // plan command
 program
@@ -252,7 +237,10 @@ program
       opts.config,
       buildOverrides(opts),
     );
-    await orchestrator.resume(scanId ? ScanId(scanId) : undefined, config.concurrency);
+    await orchestrator.resume(
+      scanId ? ScanId(scanId) : undefined,
+      config.concurrency,
+    );
   });
 
 // report command
@@ -269,10 +257,7 @@ program
     [] as string[],
   )
   .action(async (scanId: string | undefined, opts: any) => {
-    const { orchestrator } = await bootstrap(
-      opts.config,
-      buildOverrides(opts),
-    );
+    const { orchestrator } = await bootstrap(opts.config, buildOverrides(opts));
     const reporterConfigs = parseReporterFlags(opts.reporter ?? []);
     await orchestrator.report(ScanId(scanId!), reporterConfigs);
   });
