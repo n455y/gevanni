@@ -208,7 +208,7 @@ export class Orchestrator {
     let errorCount = 0;
     let skippedCount = 0;
     const totalJobs = jobs.length;
-    const progressInterval = Math.max(1, Math.floor(totalJobs / 20)); // log ~20 times
+    const progressInterval = 50;
     const startTime = Date.now();
 
     // Track completed jobs for shouldSkip decisions
@@ -217,12 +217,9 @@ export class Orchestrator {
     );
 
     // 3. Run jobs with concurrency
-    logger.debug(`Entering runWithConcurrency: ${jobs.length} items, concurrency ${concurrency}`);
     await runWithConcurrency(jobs, concurrency, async (job: SignatureJob) => {
-      logger.debug(`Worker picked up job: ${job.id} (${job.signatureName})`);
       try {
         // Update job status to running
-        logger.debug(`[job ${job.id}] Dispatching UpdateJobCommand -> Running`);
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
             status: SignatureJobStatus.Running,
@@ -237,19 +234,16 @@ export class Orchestrator {
           throw new Error(`No audit item found for job ${job.id}`);
         }
 
-        logger.debug(`[job ${job.id}] Loading scenario ${job.scenarioId}`);
         const scenario: Scenario = await commandBus.dispatch(
           new LoadScenarioCommand(job.scenarioId),
         );
 
         // Create replay function
         const replay = async (mutations: AuditMutation[]) => {
-          logger.debug(`[job ${job.id}] Creating mutation proxy`);
           const proxy = await commandBus.dispatch(
             new CreateProxyCommand(mutations),
           );
           try {
-            logger.debug(`[job ${job.id}] Replaying via proxy port ${proxy.port}`);
             return await commandBus.dispatch(
               new ReplayCommand(scenario, {
                 mutations,
@@ -263,7 +257,6 @@ export class Orchestrator {
         };
 
         // Run audit
-        logger.debug(`[job ${job.id}] Dispatching RunAuditCommand (${item.signatureName})`);
         const result = await commandBus.dispatch(
           new RunAuditCommand({
             signatureName: item.signatureName,
@@ -328,9 +321,13 @@ export class Orchestrator {
 
         completedCount++;
 
-        // Progress logging
+        // Progress logging (first job, every N jobs, and final job)
         const processed = completedCount + errorCount + skippedCount;
-        if (processed % progressInterval === 0 || processed === totalJobs) {
+        if (
+          processed === 1 ||
+          processed % progressInterval === 0 ||
+          processed === totalJobs
+        ) {
           const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
           const pct = ((processed / totalJobs) * 100).toFixed(1);
           const rate = processed / ((Date.now() - startTime) / 1000);
@@ -338,8 +335,8 @@ export class Orchestrator {
           const etaMin = rate > 0 ? (remaining / rate / 60).toFixed(1) : "?";
           logger.info(
             `Scan progress: ${processed}/${totalJobs} (${pct}%) | ` +
-            `completed=${completedCount} errors=${errorCount} skipped=${skippedCount} | ` +
-            `elapsed=${elapsedSec}s rate=${rate.toFixed(1)}/s eta=${etaMin}min`,
+            `ok=${completedCount} err=${errorCount} skip=${skippedCount} | ` +
+            `${elapsedSec}s rate=${rate.toFixed(1)}/s eta=${etaMin}min`,
           );
         }
       } catch (err) {
