@@ -8,7 +8,11 @@ function formatParameter(job: SignatureJob): string {
     typeof p.location === "object" && p.location !== null
       ? JSON.stringify(p.location)
       : String(p.location);
-  return `${p.constructor.name} ${loc} = ${String(p.originalValue)}`;
+  const val =
+    typeof p.originalValue === "object" && p.originalValue !== null
+      ? JSON.stringify(p.originalValue)
+      : String(p.originalValue);
+  return `${p.constructor.name} ${loc} = ${val}`;
 }
 
 export default class ConsoleReporterPlugin implements ReporterPlugin {
