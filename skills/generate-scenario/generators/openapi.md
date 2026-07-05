@@ -625,6 +625,82 @@ After all checks, output a summary:
 
 If errors exist, the generated spec must be fixed before use. If only warnings exist, review them and decide whether to add examples or Links.
 
+**G. Runtime transition verification (actual HTTP requests)**
+
+After the static checks pass, verify that scenarios can actually navigate by sending real HTTP requests through the scenario plugin's execution logic. This catches issues that static analysis cannot: DNS failures, TLS errors, routing mismatches, authentication redirects, and unexpected response shapes that break Link resolution.
+
+**Prerequisites:**
+- The target server must be running and reachable at the base URL from Step 5
+- If the server is not running, skip this section and emit a note: "⚠️ Target server not available — skipping runtime transition verification."
+
+**Procedure:**
+
+1. Run the validation script against the generated spec:
+   ```bash
+   npx tsx bin/validate-scenarios.ts .gevanni/scenarios/openapi.yaml
+   ```
+   If the user provided a different base URL than what's in the spec, pass `--base-url`:
+   ```bash
+   npx tsx bin/validate-scenarios.ts .gevanni/scenarios/openapi.yaml --base-url http://localhost:3000
+   ```
+
+2. The script executes every scenario by:
+   - Building the HTTP request for each step (URL, headers, body) using the same `buildUrl`/`buildHeaders`/`buildBody` functions the scenario plugin uses
+   - Sending the request to the target server
+   - Extracting tokens via `securitySchemes.x-gevanni-token` (same as `executeSteps`)
+   - Resolving Link parameters via `$response.body#/...` and `$response.header#/...` (same runtime expression resolver)
+   - Passing resolved values as overrides to the next step (same inter-step data flow)
+
+3. For each step, the script reports:
+   - ✅ Success: HTTP status code received (e.g., `GET /rest/products/search → 200`)
+   - ❌ Failure: error details (connection refused, timeout, DNS failure, etc.)
+   - 🔗 Link resolution: whether each `$response.body#/...` expression resolved to a non-empty value
+
+4. **Interpret the output:**
+   - **All steps ✅ and all Links 🔗 resolved**: transitions are valid — proceed to Step 10
+   - **Some steps ❌**: the scenario cannot navigate — fix the spec (wrong path, missing parameter, unreachable server) and re-run
+   - **Steps ✅ but Links 🔗 unresolved**: the server responded but the response shape doesn't match the Link expressions — verify the `$response.body#/...` paths against the actual response JSON
+   - **4xx/5xx status codes are NOT failures**: a 401 without auth or a 422 with a test value is normal during validation — only connection-level failures (ECONNREFUSED, timeout, DNS) count as transition errors
+
+5. **Example output:**
+   ```
+   🔗 Validating scenario transitions...
+
+   📄 Spec: /workspace/.gevanni/scenarios/openapi.yaml
+   🌐 Base URL override: http://localhost:3000
+
+   📋 Found 5 scenario(s)
+
+   ▶ Running: searchProducts
+     ✅ GET /rest/products/search?q=test → 200
+
+   ▶ Running: loginAndGetBasket
+     ✅ POST /rest/user/login → 200
+        🔗 Link → getBasket.token: eyJhbGciOiJIUzI1NiIs...
+     ✅ GET /rest/basket/{id} → 200
+
+   ═══════════════════════════════════════
+   🔗 Scenario transition integrity:
+      • Scenarios checked:     5
+      • Multi-step scenarios:  2
+      • Total step executions: 7
+      • ✅ Successful steps:   7
+      • ❌ Failed steps:       0
+      • 🔗 Links checked:      2
+      • ✅ Resolved links:     2
+      • ⚠️  Unresolved links:   0
+   ═══════════════════════════════════════
+
+   ✅ All scenario transitions are valid.
+   ```
+
+6. **On failure**, analyze the output and fix the spec before re-running:
+   - Connection failures → check the `servers[0].url` in the spec
+   - 404 on a path → check the operation's `path` template (path parameters replaced with defaults?)
+   - Unresolved Link → the prior step's response doesn't contain the field at the JSON Pointer path; either fix the pointer or check if the response shape differs in reality
+
+7. **Re-run after fixes**: if you modified the spec to fix transition errors, re-run the validation script to confirm the fix.
+
 ### Step 10: Validate
 
 Check the generated output:
