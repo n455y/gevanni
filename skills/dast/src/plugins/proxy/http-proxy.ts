@@ -119,7 +119,9 @@ export async function startMutationProxy(
     if (!res.headersSent) {
       res.writeHead(502);
     }
-    res.end(`Proxy error: ${errorMessage}`);
+    if (!res.writableEnded) {
+      res.end(`Proxy error: ${errorMessage}`);
+    }
   }
 
   const requestHandler = async (
@@ -246,8 +248,12 @@ export async function startMutationProxy(
         if (exchangeId) {
           await saveFailedExchange(exchangeId, replayId, mutated, msg, res);
         } else {
-          if (!res.headersSent) res.writeHead(502);
-          res.end(`Proxy error: ${msg}`);
+          if (!res.headersSent && !res.writableEnded) {
+            res.writeHead(502);
+          }
+          if (!res.writableEnded) {
+            res.end(`Proxy error: ${msg}`);
+          }
         }
         return;
       }
@@ -258,16 +264,24 @@ export async function startMutationProxy(
         if (exchangeId) {
           saveFailedExchange(exchangeId, replayId, mutated, msg, res);
         } else {
-          if (!res.headersSent) res.writeHead(504);
-          res.end(`Proxy error: ${msg}`);
+          if (!res.headersSent && !res.writableEnded) {
+            res.writeHead(504);
+          }
+          if (!res.writableEnded) {
+            res.end(`Proxy error: ${msg}`);
+          }
         }
       });
       proxyReq.on("error", (err) => {
         if (exchangeId) {
           saveFailedExchange(exchangeId, replayId, mutated, err.message, res);
         } else {
-          if (!res.headersSent) res.writeHead(502);
-          res.end(`Proxy error: ${err.message}`);
+          if (!res.headersSent && !res.writableEnded) {
+            res.writeHead(502);
+          }
+          if (!res.writableEnded) {
+            res.end(`Proxy error: ${err.message}`);
+          }
         }
       });
 
@@ -280,8 +294,12 @@ export async function startMutationProxy(
       if (exchangeId && replayId && mutated) {
         await saveFailedExchange(exchangeId, replayId, mutated, msg, res);
       } else {
-        if (!res.headersSent) res.writeHead(502);
-        res.end(`Proxy error: ${msg}`);
+        if (!res.headersSent && !res.writableEnded) {
+          res.writeHead(502);
+        }
+        if (!res.writableEnded) {
+          res.end(`Proxy error: ${msg}`);
+        }
       }
     }
   };
