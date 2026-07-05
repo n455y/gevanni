@@ -5,7 +5,7 @@ import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
 import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
-import { loadPlugins } from "../config/plugin-loader.ts";
+import { loadPlugins, discoverPluginFiles } from "../config/plugin-loader.ts";
 import { registerAllBuiltinPlugins } from "../builtin.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
@@ -92,7 +92,23 @@ async function bootstrap(
   const ctx = new RuntimeContext({ logger });
   const registry = new PluginRegistryImpl();
 
-  await loadPlugins(config.plugins, registry, configDir);
+  // <cwd>/.gevanni/plugins/autoload/ からプラグインを自動検出
+  // 明示的に指定されたプラグインを優先 (config → auto-discovered の順でロード)
+  const discovered = discoverPluginFiles(
+    path.join(process.cwd(), ".gevanni"),
+  );
+  const explicitPaths = new Set(
+    config.plugins
+      .filter((p): p is string => typeof p === "string" && p !== ":builtin:")
+      .map((p) => path.resolve(configDir, p)),
+  );
+  const newPlugins = discovered.filter((p) => {
+    if (typeof p !== "string") return false;
+    return !explicitPaths.has(p);
+  });
+  const allPlugins = [...config.plugins, ...newPlugins];
+
+  await loadPlugins(allPlugins, registry, configDir);
   const plugins = await registry.initializeAll(ctx);
   ctx.pluginRegistry = registry;
   const loaders = plugins.filter(

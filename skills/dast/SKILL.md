@@ -88,15 +88,20 @@ This produces `x-gevanni-scenarios` definitions in the OpenAPI 3.0 spec, which b
 
 #### Step 2c: Generate config.json
 
-After scenario generation, create `./.gevanni/config.json`. This is the scan configuration used in Step 3 — scenarios and concurrency are read from here, so the scan command stays simple.
+After scenario generation, create `./.gevanni/config.json`. This is the scan configuration used in Step 3 — scenarios, plugins, and concurrency are read from here, so the scan command stays simple.
 
 1. **Identify the scenario file** that was just generated (or selected for reuse)
-2. **Create config.json** at `<cwd>/.gevanni/config.json` with this template:
+2. **Discover custom plugins** in `<cwd>/.gevanni/plugins/autoload/`:
+   - Check if `<cwd>/.gevanni/plugins/autoload/` directory exists
+   - If it exists, list all `*.ts` and `*.js` files (top-level only, non-recursive)
+   - Each file becomes a plugin entry with the path `./plugins/autoload/<filename>` (resolved relative to configDir, i.e. `<cwd>/.gevanni/`)
+   - If the directory doesn't exist or is empty, no custom plugins are added
+3. **Create config.json** at `<cwd>/.gevanni/config.json` with this template:
 
 ```json
 {
   "concurrency": 3,
-  "plugins": [":builtin:"],
+  "plugins": [":builtin:", "./plugins/autoload/custom-auth.ts", "./plugins/autoload/rate-limiter.js"],
   "scenarios": [
     {
       "type": "openapi",
@@ -107,9 +112,11 @@ After scenario generation, create `./.gevanni/config.json`. This is the scan con
 }
 ```
 
-Replace `<scenario-file-name>` with the actual scenario filename from Step 2b.
+- Replace `<scenario-file-name>` with the actual scenario filename from Step 2b
+- Replace `./plugins/autoload/custom-auth.ts` and `./plugins/autoload/rate-limiter.js` with the actual files discovered in step 2 — always keep `:builtin:` as the first entry; add discovered plugin paths after it. If no custom plugins were found, use just `":builtin:"`
+- Plugin paths are relative to configDir (`<cwd>/.gevanni/`), so `./plugins/autoload/foo.ts` resolves to `<cwd>/.gevanni/plugins/autoload/foo.ts`
 
-**Important — file paths are relative to configDir**: The `file` field is resolved relative to the directory containing config.json (i.e. `<cwd>/.gevanni`), not the current working directory. Since scenarios are generated under `<cwd>/.gevanni/scenarios/`, the path from `.gevanni/` is `../.gevanni/scenarios/...`. If unsure, use an absolute path instead.
+**Important — file paths are relative to configDir**: The `file` and plugin paths are resolved relative to the directory containing config.json (i.e. `<cwd>/.gevanni`), not the current working directory. Since scenarios are generated under `<cwd>/.gevanni/scenarios/`, the path from `.gevanni/` is `../.gevanni/scenarios/...`. If unsure, use an absolute path instead.
 
 ### Step 3: Execute scan (scan + report in one shot)
 

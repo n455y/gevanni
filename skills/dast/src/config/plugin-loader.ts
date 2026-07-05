@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { registerAllBuiltinPlugins } from "../builtin.ts";
 import type { PluginRegistry } from "../core/plugin.ts";
@@ -69,4 +70,43 @@ async function loadPluginClass(
   }
 
   return Cls as new (...args: unknown[]) => InstanceType<never>;
+}
+
+/**
+ * 指定されたディレクトリ群の plugins/autoload/ 内の .ts / .js ファイルを
+ * PluginSpec 配列として自動検出する。
+ * 各ディレクトリの plugins/autoload/ が存在しない場合はスキップ。
+ *
+ * 返されるパスは絶対パス。重複は除外され、ファイル名でソートされる。
+ *
+ * @param searchDirs - 検索対象の親ディレクトリ群（例: configDir, cwd/.gevanni）
+ * @returns 検出されたプラグインファイルの絶対パス PluginSpec 配列
+ */
+export function discoverPluginFiles(...searchDirs: string[]): PluginSpec[] {
+  const seen = new Set<string>();
+  const results: string[] = [];
+  for (const dir of searchDirs) {
+    const pluginsDir = path.join(dir, "plugins", "autoload");
+    let entries: string[];
+    try {
+      entries = fs.readdirSync(pluginsDir);
+    } catch {
+      continue;
+    }
+    for (const f of entries) {
+      if (
+        (!f.endsWith(".ts") && !f.endsWith(".js")) ||
+        f.startsWith(".")
+      ) {
+        continue;
+      }
+      const absPath = path.resolve(pluginsDir, f);
+      if (seen.has(absPath)) continue;
+      seen.add(absPath);
+      results.push(absPath);
+    }
+  }
+  // ファイル名でソート（決定論的な順序）
+  results.sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
+  return results;
 }
