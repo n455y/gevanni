@@ -1,7 +1,6 @@
 ---
 id: P74
 name: MixedContent
-area: V12 Secure Communication
 refs: ASVS V9.1.x, V9.2.x / WSTG-CRYP-03 / CS: Transport Layer Protection, Content Security Policy
 requires: []
 ---

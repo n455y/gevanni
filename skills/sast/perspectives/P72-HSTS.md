@@ -1,7 +1,6 @@
 ---
 id: P72
 name: HSTS
-area: V12 Secure Communication
 refs: ASVS V9.1.1, V14.4.2 / WSTG-CONF-07 / CS: HTTP Strict Transport Security
 requires: []
 ---

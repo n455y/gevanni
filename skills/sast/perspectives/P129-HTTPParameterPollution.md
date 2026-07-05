@@ -1,7 +1,6 @@
 ---
 id: P129
 name: HTTPParameterPollution
-area: V2 Validation and Business Logic
 refs: ASVS V2.x / WSTG-INPV / CS: Query Parameterization, Input Validation
 requires: [backend]
 ---

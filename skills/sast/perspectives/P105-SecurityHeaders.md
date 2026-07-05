@@ -1,7 +1,6 @@
 ---
 id: P105
 name: SecurityHeaders
-area: V13 Configuration
 refs: ASVS V14.5.x / WSTG-CONF-07 / CS: Content Security Policy, HTTP Headers, Clickjacking Defense
 requires: [backend]
 ---

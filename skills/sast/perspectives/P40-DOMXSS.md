@@ -1,7 +1,6 @@
 ---
 id: P40
 name: DOMXSS
-area: V3 Web Frontend Security
 refs: ASVS V5.3.x / WSTG-CLNT-02 / CS: DOM based XSS Prevention
 requires: [frontend]
 ---

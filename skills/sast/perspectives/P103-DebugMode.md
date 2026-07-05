@@ -1,7 +1,6 @@
 ---
 id: P103
 name: DebugMode
-area: V13 Configuration
 refs: ASVS V14.x / WSTG-CONF-02, WSTG-CONF-05 / CS: Error Handling
 requires: [backend]
 ---

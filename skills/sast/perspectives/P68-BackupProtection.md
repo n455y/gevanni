@@ -1,7 +1,6 @@
 ---
 id: P68
 name: BackupProtection
-area: V14 Data Protection
 refs: ASVS V8.x / WSTG-CONF-04 / CS: Sensitive Data Protection
 requires: [backend]
 ---

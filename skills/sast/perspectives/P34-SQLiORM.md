@@ -1,7 +1,6 @@
 ---
 id: P34
 name: SQLiORM
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-05 / CS: SQL Injection Prevention, Query Parameterization
 requires: [backend, db]
 ---

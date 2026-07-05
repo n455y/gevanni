@@ -1,7 +1,6 @@
 ---
 id: P58
 name: StackTraceExposure
-area: V16 Security Logging and Error Handling
 refs: ASVS V7.x / V14.x / WSTG-ERRH-01 / CS: Error Handling
 requires: []
 ---

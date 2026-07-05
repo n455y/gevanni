@@ -1,7 +1,6 @@
 ---
 id: P29
 name: MultiTenantIsolation
-area: V8 Authorization
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-04 / CS: Multitenancy, Authorization
 requires: [backend]
 ---

@@ -1,7 +1,6 @@
 ---
 id: P16
 name: SessionIDEntropy
-area: V7 Session Management
 refs: ASVS V3.1.x, V3.2.x / WSTG-SESS-01, WSTG-SESS-02, WSTG-SESS-04 / CS: Session Management Cheat Sheet
 requires: [backend]
 ---

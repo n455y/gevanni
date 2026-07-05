@@ -1,7 +1,6 @@
 ---
 id: P39
 name: StoredXSS
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-02 / CS: Cross Site Scripting Prevention
 requires: [backend, db]
 ---

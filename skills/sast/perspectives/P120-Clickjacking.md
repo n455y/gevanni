@@ -1,7 +1,6 @@
 ---
 id: P120
 name: Clickjacking
-area: V3 Web Frontend Security
 refs: ASVS V14.x / WSTG-CLNT / CS: Clickjacking Defense
 requires: [frontend]
 ---

@@ -1,7 +1,6 @@
 ---
 id: P60
 name: SensitiveDataLogging
-area: V16 Security Logging and Error Handling
 refs: ASVS V7.1.x, V8.3.x / WSTG-INFO-02 / CS: Logging
 requires: []
 ---

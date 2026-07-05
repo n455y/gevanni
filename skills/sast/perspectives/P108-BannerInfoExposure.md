@@ -1,7 +1,6 @@
 ---
 id: P108
 name: BannerInfoExposure
-area: V13 Configuration
 refs: ASVS V14.3.x / WSTG-CONF-07, WSTG-INFO-02 / CS: Error Handling
 requires: [backend]
 ---

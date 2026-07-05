@@ -1,7 +1,6 @@
 ---
 id: P32
 name: PropertyLevelAuthz
-area: V8 Authorization
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-03, WSTG-ATHZ-04 / CS: Authorization, Mass Assignment, Insecure Direct Object Reference Prevention
 requires: [backend]
 ---

@@ -1,7 +1,6 @@
 ---
 id: P18
 name: SessionTimeout
-area: V7 Session Management
 refs: ASVS V3.3.x / WSTG-SESS-07 / CS: Session Management, Transaction Authorization
 requires: [backend]
 ---

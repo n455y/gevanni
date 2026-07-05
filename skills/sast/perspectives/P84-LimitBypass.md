@@ -1,7 +1,6 @@
 ---
 id: P84
 name: LimitBypass
-area: V2 Validation and Business Logic
 refs: ASVS V11.x / WSTG-BUSL-03 / CS: REST Security
 requires: [backend]
 ---

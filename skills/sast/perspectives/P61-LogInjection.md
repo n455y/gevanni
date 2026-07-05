@@ -1,7 +1,6 @@
 ---
 id: P61
 name: LogInjection
-area: V16 Security Logging and Error Handling
 refs: ASVS V7.1.x / WSTG-INPV-12 / CS: Logging
 requires: []
 ---

@@ -1,7 +1,6 @@
 ---
 id: P118
 name: PrototypePollution
-area: V1 Encoding and Sanitization
 refs: ASVS V5.x / WSTG-INPV / CS: Prototype Pollution
 requires: [backend]
 ---

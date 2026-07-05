@@ -1,7 +1,6 @@
 ---
 id: P62
 name: AuditTrail
-area: V16 Security Logging and Error Handling
 refs: ASVS V7.x / WSTG-ATHN-08, WSTG-ATHZ-06 / CS: Logging, Application Logging Vocabulary
 requires: []
 ---

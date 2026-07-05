@@ -1,7 +1,6 @@
 ---
 id: P107
 name: AdminInterfaceExposure
-area: V13 Configuration
 refs: ASVS V14.x / WSTG-CONF-05, WSTG-CONF-11 / CS: Administration Cheat Sheet
 requires: [backend]
 ---

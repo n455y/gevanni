@@ -1,7 +1,6 @@
 ---
 id: P43
 name: SSTI
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-13 / CS: Injection Prevention, Server Side Template Injection
 requires: [backend, templating]
 ---

@@ -1,7 +1,6 @@
 ---
 id: P133
 name: ContainerSecurity
-area: V15 Secure Coding and Architecture
 refs: ASVS V15.x / WSTG-CONF / CS: Docker Security
 requires: []
 ---

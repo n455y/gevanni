@@ -1,7 +1,6 @@
 ---
 id: P100
 name: LegacyEndpoint
-area: V4 API and Web Service
 refs: ASVS V13.x / WSTG-CONF-05, WSTG-ATHZ-01 / CS: REST Security, OWASP API9:2023 Improper Inventory of Assets
 requires: [backend]
 ---

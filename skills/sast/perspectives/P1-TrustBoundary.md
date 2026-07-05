@@ -1,7 +1,6 @@
 ---
 id: P1
 name: TrustBoundary
-area: V15 Secure Coding and Architecture
 refs: ASVS V1.x / WSTG-INFO-02, WSTG-ATHZ-01 / CS: Architecture Cheat Sheet, Authorization Cheat Sheet
 requires: []
 ---

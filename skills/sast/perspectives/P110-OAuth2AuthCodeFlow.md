@@ -1,7 +1,6 @@
 ---
 id: P110
 name: OAuth2AuthCodeFlow
-area: V10 OAuth and OIDC
 refs: ASVS V2.x / WSTG-ATHN-09 / CS: OAuth 2.0 Protocol
 requires: [backend]
 ---

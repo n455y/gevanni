@@ -1,7 +1,6 @@
 ---
 id: P116
 name: WebCachePoisoning
-area: V13 Configuration
 refs: ASVS V14.x / WSTG-CONF / CS: Web Cache Poisoning
 requires: [backend]
 ---

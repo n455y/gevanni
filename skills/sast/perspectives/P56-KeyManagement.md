@@ -1,7 +1,6 @@
 ---
 id: P56
 name: KeyManagement
-area: V11 Cryptography
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Secrets Management
 requires: [backend]
 ---

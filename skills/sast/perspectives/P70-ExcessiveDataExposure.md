@@ -1,7 +1,6 @@
 ---
 id: P70
 name: ExcessiveDataExposure
-area: V14 Data Protection
 refs: ASVS V8.3.x, V4.3.x / WSTG-ATHZ-03, WSTG-INFO-02 / CS: REST Security, REST Assessment
 requires: [backend]
 ---

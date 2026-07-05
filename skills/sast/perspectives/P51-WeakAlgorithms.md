@@ -1,7 +1,6 @@
 ---
 id: P51
 name: WeakAlgorithms
-area: V11 Cryptography
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Password Storage
 requires: [backend]
 ---

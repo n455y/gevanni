@@ -1,7 +1,6 @@
 ---
 id: P22
 name: SessionStoreProtection
-area: V7 Session Management
 refs: ASVS V3.1.x, V8.1.x / WSTG-SESS-08 / CS: Session Management
 requires: [backend]
 ---

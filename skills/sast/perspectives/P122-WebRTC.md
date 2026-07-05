@@ -1,7 +1,6 @@
 ---
 id: P122
 name: WebRTC
-area: V17 WebRTC
 refs: ASVS V17.x / WSTG-CLNT / CS: emerging WebRTC
 requires: [webrtc]
 ---

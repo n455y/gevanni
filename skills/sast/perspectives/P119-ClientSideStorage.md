@@ -1,7 +1,6 @@
 ---
 id: P119
 name: ClientSideStorage
-area: V3 Web Frontend Security
 refs: ASVS V8.x / WSTG-CLNT / CS: HTML5 Web Storage, Session Management
 requires: [frontend]
 ---

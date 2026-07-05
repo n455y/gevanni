@@ -1,7 +1,6 @@
 ---
 id: P93
 name: RESTBOLA
-area: V4 API and Web Service
 refs: ASVS V13.x / WSTG-ATHZ-04 / CS: REST Security (OWASP API1:BOLA)
 requires: [backend]
 ---

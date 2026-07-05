@@ -77,7 +77,7 @@ Output: `units: Array<{ id, method, route, code, deps, tags }>`. `id` is `U01`, 
 ### Step 2: Load perspective catalog + pre-filter
 
 - Under `perspectives/`, there is **one file per perspective** (`P<seq>-<english-name>.md`, e.g. `P38-ReflectedXSS.md`). First read the overall index in `perspectives/README.md`, and skip perspective files for areas clearly absent from the target code (e.g. no GraphQL → skip V4 GraphQL perspectives; no file upload → skip V5 upload perspectives) for token efficiency. **Skipped areas must be explicitly listed in the report's "Out of scope" section (No-silent-caps)**.
-- From each file read, assemble `{ id, name, requires, focus, signals, fpNote, refs }`. Each file follows a frontmatter (`id`/`name`/`area`/`refs`/`requires`) + body (`## What to check` / `## Static signals` / `## False positives`) structure (see README for details).
+- From each file read, assemble `{ id, name, requires, focus, signals, fpNote, refs }`. Each file follows a frontmatter (`id`/`name`/`refs`/`requires`) + body (`## What to check` / `## Static signals` / `## False positives`) structure (see README for details).
   - `requires` is a string array in the frontmatter (e.g. `requires: [backend, db]`). Empty array `[]` means the perspective runs on **all** units. Each perspective file self-declares its requirements — there is no separate mapping in the workflow script.
 - **Pre-filter**: For each unit, exclude obviously irrelevant perspectives. The workflow template matches `unit.tags` against `pov.requires`:
   - Unit must have **all** tags listed in `requires`. Missing any → **skip**.

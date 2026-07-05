@@ -1,7 +1,6 @@
 ---
 id: P85
 name: NonRepudiation
-area: V2 Validation and Business Logic
 refs: ASVS V11.2.x / WSTG-BUSL-05 / CS: Transaction Authorization, Logging
 requires: [backend]
 ---

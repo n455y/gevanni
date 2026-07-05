@@ -1,7 +1,6 @@
 ---
 id: P37
 name: LDAPXPathInjection
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-06, WSTG-INPV-10 / CS: LDAP Injection, Injection Prevention, XPATH Injection
 requires: [backend, ldap]
 ---

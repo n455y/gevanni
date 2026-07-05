@@ -1,7 +1,6 @@
 ---
 id: P44
 name: SSRF
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-13 / CS: Server Side Request Forgery Prevention
 requires: [backend]
 ---

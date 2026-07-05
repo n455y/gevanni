@@ -1,7 +1,6 @@
 ---
 id: P36
 name: OSCommandInjection
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-12 / CS: OS Command Injection Defense, Injection Prevention
 requires: [backend, subprocess]
 ---

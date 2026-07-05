@@ -1,7 +1,6 @@
 ---
 id: P10
 name: SessionGeneration
-area: V6 Authentication
 refs: ASVS V3.3.x, V8.5.x / WSTG-SESS-01, WSTG-SESS-02 / CS: Session Management
 requires: [backend]
 ---

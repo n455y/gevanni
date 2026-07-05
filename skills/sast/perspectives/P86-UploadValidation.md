@@ -1,7 +1,6 @@
 ---
 id: P86
 name: UploadValidation
-area: V5 File Handling
 refs: ASVS V12.4.x / WSTG-INPV-11, WSTG-ATHZ-04 / CS: File Upload, Protect File Upload Against Vulnerabilities
 requires: [backend, file-upload]
 ---

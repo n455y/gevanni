@@ -1,7 +1,6 @@
 ---
 id: P76
 name: DebugBackdoor
-area: V15 Secure Coding and Architecture
 refs: ASVS V10.x, V14.3 / WSTG-CONF-05, WSTG-ATHN-05 / CS: Third Party JavaScript, Session Management
 requires: []
 ---

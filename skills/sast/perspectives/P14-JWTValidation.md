@@ -1,7 +1,6 @@
 ---
 id: P14
 name: JWTValidation
-area: V6 Authentication
 refs: ASVS V3.4.x, V3.5.x / WSTG-SESS-01, WSTG-ATHN-08 / CS: JSON Web Token Cheat Sheet
 requires: [backend, jwt]
 ---

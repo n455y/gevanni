@@ -1,7 +1,6 @@
 ---
 id: P13
 name: PasswordReset
-area: V6 Authentication
 refs: ASVS V2.5.x / WSTG-ATHN-09, WSTG-ATHN-10 / CS: Forgot Password, Credential Stuffing Prevention
 requires: [backend]
 ---

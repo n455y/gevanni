@@ -1,7 +1,6 @@
 ---
 id: P35
 name: NoSQLi
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-05 / CS: NoSQL Injection, Query Parameterization
 requires: [backend, db]
 ---

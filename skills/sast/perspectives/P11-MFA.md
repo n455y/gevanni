@@ -1,7 +1,6 @@
 ---
 id: P11
 name: MFA
-area: V6 Authentication
 refs: ASVS V2.1.x, V2.2.x / WSTG-ATHN-08, WSTG-ATHN-09 / CS: Multifactor Authentication, Forgot Password, Choosing and Using Security Questions
 requires: [backend]
 ---

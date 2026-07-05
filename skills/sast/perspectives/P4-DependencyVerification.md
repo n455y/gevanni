@@ -1,7 +1,6 @@
 ---
 id: P4
 name: DependencyVerification
-area: V15 Secure Coding and Architecture
 refs: ASVS V10.x / WSTG-INFO-08 / CS: Dependency Management, Third Party JS
 requires: []
 ---

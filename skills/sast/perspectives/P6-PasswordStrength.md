@@ -1,7 +1,6 @@
 ---
 id: P6
 name: PasswordStrength
-area: V6 Authentication
 refs: ASVS V2.5.x / WSTG-ATHN-07 / CS: Password Storage, Authentication Cheat Sheet
 requires: [backend]
 ---

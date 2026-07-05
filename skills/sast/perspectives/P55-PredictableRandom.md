@@ -1,7 +1,6 @@
 ---
 id: P55
 name: PredictableRandom
-area: V11 Cryptography
 refs: ASVS V6.3.x / WSTG-CRYP-04 / CS: Cryptographic Storage
 requires: [backend]
 ---

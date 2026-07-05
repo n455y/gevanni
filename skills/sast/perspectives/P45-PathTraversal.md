@@ -1,7 +1,6 @@
 ---
 id: P45
 name: PathTraversal
-area: V1 Encoding and Sanitization
 refs: ASVS V5.3.7 / V12.3.1, V12.3.2 / WSTG-INPV-11 / CS: File Upload, Injection Prevention
 requires: [backend, file-read]
 ---

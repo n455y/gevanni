@@ -1,7 +1,6 @@
 ---
 id: P127
 name: TrustedTypesStrictCSP
-area: V3 Web Frontend Security
 refs: ASVS V3.x / WSTG-CLNT / CS: Content Security Policy, DOM based XSS Prevention
 requires: [frontend]
 ---

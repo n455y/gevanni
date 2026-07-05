@@ -1,7 +1,6 @@
 ---
 id: P31
 name: AuthzTOCTOU
-area: V8 Authorization
 refs: ASVS V4.x / WSTG-ATHZ-06 / CS: Authorization, Race Conditions
 requires: [backend]
 ---

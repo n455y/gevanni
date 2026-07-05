@@ -1,7 +1,6 @@
 ---
 id: P123
 name: SelfContainedTokens
-area: V9 Self-contained Tokens
 refs: ASVS V9.x / WSTG-SESS / CS: JSON Web Token, OAuth 2.0 Protocol
 requires: [backend, jwt]
 ---

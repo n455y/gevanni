@@ -1,7 +1,6 @@
 ---
 id: P99
 name: GraphQLBatching
-area: V4 API and Web Service
 refs: ASVS V13.x / WSTG-ATHN-04 / CS: GraphQL Cheat Sheet
 requires: [backend, graphql]
 ---

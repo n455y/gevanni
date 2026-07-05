@@ -1,7 +1,6 @@
 ---
 id: P89
 name: FileDoS
-area: V5 File Handling
 refs: ASVS V12.x / WSTG-INPV-11 / CS: File Upload, Denial of Service
 requires: [backend]
 ---

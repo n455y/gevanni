@@ -1,7 +1,6 @@
 ---
 id: P15
 name: DefaultCredentials
-area: V6 Authentication
 refs: ASVS V2.x / WSTG-ATHN-02, WSTG-CONF-04 / CS: Authentication, Default Passwords
 requires: [backend]
 ---

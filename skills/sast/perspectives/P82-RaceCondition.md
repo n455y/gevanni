@@ -1,7 +1,6 @@
 ---
 id: P82
 name: RaceCondition
-area: V2 Validation and Business Logic
 refs: ASVS V11.1.x, V4.x / WSTG-BUSL-06, WSTG-ATHZ-06 / CS: Race Conditions, Transaction Authorization
 requires: [backend]
 ---

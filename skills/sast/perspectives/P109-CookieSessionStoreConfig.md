@@ -1,7 +1,6 @@
 ---
 id: P109
 name: CookieSessionStoreConfig
-area: V13 Configuration
 refs: ASVS V3.3.x, V14.x / WSTG-SESS-02, WSTG-SESS-07 / CS: Session Management, Cookie Security
 requires: [backend]
 ---

@@ -1,7 +1,6 @@
 ---
 id: P23
 name: CSRFProtection
-area: V7 Session Management
 refs: ASVS V3.x / WSTG-SESS-04, WSTG-INPV-12 / CS: Cross-Site Request Forgery Prevention
 requires: [backend]
 ---

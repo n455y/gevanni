@@ -1,7 +1,6 @@
 ---
 id: P113
 name: SAMLSecurity
-area: V10 OAuth and OIDC
 refs: ASVS V2.x / WSTG-ATHN / CS: SAML Security
 requires: [backend]
 ---

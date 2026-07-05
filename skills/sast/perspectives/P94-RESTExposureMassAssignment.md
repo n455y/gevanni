@@ -1,7 +1,6 @@
 ---
 id: P94
 name: RESTExposureMassAssignment
-area: V4 API and Web Service
 refs: ASVS V13.x / WSTG-ATHZ-03, WSTG-INPV-12 / CS: REST Security, Mass Assignment (OWASP API3:2023 - Broken Object Property Level Authorization)
 requires: [backend]
 ---

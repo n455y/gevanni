@@ -1,7 +1,6 @@
 ---
 id: P27
 name: ForcedBrowsing
-area: V8 Authorization
 refs: ASVS V4.1.x, V4.2.x / WSTG-ATHZ-04 / CS: Authorization, Insecure Direct Object Reference Prevention
 requires: [backend]
 ---

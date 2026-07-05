@@ -1,7 +1,6 @@
 ---
 id: P102
 name: DefaultConfigCredentials
-area: V13 Configuration
 refs: ASVS V14.x / WSTG-CONF-04 / CS: Default Passwords, Authentication
 requires: [backend]
 ---

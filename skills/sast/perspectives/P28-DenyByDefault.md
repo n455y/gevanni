@@ -1,7 +1,6 @@
 ---
 id: P28
 name: DenyByDefault
-area: V8 Authorization
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-02 / CS: Authorization - Enforcement Matrix, Authorization - Testing for Bypass
 requires: [backend]
 ---

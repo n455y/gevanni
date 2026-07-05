@@ -1,7 +1,6 @@
 ---
 id: P30
 name: FunctionLevelAuthz
-area: V8 Authorization
 refs: ASVS V4.1.x, V4.2.x, V4.3.x / WSTG-ATHZ-01, WSTG-ATHZ-02, WSTG-ATHZ-04, WSTG-ATHZ-05 / CS: Authorization, Denial of Service, Transaction Authorization
 requires: [backend]
 ---
