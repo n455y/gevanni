@@ -42,6 +42,7 @@ export function sendRequest(
       method: request.method,
       headers: { ...request.headers },
       ...(agent ? { agent } : {}),
+      timeout: 30_000,
     };
 
     const req = lib.request(options, (res) => {
@@ -70,6 +71,10 @@ export function sendRequest(
       res.on("error", reject);
     });
 
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error(`HTTP request timed out after 30000ms: ${request.method} ${request.url}`));
+    });
     req.on("error", reject);
 
     if (request.body) {
@@ -188,6 +193,7 @@ export async function startMutationProxy(
             headers: { ...mutated.headers, host: targetUrl.host },
             rejectUnauthorized: false,
             autoSelectFamily: false,
+            timeout: 30_000,
             ...(targetAgent ? { agent: targetAgent } : {}),
           } as https.RequestOptions,
           (proxyRes) => {
@@ -246,6 +252,16 @@ export async function startMutationProxy(
         return;
       }
 
+      proxyReq.on("timeout", () => {
+        proxyReq.destroy();
+        const msg = `Proxy request timed out after 30000ms: ${mutated.method} ${mutated.url}`;
+        if (exchangeId) {
+          saveFailedExchange(exchangeId, replayId, mutated, msg, res);
+        } else {
+          if (!res.headersSent) res.writeHead(504);
+          res.end(`Proxy error: ${msg}`);
+        }
+      });
       proxyReq.on("error", (err) => {
         if (exchangeId) {
           saveFailedExchange(exchangeId, replayId, mutated, err.message, res);

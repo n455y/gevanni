@@ -183,6 +183,8 @@ interface ProxyResponse {
   response: HttpResponse;
 }
 
+const HTTP_TIMEOUT_MS = 30_000; // 30-second timeout for each HTTP request
+
 function sendViaProxy(
   method: string,
   url: string,
@@ -206,6 +208,7 @@ function sendViaProxy(
       headers,
       agent,
       rejectUnauthorized: false,
+      timeout: HTTP_TIMEOUT_MS,
     };
 
     const req = (isHttps ? https : http).request(options, (res) => {
@@ -231,6 +234,10 @@ function sendViaProxy(
       res.on("error", reject);
     });
 
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error(`HTTP request timed out after ${HTTP_TIMEOUT_MS}ms: ${method} ${url}`));
+    });
     req.on("error", reject);
 
     if (body) {
