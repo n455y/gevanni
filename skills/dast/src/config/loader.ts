@@ -51,7 +51,7 @@ export function loadConfig(
   configPath?: string,
   cliOverrides?: Partial<Omit<ResolvedConfig, "plugins" | "scenarios">>,
 ): { config: ResolvedConfig; configDir: string } {
-  const resolvedPath = configPath ?? path.resolve("./gevanni.json");
+  const resolvedPath = configPath ?? path.resolve("./.gevilli/config.json");
   const configDir = path.dirname(resolvedPath);
 
   let fileConfig: RawConfig = {};

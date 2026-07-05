@@ -1,0 +1,24 @@
+{
+  "concurrency": 3,
+  "plugins": [
+    ":builtin:",
+    "../.gevanni/plugins/sample-plugin.ts",
+    {
+      "file": "../.gevanni/plugins/sample-plugin-with-options.ts",
+      "options": {
+        "key1": "value1",
+        "key2": [1, 2, 3],
+        "key3": {
+          "key4": true
+        }
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "type": "openapi",
+      "file": "../.gevanni/scenarios/sample.yml"
+    }
+  ],
+  "logLevel": "info"
+}
