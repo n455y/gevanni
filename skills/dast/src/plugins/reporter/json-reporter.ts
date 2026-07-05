@@ -14,11 +14,17 @@ interface ReportSummary {
   vulnerable: number;
   safe: number;
   errors: number;
+  skipped: number;
+}
+
+interface ReadableBody {
+  base64: string;
+  utf8: string | null;
 }
 
 interface Report {
   scanState: SerializedScanState;
-  jobs: SerializedSignatureJob[];
+  jobs: unknown[];
   summary: ReportSummary;
 }
 
@@ -26,6 +32,7 @@ function computeSummary(jobs: SignatureJob[]): ReportSummary {
   let vulnerable = 0;
   let safe = 0;
   let errors = 0;
+  let skipped = 0;
 
   for (const job of jobs) {
     if (job.status === ("completed" as SignatureJob["status"])) {
@@ -36,6 +43,8 @@ function computeSummary(jobs: SignatureJob[]): ReportSummary {
       }
     } else if (job.status === ("error" as SignatureJob["status"])) {
       errors++;
+    } else if (job.status === ("skipped" as SignatureJob["status"])) {
+      skipped++;
     }
   }
 
@@ -44,7 +53,55 @@ function computeSummary(jobs: SignatureJob[]): ReportSummary {
     vulnerable,
     safe,
     errors,
+    skipped,
   };
+}
+
+/**
+ * Node.js の Buffer が JSON シリアライズされると
+ * {"type":"Buffer","data":[60,33,...]} になる。
+ * 常に base64 + UTF-8 テキストの両方で表現する。
+ */
+function normalizeBody(body: unknown): ReadableBody | null {
+  if (body === null || body === undefined) return null;
+  if (Buffer.isBuffer(body)) {
+    const b = body as Buffer;
+    return {
+      base64: b.toString("base64"),
+      utf8: b.toString("utf-8"),
+    };
+  }
+  if (
+    typeof body === "object" &&
+    (body as Record<string, unknown>).type === "Buffer" &&
+    Array.isArray((body as Record<string, unknown>).data)
+  ) {
+    const b = Buffer.from((body as { data: number[] }).data);
+    return {
+      base64: b.toString("base64"),
+      utf8: b.toString("utf-8"),
+    };
+  }
+  return null;
+}
+
+/**
+ * オブジェクトツリー内の body フィールドを再帰的に readable 形式に変換する。
+ */
+function normalizeBodies(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(normalizeBodies);
+  if (typeof obj === "object") {
+    const record = obj as Record<string, unknown>;
+    if ("body" in record) {
+      record.body = normalizeBody(record.body);
+    }
+    for (const key of Object.keys(record)) {
+      record[key] = normalizeBodies(record[key]);
+    }
+    return record;
+  }
+  return obj;
 }
 
 export default class JsonReporterPlugin implements ReporterPlugin {
@@ -64,7 +121,7 @@ export default class JsonReporterPlugin implements ReporterPlugin {
 
     const report: Report = {
       scanState: serializeScanState(scanState),
-      jobs: jobs.map(serializeSignatureJob),
+      jobs: jobs.map((j) => normalizeBodies(serializeSignatureJob(j))),
       summary,
     };
 

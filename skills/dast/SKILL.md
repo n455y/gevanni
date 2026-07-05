@@ -50,17 +50,17 @@ npm run gevanni -- --help
 
 ## Workflow
 
-### Step 0: Confirm target & authorization
+### Step 1: Confirm target & authorization
 
 - Identify the target URL/base path
 - Confirm authorization (development/staging environment, bug bounty scope, etc.)
 - Check if OpenAPI spec is available
 
-### Step 1: Generate scenarios via generate-scenario (openapi)
+### Step 2: Generate scenarios via generate-scenario (openapi)
 
 Once setup is complete, prepare the scenario input. The scenario directory is **`<cwd>/.gevanni/scenarios`**, where `<cwd>` is the directory from which this skill was invoked.
 
-#### Step 1a: Check for existing scenarios
+#### Step 2a: Check for existing scenarios
 
 List `<cwd>/.gevanni/scenarios` (e.g. `*.yaml` / `*.yml`).
 
@@ -68,9 +68,9 @@ List `<cwd>/.gevanni/scenarios` (e.g. `*.yaml` / `*.yml`).
   1. **Reuse** — use one of the existing scenarios as-is (skip generation)
   2. **Regenerate & overwrite** — pick one existing scenario, regenerate it, and overwrite that file
   3. **Generate fresh** — create a brand-new scenario without touching existing files
-- **If no scenarios exist**, proceed directly to generation (Step 1b).
+- **If no scenarios exist**, proceed directly to generation (Step 2b).
 
-#### Step 1b: Generate scenarios (if option 2 or 3, or no existing scenarios)
+#### Step 2b: Generate scenarios (if option 2 or 3, or no existing scenarios)
 
 Invoke the `generate-scenario` skill (same `gevanni` plugin) with the `openapi` type:
 
@@ -86,12 +86,12 @@ If the user chose option 1 (Reuse), skip generation and use the selected scenari
 
 This produces `x-gevanni-scenarios` definitions in the OpenAPI 3.0 spec, which become the scan input.
 
-#### Step 1c: Generate config.json
+#### Step 2c: Generate config.json
 
-After scenario generation, create `./.gevanni/config.json`. This is the scan configuration used in Step 2 — scenarios and concurrency are read from here, so the scan command stays simple.
+After scenario generation, create `./.gevanni/config.json`. This is the scan configuration used in Step 3 — scenarios and concurrency are read from here, so the scan command stays simple.
 
 1. **Identify the scenario file** that was just generated (or selected for reuse)
-2. **Create config.json** at `<cwd>/.gevilli/config.json` with this template:
+2. **Create config.json** at `<cwd>/.gevanni/config.json` with this template:
 
 ```json
 {
@@ -107,20 +107,34 @@ After scenario generation, create `./.gevanni/config.json`. This is the scan con
 }
 ```
 
-Replace `<scenario-file-name>` with the actual scenario filename from Step 1b.
+Replace `<scenario-file-name>` with the actual scenario filename from Step 2b.
 
-**Important — file paths are relative to configDir**: The `file` field is resolved relative to the directory containing config.json (i.e. `<cwd>/.gevilli`), not the current working directory. Since scenarios are generated under `<cwd>/.gevanni/scenarios/`, the path from `.gevilli/` is `../.gevanni/scenarios/...`. If unsure, use an absolute path instead.
+**Important — file paths are relative to configDir**: The `file` field is resolved relative to the directory containing config.json (i.e. `<cwd>/.gevanni`), not the current working directory. Since scenarios are generated under `<cwd>/.gevanni/scenarios/`, the path from `.gevanni/` is `../.gevanni/scenarios/...`. If unsure, use an absolute path instead.
 
-### Step 2: Execute scan with appropriate plugins
+### Step 3: Execute scan (scan + report in one shot)
+
+The scan command runs the vulnerability scan and generates reports in a single execution via the `--reporter` option. Reports are produced at the end of the scan — no separate report step needed.
 
 The scan command supports two modes:
 
 **Mode 1: Using config.json (recommended)**
 
-Run the scan using the config.json generated in Step 1c:
+Run the scan using the config.json generated in Step 2c. Always include `--reporter json` to save a structured report alongside the default console output:
 
 ```bash
-npm run gevanni -- scan --config ./.gevanni/config.json
+npm run gevanni -- scan --config ./.gevanni/config.json --reporter json
+```
+
+With a custom output path:
+
+```bash
+npm run gevanni -- scan --config ./.gevanni/config.json --reporter json:scan-result.json
+```
+
+Multiple reporters simultaneously:
+
+```bash
+npm run gevanni -- scan --config ./.gevanni/config.json --reporter json:report.json --reporter console
 ```
 
 **Mode 2: Direct CLI options (without config)**
@@ -128,7 +142,8 @@ npm run gevanni -- scan --config ./.gevanni/config.json
 ```bash
 npm run gevanni -- scan \
   -s openapi:./.gevanni/scenarios/<scenario-file>.yml \
-  --concurrency 3
+  --concurrency 3 \
+  --reporter json
 ```
 
 **CLI options override config values:**
@@ -136,7 +151,7 @@ npm run gevanni -- scan \
 When using `--config`, you can still override specific values via CLI:
 
 ```bash
-npm run gevanni -- scan --config ./.gevanni/config.json --concurrency 10
+npm run gevanni -- scan --config ./.gevanni/config.json --concurrency 10 --reporter json
 # Uses concurrency=10 from CLI, not config.concurrency
 ```
 
@@ -151,9 +166,14 @@ npm run gevanni -- scan --config ./.gevanni/config.json --concurrency 10
 - `--verbose`: Debug logging
 - `--quiet`: Minimal logging
 
-### Step 3: Collect and analyze results
+**Reporter types:**
 
-The scanner outputs structured findings with:
+- **`console`** (default): Prints findings to terminal with severity ratings and evidence
+- **`json`**: Outputs structured JSON to `gevanni-report-{scanId}.json` (default) or a custom path via `json:<path>`
+
+### Step 4: Review results
+
+The scan output (console + saved reports) includes structured findings with:
 
 - Vulnerability type and severity
 - Affected endpoint/path
@@ -161,59 +181,107 @@ The scanner outputs structured findings with:
 - Confidence level
 - Remediation guidance
 
-### Step 4: Report generation
+**Report contents (JSON):**
 
-Reports are generated automatically at the end of `gevanni scan`. You can also regenerate reports from saved scan results using the `report` command.
-
-```bash
-# Regenerate report from saved scan results (console only, default)
-gevanni report <scanId> --config ./.gevilli/config.json
-
-# Regenerate with JSON reporter
-gevanni report <scanId> --config ./.gevilli/config.json --reporter json
-
-# Regenerate with custom output path
-gevanni report <scanId> --config ./.gevilli/config.json --reporter json:security-report.json
-```
-
-**Report output options:**
-
-- **Console reporter** (default): Prints findings to terminal with severity ratings and evidence
-- **JSON reporter**: Outputs structured JSON to `gevanni-report-{scanId}.json` (default) or a custom path
-
-**Specifying reporters:**
-
-```bash
-# Single reporter (console is default when omitted)
-gevanni scan --config ./.gevanni/config.json
-
-# Single reporter with custom output
-gevanni scan --config ./.gevanni/config.json --reporter json:scan-result.json
-
-# Multiple reporters simultaneously
-gevanni scan --config ./.gevanni/config.json --reporter json:report.json --reporter console
-```
-
-Reporters can also be configured via `config.json` plugin options (legacy, for JSON output path):
-
-```json
-{
-  "plugins": [
-    {
-      "file": "./skills/dast/src/plugins/reporter/json-reporter.ts",
-      "options": {
-        "outputPath": "security-report.json"
-      }
-    }
-  ]
-}
-```
-
-**Report contents:**
 - Scan ID, status, and timing
 - Per-job findings (vulnerable/safe/error)
-- Summary statistics (total jobs, vulnerable count, safe count, errors)
-- Evidence excerpts for vulnerabilities (request/response pairs)
+- Summary statistics (total jobs, vulnerable count, safe count, errors, skipped)
+- Evidence excerpts for vulnerabilities (request/response pairs with body in both `base64` and `utf8`)
+
+### Step 5: AI Deep Inspection — analyze undetected jobs
+
+**Purpose**: Signature-based detection (Step 3) only flags known vulnerability patterns. Many subtle issues — information disclosure, misconfigurations, unusual error handling, partial injection reflections — are reported as **safe** or **error** and ignored. This step uses AI to analyze the request/response logs of those undetected jobs, identify suspicious behavior, and perform additional deep-dive inspection.
+
+#### Step 5a: Extract undetected jobs from the JSON report
+
+Load the JSON report generated in Step 3 (e.g., `gevanni-report-<scanId>.json`). Each job in the `jobs` array has:
+
+- `status`: `"completed"` | `"error"` | `"skipped"`
+- `finding`: the detected result — `finding.vulnerable === false` means the signature didn't flag it
+- `error`: error message if the job failed
+- `signatureName`: which detection plugin ran
+- `parameter`: which request parameter was tested (location, original value, allowed mutations)
+
+Filter jobs where **deep inspection is needed**:
+
+- `status === "completed"` AND `finding.vulnerable === false` → "safe" jobs
+- `status === "error"` → "error" jobs
+
+For large scans (100+ undetected jobs), prioritize:
+
+1. **Error jobs first** — errors during testing may indicate the target crashed, timed out, or rejected the payload in an unusual way (potential DoS, WAF bypass, or parsing vulnerabilities)
+2. **High-value parameter jobs** — parameters in auth headers, cookies, path segments, or GraphQL queries
+3. **Interesting endpoint jobs** — admin paths, API endpoints, file upload/download, redirect endpoints
+
+#### Step 5b: Analyze each candidate's request/response
+
+For each undetected job, examine the `finding.request` and `finding.response` (for safe jobs) or the `error` message (for error jobs). Look for these suspicious patterns:
+
+**Response body analysis** (check `finding.response.body.utf8`):
+
+- **Error messages with internal details**: Stack traces, file paths (`/var/www`, `C:\`, `/home/`), SQL snippets, framework debug output
+- **Server technology leaks**: Version numbers of servers, frameworks, or libraries in error pages
+- **Reflected input in non-executable context**: User input echoed inside HTML comments, JavaScript strings, JSON values, or HTTP headers → potential for escalated injection
+- **Unusual response structure**: JSON keys that look like debug flags (`debug: true`, `isAdmin: false`), internal IP addresses, database connection strings
+- **Differential behavior**: For diff-based signatures, compare `evidence.exchanges` — even if the diff didn't hit the vulnerability threshold, significant structural changes in the response warrant investigation
+
+**Response header analysis** (check `finding.response.headers`):
+
+- **Server fingerprinting**: `Server`, `X-Powered-By`, `X-AspNet-Version`, `X-Generator` headers
+- **CORS misconfiguration**: `Access-Control-Allow-Origin: *` with credentials, or reflecting the request's `Origin` header
+- **Cache poisoning indicators**: `X-Cache: HIT` with user-controlled input in the cache key
+- **Security header gaps**: Missing `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options` on sensitive pages
+- **Cookie attributes missing**: `Set-Cookie` without `HttpOnly`, `Secure`, or `SameSite`
+
+**Status code anomalies**:
+
+- `500` with detailed error → information disclosure
+- `403` on parameter tampering → possible authorization bypass path
+- `429` → rate limiting detected; try slower, varied timing
+- `200` with empty body or `{"error": "..."}` → the app may be silently swallowing errors
+- `302`/`301` with user-controlled redirect target → open redirect
+
+**Timing patterns** (if the signature was time-based like `sqli-time`):
+
+- Even if the timing plugin didn't flag it, response times >2x normal may indicate blind injection
+
+#### Step 5c: Perform deep-dive inspection on suspicious items
+
+For each item flagged as suspicious in Step 5b, craft additional probe requests to verify and escalate:
+
+1. **Read the scenario file first**: The job's `scenarioId` links to a scenario file under `./.gevanni/scenarios/` (or wherever the scan was configured to load from). Read the scenario file to get the original endpoint definition:
+   - Base URL, HTTP method, path, headers, query params, request body schema
+   - Authentication/security scheme configuration
+   - Multi-step flow (linked requests) — follow the whole chain to reproduce the exact request context
+   - This is far more efficient than reverse-engineering from source code or guessing from a single request log
+
+   **If the scenario looks wrong or inconsistent** with the actual application behavior (e.g., wrong base URL, missing parameters, auth not working), fall back to reading the application source code to understand the real endpoint structure.
+
+2. **Formulate a follow-up request**: Using the scenario definition + the original `finding.request` as reference, modify the payload to test the specific hypothesis. Examples:
+   - If a stack trace was leaked → try path traversal variants to read config files
+   - If input was reflected in a JSON response → try JSONP callback injection or JavaScript hijacking
+   - If headers leak server info → probe for known vulnerabilities of that version
+   - If error messages contain SQL fragments → try UNION-based extraction
+
+3. **Execute the probe**: Use `curl`, `httpie`, or a simple script to send the follow-up request. Record the full request and response.
+
+4. **Document findings**: For each confirmed finding, record:
+   - **Vulnerability type** (e.g., Information Disclosure, Open Redirect, Blind Injection)
+   - **Severity** (Critical/High/Medium/Low/Info) based on impact
+   - **Evidence**: the probe request and response showing the issue
+   - **Remediation**: actionable fix guidance
+   - **Confidence**: whether it was confirmed or needs manual verification
+
+#### Step 5d: Integrate deep inspection results
+
+Compile the deep inspection findings alongside the original scan results:
+
+- Merge new findings into the overall vulnerability list
+- Update the risk matrix with new severities
+- Note in the coverage report that AI deep inspection was performed on N safe/error jobs
+- Distinguish between automated findings (signature-based) and AI-discovered findings in the output
+
+**Output**: A consolidated security report that includes both Step 3 automated findings AND Step 5 AI-discovered findings, with clear provenance for each.
 
 ## Output contract
 
@@ -236,24 +304,6 @@ The scan results include:
 | -------------------------------------------- | -------------------------------------------------------------- |
 | Scanning production without authorization    | Always confirm scope; use dev/staging when possible            |
 | No OpenAPI spec → poor coverage              | Provide spec or configure crawl depth carefully                |
-| Ignoring rate limits → DoS on target         | Set appropriate `--concurrency` and `--timeout`                |
+| Ignoring rate limits → DoS on target         | Set appropriate `--concurrency`                                |
 | Missing silent caps in reporting             | Explicitly list untested endpoints/plugins                     |
-| Treating automated scans as comprehensive    | DAST is one layer; combine with SAST and manual testing        |
 | Running without understanding target context | Adjust plugins for tech stack (e.g., GraphQL-specific plugins) |
-
-## Integration with SAST
-
-DAST and SAST are complementary:
-
-- **SAST**: Source code analysis, finds potential vulnerabilities before runtime
-- **DAST**: Runtime testing, discovers issues only visible in live execution
-
-For comprehensive security assessment, run both:
-
-```bash
-# First, SAST on source code
-/gevanni:sast ./src
-
-# Then, DAST on running application
-/gevanni:dast https://app.example.com -s openapi:./spec.yaml
-```

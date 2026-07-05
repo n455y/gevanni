@@ -33,7 +33,7 @@ describe("loadConfig", () => {
   });
 
   it("returns defaults when no path is given and ./.gevanni/config.json does not exist", () => {
-    // Change cwd to tmpDir where no .gevilli/config.json exists
+    // Change cwd to tmpDir where no .gevanni/config.json exists
     const originalCwd = process.cwd();
     process.chdir(tmpDir);
     try {
