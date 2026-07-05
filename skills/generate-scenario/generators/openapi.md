@@ -526,7 +526,187 @@ Set `diff` to control how response differences are detected when a signature rep
 
 Omit `diff` to use the default `exact` strategy.
 
-### Step 9: Validate
+### Step 9: Verify scenario transition integrity
+
+Before final validation, verify that every generated scenario can correctly navigate from step to step at runtime. A scenario with broken transitions will fail silently at scan time — this step catches those failures at generation time.
+
+**A. Step reference resolution**
+
+For every scenario in `x-gevanni-scenarios`:
+
+1. Confirm each step references a valid target:
+   - **Direct operationId** (string like `searchProducts`): must exist in `paths`
+   - **Object step** (`{id, match}`): `id` must exist in `paths`
+   - **Sub-scenario reference** (step name matching another scenario's `id`): the referenced scenario must exist in `x-gevanni-scenarios`
+2. Emit an **error** for any unresolved step reference:
+   ```
+   ❌ Scenario `{scenarioId}` step `{stepRef}`: operationId not found in paths.
+   ```
+
+**B. Parameter satisfaction check for multi-step flows**
+
+For each step in a multi-step scenario, verify all `required` parameters can be resolved at runtime. A parameter is "satisfied" if at least one of the following holds:
+
+| Source | How it resolves |
+|--------|----------------|
+| **OpenAPI Link from prior step** | A prior step's response defines a Link targeting this operationId with the parameter mapped |
+| **Runtime expression** | The parameter's `example` or `schema.example` uses `$response.body#/...` or `$response.header#/...` referencing a prior step |
+| **Static example value** | The parameter or its schema has an `example` in the operation definition |
+| **Auth injection** | The parameter is an auth header/token injected by gevanni via `securitySchemes` (`x-gevanni-token`) |
+| **Optional parameter** | The parameter is not listed in the operation's `required` array |
+
+For each **unsatisfied required parameter**, emit a **warning**:
+```
+⚠️ Scenario `{scenarioId}` step `{stepOpId}`: required parameter `{paramName}` (in: {paramIn}) has no resolvable source.
+   → Add an example value, a Link from a prior step, or mark it optional if not needed.
+```
+
+When checking prior-step Links, resolve runtime expressions against the prior operation's response schema. If a Link maps `$response.body#/authentication/token` but the prior operation's response schema has no `authentication.token` path, emit a **warning**:
+```
+⚠️ Scenario `{scenarioId}`: Link from `{sourceOpId}` → `{targetOpId}` references `$response.body#/authentication/token`, but `{sourceOpId}` response schema has no such field.
+```
+
+**C. Link target and field cross-validation**
+
+For every Link defined in operation responses:
+
+1. **Target exists**: The Link's `operationId` must exist in `paths`. Missing → **error**.
+2. **Parameter mapping validity**: Each mapped parameter must exist in the target operation's parameter list (path/query/header/cookie). Mapped-to-nonexistent-param → **error**.
+3. **Runtime expression plausibility**: `$response.body#/...` expressions should reference paths that exist in the source operation's response schema. Unverifiable (no response schema defined) → **warning** with a hint to add one.
+
+```
+❌ Scenario `{scenarioId}`: Link from `{sourceOpId}` → `{targetOpId}` maps parameter `{paramName}`, but `{targetOpId}` has no such parameter.
+```
+
+**D. Token flow validation for bearerAuth scenarios**
+
+For every scenario whose steps include `security: bearerAuth` operations:
+
+1. A token-returning step (login, authenticate, signIn, etc.) must appear **before** any protected step
+2. The token-returning operation must have `x-gevanni-token` declared in `components/securitySchemes` pointing to the token field in its response
+3. The scenario's `steps` array must list the token step first: `[tokenStep, protectedStep, ...]`
+
+Emit an **error** if a protected step has no preceding token step:
+```
+❌ Scenario `{scenarioId}`: step `{protectedOpId}` requires bearerAuth but no token-returning step precedes it.
+   → Add a login/authenticate step before the protected operation.
+```
+
+Emit a **warning** if the token step exists but the scheme is missing `x-gevanni-token`:
+```
+⚠️ Scenario `{scenarioId}`: `{tokenOpId}` provides auth but `components/securitySchemes/bearerAuth` is missing `x-gevanni-token`.
+   → Add `x-gevanni-token: $response.body#/path.to.token` to the security scheme.
+```
+
+**E. Circular dependency detection in sub-scenarios**
+
+Sub-scenario references form a directed graph. Detect cycles to prevent infinite loops at runtime:
+
+1. Build the graph: scenario `A` → sub-scenario `B` for every step in `A` that references another scenario's `id`
+2. Run DFS from each scenario; a back-edge indicates a cycle
+3. Emit an **error** for every cycle, listing the scenario ids in the loop:
+   ```
+   ❌ Circular sub-scenario dependency detected: {scenarioA} → {scenarioB} → {scenarioA}
+   ```
+
+**F. Transition integrity summary**
+
+After all checks, output a summary:
+
+```
+🔗 Scenario transition integrity:
+   • Scenarios checked:    N
+   • Multi-step scenarios: N
+   • Total step transitions: N
+   • ✅ Valid transitions:   N
+   • ⚠️ Warnings:            N
+   • ❌ Errors:              N
+```
+
+If errors exist, the generated spec must be fixed before use. If only warnings exist, review them and decide whether to add examples or Links.
+
+**G. Runtime transition verification (actual HTTP requests)**
+
+After the static checks pass, verify that scenarios can actually navigate by sending real HTTP requests through the scenario plugin's execution logic. This catches issues that static analysis cannot: DNS failures, TLS errors, routing mismatches, authentication redirects, and unexpected response shapes that break Link resolution.
+
+**Prerequisites:**
+- The target server must be running and reachable at the base URL from Step 5
+- If the server is not running, skip this section and emit a note: "⚠️ Target server not available — skipping runtime transition verification."
+
+**Procedure:**
+
+1. Run the validation command against the generated spec from the dast skill directory:
+   ```bash
+   cd <path-to-dast-skill>
+   npm run gevanni -- validate-scenarios <project-root>/.gevanni/scenarios/openapi.yaml
+   ```
+   The command reads the target server URL from the spec's `servers[0].url`.
+   If the scanner uses an upstream proxy (e.g. `proxy:http` plugin with `upstream` option),
+   pass `--upstream` or set the `HTTP_PROXY` environment variable:
+   ```bash
+   npm run gevanni -- validate-scenarios <spec> --upstream http://127.0.0.1:8080
+   ```
+
+2. The script executes every scenario by:
+   - Building the HTTP request for each step (URL, headers, body) using the same `buildUrl`/`buildHeaders`/`buildBody` functions the scenario plugin uses
+   - Sending the request to the target server
+   - Extracting tokens via `securitySchemes.x-gevanni-token` (same as `executeSteps`)
+   - Resolving Link parameters via `$response.body#/...` and `$response.header#/...` (same runtime expression resolver)
+   - Passing resolved values as overrides to the next step (same inter-step data flow)
+
+3. For each step, the script reports:
+   - ✅ Success: HTTP status code received (e.g., `GET /rest/products/search → 200`)
+   - ❌ Failure: error details (connection refused, timeout, DNS failure, etc.)
+   - 🔗 Link resolution: whether each `$response.body#/...` expression resolved to a non-empty value
+
+4. **Interpret the output:**
+   - **All steps ✅ and all Links 🔗 resolved**: transitions are valid — proceed to Step 10
+   - **Some steps ❌**: the scenario cannot navigate — fix the spec (wrong path, missing parameter, unreachable server) and re-run
+   - **Steps ✅ but Links 🔗 unresolved**: the server responded but the response shape doesn't match the Link expressions — verify the `$response.body#/...` paths against the actual response JSON
+   - **4xx/5xx status codes are NOT failures**: a 401 without auth or a 422 with a test value is normal during validation — only connection-level failures (ECONNREFUSED, timeout, DNS) count as transition errors
+
+5. **Example output:**
+   ```
+   $ npm run gevanni -- validate-scenarios .gevanni/scenarios/openapi.yaml
+
+   🔗 Validating scenario transitions...
+
+   📄 Spec: /workspace/.gevanni/scenarios/openapi.yaml
+   🌐 Base URL override: http://localhost:3000
+
+   📋 Found 5 scenario(s)
+
+   ▶ Running: searchProducts
+     ✅ GET /rest/products/search?q=test → 200
+
+   ▶ Running: loginAndGetBasket
+     ✅ POST /rest/user/login → 200
+        🔗 Link → getBasket.token: eyJhbGciOiJIUzI1NiIs...
+     ✅ GET /rest/basket/{id} → 200
+
+   ═══════════════════════════════════════
+   🔗 Scenario transition integrity:
+      • Scenarios checked:     5
+      • Multi-step scenarios:  2
+      • Total step executions: 7
+      • ✅ Successful steps:   7
+      • ❌ Failed steps:       0
+      • 🔗 Links checked:      2
+      • ✅ Resolved links:     2
+      • ⚠️  Unresolved links:   0
+   ═══════════════════════════════════════
+
+   ✅ All scenario transitions are valid.
+   ```
+
+6. **On failure**, analyze the output and fix the spec before re-running:
+   - Connection failures → check the `servers[0].url` in the spec
+   - 404 on a path → check the operation's `path` template (path parameters replaced with defaults?)
+   - Unresolved Link → the prior step's response doesn't contain the field at the JSON Pointer path; either fix the pointer or check if the response shape differs in reality
+
+7. **Re-run after fixes**: if you modified the spec to fix transition errors, re-run the validation script to confirm the fix.
+
+### Step 10: Validate
 
 Check the generated output:
 

@@ -91,6 +91,7 @@ Delegate to the selected generator workflow:
 The selected generator will produce:
 
 - Generated scenario definitions
+- Transition integrity reports (step-to-step navigation verification)
 - Validation reports
 - Coverage analysis
 - Warnings and recommendations
