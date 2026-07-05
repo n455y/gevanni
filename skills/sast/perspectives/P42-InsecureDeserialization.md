@@ -3,6 +3,7 @@ id: P42
 name: InsecureDeserialization
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.4 / WSTG-INPV-11 / CS: Deserialization, Insecure Deserialization
+requires: [backend, deserialization]
 ---
 
 # P42 — Insecure Deserialization

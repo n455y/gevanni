@@ -3,6 +3,7 @@ id: P125
 name: SubresourceIntegrity
 area: V3 Web Frontend Security
 refs: ASVS V3.x / WSTG-CLNT / CS: Third Party Javascript, Subresource Integrity
+requires: [frontend]
 ---
 
 # P125 — Subresource Integrity

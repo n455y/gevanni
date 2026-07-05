@@ -3,6 +3,7 @@ id: P115
 name: HTTPRequestSmuggling
 area: V13 Configuration
 refs: ASVS V14.x / PortSwigger Request Smuggling / CS: Request Validation
+requires: [backend]
 ---
 
 # P115 — HTTPRequestSmuggling

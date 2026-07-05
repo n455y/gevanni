@@ -3,6 +3,7 @@ id: P131
 name: EmailHeaderInjection
 area: V1 Encoding and Sanitization
 refs: ASVS V1.x / WSTG-INPV / CS: Injection Prevention
+requires: [backend, email]
 ---
 
 # P131 — EmailHeaderInjection

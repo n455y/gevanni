@@ -3,6 +3,7 @@ id: P80
 name: PriceQuantityTrust
 area: V2 Validation and Business Logic
 refs: ASVS V11.x / WSTG-BUSL-01, WSTG-BUSL-04 / CS: REST Security, Transaction Authorization
+requires: [backend]
 ---
 
 # P80 — PriceQuantityTrust

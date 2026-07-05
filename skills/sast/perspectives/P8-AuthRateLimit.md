@@ -3,6 +3,7 @@ id: P8
 name: AuthRateLimit
 area: V6 Authentication
 refs: ASVS V2.5.x / WSTG-ATHN-04, WSTG-ATHN-10 / CS: Authentication, Blocking Brute Force Attacks
+requires: [backend]
 ---
 
 # P8 — AuthRateLimit

@@ -3,6 +3,7 @@ id: P88
 name: FileAccessTraversal
 area: V5 File Handling
 refs: ASVS V12.1.x, V12.3.x / WSTG-INPV-11, WSTG-ATHZ-01 / CS: Injection Prevention, File Upload
+requires: [backend, file-read]
 ---
 
 # P88 — FileAccessTraversal

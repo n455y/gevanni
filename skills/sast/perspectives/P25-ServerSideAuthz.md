@@ -3,6 +3,7 @@ id: P25
 name: ServerSideAuthz
 area: V8 Authorization
 refs: ASVS V4.1.x, V4.2.x, V4.3.x / WSTG-ATHZ-01, WSTG-ATHZ-02, WSTG-ATHZ-03, WSTG-ATHZ-04 / CS: Authorization, Access Control, Insecure Direct Object Reference Prevention
+requires: [backend]
 ---
 
 # P25 — Server-Side Authorization

@@ -3,6 +3,7 @@ id: P65
 name: DataMasking
 area: V14 Data Protection
 refs: ASVS V8.x / WSTG-CRYP-01, WSTG-CRYP-03 / CS: User Privacy Protections Implementation, Sensitive Data Exposure
+requires: [backend]
 ---
 
 # P65 — DataMasking

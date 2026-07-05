@@ -3,6 +3,7 @@ id: P95
 name: RESTRateLimit
 area: V4 API and Web Service
 refs: ASVS V13.4.x / WSTG-ATHN-04 / CS: REST Security, Denial of Service — OWASP API4:2023 Unrestricted Consumption
+requires: [backend]
 ---
 
 # P95 — REST Rate Limit

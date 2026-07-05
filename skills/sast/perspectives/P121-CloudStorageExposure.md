@@ -3,6 +3,7 @@ id: P121
 name: CloudStorageExposure
 area: V13 Configuration
 refs: ASVS V17.x / WSTG-CONF / CS: Cloud native storage
+requires: [backend]
 ---
 
 # P121 — Cloud Storage Exposure

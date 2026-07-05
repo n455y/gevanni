@@ -3,6 +3,7 @@ id: P38
 name: ReflectedXSS
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-01, WSTG-INPV-02 / CS: Cross Site Scripting Prevention, DOM based XSS Prevention
+requires: [backend]
 ---
 
 # P38 — Reflected XSS

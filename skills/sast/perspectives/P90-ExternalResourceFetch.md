@@ -3,6 +3,7 @@ id: P90
 name: ExternalResourceFetch
 area: V5 File Handling
 refs: ASVS V12.6.x / WSTG-INPV-13 / CS: Server Side Request Forgery, File Upload, OWASP Secure Headers
+requires: [backend]
 ---
 
 # P90 — ExternalResourceFetch

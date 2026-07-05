@@ -3,6 +3,7 @@ id: P9
 name: UserEnumeration
 area: V6 Authentication
 refs: ASVS V2.1.x, V2.5.x / WSTG-ATHN-03, WSTG-ATHN-10 / CS: Authentication, User Privacy Protection
+requires: [backend]
 ---
 
 # P9 — User Enumeration

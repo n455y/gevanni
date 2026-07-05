@@ -3,6 +3,7 @@ id: P77
 name: EvalDynamicExecution
 area: V15 Secure Coding and Architecture
 refs: ASVS V5.3.4 / WSTG-INPV-11, WSTG-INPV-12 / CS: Injection Prevention, OS Command Injection Defense
+requires: []
 ---
 
 # P77 — EvalDynamicExecution

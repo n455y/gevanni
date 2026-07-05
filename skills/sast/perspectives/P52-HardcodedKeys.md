@@ -3,6 +3,7 @@ id: P52
 name: HardcodedKeys
 area: V11 Cryptography
 refs: ASVS V6.2.x, V14 / WSTG-CONF-04, WSTG-CRYP-04 / CS: Cryptographic Storage, Secrets Management
+requires: [backend]
 ---
 
 # P52 — Hardcoded Keys & Secrets

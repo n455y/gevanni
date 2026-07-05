@@ -3,6 +3,7 @@ id: P98
 name: GraphQLBOLA
 area: V4 API and Web Service
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-04 / CS: GraphQL Cheat Sheet, API1 BOLA
+requires: [backend, graphql]
 ---
 
 # P98 — GraphQL BOLA (Broken Object Level Authorization)

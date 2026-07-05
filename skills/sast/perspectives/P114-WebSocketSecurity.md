@@ -3,6 +3,7 @@ id: P114
 name: WebSocketSecurity
 area: V4 API and Web Service
 refs: ASVS V13.x / WSTG-CLNT / CS: WebSocket Security
+requires: [backend, websocket]
 ---
 
 # P114 — WebSocketSecurity

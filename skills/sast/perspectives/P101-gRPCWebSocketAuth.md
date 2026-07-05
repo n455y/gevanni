@@ -3,6 +3,7 @@ id: P101
 name: gRPCWebSocketAuth
 area: V4 API and Web Service
 refs: ASVS V3.4.x, V13.x / WSTG-ATHN-01, WSTG-ATHZ-01 / CS: REST Security, GraphQL Cheat Sheet
+requires: [backend, websocket]
 ---
 
 # P101 — gRPC / WebSocket Authentication & Authorization

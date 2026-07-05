@@ -3,6 +3,7 @@ id: P47
 name: ResponseSplitting
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-07 / CS: Injection Prevention
+requires: [backend]
 ---
 
 # P47 — Response Splitting (CRLF Injection)

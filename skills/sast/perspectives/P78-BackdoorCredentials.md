@@ -3,6 +3,7 @@ id: P78
 name: BackdoorCredentials
 area: V15 Secure Coding and Architecture
 refs: ASVS V10.x / WSTG-ATHN-02 / CS: Secrets Management, Password Storage
+requires: []
 ---
 
 # P78 — BackdoorCredentials

@@ -3,6 +3,7 @@ id: P59
 name: GlobalExceptionHandler
 area: V16 Security Logging and Error Handling
 refs: ASVS V7.x / WSTG-ERRH-01 / CS: Error Handling
+requires: []
 ---
 
 # P59 — GlobalExceptionHandler

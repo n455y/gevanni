@@ -3,6 +3,7 @@ id: P91
 name: TempFileProtection
 area: V5 File Handling
 refs: ASVS V12.3.x, V12.4.x / WSTG-CONF-05, WSTG-ATHN-04 / CS: File Upload, Insecure Direct Object Reference Prevention
+requires: [backend, file-upload]
 ---
 
 # P91 — TempFileProtection

@@ -3,6 +3,7 @@ id: P53
 name: IVNonceSalt
 area: V11 Cryptography
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Password Storage
+requires: [backend]
 ---
 
 # P53 — IVNonceSalt

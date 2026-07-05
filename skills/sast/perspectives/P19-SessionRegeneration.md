@@ -3,6 +3,7 @@ id: P19
 name: SessionRegeneration
 area: V7 Session Management
 refs: ASVS V3.4.x, V3.7.x / WSTG-SESS-03, WSTG-SESS-08 / CS: Session Management
+requires: [backend]
 ---
 
 # P19 — Session Regeneration

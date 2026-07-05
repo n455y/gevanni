@@ -3,6 +3,7 @@ id: P5
 name: SecureDefaults
 area: V15 Secure Coding and Architecture
 refs: ASVS V1.5.x / V14.x / WSTG-CONF-02 / CS: Architecture Cheat Sheet
+requires: []
 ---
 
 # P5 — SecureDefaults

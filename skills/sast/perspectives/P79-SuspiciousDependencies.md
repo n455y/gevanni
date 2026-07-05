@@ -3,6 +3,7 @@ id: P79
 name: SuspiciousDependencies
 area: V15 Secure Coding and Architecture
 refs: ASVS V10.1.x, V14.1.x / WSTG-INFO-08 / CS: Dependency Management, Third Party JS Management
+requires: []
 ---
 
 # P79 — SuspiciousDependencies

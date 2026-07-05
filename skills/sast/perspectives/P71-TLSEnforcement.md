@@ -3,6 +3,7 @@ id: P71
 name: TLSEnforcement
 area: V12 Secure Communication
 refs: ASVS V9.1.x / WSTG-CRYP-03 / CS: Transport Layer Protection Cheat Sheet
+requires: []
 ---
 
 # P71 — TLS Enforcement

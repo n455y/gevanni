@@ -3,6 +3,7 @@ id: P17
 name: SessionCookieAttributes
 area: V7 Session Management
 refs: ASVS V3.4.1, V3.4.2, V3.4.3, V3.4.4 / WSTG-SESS-02 / CS: Session Management, Cookie Security
+requires: [backend]
 ---
 
 # P17 — Session Cookie Attributes

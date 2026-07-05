@@ -3,6 +3,7 @@ id: P96
 name: GraphQLIntrospection
 area: V4 API and Web Service
 refs: ASVS V13.x / WSTG-INPV-13 / CS: GraphQL Cheat Sheet, GraphQL (Apollo)
+requires: [backend, graphql]
 ---
 
 # P96 — GraphQLIntrospection

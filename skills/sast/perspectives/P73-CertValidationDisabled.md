@@ -3,6 +3,7 @@ id: P73
 name: CertValidationDisabled
 area: V12 Secure Communication
 refs: ASVS V9.2.x / WSTG-CRYP-03 / CS: TLS Pinning, Transport Layer Protection
+requires: []
 ---
 
 # P73 — CertValidationDisabled

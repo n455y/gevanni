@@ -3,6 +3,7 @@ id: P49
 name: HostHeaderInjection
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x, V7.x.x / WSTG-INPV-12, WSTG-INPV-17 / CS: Header Injection, Email Injection, Forgot Password Cheat Sheet
+requires: [backend]
 ---
 
 # P49 — HostHeaderInjection

@@ -3,6 +3,7 @@ id: P83
 name: CouponReuse
 area: V2 Validation and Business Logic
 refs: ASVS V11.x / WSTG-BUSL-03, WSTG-BUSL-04 / CS: REST Security
+requires: [backend]
 ---
 
 # P83 — CouponReuse

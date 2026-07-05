@@ -3,6 +3,7 @@ id: P128
 name: CSVFormulaInjection
 area: V2 Validation and Business Logic
 refs: ASVS V2.x / WSTG-INPV / CS: Injection Prevention, REST Security
+requires: [backend, csv]
 ---
 
 # P128 — CSV Formula Injection

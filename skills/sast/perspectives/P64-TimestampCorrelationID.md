@@ -3,6 +3,7 @@ id: P64
 name: TimestampCorrelationID
 area: V16 Security Logging and Error Handling
 refs: ASVS V7.x / WSTG-INFO-02, WSTG-ATHZ-06 / CS: Logging, Distributed Tracing
+requires: []
 ---
 
 # P64 — TimestampCorrelationID

@@ -10,6 +10,7 @@
 2. 残りの `P<連番>-<英名>.md` を読み、各ファイルから以下を組み立てる:
    - `id` ← frontmatter `id`
    - `name` ← frontmatter `name`
+   - `requires` ← frontmatter `requires`（必須タグ一覧。空配列 `[]` は全ユニットで実行）
    - `refs` ← frontmatter `refs`
    - `focus` ← `## What to check` 本文
    - `signals` ← `## Static signals` 本文
@@ -24,6 +25,7 @@ id: P6
 name: PasswordStrength
 area: V6 Authentication
 refs: ASVS V6.x / WSTG-ATHN-07 / CS: Password Storage
+requires: [backend]
 ---
 
 # PasswordStrength

@@ -3,6 +3,7 @@ id: P50
 name: MassAssignment
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-12 / CS: Mass Assignment, REST Security
+requires: [backend]
 ---
 
 # P50 — Mass Assignment

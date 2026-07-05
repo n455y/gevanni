@@ -3,6 +3,7 @@ id: P63
 name: LogTamperProtection
 area: V16 Security Logging and Error Handling
 refs: ASVS V7.1.x / WSTG-ATHZ-06, WSTG-ATHN-01 / CS: Logging
+requires: []
 ---
 
 # P63 — Log Tamper Protection

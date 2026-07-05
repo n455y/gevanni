@@ -3,6 +3,7 @@ id: P69
 name: PIIOverCollection
 area: V14 Data Protection
 refs: ASVS V8.2.x, V8.3.x / WSTG-INFO-02, WSTG-ATHN-09 / CS: User Privacy, Privacy Engineering
+requires: [backend]
 ---
 
 # P69 — PII Over-Collection

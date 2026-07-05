@@ -3,6 +3,7 @@ id: P21
 name: ConcurrentSessions
 area: V7 Session Management
 refs: ASVS V3.3.x / WSTG-SESS-05 / CS: Session Management
+requires: [backend]
 ---
 
 # P21 — ConcurrentSessions

@@ -3,6 +3,7 @@ id: P87
 name: UploadPathExecution
 area: V5 File Handling
 refs: ASVS V12.x / WSTG-CONF-04, WSTG-INPV-11 / CS: File Upload, Unrestricted File Upload
+requires: [backend, file-upload]
 ---
 
 # P87 — Upload Path Execution

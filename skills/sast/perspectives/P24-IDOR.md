@@ -3,6 +3,7 @@ id: P24
 name: IDOR
 area: V8 Authorization
 refs: ASVS V4.1.x, V4.2.x, V4.3.x / WSTG-ATHZ-01, WSTG-ATHZ-04 / CS: Insecure Direct Object Reference Prevention
+requires: [backend]
 ---
 
 # P24 — IDOR

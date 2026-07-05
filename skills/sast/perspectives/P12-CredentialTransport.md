@@ -3,6 +3,7 @@ id: P12
 name: CredentialTransport
 area: V6 Authentication
 refs: ASVS V2.x / V9.x / WSTG-ATHN-01, WSTG-CRYP-03 / CS: Transport Layer Security, Authentication Cheat Sheet
+requires: [backend]
 ---
 
 # P12 — CredentialTransport

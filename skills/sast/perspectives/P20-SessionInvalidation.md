@@ -3,6 +3,7 @@ id: P20
 name: SessionInvalidation
 area: V7 Session Management
 refs: ASVS V3.3.x, V3.6.x, V8.1.x / WSTG-SESS-06, WSTG-SESS-07 / CS: Session Management, JSON Web Token Cheat Sheet, Logging Cheat Sheet
+requires: [backend]
 ---
 
 # P20 — Session Invalidation

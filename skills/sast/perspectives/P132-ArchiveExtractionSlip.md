@@ -3,6 +3,7 @@ id: P132
 name: ArchiveExtractionSlip
 area: V5 File Handling
 refs: ASVS V5.x / WSTG-INPV-11 / CS: File Upload
+requires: [backend, file-upload]
 ---
 
 # P132 — ArchiveExtractionSlip

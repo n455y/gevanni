@@ -3,6 +3,7 @@ id: P126
 name: ServiceWorkerSecurity
 area: V3 Web Frontend Security
 refs: ASVS V3.x / WSTG-CLNT / CS: Service Worker, HTML5
+requires: [frontend]
 ---
 
 # P126 — ServiceWorkerSecurity

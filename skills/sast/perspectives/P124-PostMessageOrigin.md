@@ -3,6 +3,7 @@ id: P124
 name: PostMessageOrigin
 area: V3 Web Frontend Security
 refs: ASVS V3.x / WSTG-CLNT / CS: HTML5 Web Messaging
+requires: [frontend]
 ---
 
 # P124 — PostMessageOrigin

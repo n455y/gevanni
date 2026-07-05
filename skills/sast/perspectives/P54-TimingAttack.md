@@ -3,6 +3,7 @@ id: P54
 name: TimingAttack
 area: V11 Cryptography
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Authentication
+requires: [backend]
 ---
 
 # P54 — Timing Attack

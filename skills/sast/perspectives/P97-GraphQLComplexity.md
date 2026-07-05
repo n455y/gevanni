@@ -3,6 +3,7 @@ id: P97
 name: GraphQLComplexity
 area: V4 API and Web Service
 refs: ASVS V13.1.x / WSTG-INPV-13 / CS: GraphQL Cheat Sheet
+requires: [backend, graphql]
 ---
 
 # P97 — GraphQLComplexity

@@ -3,6 +3,7 @@ id: P66
 name: TempDataCaching
 area: V14 Data Protection
 refs: ASVS V8.1.x, V8.2.x / WSTG-CRYP-01, WSTG-ATHN-06 / CS: Sensitive Data, Caching, Session Management
+requires: [backend]
 ---
 
 # P66 — TempDataCaching

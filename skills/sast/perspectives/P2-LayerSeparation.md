@@ -3,6 +3,7 @@ id: P2
 name: LayerSeparation
 area: V15 Secure Coding and Architecture
 refs: ASVS V1.x / WSTG-INFO-02 / CS: Architecture Cheat Sheet
+requires: []
 ---
 
 # P2 — LayerSeparation

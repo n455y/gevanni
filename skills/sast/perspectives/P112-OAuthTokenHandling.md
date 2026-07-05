@@ -3,6 +3,7 @@ id: P112
 name: OAuthTokenHandling
 area: V10 OAuth and OIDC
 refs: ASVS V3.x / WSTG-SESS / CS: OAuth 2.0 Protocol, Session Management
+requires: [backend]
 ---
 
 # P112 — OAuthTokenHandling

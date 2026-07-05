@@ -3,6 +3,7 @@ id: P117
 name: SubdomainTakeover
 area: V13 Configuration
 refs: ASVS V14.x / WSTG-CONF / CS: Cloud subdomain takeover
+requires: [backend]
 ---
 
 # P117 — SubdomainTakeover

@@ -3,6 +3,7 @@ id: P7
 name: PasswordHashing
 area: V6 Authentication
 refs: ASVS V2.4.x / WSTG-ATHN-07 / CS: Password Storage
+requires: [backend]
 ---
 
 # P7 — Password Hashing

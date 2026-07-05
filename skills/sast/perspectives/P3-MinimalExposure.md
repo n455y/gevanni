@@ -3,6 +3,7 @@ id: P3
 name: MinimalExposure
 area: V15 Secure Coding and Architecture
 refs: ASVS V1.2.x, V1.14.x / WSTG-CONF-05 / CS: Architecture Cheat Sheet
+requires: []
 ---
 
 # P3 — MinimalExposure

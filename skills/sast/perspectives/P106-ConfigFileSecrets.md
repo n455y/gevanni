@@ -3,6 +3,7 @@ id: P106
 name: ConfigFileSecrets
 area: V13 Configuration
 refs: ASVS V14.x / WSTG-CONF-04 / CS: Secrets Management
+requires: [backend]
 ---
 
 # P106 — ConfigFileSecrets

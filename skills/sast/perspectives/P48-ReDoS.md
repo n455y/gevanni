@@ -3,6 +3,7 @@ id: P48
 name: ReDoS
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-08 / CS: Regular Expression Denial of Service
+requires: [backend]
 ---
 
 # P48 — ReDoS

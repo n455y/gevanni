@@ -3,6 +3,7 @@ id: P81
 name: StateTransitionBypass
 area: V2 Validation and Business Logic
 refs: ASVS V11.x / WSTG-BUSL-02, WSTG-BUSL-05 / CS: REST Security, Transaction Authorization
+requires: [backend]
 ---
 
 # P81 — StateTransitionBypass

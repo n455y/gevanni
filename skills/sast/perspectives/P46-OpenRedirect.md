@@ -3,6 +3,7 @@ id: P46
 name: OpenRedirect
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-12 / CS: Unvalidated Redirects and Forwards
+requires: [backend, redirect]
 ---
 
 # P46 — Open Redirect

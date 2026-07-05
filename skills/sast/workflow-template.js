@@ -8,8 +8,10 @@
 //     scriptPath: "<絶対パス>/.claude/skills/sast/workflow-template.js",
 //     args: { units, perspectives }
 //   })
-//   - units:        手順1の出力. Array<{ id, method, route, code, deps? }>
-//   - perspectives: 手順2の出力(事前フィルタ済み). Array<{ id, name, focus, signals, fpNote, refs }>
+//   - units:        Array<{ id, method, route, code, deps?, tags: string[] }>
+//                    tags は ["backend", "db", ...]。frontend|backend は必須。
+//   - perspectives: Array<{ id, name, requires, focus, signals, fpNote, refs }>
+//                    requires は必須タグの配列（例: ["backend", "db"]）。空配列は無条件実行。
 //                    優先度順(Critical寄りを先)に並べること。規模超過時に優先度で間引く。
 //
 // 戻り値: { summary, units, findings }
@@ -82,6 +84,19 @@ ${unit.code}
 5. remediation は具体的に(コード例や設定名)。
 6. refs には観点の refs を引き継ぐ。`
 
+// ── 観点フィルタリング ──────────────────────────────────────────────
+// unit.tags と pov.requires のマッチングでスキップ判定。
+// pov.requires は各観点ファイルの frontmatter に定義（全133ファイル）。
+// requires が空配列の観点は全ユニットで実行される。
+// ポリシー: 少しでも検知可能性が残る組み合わせは skip しない（conservative）。
+
+// unit が perspective の要件を満たすか判定
+const isRelevant = (unit, pov) => {
+  const tags = new Set(unit.tags || [])
+  const required = pov.requires || []
+  if (required.length === 0) return true
+  return required.every((r) => tags.has(r))
+}
 // 規模の安全弁。units × perspectives が上限を超える場合、優先度順に並んだ
 // perspectives を先頭から残す(No-silent-caps: log で明示)。
 const capPerspectives = (perspectives, unitsLen) => {
@@ -110,10 +125,15 @@ const { perspectives: povs, dropped } = capPerspectives(perspectives, units.leng
 
 const results = await pipeline(
   units,
-  // stage1: 1ユニットを全観点で並列診断
-  (unit) =>
-    parallel(
-      povs.map((pov) => () =>
+  // stage1: 1ユニットを全観点で並列診断（明らかに無関係な観点はスキップ）
+  (unit) => {
+    const relevantPovs = povs.filter((pov) => isRelevant(unit, pov))
+    const skipped = povs.length - relevantPovs.length
+    if (skipped > 0) {
+      log(`${unit.id} (${unit.method} ${unit.route}): tags=[${(unit.tags || []).join(', ')}] → ${skipped}/${povs.length} 観点をスキップ (明らかに無関係)`)
+    }
+    return parallel(
+      relevantPovs.map((pov) => () =>
         agent(ASSESS_PROMPT(unit, pov), {
           label: `${unit.id}:${pov.id}`,
           phase: '診断',
@@ -122,7 +142,8 @@ const results = await pipeline(
           .then((r) => (r && Array.isArray(r.findings) ? r.findings : []))
           .catch(() => []) // 1観点の失敗で全体は止めない
       )
-    ),
+    )
+  },
   // stage2: ユニット単位でマージ
   (findingsPerPov, unit) => {
     const all = findingsPerPov.flat()

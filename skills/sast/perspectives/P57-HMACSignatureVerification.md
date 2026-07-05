@@ -3,6 +3,7 @@ id: P57
 name: HMACSignatureVerification
 area: V11 Cryptography
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, JSON Web Token
+requires: [backend]
 ---
 
 # P57 — HMACSignatureVerification

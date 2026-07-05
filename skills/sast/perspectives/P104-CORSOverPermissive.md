@@ -3,6 +3,7 @@ id: P104
 name: CORSOverPermissive
 area: V13 Configuration
 refs: ASVS V14.x / WSTG-CLNT-07 / CS: Cross Origin Resource Sharing
+requires: [backend]
 ---
 
 # P104 — CORSOverPermissive

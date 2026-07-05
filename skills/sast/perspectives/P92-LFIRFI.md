@@ -3,6 +3,7 @@ id: P92
 name: LFIRFI
 area: V5 File Handling
 refs: ASVS V12.x / WSTG-INPV-11 / CS: File Upload, Injection Prevention
+requires: [backend, file-read]
 ---
 
 # P92 — LFI / RFI

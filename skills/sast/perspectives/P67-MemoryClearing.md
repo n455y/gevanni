@@ -3,6 +3,7 @@ id: P67
 name: MemoryClearing
 area: V14 Data Protection
 refs: ASVS V8.x / WSTG-CRYP-04 / CS: Sensitive Data Protection
+requires: [backend]
 ---
 
 # P67 — MemoryClearing

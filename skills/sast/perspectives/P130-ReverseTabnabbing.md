@@ -3,6 +3,7 @@ id: P130
 name: ReverseTabnabbing
 area: V3 Web Frontend Security
 refs: ASVS V3.x / WSTG-CLNT / CS: HTML5 Web Application Security
+requires: [frontend]
 ---
 
 # P130 — Reverse Tabnabbing

@@ -3,6 +3,7 @@ id: P41
 name: XXE
 area: V1 Encoding and Sanitization
 refs: ASVS V5.3.x / WSTG-INPV-07 / CS: XML External Entity Prevention
+requires: [backend, xml]
 ---
 
 # P41 — XXE
