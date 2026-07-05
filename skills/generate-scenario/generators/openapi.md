@@ -76,7 +76,7 @@ While analyzing endpoints, identify any fields that require specific test data v
 - **Test account identifiers**: Fields like `accountId`, `customerId` when testing multi-tenant systems — actual IDs must be provided
 - **Application-specific codes**: Any other domain-specific codes or identifiers needed for testing
 
-**⚠️ Do NOT invent these values.** Document them in a list to be confirmed with the user in Step 2d.
+**⚠️ Do NOT invent these values.** Document them in a list to be confirmed with the user in Step 5.
 
 **Record for each endpoint**:
 
@@ -122,7 +122,30 @@ While building the operation list, check for gevanni limitations:
 
 Before proceeding to spec generation, confirm all required runtime parameters that cannot be extracted from the code or from prior responses via OpenAPI Links.
 
-**A. Authentication credentials:**
+**A. Target server base URL:**
+
+1. **Check configuration files** for hints about the server URL:
+   - `.env` / `.env.local` / `.env.development` — look for `BASE_URL`, `API_URL`, `HOST`, `PORT`, `SERVER_URL`
+   - `config.js` / `config.ts` / `application.yml` / `application.properties` — look for server/port config
+   - `package.json` — check `scripts.dev` or `scripts.start` for port hints
+   - Docker files (`Dockerfile`, `docker-compose.yml`) — check exposed ports
+2. **Ask the user**: "What is the base URL of the target web server? (e.g., `http://localhost:3000`, `https://staging.example.com`)"
+3. **Wait for user input** — do not proceed without an actual URL
+4. **Store the provided URL** in the spec's `servers` list
+
+Example interaction:
+```
+🌐 Target server base URL needed:
+
+The generated OpenAPI spec needs a `servers` URL. Based on the codebase:
+  • Found .env with PORT=3000 → possible URL: http://localhost:3000
+
+Please confirm or provide the correct base URL for the target server:
+```
+
+If the codebase has hints, present them as suggestions but **always require user confirmation**. Do not auto-populate.
+
+**B. Authentication credentials:**
 
 For each token-returning operation (typically `login`, `authenticate`, `signIn`):
 
@@ -141,7 +164,7 @@ The following operations require authentication data:
 Please provide the credentials to use:
 ```
 
-**B. Dynamic test data:**
+**C. Dynamic test data:**
 
 For each field requiring application-specific codes or identifiers:
 
@@ -161,7 +184,7 @@ The following endpoints require specific test data:
 Please provide the actual values to use in the generated scenarios:
 ```
 
-**C. Parameter extraction via OpenAPI Links (DO NOT ask user):**
+**D. Parameter extraction via OpenAPI Links (DO NOT ask user):**
 
 Parameters that can be extracted from previous step responses should **NOT** be asked from the user — define these using OpenAPI Links instead:
 
@@ -172,7 +195,7 @@ Parameters that can be extracted from previous step responses should **NOT** be 
 
 These are automatically resolved by gevanni at runtime — no user input needed.
 
-**D. Proceed only after confirmation:**
+**E. Proceed only after confirmation:**
 
 - Do NOT proceed to Step 3 until all required credentials and test data have been provided
 - If the user cannot provide certain values (e.g., valid coupon codes), mark the corresponding operations as `scannable: false` and note the reason
@@ -272,7 +295,7 @@ Follow these rules when generating scenarios:
 
 **⚠️ CRITICAL: Use user-provided values in operation examples:**
 
-When defining operations in the OpenAPI spec, use the **actual values provided by the user in Step 2d** for:
+When defining operations in the OpenAPI spec, use the **actual values provided by the user in Step 5** for:
 - `requestBody.example` fields (credentials, coupon codes, invite codes, etc.)
 - `parameters.example` values (test IDs, specific identifiers, etc.)
 
@@ -340,7 +363,7 @@ x-gevanni-scenarios:
 
 gevanni evaluates `x-gevanni-token` against each step's response; once captured, the token is injected into all subsequent `security: bearerAuth` steps. `oauth2` schemes work the same way (`x-gevanni-token: $response.body#/access_token`); `apiKey` (`in: header`) injects into the configured header. Multi-step chains beyond the leading token step are only needed when operations are genuinely chained (e.g. create-then-read).
 
-**⚠️ Use user-provided credentials**: The `requestBody.example` for the `login` operation must use the **actual credentials provided by the user in Step 2d**, not invented placeholders.
+**⚠️ Use user-provided credentials**: The `requestBody.example` for the `login` operation must use the **actual credentials provided by the user in Step 5**, not invented placeholders.
 
 #### Multi-step flows
 
@@ -387,13 +410,13 @@ paths:
 |----------|----------|---------|
 | Resource ID returned by create operation | **OpenAPI Link** | `$response.body#/id` in next step |
 | Authentication token from login | **securitySchemes + Link** | `x-gevanni-token: $response.body#/token` |
-| Discount/coupon code to apply | **User-provided value** | Use code from Step 2d in `requestBody.example` |
-| Invitation code to accept invite | **User-provided value** | Use code from Step 2d in `requestBody.example` |
-| Test account ID for multi-tenant testing | **User-provided value** | Use ID from Step 2d in path parameter example |
+| Discount/coupon code to apply | **User-provided value** | Use code from Step 5 in `requestBody.example` |
+| Invitation code to accept invite | **User-provided value** | Use code from Step 5 in `requestBody.example` |
+| Test account ID for multi-tenant testing | **User-provided value** | Use ID from Step 5 in path parameter example |
 
 **Rule of thumb:**
 - If the value can be **extracted from a prior response** → Use OpenAPI Links
-- If the value must be **provided externally** (coupon code, invite code, test credentials) → Ask user in Step 2d, use provided value in `example`
+- If the value must be **provided externally** (coupon code, invite code, test credentials) → Ask user in Step 5, use provided value in `example`
 
 #### oneOf variants
 

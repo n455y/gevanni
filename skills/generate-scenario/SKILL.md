@@ -17,13 +17,8 @@ Generate gevanni-compatible scenario definitions for various API specification f
 ## Supported Scenario Types
 
 ### openapi
+
 Generate `x-gevanni-scenarios` for OpenAPI 3.0 specs. Analyzes web application source code and creates gevanni-compatible scenario definitions.
-
-### graphql (planned)
-Generate gevanni scenarios for GraphQL APIs.
-
-### grpc (planned)
-Generate gevanni scenarios for gRPC services.
 
 ## Workflow
 
@@ -31,26 +26,36 @@ Generate gevanni scenarios for gRPC services.
 
 Before generating scenarios, identify parameters that cannot be extracted from the code:
 
-**A. Identify required credentials:**
+**A. Confirm target server base URL:**
+
+- The base URL of the web server to scan (e.g., `http://localhost:3000`, `https://api.example.com`)
+- This is used in the OpenAPI spec's `servers` field
+- If the codebase has configuration files (`.env`, `config.js`, `application.yml`, etc.), check them for hints, but always confirm with the user
+
+**B. Identify required credentials:**
+
 - Login credentials (username/email, password)
 - API keys or tokens
 - Multi-factor authentication codes (TOTP seeds, backup codes)
 - Any authentication data needed to access protected endpoints
 
-**B. Identify required dynamic test data:**
+**C. Identify required dynamic test data:**
+
 - Discount/coupon codes
 - Invitation codes
 - Test account identifiers
 - Any application-specific codes needed for testing
 
-**C. Confirmation workflow:**
+**D. Confirmation workflow:**
 For each required parameter discovered:
-1. **Ask the user** for the actual value or test data
-2. **Do not invent or guess** values like `test@example.com`, `password123`, or `DISCOUNT20`
+
+1. **Ask the user** for the actual value
+2. **Do not invent or guess** values like `http://localhost:3000`, `test@example.com`, `password123`, or `DISCOUNT20`
 3. Store the provided values in the appropriate scenario examples
 
 **Exception - OpenAPI Links:**
 Parameters that can be extracted from previous step responses (via `$response.body#/...`, `$response.header#/...`) should **NOT** be asked — define these in the OpenAPI spec using Links. For example:
+
 - User ID returned by a `createUser` operation → use in `getUserById` path parameter
 - Order ID returned by `createOrder` → use in `trackOrder` query parameter
 - Token returned by `login` → use in `Authorization` header via `securitySchemes.x-gevanni-token`
@@ -67,11 +72,11 @@ Parameters that can be extracted from previous step responses (via `$response.bo
 
 Based on the scenario type, load the appropriate generator:
 
-| Type      | Generator File                | Description                                  |
-| --------- | ------------------------------ | -------------------------------------------- |
-| `openapi` | `generators/openapi.md`       | OpenAPI 3.0 x-gevanni-scenarios generator    |
-| `graphql` | `generators/graphql.md`       | GraphQL scenarios generator (planned)        |
-| `grpc`    | `generators/grpc.md`          | gRPC scenarios generator (planned)           |
+| Type      | Generator File          | Description                               |
+| --------- | ----------------------- | ----------------------------------------- |
+| `openapi` | `generators/openapi.md` | OpenAPI 3.0 x-gevanni-scenarios generator |
+| `graphql` | `generators/graphql.md` | GraphQL scenarios generator (planned)     |
+| `grpc`    | `generators/grpc.md`    | gRPC scenarios generator (planned)        |
 
 ### Step 4: Execute generator
 
@@ -84,6 +89,7 @@ Delegate to the selected generator workflow:
 ### Step 5: Output results
 
 The selected generator will produce:
+
 - Generated scenario definitions
 - Validation reports
 - Coverage analysis
@@ -117,11 +123,13 @@ Generated scenarios are project-specific and should be regenerated from source c
 ## Error Handling
 
 If the scenario type is not supported:
+
 ```
 Error: Unsupported scenario type '<type>'. Supported types: openapi
 ```
 
 If the generator file is missing:
+
 ```
 Error: Generator file not found for type '<type>': generators/<type>.md
 ```
