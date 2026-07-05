@@ -27,7 +27,35 @@ Generate gevanni scenarios for gRPC services.
 
 ## Workflow
 
-### Step 1: Parse arguments
+### Step 1: Gather required runtime parameters
+
+Before generating scenarios, identify parameters that cannot be extracted from the code:
+
+**A. Identify required credentials:**
+- Login credentials (username/email, password)
+- API keys or tokens
+- Multi-factor authentication codes (TOTP seeds, backup codes)
+- Any authentication data needed to access protected endpoints
+
+**B. Identify required dynamic test data:**
+- Discount/coupon codes
+- Invitation codes
+- Test account identifiers
+- Any application-specific codes needed for testing
+
+**C. Confirmation workflow:**
+For each required parameter discovered:
+1. **Ask the user** for the actual value or test data
+2. **Do not invent or guess** values like `test@example.com`, `password123`, or `DISCOUNT20`
+3. Store the provided values in the appropriate scenario examples
+
+**Exception - OpenAPI Links:**
+Parameters that can be extracted from previous step responses (via `$response.body#/...`, `$response.header#/...`) should **NOT** be asked — define these in the OpenAPI spec using Links. For example:
+- User ID returned by a `createUser` operation → use in `getUserById` path parameter
+- Order ID returned by `createOrder` → use in `trackOrder` query parameter
+- Token returned by `login` → use in `Authorization` header via `securitySchemes.x-gevanni-token`
+
+### Step 2: Parse arguments
 
 1. Parse `$ARGUMENTS` to extract scenario type and source path:
    - If format is `<type>:<path>`, extract type and path
@@ -35,7 +63,7 @@ Generate gevanni scenarios for gRPC services.
 2. Validate that the scenario type is supported
 3. Validate that the source path exists
 
-### Step 2: Select generator
+### Step 3: Select generator
 
 Based on the scenario type, load the appropriate generator:
 
@@ -45,7 +73,7 @@ Based on the scenario type, load the appropriate generator:
 | `graphql` | `generators/graphql.md`       | GraphQL scenarios generator (planned)        |
 | `grpc`    | `generators/grpc.md`          | gRPC scenarios generator (planned)           |
 
-### Step 3: Execute generator
+### Step 4: Execute generator
 
 Delegate to the selected generator workflow:
 
@@ -53,7 +81,7 @@ Delegate to the selected generator workflow:
 2. Follow the generator's workflow steps
 3. Apply the generator's validation rules
 
-### Step 4: Output results
+### Step 5: Output results
 
 The selected generator will produce:
 - Generated scenario definitions

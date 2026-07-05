@@ -35,7 +35,7 @@ For each endpoint, extract:
 - **Response structure**: especially any links to other operations
 - **Authentication requirements**: headers, cookies, tokens
 
-### Step 2b: Analyze for vulnerability classes
+### Step 3: Analyze for vulnerability classes and required test data
 
 Scan the source code for known vulnerability patterns and classify each endpoint:
 
@@ -67,13 +67,24 @@ Scan the source code for known vulnerability patterns and classify each endpoint
 
 **Other classes**: XXE (XML parsing), OS Command Injection (`exec`, `spawn`), SSTI (template engines with user input), LDAP/XPath injection, Open Redirect (`res.redirect(req.query.*)`), SSRF (`fetch(req.body.url)` / `axios(req.body.*)`), RCE (`vm.runInContext(` / `eval(` with user input), Business Logic (role escalation, price/coupon manipulation)
 
+**Identify required dynamic test data**:
+
+While analyzing endpoints, identify any fields that require specific test data values to test the functionality:
+
+- **Discount/coupon codes**: Fields like `couponCode`, `discountCode`, `promoCode` — the actual codes must be provided by the user
+- **Invitation/referral codes**: Fields like `inviteCode`, `referralCode` — actual codes must be provided
+- **Test account identifiers**: Fields like `accountId`, `customerId` when testing multi-tenant systems — actual IDs must be provided
+- **Application-specific codes**: Any other domain-specific codes or identifiers needed for testing
+
+**⚠️ Do NOT invent these values.** Document them in a list to be confirmed with the user in Step 2d.
+
 **Record for each endpoint**:
 
 - Vulnerability class(es) it is susceptible to
 - The exact parameter(s) involved (query name, body field, path param)
 - Code snippet (file:line) for reference
 
-### Step 2c: Path parameter and type audit
+### Step 4: Path parameter and type audit
 
 While building the operation list, check for gevanni limitations:
 
@@ -87,6 +98,9 @@ While building the operation list, check for gevanni limitations:
    - Log a **warning**: "⚠️ Integer path parameter `{name}` in `{operationId}` — change type to string with example for injection to work."
 
 3. **BearerAuth / security requirements**: gevanni resolves authentication **inside the scenarios** from `securitySchemes`. A scenario's token-returning step (e.g. `login`) yields the token, and gevanni injects it into every later `security: bearerAuth` operation as `Authorization: Bearer <token>` — automatically. No `Authorization` header parameter and no OpenAPI Link are needed; the `Authorization` header is excluded from audit so signatures never mutate it. Credentials and the login flow live entirely in the spec; the scan script only sets `proxy:http.upstream` and must NOT inject tokens globally.
+   - **Identify the login operation** that returns a token (e.g. `POST /rest/user/login`)
+   - **Ask the user for credentials**: "What username/email and password should be used for the login operation `{operationId}`?"
+   - **Do NOT invent** test credentials like `test@example.com` / `password123`
    - Declare the scheme in `components/securitySchemes` and point gevanni at the token field with `x-gevanni-token`:
      ```yaml
      components:
@@ -104,7 +118,66 @@ While building the operation list, check for gevanni limitations:
 
 4. **CAPTCHA or other bot protection**: If source code references CAPTCHA (`captcha`, `captchaId` fields, captcha verification middleware), those endpoints cannot be scanned automatically. Log: "⚠️ `{operationId}` appears to require CAPTCHA — automated scanning not possible."
 
-### Step 3: Build or update the OpenAPI spec
+### Step 5: Confirm required parameters with the user
+
+Before proceeding to spec generation, confirm all required runtime parameters that cannot be extracted from the code or from prior responses via OpenAPI Links.
+
+**A. Authentication credentials:**
+
+For each token-returning operation (typically `login`, `authenticate`, `signIn`):
+
+1. **Ask the user**: "What credentials should be used for the `{operationId}` operation? (e.g., username/email, password)"
+2. **Wait for user input** — do not proceed without actual values
+3. **Use the provided values** in the `requestBody.example` field when generating the operation
+
+Example interaction:
+```
+🔐 Credentials needed for scenario generation:
+
+The following operations require authentication data:
+  • login (POST /rest/user/login) — needs username and password
+  • adminLogin (POST /admin/auth) — needs admin username and password
+
+Please provide the credentials to use:
+```
+
+**B. Dynamic test data:**
+
+For each field requiring application-specific codes or identifiers:
+
+1. **Present the list** to the user with context (endpoint, parameter name, purpose)
+2. **Ask for actual values** — do not invent placeholder codes
+3. **Wait for user input** before proceeding
+
+Example interaction:
+```
+📋 Test data needed for scenario generation:
+
+The following endpoints require specific test data:
+  • applyDiscount (POST /rest/coupon/apply) — needs a valid couponCode
+  • acceptInvite (POST /rest/invitations/accept) — needs a valid inviteCode
+  • getTenant (GET /rest/tenants/{id}) — needs a valid tenant ID for testing
+
+Please provide the actual values to use in the generated scenarios:
+```
+
+**C. Parameter extraction via OpenAPI Links (DO NOT ask user):**
+
+Parameters that can be extracted from previous step responses should **NOT** be asked from the user — define these using OpenAPI Links instead:
+
+- **User/Resource IDs returned by create operations**: Use `$response.body#/id` in the next step's path/query/body
+- **Order/Transaction IDs**: Use `$response.body#/orderId` in tracking/status operations
+- **Session tokens returned by login**: Use `$response.body#/token` via `securitySchemes.x-gevanni-token`
+- **Any field in a prior response**: Use `$response.body#/field.name` runtime expression
+
+These are automatically resolved by gevanni at runtime — no user input needed.
+
+**D. Proceed only after confirmation:**
+
+- Do NOT proceed to Step 3 until all required credentials and test data have been provided
+- If the user cannot provide certain values (e.g., valid coupon codes), mark the corresponding operations as `scannable: false` and note the reason
+
+### Step 6: Build or update the OpenAPI spec
 
 #### operationId is MANDATORY for every operation
 
@@ -139,7 +212,7 @@ Ensure the `.gevanni/scenarios/` directory exists before writing the spec.
 - Do not remove or modify existing scenarios unless the user asks
 - Write the updated spec to `.gevanni/scenarios/openapi.yaml`
 
-### Step 3.5: Coverage planning — ensure every scannable operation has a scenario
+### Step 7: Coverage planning — ensure every scannable operation has a scenario
 
 This is a **mandatory validation step** before finalizing the spec. The goal is to maximize vulnerability detection coverage.
 
@@ -193,9 +266,23 @@ The final spec must have:
 
 **D. Output the coverage summary** before proceeding to Step 4. This makes gaps visible and ensures nothing is accidentally skipped.
 
-### Step 4: Generate x-gevanni-scenarios
+### Step 8: Generate x-gevanni-scenarios
 
 Follow these rules when generating scenarios:
+
+**⚠️ CRITICAL: Use user-provided values in operation examples:**
+
+When defining operations in the OpenAPI spec, use the **actual values provided by the user in Step 2d** for:
+- `requestBody.example` fields (credentials, coupon codes, invite codes, etc.)
+- `parameters.example` values (test IDs, specific identifiers, etc.)
+
+**Do NOT invent placeholder values** like:
+- ❌ `test@example.com`, `admin@example.com`, `user@example.com`
+- ❌ `password123`, `admin123`, `testpass`
+- ❌ `DISCOUNT20`, `SAVE10`, `PROMO2024`
+- ❌ `12345`, `test-id-123`, `sample-tenant`
+
+These invented values will likely fail at runtime and produce false negatives.
 
 #### Basic scenarios
 
@@ -227,6 +314,9 @@ Setup (done once in the spec):
          x-gevanni-token: $response.body#/authentication/token
    ```
 2. Define the token-returning operation (e.g. `POST /rest/user/login`) with credentials in its requestBody `example`.
+   - **⚠️ CRITICAL: Ask the user for actual credentials** — do not invent values like `test@example.com`, `password123`, or `admin/admin`.
+   - Query the user: "What username/email and password should be used for the login operation in the generated scenarios?"
+   - Use the provided values in the `requestBody.example` field
 3. Tag protected operations with `security: bearerAuth` (standard OpenAPI). Do **not** add an `Authorization` header parameter.
 
 Then every authenticated scenario starts with the token step:
@@ -250,19 +340,60 @@ x-gevanni-scenarios:
 
 gevanni evaluates `x-gevanni-token` against each step's response; once captured, the token is injected into all subsequent `security: bearerAuth` steps. `oauth2` schemes work the same way (`x-gevanni-token: $response.body#/access_token`); `apiKey` (`in: header`) injects into the configured header. Multi-step chains beyond the leading token step are only needed when operations are genuinely chained (e.g. create-then-read).
 
+**⚠️ Use user-provided credentials**: The `requestBody.example` for the `login` operation must use the **actual credentials provided by the user in Step 2d**, not invented placeholders.
+
 #### Multi-step flows
 
-When operations are chained (e.g., create resource then get it by ID), create multi-step scenarios. OpenAPI Links in responses define how data flows between steps:
+When operations are chained (e.g., create resource then get it by ID), create multi-step scenarios.
+
+**Use OpenAPI Links for data extraction:**
+
+When a parameter can be extracted from a prior operation's response, define it using OpenAPI Links — do **not** hardcode values or ask the user for them.
 
 ```yaml
 x-gevanni-scenarios:
   - id: createUserAndGet
     steps:
       - createUser
-      - getUserById
+      - getUserById  # ID extracted via $response.body#/id Link
 ```
 
-The OpenAPI Link mechanism provides runtime expressions like `$response.body#/id` that pass data between steps.
+**OpenAPI Links mechanism:**
+
+Define Links in the operation's response to pass data to subsequent operations:
+
+```yaml
+paths:
+  /users:
+    post:
+      operationId: createUser
+      responses:
+        "201":
+          description: User created
+          links:
+            getUserById:
+              operationId: getUserById
+              parameters:
+                id: "$response.body#/id"  # Extract ID from createUser response
+```
+
+**Runtime expressions supported:**
+- `$response.body#/json/pointer` — Extract from JSON response body
+- `$response.header#/header-name` — Extract from response headers
+
+**When to use user-provided static values vs Links:**
+
+| Scenario | Approach | Example |
+|----------|----------|---------|
+| Resource ID returned by create operation | **OpenAPI Link** | `$response.body#/id` in next step |
+| Authentication token from login | **securitySchemes + Link** | `x-gevanni-token: $response.body#/token` |
+| Discount/coupon code to apply | **User-provided value** | Use code from Step 2d in `requestBody.example` |
+| Invitation code to accept invite | **User-provided value** | Use code from Step 2d in `requestBody.example` |
+| Test account ID for multi-tenant testing | **User-provided value** | Use ID from Step 2d in path parameter example |
+
+**Rule of thumb:**
+- If the value can be **extracted from a prior response** → Use OpenAPI Links
+- If the value must be **provided externally** (coupon code, invite code, test credentials) → Ask user in Step 2d, use provided value in `example`
 
 #### oneOf variants
 
@@ -372,7 +503,7 @@ Set `diff` to control how response differences are detected when a signature rep
 
 Omit `diff` to use the default `exact` strategy.
 
-### Step 5: Validate
+### Step 9: Validate
 
 Check the generated output:
 
