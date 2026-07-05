@@ -1,7 +1,16 @@
 import { type Exchange, type HttpResponse, ReplayResult } from "../../types/models.ts";
 import { ExchangeId } from "../../types/branded.ts";
 import type { ReplayId } from "../../types/branded.ts";
-import type { ScenarioPlugin, PluginContext } from "../../core/plugin.ts";
+import type {
+  ScenarioPlugin,
+  PluginContext,
+  ScenarioValidationResult,
+  ScenarioValidationStepResult,
+  ScenarioValidationTransitionResult,
+  ValidateScenarioOptions,
+} from "../../core/plugin.ts";
+import type { Scenario } from "../../types/models.ts";
+import { sendHttpRequest } from "../../http/sender.ts";
 import { ReplayCommand } from "../../commands/replay.ts";
 import { LoadExchangesCommand } from "../../commands/exchange.ts";
 import { HttpProxyAgent } from "http-proxy-agent";
@@ -14,6 +23,7 @@ import {
   type OpenApiRequestBody,
   type OpenApiScenarioSource,
   type OpenApiSecurityScheme,
+  type OpenApiStep,
   defaultValueForSchema,
 } from "../loader/openapi-loader.ts";
 
@@ -279,6 +289,25 @@ export default class OpenApiPlugin implements ScenarioPlugin {
       return new ReplayResult(exchange, secondOrderExchanges);
     });
   }
+
+  async validateScenario(
+    scenario: Scenario,
+    options?: ValidateScenarioOptions,
+  ): Promise<ScenarioValidationResult> {
+    const source = scenario.source as OpenApiScenarioSource;
+    const steps = await executeValidationSteps(
+      source.steps,
+      source.securitySchemes,
+      options?.upstreamProxyUrl,
+    );
+    const allValid = steps.every((s) => s.success) &&
+      steps.every((s) => s.transitions.every((t) => t.resolved));
+    return {
+      scenarioName: scenario.name,
+      allValid,
+      steps,
+    };
+  }
 }
 
 async function executeSteps(
@@ -342,6 +371,167 @@ async function executeSteps(
       }
     }
   }
+}
+
+async function executeValidationSteps(
+  steps: OpenApiStep[],
+  securitySchemes?: Record<string, OpenApiSecurityScheme>,
+  upstreamProxyUrl?: string,
+): Promise<ScenarioValidationStepResult[]> {
+  const overridesMap: Record<string, string> = {};
+  const bodyOverridesMap: Record<string, string> = {};
+  const tokensByScheme: Record<string, string> = {};
+  const results: ScenarioValidationStepResult[] = [];
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    const op = step.operation;
+    const stepId = op.operationId ?? `${op.method} ${op.path}`;
+
+    // --- Build URL ---
+    let url: string;
+    try {
+      url = buildUrl(op, overridesMap);
+    } catch (err) {
+      results.push({
+        stepId,
+        description: `${op.method} ${op.path}`,
+        method: op.method,
+        url: `${op.baseUrl}${op.path}`,
+        statusCode: 0,
+        success: false,
+        error: `URL build failed: ${err instanceof Error ? err.message : String(err)}`,
+        transitions: [],
+      });
+      continue;
+    }
+
+    // --- Build Headers ---
+    let headers: Record<string, string>;
+    try {
+      headers = buildHeaders(
+        op,
+        "validate" as unknown as ReplayId,
+        overridesMap,
+        securitySchemes,
+        tokensByScheme,
+      );
+    } catch (err) {
+      results.push({
+        stepId,
+        description: `${op.method} ${op.path}`,
+        method: op.method,
+        url,
+        statusCode: 0,
+        success: false,
+        error: `Header build failed: ${err instanceof Error ? err.message : String(err)}`,
+        transitions: [],
+      });
+      continue;
+    }
+
+    // --- Build Body ---
+    let body: string | null = null;
+    try {
+      body = buildBody(op.requestBody, bodyOverridesMap);
+    } catch (err) {
+      results.push({
+        stepId,
+        description: `${op.method} ${op.path}`,
+        method: op.method,
+        url,
+        statusCode: 0,
+        success: false,
+        error: `Body build failed: ${err instanceof Error ? err.message : String(err)}`,
+        transitions: [],
+      });
+      continue;
+    }
+
+    // --- Send HTTP request ---
+    let response: { statusCode: number; headers: Record<string, string>; body: Buffer | null };
+    try {
+      response = await sendHttpRequest(op.method, url, headers, body, upstreamProxyUrl);
+    } catch (err) {
+      results.push({
+        stepId,
+        description: `${op.method} ${op.path}`,
+        method: op.method,
+        url,
+        statusCode: 0,
+        success: false,
+        error: `HTTP request failed: ${err instanceof Error ? err.message : String(err)}`,
+        transitions: [],
+      });
+      continue;
+    }
+
+    // --- Resolve transitions (links) ---
+    const transitions: ScenarioValidationTransitionResult[] = [];
+    if (step.link) {
+      for (const [paramName, expr] of Object.entries(step.link.parameters)) {
+        const resolved = resolveRuntimeExpression(expr, {
+          statusCode: response.statusCode,
+          headers: response.headers,
+          body: response.body,
+        });
+        transitions.push({
+          description: `${step.link.targetOperationId}.${paramName}`,
+          resolved: resolved !== "" && resolved !== undefined,
+          resolvedValue: resolved || undefined,
+          error: resolved === "" ? `Expression "${expr}" resolved to empty string` : undefined,
+        });
+      }
+    }
+
+    // --- Extract security tokens ---
+    if (securitySchemes) {
+      const httpResponse = {
+        statusCode: response.statusCode,
+        headers: response.headers,
+        body: response.body,
+      };
+      for (const [schemeName, scheme] of Object.entries(securitySchemes)) {
+        if (!scheme.tokenExpr) continue;
+        const tok = resolveRuntimeExpression(scheme.tokenExpr, httpResponse);
+        if (tok) tokensByScheme[schemeName] = tok;
+      }
+    }
+
+    // --- Populate overrides for next step ---
+    if (step.link) {
+      for (const [paramName, expr] of Object.entries(step.link.parameters)) {
+        const resolved = resolveRuntimeExpression(expr, {
+          statusCode: response.statusCode,
+          headers: response.headers,
+          body: response.body,
+        });
+        if (resolved) overridesMap[paramName] = resolved;
+      }
+      if (step.link.requestBody) {
+        for (const [fieldName, expr] of Object.entries(step.link.requestBody)) {
+          const resolved = resolveRuntimeExpression(expr, {
+            statusCode: response.statusCode,
+            headers: response.headers,
+            body: response.body,
+          });
+          if (resolved) bodyOverridesMap[fieldName] = resolved;
+        }
+      }
+    }
+
+    results.push({
+      stepId,
+      description: `${op.method} ${op.path}`,
+      method: op.method,
+      url,
+      statusCode: response.statusCode,
+      success: true,
+      transitions,
+    });
+  }
+
+  return results;
 }
 
 export { OpenApiScenarioType } from "../loader/openapi-loader.ts";

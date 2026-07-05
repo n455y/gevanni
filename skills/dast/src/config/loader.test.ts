@@ -27,7 +27,7 @@ describe("loadConfig", () => {
     expect(config).toEqual({
       concurrency: 5,
       logLevel: "info",
-      plugins: [],
+      plugins: [":builtin:"],
       scenarios: [],
     });
   });
@@ -41,7 +41,7 @@ describe("loadConfig", () => {
       expect(config).toEqual({
         concurrency: 5,
         logLevel: "info",
-        plugins: [],
+        plugins: [":builtin:"],
         scenarios: [],
       });
     } finally {
@@ -74,7 +74,7 @@ describe("loadConfig", () => {
     const { config } = loadConfig(configPath);
     expect(config.concurrency).toBe(10);
     expect(config.logLevel).toBe("info");
-    expect(config.plugins).toEqual([]);
+    expect(config.plugins).toEqual([":builtin:"]);
     expect(config.scenarios).toEqual([]);
   });
 
@@ -111,7 +111,7 @@ describe("loadConfig", () => {
     expect(config.logLevel).toBe("debug");
     // fields not overridable from CLI fall back to defaults
     expect(config.scenarios).toEqual([]);
-    expect(config.plugins).toEqual([]);
+    expect(config.plugins).toEqual([":builtin:"]);
   });
 
   it("handles invalid JSON gracefully", () => {
@@ -122,7 +122,7 @@ describe("loadConfig", () => {
     expect(config).toEqual({
       concurrency: 5,
       logLevel: "info",
-      plugins: [],
+      plugins: [":builtin:"],
       scenarios: [],
     });
   });
@@ -134,7 +134,7 @@ describe("loadConfig", () => {
     expect(config).toEqual({
       concurrency: 5,
       logLevel: "info",
-      plugins: [],
+      plugins: [":builtin:"],
       scenarios: [],
     });
   });

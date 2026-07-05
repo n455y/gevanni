@@ -45,7 +45,7 @@ const DEFAULT_LOG_LEVEL: LogLevel = "info";
 const DEFAULT_CONFIG: ResolvedConfig = {
   concurrency: DEFAULT_CONCURRENCY,
   logLevel: DEFAULT_LOG_LEVEL,
-  plugins: [],
+  plugins: [":builtin:"],
   scenarios: [],
 };
 

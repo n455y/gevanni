@@ -638,13 +638,13 @@ After the static checks pass, verify that scenarios can actually navigate by sen
 1. Run the validation command against the generated spec from the dast skill directory:
    ```bash
    cd <path-to-dast-skill>
-   npm run gevanni -- validate-scenarios <project-root>/.gevanni/scenarios/openapi.yaml
+   npm run gevanni -- validate-scenarios -s openapi:<project-root>/.gevanni/scenarios/openapi.yaml
    ```
    The command reads the target server URL from the spec's `servers[0].url`.
    If the scanner uses an upstream proxy (e.g. `proxy:http` plugin with `upstream` option),
    pass `--upstream` or set the `HTTP_PROXY` environment variable:
    ```bash
-   npm run gevanni -- validate-scenarios <spec> --upstream http://127.0.0.1:8080
+   npm run gevanni -- validate-scenarios -s openapi:<spec> --upstream http://127.0.0.1:8080
    ```
 
 2. The script executes every scenario by:
@@ -667,7 +667,7 @@ After the static checks pass, verify that scenarios can actually navigate by sen
 
 5. **Example output:**
    ```
-   $ npm run gevanni -- validate-scenarios .gevanni/scenarios/openapi.yaml
+   $ npm run gevanni -- validate-scenarios -s openapi:.gevanni/scenarios/openapi.yaml
 
    🔗 Validating scenario transitions...
 

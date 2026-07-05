@@ -1,336 +1,90 @@
 /**
  * validate-scenarios — 生成されたシナリオの遷移を実際のHTTPリクエストで検証する。
  *
- * CLI から `gevanni validate-scenarios <spec.yaml>` で実行する。
+ * CLI から `gevanni validate-scenarios -s <loader>:<path>` で実行する。
  *
- * 各シナリオのステップを順に実HTTPリクエストし、
- * - リクエスト構築の成否
- * - サーバー応答の有無
- * - ステップ間のLink解決の成否
- * を検証してレポートする。
+ * プラグインレジストリ経由でシナリオをロードし、対応する scenario プラグインに
+ * 検証を委譲する。特定のフォーマット（OpenAPI 等）に依存しない汎用的な設計。
  */
 
-import fs from "node:fs";
-import path from "node:path";
-import http from "node:http";
-import https from "node:https";
-import { HttpProxyAgent } from "http-proxy-agent";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import {
-  loadOpenApiScenarios,
-} from "../plugins/loader/openapi-loader.ts";
-import {
-  buildUrl,
-  buildHeaders,
-  buildBody,
-  resolveRuntimeExpression,
-} from "../plugins/scenario/openapi.ts";
-import type { ReplayId } from "../types/branded.ts";
+import { loadScenariosFromSpecs } from "./scenario-spec.ts";
+import type {
+  PluginRegistry,
+  ScenarioPlugin,
+  ScenarioValidationResult,
+} from "../core/plugin.ts";
 
-// --- HTTP sender ---
-interface SimpleResponse {
-  statusCode: number;
-  headers: Record<string, string>;
-  body: Buffer | null;
-}
+// --- Console output ---
 
-const HTTP_TIMEOUT_MS = 15_000;
-
-function sendHttpRequest(
-  method: string,
-  url: string,
-  headers: Record<string, string>,
-  body: string | null,
-  upstreamProxyUrl?: string,
-): Promise<SimpleResponse> {
-  return new Promise((resolve, reject) => {
-    const parsed = new URL(url);
-    const isHttps = parsed.protocol === "https:";
-
-    const agent = upstreamProxyUrl
-      ? isHttps
-        ? new HttpsProxyAgent(upstreamProxyUrl)
-        : new HttpProxyAgent(upstreamProxyUrl)
-      : undefined;
-
-    const options: https.RequestOptions = {
-      hostname: parsed.hostname,
-      port: parsed.port || (isHttps ? 443 : 80),
-      path: parsed.pathname + parsed.search,
-      method,
-      headers,
-      rejectUnauthorized: false,
-      timeout: HTTP_TIMEOUT_MS,
-      ...(agent ? { agent } : {}),
-    };
-
-    const req = (isHttps ? https : http).request(options, (res) => {
-      const chunks: Buffer[] = [];
-      res.on("data", (chunk: Buffer) => chunks.push(chunk));
-      res.on("end", () => {
-        const resHeaders: Record<string, string> = {};
-        for (const [key, value] of Object.entries(res.headers)) {
-          if (typeof value === "string") resHeaders[key] = value;
-          else if (Array.isArray(value)) resHeaders[key] = value.join(", ");
+function printValidationReport(results: ScenarioValidationResult[]): void {
+  for (const result of results) {
+    console.log(`▶ Running: ${result.scenarioName}`);
+    for (const step of result.steps) {
+      if (step.success) {
+        console.log(`  ✅ ${step.description} → ${step.statusCode}`);
+        for (const t of step.transitions) {
+          if (t.resolved) {
+            console.log(`     🔗 Link → ${t.description}: ${t.resolvedValue?.substring(0, 50)}`);
+          } else {
+            console.log(`     ⚠️  Link → ${t.description}: ${t.error}`);
+          }
         }
-        resolve({
-          statusCode: res.statusCode ?? 0,
-          headers: resHeaders,
-          body: chunks.length > 0 ? Buffer.concat(chunks) : null,
-        });
-      });
-      res.on("error", reject);
-    });
-
-    req.on("timeout", () => {
-      req.destroy();
-      reject(new Error(`HTTP timeout after ${HTTP_TIMEOUT_MS}ms`));
-    });
-    req.on("error", reject);
-
-    if (body) req.write(body);
-    req.end();
-  });
-}
-
-// --- Step execution ---
-interface StepResult {
-  operationId: string;
-  method: string;
-  path: string;
-  url: string;
-  statusCode: number;
-  success: boolean;
-  error?: string;
-  linkResults: LinkResult[];
-}
-
-interface LinkResult {
-  targetOperationId: string;
-  paramName: string;
-  expression: string;
-  resolved: boolean;
-  resolvedValue?: string;
-  error?: string;
-}
-
-interface ScenarioResult {
-  scenarioId: string;
-  steps: StepResult[];
-  allTransitionsValid: boolean;
-}
-
-async function executeScenarioSteps(
-  source: Awaited<ReturnType<typeof loadOpenApiScenarios>>[number],
-  upstreamProxyUrl?: string,
-): Promise<ScenarioResult> {
-  const src = source.source as {
-    steps: Array<{
-      operation: {
-        operationId?: string;
-        method: string;
-        path: string;
-        baseUrl: string;
-        parameters: Array<{ name: string; in: string; schema?: object; example?: unknown }>;
-        requestBody?: { contentType: string; schema?: object; example?: unknown };
-        links?: Array<{
-          targetOperationId: string;
-          parameters: Record<string, string>;
-          requestBody?: Record<string, string>;
-        }>;
-        security?: string[];
-      };
-      link?: {
-        targetOperationId: string;
-        parameters: Record<string, string>;
-        requestBody?: Record<string, string>;
-      };
-    }>;
-    securitySchemes?: Record<string, {
-      type: string;
-      scheme?: string;
-      in?: string;
-      name?: string;
-      tokenExpr?: string;
-    }>;
-  };
-
-  const stepResults: StepResult[] = [];
-  const overridesMap: Record<string, string> = {};
-  const bodyOverridesMap: Record<string, string> = {};
-  const tokensByScheme: Record<string, string> = {};
-
-  for (let i = 0; i < src.steps.length; i++) {
-    const step = src.steps[i];
-    const op = step.operation;
-
-    let url: string;
-    try {
-      url = buildUrl(op as Parameters<typeof buildUrl>[0], overridesMap);
-    } catch (err) {
-      stepResults.push({
-        operationId: op.operationId ?? `${op.method} ${op.path}`,
-        method: op.method,
-        path: op.path,
-        url: `${op.baseUrl}${op.path}`,
-        statusCode: 0,
-        success: false,
-        error: `URL build failed: ${err instanceof Error ? err.message : String(err)}`,
-        linkResults: [],
-      });
-      continue;
-    }
-
-    let headers: Record<string, string>;
-    try {
-      headers = buildHeaders(
-        op as Parameters<typeof buildHeaders>[0],
-        "validate" as unknown as ReplayId,
-        overridesMap,
-        src.securitySchemes as Parameters<typeof buildHeaders>[3],
-        tokensByScheme,
-      );
-    } catch (err) {
-      stepResults.push({
-        operationId: op.operationId ?? `${op.method} ${op.path}`,
-        method: op.method,
-        path: op.path,
-        url,
-        statusCode: 0,
-        success: false,
-        error: `Header build failed: ${err instanceof Error ? err.message : String(err)}`,
-        linkResults: [],
-      });
-      continue;
-    }
-
-    let body: string | null = null;
-    try {
-      body = buildBody(op.requestBody as Parameters<typeof buildBody>[0], bodyOverridesMap);
-    } catch (err) {
-      stepResults.push({
-        operationId: op.operationId ?? `${op.method} ${op.path}`,
-        method: op.method,
-        path: op.path,
-        url,
-        statusCode: 0,
-        success: false,
-        error: `Body build failed: ${err instanceof Error ? err.message : String(err)}`,
-        linkResults: [],
-      });
-      continue;
-    }
-
-    // --- Send the request ---
-    let response: SimpleResponse;
-    try {
-      response = await sendHttpRequest(op.method, url, headers, body, upstreamProxyUrl);
-    } catch (err) {
-      stepResults.push({
-        operationId: op.operationId ?? `${op.method} ${op.path}`,
-        method: op.method,
-        path: op.path,
-        url,
-        statusCode: 0,
-        success: false,
-        error: `HTTP request failed: ${err instanceof Error ? err.message : String(err)}`,
-        linkResults: [],
-      });
-      continue;
-    }
-
-    // --- Verify Link resolution ---
-    const linkResults: LinkResult[] = [];
-    if (step.link) {
-      for (const [paramName, expr] of Object.entries(step.link.parameters)) {
-        const resolved = resolveRuntimeExpression(expr, {
-          statusCode: response.statusCode,
-          headers: response.headers,
-          body: response.body,
-        });
-        linkResults.push({
-          targetOperationId: step.link.targetOperationId,
-          paramName,
-          expression: expr,
-          resolved: resolved !== "" && resolved !== undefined,
-          resolvedValue: resolved || undefined,
-          error: resolved === "" ? `Expression "${expr}" resolved to empty string` : undefined,
-        });
+      } else {
+        console.log(`  ❌ ${step.description}: ${step.error}`);
       }
     }
-
-    // Token extraction
-    if (src.securitySchemes) {
-      const httpResponse = {
-        statusCode: response.statusCode,
-        headers: response.headers,
-        body: response.body,
-      };
-      for (const [schemeName, scheme] of Object.entries(src.securitySchemes)) {
-        if (!scheme.tokenExpr) continue;
-        const tok = resolveRuntimeExpression(scheme.tokenExpr, httpResponse);
-        if (tok) tokensByScheme[schemeName] = tok;
-      }
-    }
-
-    // Populate overrides for next step
-    if (step.link) {
-      for (const [paramName, expr] of Object.entries(step.link.parameters)) {
-        const resolved = resolveRuntimeExpression(expr, {
-          statusCode: response.statusCode,
-          headers: response.headers,
-          body: response.body,
-        });
-        if (resolved) overridesMap[paramName] = resolved;
-      }
-      if (step.link.requestBody) {
-        for (const [fieldName, expr] of Object.entries(step.link.requestBody)) {
-          const resolved = resolveRuntimeExpression(expr, {
-            statusCode: response.statusCode,
-            headers: response.headers,
-            body: response.body,
-          });
-          if (resolved) bodyOverridesMap[fieldName] = resolved;
-        }
-      }
-    }
-
-    stepResults.push({
-      operationId: op.operationId ?? `${op.method} ${op.path}`,
-      method: op.method,
-      path: op.path,
-      url,
-      statusCode: response.statusCode,
-      success: true,
-      linkResults,
-    });
+    console.log("");
   }
 
-  const allValid = stepResults.every((s) => s.success) &&
-    stepResults.every((s) => s.linkResults.every((l) => l.resolved));
+  // --- Summary ---
+  const totalSteps = results.reduce((sum, r) => sum + r.steps.length, 0);
+  const passedSteps = results.reduce((sum, r) => sum + r.steps.filter((s) => s.success).length, 0);
+  const totalTransitions = results.reduce(
+    (sum, r) => sum + r.steps.reduce((s, step) => s + step.transitions.length, 0),
+    0,
+  );
+  const resolvedTransitions = results.reduce(
+    (sum, r) =>
+      sum +
+      r.steps.reduce((s, step) => s + step.transitions.filter((t) => t.resolved).length, 0),
+    0,
+  );
+  const allPassed = results.every((r) => r.allValid);
 
-  return {
-    scenarioId: source.name,
-    steps: stepResults,
-    allTransitionsValid: allValid,
-  };
+  console.log("═══════════════════════════════════════");
+  console.log("🔗 Scenario transition integrity:");
+  console.log(`   • Scenarios checked:     ${results.length}`);
+  console.log(`   • Multi-step scenarios:  ${results.filter((r) => r.steps.length > 1).length}`);
+  console.log(`   • Total step executions: ${totalSteps}`);
+  console.log(`   • ✅ Successful steps:   ${passedSteps}`);
+  console.log(`   • ❌ Failed steps:       ${totalSteps - passedSteps}`);
+  console.log(`   • 🔗 Transitions checked: ${totalTransitions}`);
+  console.log(`   • ✅ Resolved transitions: ${resolvedTransitions}`);
+  console.log(`   • ⚠️  Unresolved transitions: ${totalTransitions - resolvedTransitions}`);
+  console.log("═══════════════════════════════════════");
+
+  if (allPassed) {
+    console.log("\n✅ All scenario transitions are valid.");
+  } else {
+    console.log("\n❌ Some transitions failed. Review the errors above.");
+  }
 }
 
 // --- Main entry point ---
 
 export async function validateScenarios(
-  specPath: string,
+  specs: string[],
+  registry: PluginRegistry,
   upstream?: string,
-): Promise<{ allPassed: boolean; results: ScenarioResult[] }> {
-  const absSpec = path.resolve(specPath);
-  if (!fs.existsSync(absSpec)) {
-    throw new Error(`Spec file not found: ${absSpec}`);
+): Promise<{ allPassed: boolean; results: ScenarioValidationResult[] }> {
+  if (specs.length === 0) {
+    throw new Error("No scenario sources specified.");
   }
 
-  const scenarios = await loadOpenApiScenarios(absSpec);
+  // 1. Load scenarios via plugin registry (generic)
+  const scenarios = await loadScenariosFromSpecs(specs, registry);
 
   console.log("🔗 Validating scenario transitions...\n");
-  console.log(`📄 Spec: ${absSpec}`);
   if (upstream) {
     console.log(`🔀 Upstream proxy: ${upstream}`);
   }
@@ -343,61 +97,31 @@ export async function validateScenarios(
 
   console.log(`📋 Found ${scenarios.length} scenario(s)\n`);
 
-  const results: ScenarioResult[] = [];
+  // 2. For each scenario, find the scenario plugin and validate
+  const results: ScenarioValidationResult[] = [];
   for (const scenario of scenarios) {
-    console.log(`▶ Running: ${scenario.name}`);
-    const result = await executeScenarioSteps(scenario, upstream);
-    results.push(result);
-
-    for (const step of result.steps) {
-      if (step.success) {
-        console.log(`  ✅ ${step.method} ${step.path} → ${step.statusCode}`);
-        for (const link of step.linkResults) {
-          if (link.resolved) {
-            console.log(`     🔗 Link → ${link.targetOperationId}.${link.paramName}: ${link.resolvedValue?.substring(0, 50)}`);
-          } else {
-            console.log(`     ⚠️  Link → ${link.targetOperationId}.${link.paramName}: ${link.error}`);
-          }
-        }
-      } else {
-        console.log(`  ❌ ${step.method} ${step.path}: ${step.error}`);
-      }
+    const pluginName = `scenario:${scenario.type}`;
+    const plugin = registry.getByName<ScenarioPlugin>(pluginName);
+    if (!plugin) {
+      throw new Error(
+        `No scenario plugin found for type "${scenario.type}". ` +
+        `Expected a plugin named "${pluginName}".`,
+      );
     }
-    console.log("");
+    if (!plugin.validateScenario) {
+      throw new Error(
+        `The scenario plugin "${pluginName}" does not support validation.`,
+      );
+    }
+    const result = await plugin.validateScenario(scenario, {
+      upstreamProxyUrl: upstream,
+    });
+    results.push(result);
   }
 
-  // --- Summary ---
-  const totalSteps = results.reduce((sum, r) => sum + r.steps.length, 0);
-  const passedSteps = results.reduce((sum, r) => sum + r.steps.filter((s) => s.success).length, 0);
-  const totalLinks = results.reduce(
-    (sum, r) => sum + r.steps.reduce((s, step) => s + step.linkResults.length, 0),
-    0,
-  );
-  const resolvedLinks = results.reduce(
-    (sum, r) =>
-      sum +
-      r.steps.reduce((s, step) => s + step.linkResults.filter((l) => l.resolved).length, 0),
-    0,
-  );
-  const allPassed = results.every((r) => r.allTransitionsValid);
+  // 3. Print results
+  printValidationReport(results);
 
-  console.log("═══════════════════════════════════════");
-  console.log("🔗 Scenario transition integrity:");
-  console.log(`   • Scenarios checked:     ${results.length}`);
-  console.log(`   • Multi-step scenarios:  ${results.filter((r) => r.steps.length > 1).length}`);
-  console.log(`   • Total step executions: ${totalSteps}`);
-  console.log(`   • ✅ Successful steps:   ${passedSteps}`);
-  console.log(`   • ❌ Failed steps:       ${totalSteps - passedSteps}`);
-  console.log(`   • 🔗 Links checked:      ${totalLinks}`);
-  console.log(`   • ✅ Resolved links:     ${resolvedLinks}`);
-  console.log(`   • ⚠️  Unresolved links:   ${totalLinks - resolvedLinks}`);
-  console.log("═══════════════════════════════════════");
-
-  if (allPassed) {
-    console.log("\n✅ All scenario transitions are valid.");
-  } else {
-    console.log("\n❌ Some transitions failed. Review the errors above.");
-  }
-
+  const allPassed = results.every((r) => r.allValid);
   return { allPassed, results };
 }

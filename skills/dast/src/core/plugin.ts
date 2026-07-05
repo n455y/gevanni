@@ -2,7 +2,7 @@ import type { CommandBus } from "./command-bus.ts";
 import type { EventBus } from "./event-bus.ts";
 import type { Logger } from "./logger.ts";
 import type { RuntimeContext } from "./runtime-context.ts";
-import type { Scenario } from "../types/models.ts";
+import type { HttpResponse, Scenario } from "../types/models.ts";
 
 export interface PluginContext {
   commandBus: CommandBus;
@@ -19,6 +19,14 @@ export interface Plugin {
 
 export interface ScenarioPlugin extends Plugin {
   readonly name: `scenario:${string}`;
+  /**
+   * Validate that this scenario's steps execute successfully with real HTTP requests.
+   * Optional — plugins that don't implement it cannot be used with validate-scenarios.
+   */
+  validateScenario?(
+    scenario: Scenario,
+    options?: ValidateScenarioOptions,
+  ): Promise<ScenarioValidationResult>;
 }
 
 export interface ScenarioLoaderPlugin extends Plugin {
@@ -49,6 +57,40 @@ export interface MutationPlugin extends Plugin {
 
 export interface SignaturePlugin extends Plugin {
   readonly name: `signature:${string}`;
+}
+
+// --- Validation result types (generic, not specific to any format) ---
+
+/** Result of verifying a single transition between steps (e.g. link resolution) */
+export interface ScenarioValidationTransitionResult {
+  description: string;
+  resolved: boolean;
+  resolvedValue?: string;
+  error?: string;
+}
+
+/** Result of validating a single step (HTTP request + transitions) */
+export interface ScenarioValidationStepResult {
+  stepId: string;
+  description: string;
+  method: string;
+  url: string;
+  statusCode: number;
+  success: boolean;
+  error?: string;
+  transitions: ScenarioValidationTransitionResult[];
+}
+
+/** Overall validation result for one scenario */
+export interface ScenarioValidationResult {
+  scenarioName: string;
+  allValid: boolean;
+  steps: ScenarioValidationStepResult[];
+}
+
+/** Options for scenario validation */
+export interface ValidateScenarioOptions {
+  upstreamProxyUrl?: string;
 }
 
 export interface PluginRegistry {

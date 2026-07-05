@@ -284,13 +284,35 @@ program
 
 // validate-scenarios command
 program
-  .command("validate-scenarios <spec>")
+  .command("validate-scenarios")
   .description("Validate scenario transitions with actual HTTP requests")
+  .option("--config <path>", "Config file path")
+  .option(
+    "-s, --scenario <name>:<path>",
+    "Scenario source as <loader-name>:<path>, e.g. openapi:./spec.yaml (repeatable)",
+    collect,
+    [] as string[],
+  )
   .option("--upstream <url>", "Upstream proxy URL (e.g. http://127.0.0.1:8080)")
-  .action(async (spec: string, opts: { upstream?: string }) => {
+  .action(async (opts: {
+    config?: string;
+    scenario: string[];
+    upstream?: string;
+  }) => {
+    const { registry } = await bootstrap(opts.config);
+    if (opts.scenario.length === 0) {
+      console.error(
+        "No scenario sources specified. Use --scenario/-s (e.g. -s openapi:./spec.yaml)",
+      );
+      process.exit(1);
+    }
     try {
       const upstream = opts.upstream ?? process.env.HTTP_PROXY;
-      const { allPassed } = await validateScenarios(spec, upstream);
+      const { allPassed } = await validateScenarios(
+        opts.scenario,
+        registry,
+        upstream,
+      );
       if (!allPassed) process.exit(1);
     } catch (err) {
       console.error(
