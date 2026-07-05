@@ -1,6 +1,6 @@
-import { type Exchange, type HttpResponse, ReplayResult } from "../../types/models.ts";
-import { ExchangeId } from "../../types/branded.ts";
-import type { ReplayId } from "../../types/branded.ts";
+import { type Exchange, type HttpResponse, ReplayResult } from "../../../types/models.ts";
+import { ExchangeId } from "../../../types/branded.ts";
+import type { ReplayId } from "../../../types/branded.ts";
 import type {
   ScenarioPlugin,
   PluginContext,
@@ -8,184 +8,36 @@ import type {
   ScenarioValidationStepResult,
   ScenarioValidationTransitionResult,
   ValidateScenarioOptions,
-} from "../../core/plugin.ts";
-import type { Scenario } from "../../types/models.ts";
-import { sendHttpRequest } from "../../http/sender.ts";
-import { ReplayCommand } from "../../commands/replay.ts";
-import { LoadExchangesCommand } from "../../commands/exchange.ts";
+} from "../../../core/plugin.ts";
+import type { Scenario } from "../../../types/models.ts";
+import { sendHttpRequest } from "../../../http/sender.ts";
+import { ReplayCommand } from "../../../commands/replay.ts";
+import type { ReplayConfig } from "../../../commands/replay.ts";
+import { LoadExchangesCommand } from "../../../commands/exchange.ts";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import http from "node:http";
 import https from "node:https";
 import { randomUUID } from "node:crypto";
-import {
-  type OpenApiOperation,
-  type OpenApiRequestBody,
-  type OpenApiScenarioSource,
-  type OpenApiSecurityScheme,
-  type OpenApiStep,
-  defaultValueForSchema,
-} from "../loader/openapi-loader.ts";
+import type {
+  OpenApiScenarioSource,
+  OpenApiSecurityScheme,
+  OpenApiStep,
+} from "./types.ts";
 
-// --- Runtime expression resolver ---
+// Re-export for backward compatibility
+export { resolveRuntimeExpression } from "./runtime-expression.ts";
+export {
+  buildUrl,
+  applySecurity,
+  buildHeaders,
+  buildBody,
+} from "./request-builder.ts";
+export { OpenApiScenarioType } from "./loader.ts";
 
-export function resolveRuntimeExpression(
-  expr: string,
-  response: HttpResponse,
-): string {
-  if (expr.startsWith("$response.body#")) {
-    const pointer = expr.slice("$response.body#".length);
-    const body = response.body?.toString("utf-8") ?? "{}";
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(body);
-    } catch {
-      return "";
-    }
-    const value = resolveJsonPointer(parsed, pointer);
-    return String(value ?? "");
-  }
-
-  if (expr.startsWith("$response.header#")) {
-    const raw = expr.slice("$response.header#".length);
-    const headerName = raw.startsWith("/")
-      ? raw.slice(1).toLowerCase()
-      : raw.toLowerCase();
-    return response.headers[headerName] ?? "";
-  }
-
-  return expr;
-}
-
-function resolveJsonPointer(data: unknown, pointer: string): unknown {
-  if (pointer === "" || pointer === "/") return data;
-  const tokens = pointer.split("/").slice(1);
-  let current: unknown = data;
-  for (const token of tokens) {
-    if (current === null || current === undefined) return undefined;
-    if (Array.isArray(current)) {
-      current = current[parseInt(token, 10)];
-    } else if (typeof current === "object") {
-      current = (current as Record<string, unknown>)[decodeURIComponent(token)];
-    } else {
-      return undefined;
-    }
-  }
-  return current;
-}
-
-// --- Request building ---
-
-export function buildUrl(
-  op: OpenApiOperation,
-  overrides?: Record<string, string>,
-): string {
-  let resolvedPath = op.path;
-  const queryParams: string[] = [];
-
-  for (const param of op.parameters) {
-    const value =
-      overrides?.[param.name] ??
-      String(defaultValueForSchema(param.schema, param.example));
-
-    switch (param.in) {
-      case "path":
-        resolvedPath = resolvedPath.replace(
-          `{${param.name}}`,
-          encodeURIComponent(value),
-        );
-        break;
-      case "query":
-        queryParams.push(
-          `${encodeURIComponent(param.name)}=${encodeURIComponent(value)}`,
-        );
-        break;
-    }
-  }
-
-  const base = op.baseUrl.replace(/\/$/, "");
-  const path = resolvedPath.startsWith("/")
-    ? resolvedPath
-    : `/${resolvedPath}`;
-  let url = `${base}${path}`;
-  if (queryParams.length > 0) {
-    url += `?${queryParams.join("&")}`;
-  }
-
-  return url;
-}
-
-function applySecurity(
-  headers: Record<string, string>,
-  security: string[] | undefined,
-  schemes: Record<string, OpenApiSecurityScheme> | undefined,
-  tokens: Record<string, string> | undefined,
-): void {
-  if (!security || !schemes) return;
-  for (const name of security) {
-    const scheme = schemes[name];
-    const token = tokens?.[name];
-    if (!scheme || !token) continue;
-    if (scheme.type === "http" && scheme.scheme === "bearer") {
-      headers["Authorization"] = `Bearer ${token}`;
-    } else if (scheme.type === "oauth2") {
-      headers["Authorization"] = `Bearer ${token}`;
-    } else if (
-      scheme.type === "apiKey" &&
-      scheme.in === "header" &&
-      scheme.name
-    ) {
-      headers[scheme.name] = token;
-    }
-  }
-}
-
-export function buildHeaders(
-  op: OpenApiOperation,
-  replayId: ReplayId,
-  overrides?: Record<string, string>,
-  securitySchemes?: Record<string, OpenApiSecurityScheme>,
-  tokens?: Record<string, string>,
-): Record<string, string> {
-  const headers: Record<string, string> = {
-    "X-Gevanni-Replay-Id": replayId,
-  };
-
-  for (const param of op.parameters) {
-    if (param.in === "header") {
-      headers[param.name] =
-        overrides?.[param.name] ??
-        String(defaultValueForSchema(param.schema, param.example));
-    }
-  }
-
-  applySecurity(headers, op.security, securitySchemes, tokens);
-
-  if (op.requestBody) {
-    headers["Content-Type"] = op.requestBody.contentType;
-  }
-
-  return headers;
-}
-
-export function buildBody(
-  requestBody?: OpenApiRequestBody,
-  overrides?: Record<string, string>,
-): string | null {
-  if (!requestBody) return null;
-  const value = defaultValueForSchema(requestBody.schema, requestBody.example);
-  if (overrides && Object.keys(overrides).length > 0) {
-    const obj =
-      typeof value === "object" && value !== null && !Array.isArray(value)
-        ? (value as Record<string, unknown>)
-        : {};
-    for (const [k, v] of Object.entries(overrides)) {
-      obj[k] = v;
-    }
-    return JSON.stringify(obj);
-  }
-  return typeof value === "string" ? value : JSON.stringify(value);
-}
+// Import locally for internal use (already imported from request-builder via re-export)
+import { buildUrl, buildHeaders, buildBody } from "./request-builder.ts";
+import { resolveRuntimeExpression } from "./runtime-expression.ts";
 
 // --- HTTP sender ---
 
@@ -311,8 +163,8 @@ export default class OpenApiPlugin implements ScenarioPlugin {
 }
 
 async function executeSteps(
-  steps: import("../loader/openapi-loader.ts").OpenApiStep[],
-  config: import("../../commands/replay.ts").ReplayConfig,
+  steps: OpenApiStep[],
+  config: ReplayConfig,
   securitySchemes?: Record<string, OpenApiSecurityScheme>,
 ): Promise<void> {
   const overridesMap: Record<string, string> = {};
@@ -533,5 +385,3 @@ async function executeValidationSteps(
 
   return results;
 }
-
-export { OpenApiScenarioType } from "../loader/openapi-loader.ts";

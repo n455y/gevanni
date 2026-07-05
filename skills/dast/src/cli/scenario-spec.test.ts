@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { parseScenarioSpec, loadScenariosFromSpecs } from "./scenario-spec.ts";
 import type { Plugin, PluginRegistry, ScenarioLoaderPlugin } from "../core/plugin.ts";
-import { loadOpenApiScenarios } from "../plugins/loader/openapi-loader.ts";
+import { loadOpenApiScenarios } from "../plugins/scenario/openapi/loader.ts";
 
 // registry を最小モックするヘルパー
 function makeRegistry(loader?: ScenarioLoaderPlugin): Pick<PluginRegistry, "getByName"> {

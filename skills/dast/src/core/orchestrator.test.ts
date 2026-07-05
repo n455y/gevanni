@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { OpenApiScenarioType } from "../plugins/scenario/openapi.ts";
+import { OpenApiScenarioType } from "../plugins/scenario/openapi/plugin.ts";
 import { InMemoryCommandBus } from "./command-bus.ts";
 import { InMemoryEventBus } from "./event-bus.ts";
 import { RuntimeContext } from "./runtime-context.ts";

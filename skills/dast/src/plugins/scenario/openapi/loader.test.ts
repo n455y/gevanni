@@ -2,15 +2,15 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "path";
-import type { OpenApiOperation, OpenApiScenarioSource } from "./openapi-loader.ts";
+import type { OpenApiOperation, OpenApiScenarioSource } from "./loader.ts";
 import {
   loadOpenApiScenarios,
   OpenApiScenarioType,
   buildScenariosFromExtension,
   defaultValueForSchema,
   isOpenApi3,
-} from "./openapi-loader.ts";
-import OpenApiLoaderPlugin from "./openapi-loader.ts";
+} from "./loader.ts";
+import OpenApiLoaderPlugin from "./loader.ts";
 
 describe("OpenApiLoader", () => {
   const loader = { load: loadOpenApiScenarios };

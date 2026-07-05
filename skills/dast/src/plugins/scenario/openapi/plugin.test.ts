@@ -1,19 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { ReplayId } from "../../types/branded.ts";
+import { ReplayId } from "../../../types/branded.ts";
 import {
   buildUrl,
   buildHeaders,
   buildBody,
   resolveRuntimeExpression,
-} from "./openapi.ts";
+} from "./plugin.ts";
 import {
   buildScenariosFromExtension,
   extractOperations,
   isOpenApi3,
   type OpenApiOperation,
   type OpenApiRequestBody,
-} from "../loader/openapi-loader.ts";
-import type { HttpResponse } from "../../types/models.ts";
+} from "./loader.ts";
+import type { HttpResponse } from "../../../types/models.ts";
 
 function mockResponse(body: Record<string, unknown>): HttpResponse {
   return {
