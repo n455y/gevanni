@@ -5,6 +5,7 @@ import { InMemoryEventBus } from "./event-bus.ts";
 import { RuntimeContext } from "./runtime-context.ts";
 import { createLogger } from "./logger.ts";
 import { Orchestrator } from "./orchestrator.ts";
+import { PluginRegistryImpl, type ReporterPlugin } from "./plugin.ts";
 import type { AuditItem } from "./audit-item.ts";
 import type {
   Evidence,
@@ -41,7 +42,6 @@ import {
   UpdateJobCommand,
   SaveScanStateCommand,
   LoadScanStateCommand,
-  GenerateReportCommand,
   SaveScenarioCommand,
   LoadScenarioCommand,
   CreateProxyCommand,
@@ -415,9 +415,9 @@ describe("Orchestrator", () => {
     });
   });
 
-  describe("report phase", () => {
-    it("broadcasts GenerateReportCommand with scan state and jobs", async () => {
-      const scanId = ScanId("report-scan-id");
+  describe("report()", () => {
+    it("calls generate() on specified reporters with options", async () => {
+      const scanId = ScanId("test-scan");
       const mockScanState: ScanState = {
         id: scanId,
         status: ScanStatus.Completed,
@@ -425,58 +425,140 @@ describe("Orchestrator", () => {
         updatedAt: new Date("2024-01-01T00:01:00.000Z"),
       };
 
-      const mockJobs: SignatureJob[] = [
-        {
-          id: SignatureJobId("job-1"),
-          scanId: ScanId("report-scan-id"),
-          scenarioId: ScenarioId("sc-1"),
-          signatureName: "signature:reflected-xss",
-          groups: [],
-          parameter: mockTargets[0],
-          status: SignatureJobStatus.Completed,
-          finding: mockFinding,
-          error: null,
-          createdAt: new Date("2024-01-01T00:00:00.000Z"),
-          updatedAt: new Date("2024-01-01T00:00:01.000Z"),
-        },
-      ];
-
       commandBus.register(LoadScanStateCommand, async () => mockScanState);
-      commandBus.register(LoadJobsByStatusCommand, async () => mockJobs);
+      commandBus.register(LoadJobsByStatusCommand, async () => []);
 
-      let reportPayload: { scanState: ScanState; jobs: SignatureJob[] } | null =
-        null;
-      commandBus.register(GenerateReportCommand, async (cmd) => {
-        reportPayload = cmd.payload;
+      const generateCalls: { scanState: ScanState; jobs: SignatureJob[]; options?: string }[] =
+        [];
+      const mockReporter: ReporterPlugin = {
+        name: "reporter:test",
+        async init() {},
+        async generate(scanState, jobs, options) {
+          generateCalls.push({ scanState, jobs, options });
+        },
+      };
+
+      const registry = new PluginRegistryImpl();
+      registry.register(mockReporter);
+
+      const ctx = new RuntimeContext({
+        commandBus,
+        eventBus,
+        logger,
+        pluginRegistry: registry,
       });
+      const orchestrator = new Orchestrator({ context: ctx });
 
-      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
-      const orchestrator = new Orchestrator({
-        context: ctx,
-      });
+      await orchestrator.report(scanId, [
+        { name: "test", options: "custom-opt" },
+      ]);
 
-      await orchestrator.report(scanId);
-
-      expect(reportPayload).toBeDefined();
-      expect(reportPayload!.scanState).toBe(mockScanState);
-      expect(reportPayload!.jobs).toBe(mockJobs);
+      expect(generateCalls).toHaveLength(1);
+      expect(generateCalls[0].scanState).toBe(mockScanState);
+      expect(generateCalls[0].options).toBe("custom-opt");
     });
 
-    it("warns when scan state not found", async () => {
-      const scanId = ScanId("missing-scan");
+    it("defaults to console reporter when no reporters specified", async () => {
+      const scanId = ScanId("test-scan");
+      const mockScanState: ScanState = {
+        id: scanId,
+        status: ScanStatus.Completed,
+        startedAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:01:00.000Z"),
+      };
 
-      commandBus.register(LoadScanStateCommand, async () => null);
+      commandBus.register(LoadScanStateCommand, async () => mockScanState);
+      commandBus.register(LoadJobsByStatusCommand, async () => []);
 
-      const ctx = new RuntimeContext({ commandBus, eventBus, logger });
-      const orchestrator = new Orchestrator({
-        context: ctx,
+      let consoleGenerateCalled = false;
+      const consoleReporter: ReporterPlugin = {
+        name: "reporter:console",
+        async init() {},
+        async generate() {
+          consoleGenerateCalled = true;
+        },
+      };
+
+      const registry = new PluginRegistryImpl();
+      registry.register(consoleReporter);
+
+      const ctx = new RuntimeContext({
+        commandBus,
+        eventBus,
+        logger,
+        pluginRegistry: registry,
+      });
+      const orchestrator = new Orchestrator({ context: ctx });
+
+      await orchestrator.report(scanId, []);
+
+      expect(consoleGenerateCalled).toBe(true);
+    });
+
+    it("throws on invalid reporter name with available list", async () => {
+      const scanId = ScanId("test-scan");
+      const mockScanState: ScanState = {
+        id: scanId,
+        status: ScanStatus.Completed,
+        startedAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:01:00.000Z"),
+      };
+
+      commandBus.register(LoadScanStateCommand, async () => mockScanState);
+      commandBus.register(LoadJobsByStatusCommand, async () => []);
+
+      const consoleReporter: ReporterPlugin = {
+        name: "reporter:console",
+        async init() {},
+        async generate() {},
+      };
+
+      const registry = new PluginRegistryImpl();
+      registry.register(consoleReporter);
+
+      const ctx = new RuntimeContext({
+        commandBus,
+        eventBus,
+        logger,
+        pluginRegistry: registry,
+      });
+      const orchestrator = new Orchestrator({ context: ctx });
+
+      await expect(
+        orchestrator.report(scanId, [{ name: "nonexistent" }]),
+      ).rejects.toThrow("Invalid reporter(s): nonexistent");
+    });
+
+    it("throws when reporter does not implement generate()", async () => {
+      const scanId = ScanId("test-scan");
+      const mockScanState: ScanState = {
+        id: scanId,
+        status: ScanStatus.Completed,
+        startedAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:01:00.000Z"),
+      };
+
+      commandBus.register(LoadScanStateCommand, async () => mockScanState);
+      commandBus.register(LoadJobsByStatusCommand, async () => []);
+
+      const registry = new PluginRegistryImpl();
+      // Reporter without generate() method
+      registry.register({
+        name: "reporter:bad",
+        async init() {},
       });
 
-      await orchestrator.report(scanId);
+      const ctx = new RuntimeContext({
+        commandBus,
+        eventBus,
+        logger,
+        pluginRegistry: registry,
+      });
+      const orchestrator = new Orchestrator({ context: ctx });
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        `No scan state found for ${scanId}`,
-      );
+      await expect(
+        orchestrator.report(scanId, [{ name: "bad" }]),
+      ).rejects.toThrow("does not implement generate() method");
     });
   });
 

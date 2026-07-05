@@ -1,7 +1,8 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import type { ReporterPlugin, PluginContext } from "../../core/plugin.ts";
-import { serializeSignatureJob, serializeScanState, type SignatureJob, type SerializedSignatureJob, type SerializedScanState } from "../../types/models.ts";
+import type { ScanState, SignatureJob } from "../../types/models.ts";
+import { serializeSignatureJob, serializeScanState, type SerializedSignatureJob, type SerializedScanState } from "../../types/models.ts";
 import { GenerateReportCommand } from "../../commands/report.ts";
 
 export interface JsonReporterConfig {
@@ -54,30 +55,35 @@ export default class JsonReporterPlugin implements ReporterPlugin {
     this.outputPath = options.outputPath;
   }
 
-  async init(ctx: PluginContext): Promise<void> {
+  async generate(
+    scanState: ScanState,
+    jobs: SignatureJob[],
+    options?: string,
+  ): Promise<void> {
+    const summary = computeSummary(jobs);
 
+    const report: Report = {
+      scanState: serializeScanState(scanState),
+      jobs: jobs.map(serializeSignatureJob),
+      summary,
+    };
+
+    const resolvedPath =
+      options ?? this.outputPath ?? `gevanni-report-${scanState.id as string}.json`;
+
+    const dir = join(resolvedPath, "..");
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
+      resolvedPath,
+      JSON.stringify(report, null, 2),
+      "utf-8",
+    );
+  }
+
+  async init(ctx: PluginContext): Promise<void> {
     ctx.commandBus.register(GenerateReportCommand, async (cmd) => {
       const { scanState, jobs } = cmd.payload;
-
-      const summary = computeSummary(jobs);
-
-      const report: Report = {
-        scanState: serializeScanState(scanState),
-        jobs: jobs.map(serializeSignatureJob),
-        summary,
-      };
-
-      const resolvedPath =
-        this.outputPath ??
-        `gevanni-report-${scanState.id as string}.json`;
-
-      const dir = join(resolvedPath, "..");
-      await fs.mkdir(dir, { recursive: true });
-      await fs.writeFile(
-        resolvedPath,
-        JSON.stringify(report, null, 2),
-        "utf-8",
-      );
+      await this.generate(scanState, jobs);
     });
   }
 }

@@ -312,3 +312,56 @@ describe("ConsoleReporterPlugin", () => {
     logSpy.mockRestore();
   });
 });
+
+describe("ConsoleReporterPlugin.generate()", () => {
+  it("generates report when called directly via generate()", async () => {
+    const plugin = new ConsoleReporterPlugin();
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const scanState = makeScanState({
+      id: ScanId("scan-direct"),
+      status: ScanStatus.Completed,
+    });
+
+    const vulnerableJob = makeJob({
+      id: SignatureJobId("job-vuln"),
+      signatureName: "signature:reflected-xss",
+      status: SignatureJobStatus.Completed,
+      finding: {
+        vulnerable: true,
+        evidence: {
+          judgmentId: "payload-reflection",
+          exchanges: [],
+          evidenceExchanges: [],
+        },
+        request: {
+          method: "GET",
+          url: "https://example.com/search",
+          headers: {},
+          body: null,
+        },
+        response: { statusCode: 200, headers: {}, body: null },
+      },
+    });
+
+    await plugin.generate!(scanState, [vulnerableJob], "ignored-option");
+
+    const output = logSpy.mock.calls[0][0] as string;
+    expect(output).toContain("=== Gevanni Scan Report ===");
+    expect(output).toContain("[VULNERABLE] signature:reflected-xss");
+
+    logSpy.mockRestore();
+  });
+
+  it("ignores options parameter", async () => {
+    const plugin = new ConsoleReporterPlugin();
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const scanState = makeScanState();
+
+    await plugin.generate!(scanState, [], "any-option-value");
+
+    expect(logSpy).toHaveBeenCalledOnce();
+    logSpy.mockRestore();
+  });
+});

@@ -18,6 +18,7 @@ import {
 } from "../types/models.ts";
 import type { RuntimeContext } from "./runtime-context.ts";
 import type { AuditItem } from "./audit-item.ts";
+import type { ReporterPlugin } from "./plugin.ts";
 import {
   ReplayCommand,
   ParseRequestCommand,
@@ -30,7 +31,6 @@ import {
   LoadScanStateCommand,
   LoadScenarioCommand,
   SaveScenarioCommand,
-  GenerateReportCommand,
   CreateProxyCommand,
 } from "../commands/index.ts";
 
@@ -336,8 +336,15 @@ export class Orchestrator {
     );
   }
 
-  async report(scanId: ScanId): Promise<void> {
-    const { commandBus, logger } = this.deps.context;
+  async report(
+    scanId: ScanId,
+    reporterConfigs: Array<{ name: string; options?: string }>,
+  ): Promise<void> {
+    const { commandBus, logger, pluginRegistry } = this.deps.context;
+
+    if (!pluginRegistry) {
+      throw new Error("PluginRegistry not available in context");
+    }
 
     // 1. Load scan state
     const scanState: ScanState | null = await commandBus.dispatch(
@@ -354,8 +361,37 @@ export class Orchestrator {
       new LoadJobsByStatusCommand(scanId),
     );
 
-    // 3. Broadcast GenerateReportCommand
-    await commandBus.broadcast(new GenerateReportCommand({ scanState, jobs }));
+    // 3. Resolve configs (default to console when none specified)
+    const configs =
+      reporterConfigs.length > 0
+        ? reporterConfigs
+        : [{ name: "console", options: undefined }];
+
+    // 4. Get available reporter names for error messages
+    const allPlugins = pluginRegistry.getAll();
+    const availableReporters = allPlugins
+      .filter((p) => p.name.startsWith("reporter:"))
+      .map((p) => p.name.replace("reporter:", ""));
+
+    // 5. Validate and execute each configured reporter
+    for (const { name, options } of configs) {
+      const pluginName = `reporter:${name}` as const;
+      const reporter = pluginRegistry.getByName<ReporterPlugin>(pluginName);
+
+      if (!reporter) {
+        throw new Error(
+          `Invalid reporter(s): ${name}. Available reporters: ${availableReporters.join(", ")}`,
+        );
+      }
+
+      if (!reporter.generate) {
+        throw new Error(
+          `Reporter ${name} does not implement generate() method`,
+        );
+      }
+
+      await reporter.generate(scanState, jobs, options);
+    }
 
     logger.info(`Report phase complete for scan ${scanId}`);
   }

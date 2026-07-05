@@ -32,6 +32,7 @@ export interface ProxyPlugin extends Plugin {
 
 export interface ReporterPlugin extends Plugin {
   readonly name: `reporter:${string}`;
+  generate?(scanState: any, jobs: any[], options?: string): Promise<void>;
 }
 
 export interface StoragePlugin extends Plugin {
@@ -55,6 +56,7 @@ export interface PluginRegistry {
   initializeAll(context: RuntimeContext): Promise<Plugin[]>;
   destroyAll(plugins: Plugin[]): Promise<void>;
   getByName<T extends Plugin = Plugin>(name: string): T | undefined;
+  getAll(): Plugin[];
 }
 
 export class PluginRegistryImpl implements PluginRegistry {
@@ -86,5 +88,9 @@ export class PluginRegistryImpl implements PluginRegistry {
 
   getByName<T extends Plugin = Plugin>(name: string): T | undefined {
     return this.plugins.get(name) as T | undefined;
+  }
+
+  getAll(): Plugin[] {
+    return Array.from(this.plugins.values());
   }
 }

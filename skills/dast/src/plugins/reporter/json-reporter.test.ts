@@ -273,3 +273,56 @@ describe("JsonReporterPlugin", () => {
     expect(report.summary.total).toBe(0);
   });
 });
+
+describe("JsonReporterPlugin.generate()", () => {
+  it("generates report to custom file when options provided", async () => {
+    const plugin = new JsonReporterPlugin();
+    const customPath = join(tempDir, "test-custom-report.json");
+
+    await plugin.generate!(
+      makeScanState({ id: ScanId("scan-custom") }),
+      [makeJob({ id: SignatureJobId("job-1") })],
+      customPath,
+    );
+
+    const raw = await fs.readFile(customPath, "utf-8");
+    const report = JSON.parse(raw);
+    expect(report.scanState.id).toBe("scan-custom");
+    expect(report.jobs).toHaveLength(1);
+  });
+
+  it("generates report to default file when no options provided", async () => {
+    const plugin = new JsonReporterPlugin();
+
+    await plugin.generate!(
+      makeScanState({ id: ScanId("scan-json") }),
+      [makeJob()],
+      undefined,
+    );
+
+    const raw = await fs.readFile("gevanni-report-scan-json.json", "utf-8");
+    expect(JSON.parse(raw).scanState.id).toBe("scan-json");
+
+    // Clean up
+    await fs.unlink("gevanni-report-scan-json.json");
+  });
+
+  it("writes valid JSON structure via generate()", async () => {
+    const plugin = new JsonReporterPlugin();
+    const customPath = join(tempDir, "test-structure-gen.json");
+
+    await plugin.generate!(
+      makeScanState({ id: ScanId("scan-struct") }),
+      [makeJob()],
+      customPath,
+    );
+
+    const content = await fs.readFile(customPath, "utf-8");
+    const parsed = JSON.parse(content);
+
+    expect(parsed).toHaveProperty("scanState");
+    expect(parsed).toHaveProperty("jobs");
+    expect(parsed).toHaveProperty("summary");
+    expect(parsed.summary.total).toBe(1);
+  });
+});

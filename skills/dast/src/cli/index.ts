@@ -1,4 +1,5 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
@@ -57,6 +58,31 @@ function collect(value: string, previous: string[]): string[] {
   return [...previous, value];
 }
 
+interface ReporterConfig {
+  name: string;
+  options?: string;
+}
+
+function parseReporterFlags(flags: string[]): ReporterConfig[] {
+  if (flags.length === 0) {
+    return [{ name: "console", options: undefined }];
+  }
+
+  return flags.map((flag) => {
+    const colonIndex = flag.indexOf(":");
+    if (colonIndex === -1) {
+      return { name: flag, options: undefined };
+    }
+    const name = flag.slice(0, colonIndex);
+    const options = flag.slice(colonIndex + 1);
+    return { name, options };
+  });
+}
+
+// Exported for testing and reuse
+export type { ReporterConfig };
+export { parseReporterFlags };
+
 async function bootstrap(
   configPath?: string,
   cliOverrides?: Partial<{ logLevel: LogLevel; concurrency: number }>,
@@ -68,6 +94,7 @@ async function bootstrap(
 
   await loadPlugins(config.plugins, registry, configDir);
   const plugins = await registry.initializeAll(ctx);
+  ctx.pluginRegistry = registry;
   const loaders = plugins.filter(
     (p): p is ScenarioLoaderPlugin => p.name.startsWith("scenario-loader:"),
   );
@@ -99,7 +126,13 @@ program
   .option("--verbose", "Debug logging")
   .option("--quiet", "Minimal logging")
   .option("--concurrency <n>", "Parallel workers")
-  .action(async (opts: { config?: string; scenario: string[]; verbose?: boolean; quiet?: boolean; concurrency?: string }) => {
+  .option(
+    "-r, --reporter <name[:option]>",
+    "Reporter to use (repeatable, e.g., --reporter json:report.json)",
+    collect,
+    [] as string[],
+  )
+  .action(async (opts: { config?: string; scenario: string[]; verbose?: boolean; quiet?: boolean; concurrency?: string; reporter: string[] }) => {
     // モード決定: config.json 使用時
     if (opts.config) {
       const { config, configDir, orchestrator, registry } = await bootstrap(opts.config, buildOverrides(opts));
@@ -120,9 +153,10 @@ program
       }
 
       // スキャン実行
+      const reporterConfigs = parseReporterFlags(opts.reporter ?? []);
       const { scanId, items } = await orchestrator.plan(scenarios);
       await orchestrator.scan(scanId, items, config.concurrency);
-      await orchestrator.report(scanId);
+      await orchestrator.report(scanId, reporterConfigs);
       return;
     }
 
@@ -141,6 +175,7 @@ program
     // シナリオの URL（OpenAPI の servers[0].url 起）のホストへ直接アクセス。
     registerAllBuiltinPlugins(registry);
     await registry.initializeAll(ctx);
+    ctx.pluginRegistry = registry;
 
     const scenarios = await loadScenariosFromSpecs(opts.scenario, registry);
     if (scenarios.length === 0) {
@@ -150,9 +185,10 @@ program
 
     const orchestrator = new Orchestrator({ context: ctx });
     const concurrency = opts.concurrency ? parseInt(opts.concurrency, 10) : 5;
+    const reporterConfigs = parseReporterFlags(opts.reporter ?? []);
     const { scanId, items } = await orchestrator.plan(scenarios);
     await orchestrator.scan(scanId, items, concurrency);
-    await orchestrator.report(scanId);
+    await orchestrator.report(scanId, reporterConfigs);
   });
 
 // plan command
@@ -196,12 +232,19 @@ program
   .option("--config <path>", "Config file path")
   .option("--verbose", "Debug logging")
   .option("--quiet", "Minimal logging")
-  .action(async (scanId: string | undefined, opts: CliOptions) => {
+  .option(
+    "-r, --reporter <name[:option]>",
+    "Reporter to use (repeatable)",
+    collect,
+    [] as string[],
+  )
+  .action(async (scanId: string | undefined, opts: any) => {
     const { orchestrator } = await bootstrap(
       opts.config,
       buildOverrides(opts),
     );
-    await orchestrator.report(ScanId(scanId!));
+    const reporterConfigs = parseReporterFlags(opts.reporter ?? []);
+    await orchestrator.report(ScanId(scanId!), reporterConfigs);
   });
 
 // plugins command
@@ -222,4 +265,7 @@ program
     }
   });
 
-program.parse();
+// Only parse argv when run directly (not when imported, e.g. in tests)
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  program.parse();
+}
