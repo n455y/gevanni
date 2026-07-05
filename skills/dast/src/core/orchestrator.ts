@@ -109,7 +109,7 @@ export class Orchestrator {
           `Found ${parameters.length} audit parameters for ${scenario.name}`,
         );
         logger.debug(
-          `Parameters: ${parameters.map((p) => `${JSON.stringify(p.location)}=${p.originalValue}`).join(", ")}`,
+          `Parameters: ${parameters.map((p) => `${JSON.stringify(p.location)}=${JSON.stringify(p.originalValue)}`).join(", ")}`,
         );
 
         // c. Broadcast CreateAuditItemsCommand to collect all AuditItems
