@@ -10,12 +10,12 @@ import type { PluginSpec } from "./loader.ts";
  *
  * @param specs - PluginSpec 配列
  * @param registry - プラグインレジストリ
- * @param configDir - config ファイルのあるディレクトリ（相対パス解決用）
+ * @param searchDirs - プラグインファイルの検索基準ディレクトリ（優先度順）
  */
 export async function loadPlugins(
   specs: PluginSpec[],
   registry: PluginRegistry,
-  configDir: string,
+  searchDirs: string[],
 ): Promise<void> {
   for (const spec of specs) {
     if (spec === ":builtin:") {
@@ -23,29 +23,56 @@ export async function loadPlugins(
       registerAllBuiltinPlugins(registry);
     } else if (typeof spec === "string") {
       // ファイルから default export クラスを new() して登録
-      const Cls = await loadPluginClass(spec, configDir);
+      const Cls = await loadPluginClass(spec, searchDirs);
       registry.register(new Cls());
     } else {
       // options 付きで new()
-      const Cls = await loadPluginClass(spec.file, configDir);
+      const Cls = await loadPluginClass(spec.file, searchDirs);
       registry.register(new Cls(spec.options));
     }
   }
 }
 
 /**
- * パスを解決して、プラグインファイルの default export クラスを読み込む。
+ * 複数の検索ディレクトリからプラグインファイルの絶対パスを解決する。
+ * 最初に見つかったパスを返す。見つからない場合は null。
  *
- * @param file - プラグインファイルのパス（configDir 基準）
- * @param configDir - config ファイルのあるディレクトリ
+ * @param file - プラグインファイルの相対パス
+ * @param searchDirs - 検索基準ディレクトリのリスト（優先度順）
+ * @returns 解決された絶対パス、または null
+ */
+export function resolvePluginPath(
+  file: string,
+  searchDirs: string[],
+): string | null {
+  for (const dir of searchDirs) {
+    const resolvedPath = path.resolve(dir, file);
+    if (fs.existsSync(resolvedPath)) {
+      return resolvedPath;
+    }
+  }
+  return null;
+}
+
+/**
+ * 複数の検索ディレクトリからプラグインファイルを探し、
+ * default export クラスを読み込む。
+ *
+ * @param file - プラグインファイルのパス（searchDirs 基準）
+ * @param searchDirs - 検索基準ディレクトリのリスト（優先度順）
  * @returns プラグインクラスのコンストラクタ
  * @throws ファイル not found, default export なし, クラスでない場合
  */
 async function loadPluginClass(
   file: string,
-  configDir: string,
+  searchDirs: string[],
 ): Promise<new (...args: unknown[]) => InstanceType<never>> {
-  const resolvedPath = path.resolve(configDir, file);
+  const resolvedPath = resolvePluginPath(file, searchDirs);
+  if (!resolvedPath) {
+    throw new Error(
+      `Plugin file "${file}" not found in any search directory: ${searchDirs.join(", ")}`,
+    );
+  }
 
   let mod: unknown;
   try {

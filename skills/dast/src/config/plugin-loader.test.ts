@@ -29,7 +29,7 @@ describe("loadPlugins", () => {
 
   it("registers all builtin plugins for :builtin:", async () => {
     const registry = new PluginRegistryImpl();
-    await loadPlugins([":builtin:"], registry, "/any/dir");
+    await loadPlugins([":builtin:"], registry, ["/any/dir"]);
 
     // Check specific known builtin plugins exist
     expect(registry.getByName("scenario:openapi")).toBeDefined();
@@ -51,7 +51,7 @@ describe("loadPlugins", () => {
     `;
     writePluginFile(tmpDir, "test-plugin.ts", pluginCode);
 
-    await loadPlugins(["./test-plugin.ts"], registry, tmpDir);
+    await loadPlugins(["./test-plugin.ts"], registry, [tmpDir]);
     const plugin = registry.getByName("test:plugin");
     expect(plugin).toBeDefined();
     expect(plugin?.name).toBe("test:plugin");
@@ -77,7 +77,7 @@ describe("loadPlugins", () => {
     await loadPlugins(
       [{ file: "./test-plugin.ts", options: { key: "value" } }],
       registry,
-      tmpDir,
+      [tmpDir],
     );
     const plugin = registry.getByName("test:plugin") as any;
     expect(plugin).toBeDefined();
@@ -106,7 +106,7 @@ describe("loadPlugins", () => {
     await loadPlugins(
       [":builtin:", "./plugin1.ts", "./plugin2.ts"],
       registry,
-      tmpDir,
+      [tmpDir],
     );
     const plugin = registry.getByName("test:same") as any;
     expect(plugin?.version).toBe(2);
@@ -124,7 +124,7 @@ describe("loadPlugins", () => {
     writePluginFile(tmpDir, "no-default.ts", pluginCode);
 
     await expect(
-      loadPlugins(["./no-default.ts"], registry, tmpDir),
+      loadPlugins(["./no-default.ts"], registry, [tmpDir]),
     ).rejects.toThrow("has no default export");
   });
 
@@ -136,7 +136,7 @@ describe("loadPlugins", () => {
     writePluginFile(tmpDir, "not-class.ts", pluginCode);
 
     await expect(
-      loadPlugins(["./not-class.ts"], registry, tmpDir),
+      loadPlugins(["./not-class.ts"], registry, [tmpDir]),
     ).rejects.toThrow("is not a class");
   });
 
@@ -150,14 +150,14 @@ describe("loadPlugins", () => {
     writePluginFile(tmpDir, "plain-fn.ts", pluginCode);
 
     await expect(
-      loadPlugins(["./plain-fn.ts"], registry, tmpDir),
+      loadPlugins(["./plain-fn.ts"], registry, [tmpDir]),
     ).rejects.toThrow("is not a class");
   });
 
   it("throws error for file not found", async () => {
     const registry = new PluginRegistryImpl();
     await expect(
-      loadPlugins(["./nonexistent.ts"], registry, tmpDir),
-    ).rejects.toThrow("Failed to import plugin file");
+      loadPlugins(["./nonexistent.ts"], registry, [tmpDir]),
+    ).rejects.toThrow("not found in any search directory");
   });
 });

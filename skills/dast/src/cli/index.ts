@@ -5,7 +5,7 @@ import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
 import { createLogger } from "../core/logger.ts";
 import { loadConfig } from "../config/loader.ts";
-import { loadPlugins, discoverPluginFiles } from "../config/plugin-loader.ts";
+import { loadPlugins, discoverPluginFiles, resolvePluginPath } from "../config/plugin-loader.ts";
 import { registerAllBuiltinPlugins } from "../builtin.ts";
 import { Orchestrator } from "../core/orchestrator.ts";
 import { ScanId } from "../types/branded.ts";
@@ -92,15 +92,29 @@ async function bootstrap(
   const ctx = new RuntimeContext({ logger });
   const registry = new PluginRegistryImpl();
 
-  // <cwd>/.gevanni/plugins/autoload/ からプラグインを自動検出
+  // プラグインの検索基準ディレクトリ（優先度順）
+  // 1. .gevanni/plugins/
+  // 2. カレントディレクトリ
+  // 3. configファイルが配置してあるディレクトリ
+  const searchDirs = [
+    path.join(process.cwd(), ".gevanni", "plugins"),
+    process.cwd(),
+    configDir,
+  ];
+
+  // 各検索ディレクトリの plugins/autoload/ からプラグインを自動検出
   // 明示的に指定されたプラグインを優先 (config → auto-discovered の順でロード)
-  const discovered = discoverPluginFiles(
+  const autoloadBaseDirs = [
     path.join(process.cwd(), ".gevanni"),
-  );
+    process.cwd(),
+    configDir,
+  ];
+  const discovered = discoverPluginFiles(...autoloadBaseDirs);
   const explicitPaths = new Set(
     config.plugins
       .filter((p): p is string => typeof p === "string" && p !== ":builtin:")
-      .map((p) => path.resolve(configDir, p)),
+      .map((p) => resolvePluginPath(p, searchDirs))
+      .filter((p): p is string => p !== null),
   );
   const newPlugins = discovered.filter((p) => {
     if (typeof p !== "string") return false;
@@ -108,7 +122,7 @@ async function bootstrap(
   });
   const allPlugins = [...config.plugins, ...newPlugins];
 
-  await loadPlugins(allPlugins, registry, configDir);
+  await loadPlugins(allPlugins, registry, searchDirs);
   const plugins = await registry.initializeAll(ctx);
   ctx.pluginRegistry = registry;
   const loaders = plugins.filter(
