@@ -635,13 +635,14 @@ After the static checks pass, verify that scenarios can actually navigate by sen
 
 **Procedure:**
 
-1. Run the validation script against the generated spec:
+1. Run the validation command against the generated spec from the dast skill directory:
    ```bash
-   gevanni validate-scenarios .gevanni/scenarios/openapi.yaml
+   cd <path-to-dast-skill>
+   npm run gevanni -- validate-scenarios <project-root>/.gevanni/scenarios/openapi.yaml
    ```
    If the user provided a different base URL than what's in the spec, pass `--base-url`:
    ```bash
-   gevanni validate-scenarios .gevanni/scenarios/openapi.yaml --base-url http://localhost:3000
+   npm run gevanni -- validate-scenarios <project-root>/.gevanni/scenarios/openapi.yaml --base-url http://localhost:3000
    ```
 
 2. The script executes every scenario by:
@@ -664,6 +665,8 @@ After the static checks pass, verify that scenarios can actually navigate by sen
 
 5. **Example output:**
    ```
+   $ npm run gevanni -- validate-scenarios .gevanni/scenarios/openapi.yaml
+
    🔗 Validating scenario transitions...
 
    📄 Spec: /workspace/.gevanni/scenarios/openapi.yaml
