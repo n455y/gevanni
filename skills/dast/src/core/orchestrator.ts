@@ -217,9 +217,12 @@ export class Orchestrator {
     );
 
     // 3. Run jobs with concurrency
+    logger.debug(`Entering runWithConcurrency: ${jobs.length} items, concurrency ${concurrency}`);
     await runWithConcurrency(jobs, concurrency, async (job: SignatureJob) => {
+      logger.debug(`Worker picked up job: ${job.id} (${job.signatureName})`);
       try {
         // Update job status to running
+        logger.debug(`[job ${job.id}] Dispatching UpdateJobCommand -> Running`);
         await commandBus.dispatch(
           new UpdateJobCommand(job.id, {
             status: SignatureJobStatus.Running,
@@ -234,16 +237,19 @@ export class Orchestrator {
           throw new Error(`No audit item found for job ${job.id}`);
         }
 
+        logger.debug(`[job ${job.id}] Loading scenario ${job.scenarioId}`);
         const scenario: Scenario = await commandBus.dispatch(
           new LoadScenarioCommand(job.scenarioId),
         );
 
         // Create replay function
         const replay = async (mutations: AuditMutation[]) => {
+          logger.debug(`[job ${job.id}] Creating mutation proxy`);
           const proxy = await commandBus.dispatch(
             new CreateProxyCommand(mutations),
           );
           try {
+            logger.debug(`[job ${job.id}] Replaying via proxy port ${proxy.port}`);
             return await commandBus.dispatch(
               new ReplayCommand(scenario, {
                 mutations,
@@ -257,6 +263,7 @@ export class Orchestrator {
         };
 
         // Run audit
+        logger.debug(`[job ${job.id}] Dispatching RunAuditCommand (${item.signatureName})`);
         const result = await commandBus.dispatch(
           new RunAuditCommand({
             signatureName: item.signatureName,
