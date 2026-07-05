@@ -32,7 +32,7 @@ describe("loadConfig", () => {
     });
   });
 
-  it("returns defaults when no path is given and ./.gevilli/config.json does not exist", () => {
+  it("returns defaults when no path is given and ./.gevanni/config.json does not exist", () => {
     // Change cwd to tmpDir where no .gevilli/config.json exists
     const originalCwd = process.cwd();
     process.chdir(tmpDir);
@@ -53,12 +53,8 @@ describe("loadConfig", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarios: [
-        { type: "openapi", file: "./spec.yaml" },
-      ],
-      plugins: [
-        ":builtin:",
-      ],
+      scenarios: [{ type: "openapi", file: "./spec.yaml" }],
+      plugins: [":builtin:"],
     });
 
     const { config } = loadConfig(configPath);
@@ -67,9 +63,7 @@ describe("loadConfig", () => {
     expect(config.scenarios).toEqual([
       { type: "openapi", file: "./spec.yaml" },
     ]);
-    expect(config.plugins).toEqual([
-      ":builtin:",
-    ]);
+    expect(config.plugins).toEqual([":builtin:"]);
   });
 
   it("uses defaults for missing fields in config file", () => {
@@ -88,12 +82,8 @@ describe("loadConfig", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarios: [
-        { type: "openapi", file: "./spec.yaml" },
-      ],
-      plugins: [
-        "./.gevanni/plugins/custom.ts",
-      ],
+      scenarios: [{ type: "openapi", file: "./spec.yaml" }],
+      plugins: ["./.gevanni/plugins/custom.ts"],
     });
 
     const { config } = loadConfig(configPath, {
@@ -107,9 +97,7 @@ describe("loadConfig", () => {
     expect(config.scenarios).toEqual([
       { type: "openapi", file: "./spec.yaml" },
     ]);
-    expect(config.plugins).toEqual([
-      "./.gevanni/plugins/custom.ts",
-    ]);
+    expect(config.plugins).toEqual(["./.gevanni/plugins/custom.ts"]);
   });
 
   it("CLI overrides take precedence even over defaults when no file exists", () => {
@@ -155,13 +143,14 @@ describe("loadConfig", () => {
     const configPath = writeConfig(tmpDir, {
       concurrency: 3,
       logLevel: "debug",
-      scenarios: [
-        { type: "openapi", file: "./spec.yaml" },
-      ],
+      scenarios: [{ type: "openapi", file: "./spec.yaml" }],
       plugins: [
         ":builtin:",
         "./.gevanni/plugins/custom.ts",
-        { file: "./.gevanni/plugins/custom-with-opts.ts", options: { key: "value" } },
+        {
+          file: "./.gevanni/plugins/custom-with-opts.ts",
+          options: { key: "value" },
+        },
       ],
     });
 

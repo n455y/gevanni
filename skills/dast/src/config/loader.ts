@@ -51,7 +51,7 @@ export function loadConfig(
   configPath?: string,
   cliOverrides?: Partial<Omit<ResolvedConfig, "plugins" | "scenarios">>,
 ): { config: ResolvedConfig; configDir: string } {
-  const resolvedPath = configPath ?? path.resolve("./.gevilli/config.json");
+  const resolvedPath = path.resolve(configPath ?? "./.gevanni/config.json");
   const configDir = path.dirname(resolvedPath);
 
   let fileConfig: RawConfig = {};
@@ -64,8 +64,12 @@ export function loadConfig(
   }
 
   const resolved: ResolvedConfig = {
-    concurrency: cliOverrides?.concurrency ?? fileConfig.concurrency ?? DEFAULT_CONFIG.concurrency,
-    logLevel: cliOverrides?.logLevel ?? fileConfig.logLevel ?? DEFAULT_CONFIG.logLevel,
+    concurrency:
+      cliOverrides?.concurrency ??
+      fileConfig.concurrency ??
+      DEFAULT_CONFIG.concurrency,
+    logLevel:
+      cliOverrides?.logLevel ?? fileConfig.logLevel ?? DEFAULT_CONFIG.logLevel,
     plugins: fileConfig.plugins ?? DEFAULT_CONFIG.plugins,
     scenarios: fileConfig.scenarios ?? DEFAULT_CONFIG.scenarios,
   };

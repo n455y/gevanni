@@ -1,3 +1,4 @@
+import path from "node:path";
 import { Command } from "commander";
 import { PluginRegistryImpl } from "../core/plugin.ts";
 import { RuntimeContext } from "../core/runtime-context.ts";
@@ -74,7 +75,7 @@ async function bootstrap(
   const orchestrator = new Orchestrator({
     context: ctx,
   });
-  return { config, logger, ctx, registry, orchestrator, loaders };
+  return { config, configDir, logger, ctx, registry, orchestrator, loaders };
 }
 
 // CLI setup
@@ -88,6 +89,7 @@ program
 program
   .command("scan")
   .description("Run full vulnerability scan from scenario source(s)")
+  .option("--config <path>", "Config file path")
   .option(
     "-s, --scenario <name>:<path>",
     "Scenario source as <loader-name>:<path>, e.g. openapi:./spec.yaml (repeatable, glob/dir ok)",
@@ -97,7 +99,34 @@ program
   .option("--verbose", "Debug logging")
   .option("--quiet", "Minimal logging")
   .option("--concurrency <n>", "Parallel workers")
-  .action(async (opts: { scenario: string[]; verbose?: boolean; quiet?: boolean; concurrency?: string }) => {
+  .action(async (opts: { config?: string; scenario: string[]; verbose?: boolean; quiet?: boolean; concurrency?: string }) => {
+    // モード決定: config.json 使用時
+    if (opts.config) {
+      const { config, configDir, orchestrator, registry } = await bootstrap(opts.config, buildOverrides(opts));
+
+      // config.scenarios を scenario specs に変換（configDirを考慮）
+      const scenarioSpecs = config.scenarios.map((s) => {
+        const resolvedPath = path.resolve(configDir, s.file);
+        return `${s.type}:${resolvedPath}`;
+      });
+
+      // シナリオ読み込み（registryからloaderを取得）
+      const scenarios = await loadScenariosFromSpecs(scenarioSpecs, registry);
+
+      if (scenarios.length === 0) {
+        const logger = createLogger(config.logLevel);
+        logger.error("No scenarios loaded from config file");
+        process.exit(1);
+      }
+
+      // スキャン実行
+      const { scanId, items } = await orchestrator.plan(scenarios);
+      await orchestrator.scan(scanId, items, config.concurrency);
+      await orchestrator.report(scanId);
+      return;
+    }
+
+    // モード2: CLIオプション直接指定時（既存の実装）
     if (opts.scenario.length === 0) {
       console.error("error: required option '-s, --scenario <name>:<path>' not specified");
       process.exit(1);
