@@ -4,11 +4,13 @@
 // 実際のプラグイン生成時は、検出すべき脆弱性クラスに応じて
 // payload, 検出パターン, groups がカスタマイズされる。
 //
-// 配置先: <cwd>/.gevanni/plugins/custom-<vuln-type>.ts
-// config.json での参照: "./.gevanni/plugins/custom-<vuln-type>.ts"
+// 配置先: <cwd>/.gevanni/plugins/autoload/custom-<vuln-type>.ts
+//
+// autoload ディレクトリ内の .ts/.js ファイルは discoverPluginFiles() によって
+// 自動検出されるため、config.json への手動追加は不要。
 //
 // インポートパスは gevanni の src/ からの相対パス。
-// カスタムプラグインは .gevanni/plugins/ に置かれ、
+// カスタムプラグインは .gevanni/plugins/autoload/ に置かれ、
 // gevanni のビルドイン plugin-loader が動的インポートするため
 // これらの相対インポートが解決される。
 
@@ -136,8 +138,10 @@ export default class CustomPlugin extends MutationFilteredSignaturePlugin {
 //   }
 // }
 //
-// config.json での参照:
+// コンストラクタオプションを使用する場合、config.json に明示的に
+// プラグインを列挙し、{ file, options } 形式で指定する（autoload の自動検出では
+// オプションを渡せないため）:
 // {
-//   "file": "./.gevanni/plugins/custom-example.ts",
+//   "file": "./.gevanni/plugins/autoload/custom-example.ts",
 //   "options": { "threshold": 0.8, "extraPatterns": ["custom error"] }
 // }

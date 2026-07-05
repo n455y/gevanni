@@ -141,23 +141,13 @@ sast_only finding
       └─ YES → NOT DETECTABLE → Skip (requires browser execution context)
 ```
 
-**DAST-detectable → generate a plugin file** at `<cwd>/.gevanni/plugins/custom-<vuln-type>.ts`.
+**DAST-detectable → generate a plugin file** at `<cwd>/.gevanni/plugins/autoload/custom-<vuln-type>.ts`.
 
 **NOT detectable → document** in the integrated report's "Coverage gaps" section with the reason for skipping.
 
 #### Plugin generation template
 
-Generated plugins follow the `SignaturePluginBase` pattern. Place them in `.gevanni/plugins/` relative to the scan working directory, then reference them in `config.json`:
-
-```json
-{
-  "plugins": [
-    ":builtin:",
-    "./.gevanni/plugins/custom-sqli-error.ts",
-    "./.gevanni/plugins/custom-xss-reflected.ts"
-  ]
-}
-```
+Generated plugins follow the `SignaturePluginBase` pattern. Place them in `.gevanni/plugins/autoload/` — gevanni の `discoverPluginFiles()` が自動検出するため、**config.json の更新は不要**。
 
 **Template reference**: See `plugin-template.ts` in this skill directory for the base class structure. Each generated plugin must:
 
@@ -170,7 +160,7 @@ Generated plugins follow the `SignaturePluginBase` pattern. Place them in `.geva
 **Example — custom error-based SQLi plugin for a specific parameter pattern**:
 
 ```typescript
-// .gevanni/plugins/custom-sqli-error.ts
+// .gevanni/plugins/autoload/custom-sqli-error.ts
 import { SignatureGroupId } from "../../types/branded.ts";
 import type { Exchange } from "../../types/models.ts";
 import { BuiltinMutationType, BuiltinPayload } from "../../types/models.ts";
@@ -213,7 +203,7 @@ export default class CustomSqliErrorPlugin extends MutationFilteredSignaturePlug
 }
 ```
 
-**After generating plugins**, update the DAST config to include them and note that re-running the scan will now catch these previously missed vulnerabilities.
+**After generating plugins**, note that re-running the DAST scan will automatically pick them up via autoload — no config changes needed.
 
 ### Step 4: Integrated report
 
@@ -273,9 +263,8 @@ Findings SAST caught but DAST missed. Each entry includes:
 After the scan completes, the user receives:
 
 1. **Integrated report** (Markdown) — saved to `<cwd>/.gevanni/scan-report-<date>.md`
-2. **Generated plugins** — saved to `<cwd>/.gevanni/plugins/custom-*.ts`
-3. **Updated DAST config** — `config.json` with new plugin references (or instructions to add them)
-4. **Raw scan outputs** preserved for reference:
+2. **Generated plugins** — saved to `<cwd>/.gevanni/plugins/autoload/custom-*.ts` (自動検出されるため config.json 更新不要)
+3. **Raw scan outputs** preserved for reference:
    - DAST: JSON report from `gevanni scan --reporter json`
    - SAST: Markdown report from sast workflow
 
@@ -285,7 +274,7 @@ After the scan completes, the user receives:
 |---------|-----------------|
 | Running scans sequentially instead of parallel | DAST and SAST are independent — always run in parallel for wall-clock efficiency |
 | Generating plugins for everything SAST finds | Only generate for injection classes with observable HTTP responses; skip timing/blind/logic/config issues |
-| Not updating config.json after generating plugins | Plugins must be referenced in `"plugins"` array to take effect on next scan |
+| Manually adding autoload plugins to config.json | Plugins in `plugins/autoload/` are auto-discovered by `discoverPluginFiles()` — no config update needed. Only explicitly configured (non-autoload) plugins need to be listed. |
 | Treating detection gaps as failures | Gaps are expected — they're the input to improving scanner coverage. Document and move on |
 | Assuming SAST findings are always exploitable | Cross-reference with DAST; SAST-only findings may be false positives or protected by runtime guards |
 | Not collecting all inputs before dispatching | Both agents need different inputs — gather URL, source dir, and auth upfront to avoid mid-scan interruptions |
