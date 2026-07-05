@@ -91,7 +91,7 @@ function makeRequest(url: string, method = "GET"): HttpRequest {
 
 describe("HttpProxyPlugin", () => {
   it("registers the plugin and intercepts an HTTP request", async () => {
-    const plugin = new HttpProxyPlugin();
+    const plugin = new HttpProxyPlugin({ upstream: "" });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -119,7 +119,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("pipes through ApplyMutationCommand before sending", async () => {
-    const plugin = new HttpProxyPlugin();
+    const plugin = new HttpProxyPlugin({ upstream: "" });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -145,7 +145,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("sends POST request with body", async () => {
-    const plugin = new HttpProxyPlugin();
+    const plugin = new HttpProxyPlugin({ upstream: "" });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -174,7 +174,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("adds extra headers from config", async () => {
-    const plugin = new HttpProxyPlugin({ headers: { "X-Custom": "injected" } });
+    const plugin = new HttpProxyPlugin({ headers: { "X-Custom": "injected" }, upstream: "" });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),
@@ -195,7 +195,7 @@ describe("HttpProxyPlugin", () => {
   });
 
   it("returns the modified request in the result", async () => {
-    const plugin = new HttpProxyPlugin();
+    const plugin = new HttpProxyPlugin({ upstream: "" });
     await plugin.init({
       commandBus,
       eventBus: new InMemoryEventBus(),

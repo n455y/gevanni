@@ -360,7 +360,7 @@ export default class HttpProxyPlugin implements ProxyPlugin {
 
   constructor(options: HttpProxyConfig = {}) {
     this.extraHeaders = options.headers ?? {};
-    this.upstream = options.upstream;
+    this.upstream = options.upstream ?? process.env.HTTP_PROXY;
   }
 
   async init(context: PluginContext): Promise<void> {
