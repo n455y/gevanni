@@ -637,11 +637,11 @@ After the static checks pass, verify that scenarios can actually navigate by sen
 
 1. Run the validation script against the generated spec:
    ```bash
-   npx tsx bin/validate-scenarios.ts .gevanni/scenarios/openapi.yaml
+   gevanni validate-scenarios .gevanni/scenarios/openapi.yaml
    ```
    If the user provided a different base URL than what's in the spec, pass `--base-url`:
    ```bash
-   npx tsx bin/validate-scenarios.ts .gevanni/scenarios/openapi.yaml --base-url http://localhost:3000
+   gevanni validate-scenarios .gevanni/scenarios/openapi.yaml --base-url http://localhost:3000
    ```
 
 2. The script executes every scenario by:

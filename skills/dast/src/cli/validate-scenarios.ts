@@ -1,9 +1,7 @@
-#!/usr/bin/env npx tsx
 /**
  * validate-scenarios — 生成されたシナリオの遷移を実際のHTTPリクエストで検証する。
  *
- * 使い方:
- *   npx tsx bin/validate-scenarios.ts <spec.yaml> [--base-url <url>]
+ * CLI から `gevanni validate-scenarios <spec.yaml>` で実行する。
  *
  * 各シナリオのステップを順に実HTTPリクエストし、
  * - リクエスト構築の成否
@@ -16,43 +14,16 @@ import fs from "node:fs";
 import path from "node:path";
 import http from "node:http";
 import https from "node:https";
-import { parseArgs } from "node:util";
-
-// --- resolve the loader from the src tree ---
-const DAST_SRC = path.resolve(import.meta.dirname!, "..", "src");
-
-// Dynamic imports for the DAST modules (they are .ts files)
-const loaderPath = path.join(DAST_SRC, "plugins", "loader", "openapi-loader.ts");
-const { loadOpenApiScenarios } = await import(loaderPath);
-
-// Re-use resolveRuntimeExpression from the scenario plugin for Link verification
-const pluginPath = path.join(DAST_SRC, "plugins", "scenario", "openapi.ts");
-const { buildUrl, buildHeaders, buildBody, resolveRuntimeExpression } =
-  await import(pluginPath);
-
-// --- CLI args ---
-const { values, positionals } = parseArgs({
-  args: process.argv.slice(2),
-  options: {
-    "base-url": { type: "string" },
-  },
-  allowPositionals: true,
-  strict: false,
-});
-
-const specFile = positionals[0];
-if (!specFile) {
-  console.error("Usage: validate-scenarios.ts <spec.yaml> [--base-url <url>]");
-  process.exit(2);
-}
-
-const absSpec = path.resolve(specFile);
-if (!fs.existsSync(absSpec)) {
-  console.error(`❌ Spec file not found: ${absSpec}`);
-  process.exit(1);
-}
-
-const overriddenBaseUrl = values["base-url"] ?? undefined;
+import {
+  loadOpenApiScenarios,
+} from "../plugins/loader/openapi-loader.ts";
+import {
+  buildUrl,
+  buildHeaders,
+  buildBody,
+  resolveRuntimeExpression,
+} from "../plugins/scenario/openapi.ts";
+import type { ReplayId } from "../types/branded.ts";
 
 // --- HTTP sender (direct, no proxy needed for validation) ---
 interface SimpleResponse {
@@ -73,7 +44,7 @@ function sendHttpRequest(
     const parsed = new URL(url);
     const isHttps = parsed.protocol === "https:";
 
-    const options: http.RequestOptions = {
+    const options: https.RequestOptions = {
       hostname: parsed.hostname,
       port: parsed.port || (isHttps ? 443 : 80),
       path: parsed.pathname + parsed.search,
@@ -203,7 +174,7 @@ async function executeScenarioSteps(
     try {
       headers = buildHeaders(
         op as Parameters<typeof buildHeaders>[0],
-        "validate" as unknown as Parameters<typeof buildHeaders>[1],
+        "validate" as unknown as ReplayId,
         overridesMap,
         src.securitySchemes as Parameters<typeof buildHeaders>[3],
         tokensByScheme,
@@ -334,77 +305,91 @@ async function executeScenarioSteps(
   };
 }
 
-// --- Main ---
-console.log("🔗 Validating scenario transitions...\n");
-console.log(`📄 Spec: ${absSpec}`);
-if (overriddenBaseUrl) {
-  console.log(`🌐 Base URL override: ${overriddenBaseUrl}`);
-}
-console.log("");
-
-const scenarios = await loadOpenApiScenarios(absSpec);
-
-if (scenarios.length === 0) {
-  console.log("⚠️  No scenarios found in spec.");
-  process.exit(0);
+// --- Main entry point ---
+export interface ValidateScenariosOptions {
+  baseUrl?: string;
 }
 
-console.log(`📋 Found ${scenarios.length} scenario(s)\n`);
+export async function validateScenarios(
+  specPath: string,
+  opts: ValidateScenariosOptions = {},
+): Promise<{ allPassed: boolean; results: ScenarioResult[] }> {
+  const absSpec = path.resolve(specPath);
+  if (!fs.existsSync(absSpec)) {
+    throw new Error(`Spec file not found: ${absSpec}`);
+  }
 
-const results: ScenarioResult[] = [];
-for (const scenario of scenarios) {
-  console.log(`▶ Running: ${scenario.name}`);
-  const result = await executeScenarioSteps(scenario);
-  results.push(result);
-
-  for (const step of result.steps) {
-    if (step.success) {
-      console.log(`  ✅ ${step.method} ${step.path} → ${step.statusCode}`);
-      for (const link of step.linkResults) {
-        if (link.resolved) {
-          console.log(`     🔗 Link → ${link.targetOperationId}.${link.paramName}: ${link.resolvedValue?.substring(0, 50)}`);
-        } else {
-          console.log(`     ⚠️  Link → ${link.targetOperationId}.${link.paramName}: ${link.error}`);
-        }
-      }
-    } else {
-      console.log(`  ❌ ${step.method} ${step.path}: ${step.error}`);
-    }
+  console.log("🔗 Validating scenario transitions...\n");
+  console.log(`📄 Spec: ${absSpec}`);
+  if (opts.baseUrl) {
+    console.log(`🌐 Base URL override: ${opts.baseUrl}`);
   }
   console.log("");
-}
 
-// --- Summary ---
-const totalSteps = results.reduce((sum, r) => sum + r.steps.length, 0);
-const passedSteps = results.reduce((sum, r) => sum + r.steps.filter((s) => s.success).length, 0);
-const totalLinks = results.reduce(
-  (sum, r) => sum + r.steps.reduce((s, step) => s + step.linkResults.length, 0),
-  0,
-);
-const resolvedLinks = results.reduce(
-  (sum, r) =>
-    sum +
-    r.steps.reduce((s, step) => s + step.linkResults.filter((l) => l.resolved).length, 0),
-  0,
-);
-const allPassed = results.every((r) => r.allTransitionsValid);
+  const scenarios = await loadOpenApiScenarios(absSpec);
 
-console.log("═══════════════════════════════════════");
-console.log("🔗 Scenario transition integrity:");
-console.log(`   • Scenarios checked:     ${results.length}`);
-console.log(`   • Multi-step scenarios:  ${results.filter((r) => r.steps.length > 1).length}`);
-console.log(`   • Total step executions: ${totalSteps}`);
-console.log(`   • ✅ Successful steps:   ${passedSteps}`);
-console.log(`   • ❌ Failed steps:       ${totalSteps - passedSteps}`);
-console.log(`   • 🔗 Links checked:      ${totalLinks}`);
-console.log(`   • ✅ Resolved links:     ${resolvedLinks}`);
-console.log(`   • ⚠️  Unresolved links:   ${totalLinks - resolvedLinks}`);
-console.log("═══════════════════════════════════════");
+  if (scenarios.length === 0) {
+    console.log("⚠️  No scenarios found in spec.");
+    return { allPassed: true, results: [] };
+  }
 
-if (allPassed) {
-  console.log("\n✅ All scenario transitions are valid.");
-  process.exit(0);
-} else {
-  console.log("\n❌ Some transitions failed. Review the errors above.");
-  process.exit(1);
+  console.log(`📋 Found ${scenarios.length} scenario(s)\n`);
+
+  const results: ScenarioResult[] = [];
+  for (const scenario of scenarios) {
+    console.log(`▶ Running: ${scenario.name}`);
+    const result = await executeScenarioSteps(scenario);
+    results.push(result);
+
+    for (const step of result.steps) {
+      if (step.success) {
+        console.log(`  ✅ ${step.method} ${step.path} → ${step.statusCode}`);
+        for (const link of step.linkResults) {
+          if (link.resolved) {
+            console.log(`     🔗 Link → ${link.targetOperationId}.${link.paramName}: ${link.resolvedValue?.substring(0, 50)}`);
+          } else {
+            console.log(`     ⚠️  Link → ${link.targetOperationId}.${link.paramName}: ${link.error}`);
+          }
+        }
+      } else {
+        console.log(`  ❌ ${step.method} ${step.path}: ${step.error}`);
+      }
+    }
+    console.log("");
+  }
+
+  // --- Summary ---
+  const totalSteps = results.reduce((sum, r) => sum + r.steps.length, 0);
+  const passedSteps = results.reduce((sum, r) => sum + r.steps.filter((s) => s.success).length, 0);
+  const totalLinks = results.reduce(
+    (sum, r) => sum + r.steps.reduce((s, step) => s + step.linkResults.length, 0),
+    0,
+  );
+  const resolvedLinks = results.reduce(
+    (sum, r) =>
+      sum +
+      r.steps.reduce((s, step) => s + step.linkResults.filter((l) => l.resolved).length, 0),
+    0,
+  );
+  const allPassed = results.every((r) => r.allTransitionsValid);
+
+  console.log("═══════════════════════════════════════");
+  console.log("🔗 Scenario transition integrity:");
+  console.log(`   • Scenarios checked:     ${results.length}`);
+  console.log(`   • Multi-step scenarios:  ${results.filter((r) => r.steps.length > 1).length}`);
+  console.log(`   • Total step executions: ${totalSteps}`);
+  console.log(`   • ✅ Successful steps:   ${passedSteps}`);
+  console.log(`   • ❌ Failed steps:       ${totalSteps - passedSteps}`);
+  console.log(`   • 🔗 Links checked:      ${totalLinks}`);
+  console.log(`   • ✅ Resolved links:     ${resolvedLinks}`);
+  console.log(`   • ⚠️  Unresolved links:   ${totalLinks - resolvedLinks}`);
+  console.log("═══════════════════════════════════════");
+
+  if (allPassed) {
+    console.log("\n✅ All scenario transitions are valid.");
+  } else {
+    console.log("\n❌ Some transitions failed. Review the errors above.");
+  }
+
+  return { allPassed, results };
 }

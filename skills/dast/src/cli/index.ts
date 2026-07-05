@@ -16,6 +16,7 @@ import type { LogLevel } from "../core/logger.ts";
 import type { ScenarioLoaderPlugin } from "../core/plugin.ts";
 import type { Scenario } from "../types/models.ts";
 import { loadScenariosFromSpecs } from "./scenario-spec.ts";
+import { validateScenarios } from "./validate-scenarios.ts";
 
 // config 経路（plan/resume/report）用: scenarioSources を全 scenario-loader で自動判定。
 // 形式や挙動は従来（空配列フォールバック）を維持する。
@@ -278,6 +279,25 @@ program
         const label = "file" in plugin ? plugin.file : plugin.name;
         console.log(`${label} with options`);
       }
+    }
+  });
+
+// validate-scenarios command
+program
+  .command("validate-scenarios <spec>")
+  .description("Validate scenario transitions with actual HTTP requests")
+  .option("--base-url <url>", "Override the base URL from the spec")
+  .action(async (spec: string, opts: { baseUrl?: string }) => {
+    try {
+      const { allPassed } = await validateScenarios(spec, {
+        baseUrl: opts.baseUrl,
+      });
+      if (!allPassed) process.exit(1);
+    } catch (err) {
+      console.error(
+        `❌ Validation failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      process.exit(1);
     }
   });
 
