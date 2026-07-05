@@ -6,12 +6,14 @@ import type { LogLevel } from "../core/logger.ts";
  * プラグイン指定の形式
  * - ":builtin:": 全ビルトインプラグイン
  * - string: ファイルパス (./.gevanni/plugins/custom.ts)
- * - {file, options}: options 付きファイル指定
+ * - {file, options?}: options 付きファイル指定
+ * - {name, options}: ビルトインプラグイン名指定で options 上書き
  */
 export type PluginSpec =
   | ":builtin:"
   | string
-  | { file: string; options: Record<string, unknown> };
+  | { file: string; options?: Record<string, unknown> }
+  | { name: string; options: Record<string, unknown> };
 
 /**
  * シナリオ指定の形式

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { registerAllBuiltinPlugins } from "../builtin.ts";
+import { registerAllBuiltinPlugins, registerBuiltinPlugin } from "../builtin.ts";
 import type { PluginRegistry } from "../core/plugin.ts";
 import type { PluginSpec } from "./loader.ts";
 
@@ -25,10 +25,13 @@ export async function loadPlugins(
       // ファイルから default export クラスを new() して登録
       const Cls = await loadPluginClass(spec, searchDirs);
       registry.register(new Cls());
+    } else if ("name" in spec) {
+      // ビルトインプラグインを名前指定で options 上書き登録
+      registerBuiltinPlugin(registry, spec.name, spec.options);
     } else {
-      // options 付きで new()
+      // ファイル + options 指定
       const Cls = await loadPluginClass(spec.file, searchDirs);
-      registry.register(new Cls(spec.options));
+      registry.register(new Cls(spec.options ?? {}));
     }
   }
 }

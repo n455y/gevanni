@@ -99,3 +99,19 @@ export function registerAllBuiltinPlugins(
     registry.register(factory(overrides?.[name] ?? ({} as Record<string, unknown>)));
   }
 }
+
+/**
+ * ビルトインプラグインを個別に登録（options を上書きする用途）。
+ * 同名プラグインが既に登録済みの場合、上書きする（後勝ち）。
+ */
+export function registerBuiltinPlugin(
+  registry: PluginRegistry,
+  name: string,
+  options: Record<string, unknown>,
+): void {
+  const factory = builtinPluginFactories.get(name);
+  if (!factory) {
+    throw new Error(`Unknown builtin plugin: ${name}`);
+  }
+  registry.register(factory(options));
+}
