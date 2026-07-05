@@ -146,6 +146,7 @@ npm run gevanni -- scan --config ./.gevanni/config.json --concurrency 10
 
 - `--config <path>`: Config file path
 - `-s, --scenario <name>:<path>`: Scenario source (repeatable)
+- `-r, --reporter <name[:option]>`: Reporter to use (repeatable, e.g., `--reporter json:report.json`). Defaults to `console` when omitted.
 - `--concurrency <n>`: Parallel workers
 - `--verbose`: Debug logging
 - `--quiet`: Minimal logging
@@ -162,12 +163,57 @@ The scanner outputs structured findings with:
 
 ### Step 4: Report generation
 
-Convert raw output into actionable security report:
+Reports are generated automatically at the end of `gevanni scan`. You can also regenerate reports from saved scan results using the `report` command.
 
 ```bash
-# Generate markdown report
-gevanni report -i scan-results.json -o security-report.md
+# Regenerate report from saved scan results (console only, default)
+gevanni report <scanId> --config ./.gevilli/config.json
+
+# Regenerate with JSON reporter
+gevanni report <scanId> --config ./.gevilli/config.json --reporter json
+
+# Regenerate with custom output path
+gevanni report <scanId> --config ./.gevilli/config.json --reporter json:security-report.json
 ```
+
+**Report output options:**
+
+- **Console reporter** (default): Prints findings to terminal with severity ratings and evidence
+- **JSON reporter**: Outputs structured JSON to `gevanni-report-{scanId}.json` (default) or a custom path
+
+**Specifying reporters:**
+
+```bash
+# Single reporter (console is default when omitted)
+gevanni scan --config ./.gevanni/config.json
+
+# Single reporter with custom output
+gevanni scan --config ./.gevanni/config.json --reporter json:scan-result.json
+
+# Multiple reporters simultaneously
+gevanni scan --config ./.gevanni/config.json --reporter json:report.json --reporter console
+```
+
+Reporters can also be configured via `config.json` plugin options (legacy, for JSON output path):
+
+```json
+{
+  "plugins": [
+    {
+      "file": "./skills/dast/src/plugins/reporter/json-reporter.ts",
+      "options": {
+        "outputPath": "security-report.json"
+      }
+    }
+  ]
+}
+```
+
+**Report contents:**
+- Scan ID, status, and timing
+- Per-job findings (vulnerable/safe/error)
+- Summary statistics (total jobs, vulnerable count, safe count, errors)
+- Evidence excerpts for vulnerabilities (request/response pairs)
 
 ## Output contract
 
