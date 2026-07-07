@@ -90,7 +90,7 @@ describe("ConsoleReporterPlugin", () => {
     logSpy.mockRestore();
   });
 
-  it("prints vulnerable findings with details", async () => {
+  it("prints vulnerable findings with full details", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     const scanState = makeScanState();
@@ -129,7 +129,13 @@ describe("ConsoleReporterPlugin", () => {
                 headers: {},
                 body: null,
               },
-              response: { statusCode: 200, headers: {}, body: null },
+              response: {
+                statusCode: 200,
+                headers: {
+                  "x-powered-by": "Express",
+                },
+                body: Buffer.from("<html><script>alert(1)</script></html>"),
+              },
             },
           ],
         },
@@ -141,8 +147,10 @@ describe("ConsoleReporterPlugin", () => {
         },
         response: {
           statusCode: 200,
-          headers: {},
-          body: null,
+          headers: {
+            "x-powered-by": "Express",
+          },
+          body: Buffer.from("<html><script>alert(1)</script></html>"),
         },
       },
     });
@@ -154,13 +162,14 @@ describe("ConsoleReporterPlugin", () => {
     const output = logSpy.mock.calls[0][0] as string;
 
     expect(output).toContain("[VULNERABLE] signature:reflected-xss");
+    expect(output).toContain("Group:");
     expect(output).toContain("Target:");
-    expect(output).toContain(
-      "Evidence: payload-reflection (1 evidence exchanges)",
-    );
-    expect(output).toContain(
-      "Request: GET https://example.com/search?q=%3Cscript%3E",
-    );
+    expect(output).toContain("Judgment: payload-reflection (1 evidence");
+    expect(output).toContain("Request: GET https://example.com/search?q=%3Cscript%3E");
+    expect(output).toContain("Response Status: 200");
+    expect(output).toContain("x-powered-by: Express");
+    expect(output).toContain("<script>alert(1)</script>");
+    expect(output).toContain("Evidence #1:");
 
     logSpy.mockRestore();
   });
@@ -198,8 +207,10 @@ describe("ConsoleReporterPlugin", () => {
 
     expect(output).toContain("[SAFE] signature:sqli-error");
     expect(output).toContain("Target:");
-    expect(output).not.toContain("Evidence:");
-    expect(output).not.toContain("Request: POST");
+    // Safe jobs should not show judgment or response details
+    expect(output).not.toContain("Judgment:");
+    expect(output).not.toContain("Response Status:");
+    expect(output).not.toContain("Evidence #");
 
     logSpy.mockRestore();
   });
@@ -349,6 +360,7 @@ describe("ConsoleReporterPlugin.generate()", () => {
     const output = logSpy.mock.calls[0][0] as string;
     expect(output).toContain("=== Gevanni Scan Report ===");
     expect(output).toContain("[VULNERABLE] signature:reflected-xss");
+    expect(output).toContain("Response Status: 200");
 
     logSpy.mockRestore();
   });
