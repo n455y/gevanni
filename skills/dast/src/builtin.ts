@@ -35,6 +35,14 @@ import XxeInjectionPlugin from "./plugins/signature/xxe-injection.ts";
 import CrlfInjectionPlugin from "./plugins/signature/crlf-injection.ts";
 import SsiInjectionPlugin from "./plugins/signature/ssi-injection.ts";
 import PrototypePollutionPlugin from "./plugins/signature/prototype-pollution.ts";
+import SsrfPlugin from "./plugins/signature/ssrf.ts";
+import type { SsrfPluginOptions } from "./plugins/signature/ssrf.ts";
+import InfoDisclosurePlugin from "./plugins/signature/info-disclosure.ts";
+import type { InfoDisclosurePluginOptions } from "./plugins/signature/info-disclosure.ts";
+import ZipSlipPlugin from "./plugins/signature/zip-slip.ts";
+import type { ZipSlipPluginOptions } from "./plugins/signature/zip-slip.ts";
+import HppPlugin from "./plugins/signature/hpp.ts";
+import type { HppPluginOptions } from "./plugins/signature/hpp.ts";
 import JsonStoragePlugin, { type JsonStorageConfig } from "./plugins/storage/json-storage.ts";
 import ConsoleReporterPlugin from "./plugins/reporter/console-reporter.ts";
 import JsonReporterPlugin, { type JsonReporterConfig } from "./plugins/reporter/json-reporter.ts";
@@ -82,6 +90,10 @@ const builtinPlugins: PluginFactory[] = [
   () => new CrlfInjectionPlugin(),
   () => new SsiInjectionPlugin(),
   () => new PrototypePollutionPlugin(),
+  (opts) => new SsrfPlugin(opts as SsrfPluginOptions),
+  (opts) => new InfoDisclosurePlugin(opts as InfoDisclosurePluginOptions),
+  (opts) => new ZipSlipPlugin(opts as ZipSlipPluginOptions),
+  (opts) => new HppPlugin(opts as HppPluginOptions),
   (opts) => new JsonStoragePlugin(opts as JsonStorageConfig),
   () => new ConsoleReporterPlugin(),
   (opts) => new JsonReporterPlugin(opts as JsonReporterConfig),
