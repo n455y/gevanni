@@ -134,6 +134,7 @@ Before proceeding to spec generation, confirm all required runtime parameters th
 4. **Store the provided URL** in the spec's `servers` list
 
 Example interaction:
+
 ```
 🌐 Target server base URL needed:
 
@@ -154,6 +155,7 @@ For each token-returning operation (typically `login`, `authenticate`, `signIn`)
 3. **Use the provided values** in the `requestBody.example` field when generating the operation
 
 Example interaction:
+
 ```
 🔐 Credentials needed for scenario generation:
 
@@ -173,6 +175,7 @@ For each field requiring application-specific codes or identifiers:
 3. **Wait for user input** before proceeding
 
 Example interaction:
+
 ```
 📋 Test data needed for scenario generation:
 
@@ -296,10 +299,12 @@ Follow these rules when generating scenarios:
 **⚠️ CRITICAL: Use user-provided values in operation examples:**
 
 When defining operations in the OpenAPI spec, use the **actual values provided by the user in Step 5** for:
+
 - `requestBody.example` fields (credentials, coupon codes, invite codes, etc.)
 - `parameters.example` values (test IDs, specific identifiers, etc.)
 
 **Do NOT invent placeholder values** like:
+
 - ❌ `test@example.com`, `admin@example.com`, `user@example.com`
 - ❌ `password123`, `admin123`, `testpass`
 - ❌ `DISCOUNT20`, `SAVE10`, `PROMO2024`
@@ -378,7 +383,7 @@ x-gevanni-scenarios:
   - id: createUserAndGet
     steps:
       - createUser
-      - getUserById  # ID extracted via $response.body#/id Link
+      - getUserById # ID extracted via $response.body#/id Link
 ```
 
 **OpenAPI Links mechanism:**
@@ -397,24 +402,26 @@ paths:
             getUserById:
               operationId: getUserById
               parameters:
-                id: "$response.body#/id"  # Extract ID from createUser response
+                id: "$response.body#/id" # Extract ID from createUser response
 ```
 
 **Runtime expressions supported:**
+
 - `$response.body#/json/pointer` — Extract from JSON response body
 - `$response.header#/header-name` — Extract from response headers
 
 **When to use user-provided static values vs Links:**
 
-| Scenario | Approach | Example |
-|----------|----------|---------|
-| Resource ID returned by create operation | **OpenAPI Link** | `$response.body#/id` in next step |
-| Authentication token from login | **securitySchemes + Link** | `x-gevanni-token: $response.body#/token` |
-| Discount/coupon code to apply | **User-provided value** | Use code from Step 5 in `requestBody.example` |
-| Invitation code to accept invite | **User-provided value** | Use code from Step 5 in `requestBody.example` |
-| Test account ID for multi-tenant testing | **User-provided value** | Use ID from Step 5 in path parameter example |
+| Scenario                                 | Approach                   | Example                                       |
+| ---------------------------------------- | -------------------------- | --------------------------------------------- |
+| Resource ID returned by create operation | **OpenAPI Link**           | `$response.body#/id` in next step             |
+| Authentication token from login          | **securitySchemes + Link** | `x-gevanni-token: $response.body#/token`      |
+| Discount/coupon code to apply            | **User-provided value**    | Use code from Step 5 in `requestBody.example` |
+| Invitation code to accept invite         | **User-provided value**    | Use code from Step 5 in `requestBody.example` |
+| Test account ID for multi-tenant testing | **User-provided value**    | Use ID from Step 5 in path parameter example  |
 
 **Rule of thumb:**
+
 - If the value can be **extracted from a prior response** → Use OpenAPI Links
 - If the value must be **provided externally** (coupon code, invite code, test credentials) → Ask user in Step 5, use provided value in `example`
 
@@ -547,21 +554,23 @@ For every scenario in `x-gevanni-scenarios`:
 
 For each step in a multi-step scenario, verify all `required` parameters can be resolved at runtime. A parameter is "satisfied" if at least one of the following holds:
 
-| Source | How it resolves |
-|--------|----------------|
-| **OpenAPI Link from prior step** | A prior step's response defines a Link targeting this operationId with the parameter mapped |
-| **Runtime expression** | The parameter's `example` or `schema.example` uses `$response.body#/...` or `$response.header#/...` referencing a prior step |
-| **Static example value** | The parameter or its schema has an `example` in the operation definition |
-| **Auth injection** | The parameter is an auth header/token injected by gevanni via `securitySchemes` (`x-gevanni-token`) |
-| **Optional parameter** | The parameter is not listed in the operation's `required` array |
+| Source                           | How it resolves                                                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAPI Link from prior step** | A prior step's response defines a Link targeting this operationId with the parameter mapped                                  |
+| **Runtime expression**           | The parameter's `example` or `schema.example` uses `$response.body#/...` or `$response.header#/...` referencing a prior step |
+| **Static example value**         | The parameter or its schema has an `example` in the operation definition                                                     |
+| **Auth injection**               | The parameter is an auth header/token injected by gevanni via `securitySchemes` (`x-gevanni-token`)                          |
+| **Optional parameter**           | The parameter is not listed in the operation's `required` array                                                              |
 
 For each **unsatisfied required parameter**, emit a **warning**:
+
 ```
 ⚠️ Scenario `{scenarioId}` step `{stepOpId}`: required parameter `{paramName}` (in: {paramIn}) has no resolvable source.
    → Add an example value, a Link from a prior step, or mark it optional if not needed.
 ```
 
 When checking prior-step Links, resolve runtime expressions against the prior operation's response schema. If a Link maps `$response.body#/authentication/token` but the prior operation's response schema has no `authentication.token` path, emit a **warning**:
+
 ```
 ⚠️ Scenario `{scenarioId}`: Link from `{sourceOpId}` → `{targetOpId}` references `$response.body#/authentication/token`, but `{sourceOpId}` response schema has no such field.
 ```
@@ -587,12 +596,14 @@ For every scenario whose steps include `security: bearerAuth` operations:
 3. The scenario's `steps` array must list the token step first: `[tokenStep, protectedStep, ...]`
 
 Emit an **error** if a protected step has no preceding token step:
+
 ```
 ❌ Scenario `{scenarioId}`: step `{protectedOpId}` requires bearerAuth but no token-returning step precedes it.
    → Add a login/authenticate step before the protected operation.
 ```
 
 Emit a **warning** if the token step exists but the scheme is missing `x-gevanni-token`:
+
 ```
 ⚠️ Scenario `{scenarioId}`: `{tokenOpId}` provides auth but `components/securitySchemes/bearerAuth` is missing `x-gevanni-token`.
    → Add `x-gevanni-token: $response.body#/path.to.token` to the security scheme.
@@ -630,19 +641,23 @@ If errors exist, the generated spec must be fixed before use. If only warnings e
 After the static checks pass, verify that scenarios can actually navigate by sending real HTTP requests through the scenario plugin's execution logic. This catches issues that static analysis cannot: DNS failures, TLS errors, routing mismatches, authentication redirects, and unexpected response shapes that break Link resolution.
 
 **Prerequisites:**
+
 - The target server must be running and reachable at the base URL from Step 5
 - If the server is not running, skip this section and emit a note: "⚠️ Target server not available — skipping runtime transition verification."
 
 **Procedure:**
 
 1. Run the validation command against the generated spec from the dast skill directory:
+
    ```bash
    cd <path-to-dast-skill>
    npm run gevanni -- validate-scenarios -s openapi:<project-root>/.gevanni/scenarios/openapi.yaml
    ```
+
    The command reads the target server URL from the spec's `servers[0].url`.
    If the scanner uses an upstream proxy (e.g. `proxy:http` plugin with `upstream` option),
    pass `--upstream` or set the `HTTP_PROXY` environment variable:
+
    ```bash
    npm run gevanni -- validate-scenarios -s openapi:<spec> --upstream http://127.0.0.1:8080
    ```
@@ -666,6 +681,7 @@ After the static checks pass, verify that scenarios can actually navigate by sen
    - **4xx/5xx status codes are NOT failures**: a 401 without auth or a 422 with a test value is normal during validation — only connection-level failures (ECONNREFUSED, timeout, DNS) count as transition errors
 
 5. **Example output:**
+
    ```
    $ npm run gevanni -- validate-scenarios -s openapi:.gevanni/scenarios/openapi.yaml
 

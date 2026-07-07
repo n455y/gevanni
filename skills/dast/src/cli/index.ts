@@ -299,33 +299,35 @@ program
     [] as string[],
   )
   .option("--upstream <url>", "Upstream proxy URL (e.g. http://127.0.0.1:8080)")
-  .action(async (opts: {
-    config?: string;
-    scenario: string[];
-    upstream?: string;
-  }) => {
-    const { registry } = await bootstrap(opts.config);
-    if (opts.scenario.length === 0) {
-      console.error(
-        "No scenario sources specified. Use --scenario/-s (e.g. -s openapi:./spec.yaml)",
-      );
-      process.exit(1);
-    }
-    try {
-      const upstream = opts.upstream ?? process.env.HTTP_PROXY;
-      const { allPassed } = await validateScenarios(
-        opts.scenario,
-        registry,
-        upstream,
-      );
-      if (!allPassed) process.exit(1);
-    } catch (err) {
-      console.error(
-        `❌ Validation failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-      process.exit(1);
-    }
-  });
+  .action(
+    async (opts: {
+      config?: string;
+      scenario: string[];
+      upstream?: string;
+    }) => {
+      const { registry } = await bootstrap(opts.config);
+      if (opts.scenario.length === 0) {
+        console.error(
+          "No scenario sources specified. Use --scenario/-s (e.g. -s openapi:./spec.yaml)",
+        );
+        process.exit(1);
+      }
+      try {
+        const upstream = opts.upstream ?? process.env.HTTP_PROXY;
+        const { allPassed } = await validateScenarios(
+          opts.scenario,
+          registry,
+          upstream,
+        );
+        if (!allPassed) process.exit(1);
+      } catch (err) {
+        console.error(
+          `❌ Validation failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        process.exit(1);
+      }
+    },
+  );
 
 // Only parse argv when run directly (not when imported, e.g. in tests)
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

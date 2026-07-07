@@ -24,7 +24,9 @@ function printValidationReport(results: ScenarioValidationResult[]): void {
         console.log(`  ✅ ${step.description} → ${step.statusCode}`);
         for (const t of step.transitions) {
           if (t.resolved) {
-            console.log(`     🔗 Link → ${t.description}: ${t.resolvedValue?.substring(0, 50)}`);
+            console.log(
+              `     🔗 Link → ${t.description}: ${t.resolvedValue?.substring(0, 50)}`,
+            );
           } else {
             console.log(`     ⚠️  Link → ${t.description}: ${t.error}`);
           }
@@ -38,15 +40,22 @@ function printValidationReport(results: ScenarioValidationResult[]): void {
 
   // --- Summary ---
   const totalSteps = results.reduce((sum, r) => sum + r.steps.length, 0);
-  const passedSteps = results.reduce((sum, r) => sum + r.steps.filter((s) => s.success).length, 0);
+  const passedSteps = results.reduce(
+    (sum, r) => sum + r.steps.filter((s) => s.success).length,
+    0,
+  );
   const totalTransitions = results.reduce(
-    (sum, r) => sum + r.steps.reduce((s, step) => s + step.transitions.length, 0),
+    (sum, r) =>
+      sum + r.steps.reduce((s, step) => s + step.transitions.length, 0),
     0,
   );
   const resolvedTransitions = results.reduce(
     (sum, r) =>
       sum +
-      r.steps.reduce((s, step) => s + step.transitions.filter((t) => t.resolved).length, 0),
+      r.steps.reduce(
+        (s, step) => s + step.transitions.filter((t) => t.resolved).length,
+        0,
+      ),
     0,
   );
   const allPassed = results.every((r) => r.allValid);
@@ -54,13 +63,17 @@ function printValidationReport(results: ScenarioValidationResult[]): void {
   console.log("═══════════════════════════════════════");
   console.log("🔗 Scenario transition integrity:");
   console.log(`   • Scenarios checked:     ${results.length}`);
-  console.log(`   • Multi-step scenarios:  ${results.filter((r) => r.steps.length > 1).length}`);
+  console.log(
+    `   • Multi-step scenarios:  ${results.filter((r) => r.steps.length > 1).length}`,
+  );
   console.log(`   • Total step executions: ${totalSteps}`);
   console.log(`   • ✅ Successful steps:   ${passedSteps}`);
   console.log(`   • ❌ Failed steps:       ${totalSteps - passedSteps}`);
   console.log(`   • 🔗 Transitions checked: ${totalTransitions}`);
   console.log(`   • ✅ Resolved transitions: ${resolvedTransitions}`);
-  console.log(`   • ⚠️  Unresolved transitions: ${totalTransitions - resolvedTransitions}`);
+  console.log(
+    `   • ⚠️  Unresolved transitions: ${totalTransitions - resolvedTransitions}`,
+  );
   console.log("═══════════════════════════════════════");
 
   if (allPassed) {
@@ -105,7 +118,7 @@ export async function validateScenarios(
     if (!plugin) {
       throw new Error(
         `No scenario plugin found for type "${scenario.type}". ` +
-        `Expected a plugin named "${pluginName}".`,
+          `Expected a plugin named "${pluginName}".`,
       );
     }
     if (!plugin.validateScenario) {
