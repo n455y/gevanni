@@ -2,10 +2,14 @@
 id: P75
 name: InternalTransportEncryption
 refs: ASVS V9.1.x / WSTG-CRYP-03 / CS: Transport Layer Protection
-requires: []
 ---
 
 # P75 — InternalTransportEncryption
+
+## Preconditions
+
+The code communicates with backend services.
+
 
 ## Overview
 East-west traffic — between the application and its database, cache, message broker, object store, or peer microservices — is frequently left in plaintext under the assumption that "the internal network is trusted." This assumption breaks down the moment an attacker reaches the VPC (compromised pod, SSRF, misconfigured security group, malicious insider, or a co-tenant in a shared subnet) and can sniff or tamper with credentials, PII, and tokens flowing over the wire. The root cause is almost always a connection string or client configuration that omits TLS/mTLS, or an HTTP-based internal API with no service mesh sidecar enforcing encryption. Even ASVS V9 treats internal links as in scope: all hops carrying sensitive data must be encrypted regardless of network topology.

@@ -2,10 +2,14 @@
 id: P48
 name: ReDoS
 refs: ASVS V5.3.x / WSTG-INPV-08 / CS: Regular Expression Denial of Service
-requires: [backend]
 ---
 
 # P48 — ReDoS
+
+## Preconditions
+
+The code evaluates regular expressions.
+
 
 ## Overview
 Regular Expression Denial of Service (ReDoS) is a denial-of-service vector in which a crafted input forces a regex engine into **catastrophic backtracking** — exponential or polynomial time relative to input length. The root cause is a "evil pattern": a regex containing overlapping quantifiers (e.g. `(a+)+`, `(a*)*`) or nested quantifiers with ambiguous alternatives (`(a|a)*`, `(\d|\w)+`) where the engine cannot decide greedily how to partition a string and ends up exploring an exponential number of paths. Most production regex engines (PCRE, JavaScript V8/SpiderMonkey, Python `re`, Java `java.util.regex`, Ruby Oniguruma, Go `regexp` RE2-derived, PHP PCRE) are backtracking engines — and all but Go's are vulnerable. A single 28-character malicious input can hang a worker thread for minutes or hours, draining CPU and exhausting the event loop / thread pool until the service is unavailable.

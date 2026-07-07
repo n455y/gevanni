@@ -2,10 +2,14 @@
 id: P107
 name: AdminInterfaceExposure
 refs: ASVS V14.x / WSTG-CONF-05, WSTG-CONF-11 / CS: Administration Cheat Sheet
-requires: [backend]
 ---
 
 # P107 — AdminInterfaceExposure
+
+## Preconditions
+
+The code has administrative functionality.
+
 
 ## Overview
 Administrative and operational interfaces — admin consoles, management APIs, framework diagnostic endpoints (Spring Boot Actuator, Django debug toolbar, ASP.NET diagnostics), database web consoles (H2, phpMyAdmin, Redis Commander), and feature-flag/queue dashboards — are the highest-value targets in any application. When they are reachable from the public network, behind weak or default credentials, or without MFA, an attacker can convert one exposed endpoint into full system compromise: environment/secret disclosure, RCE via shutdown or refresh endpoints, account takeover via direct user management. The root cause is almost always **default-open exposure plus missing network isolation**: frameworks ship management endpoints enabled for developer convenience, and they are never gated down before deployment.

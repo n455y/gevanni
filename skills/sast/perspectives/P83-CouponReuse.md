@@ -2,10 +2,14 @@
 id: P83
 name: CouponReuse
 refs: ASVS V11.x / WSTG-BUSL-03, WSTG-BUSL-04 / CS: REST Security
-requires: [backend]
 ---
 
 # P83 — CouponReuse
+
+## Preconditions
+
+The code applies client-supplied codes that affect transactions.
+
 
 ## Overview
 Coupon / promotion / referral-code abuse is a business-logic flaw where the server validates only whether a code is *valid* but fails to enforce *who* may use it, *how many times*, *within what window*, or *against what minimum spend*. Unlike injection or XSS there is no malformed payload — the attacker simply replays a legitimate code in a way the developer never intended (infinite reuse, stacking, application to an empty cart, race-condition claiming). The root cause is missing server-side state: redemption counts, per-user bindings, expiry, and minimum-cart guards are checked partially or not at all, and the redemption is not made atomic against concurrent requests.

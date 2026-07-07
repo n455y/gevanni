@@ -2,10 +2,14 @@
 id: P5
 name: SecureDefaults
 refs: ASVS V1.5.x / V14.x / WSTG-CONF-02 / CS: Architecture Cheat Sheet
-requires: []
 ---
 
 # P5 — SecureDefaults
+
+## Preconditions
+
+The code has configurable settings.
+
 
 ## Overview
 Secure defaults (the "secure by default" principle, ASVS V1.5) means every newly created user, object, session, or configuration starts in its most restrictive state and privileges must be **opt-in, not opt-out**. The root cause of related breaches is almost always a permissive default that an operator or user was expected to tighten but never did: a fresh account ships as `admin`, a new document is world-readable, cookies ship without `Secure`, or CORS ships as `origin:'*'`. Defaults are sticky — once a thousand users have been provisioned the wrong way, the fix becomes a migration rather than a config change. The defensive goal is "fail closed": if a setting is forgotten, the worst outcome is a broken feature, not a compromise.

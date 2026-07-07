@@ -2,10 +2,14 @@
 id: P60
 name: SensitiveDataLogging
 refs: ASVS V7.1.x, V8.3.x / WSTG-INFO-02 / CS: Logging
-requires: []
 ---
 
 # P60 — SensitiveDataLogging
+
+## Preconditions
+
+The code writes logs.
+
 
 ## Overview
 Sensitive-data logging occurs when secrets or regulated data — passwords, API keys, bearer tokens, session cookies, PII, payment card numbers, government IDs, biometric data — are written to application logs, error reports, audit trails, or crash dumps **in plaintext or with insufficient masking**. Unlike a direct exfiltration attack, this is a self-inflicted disclosure: the application itself persists the secret to infrastructure that is often broadly readable (log aggregators, SIEM, object storage, APM traces) and retained far longer than the original transaction. The root cause is almost always dumping a whole request object (`req.body`, `req.headers`, an exception with `.config`/`.request` attached) instead of an allow-listed subset, or a logger that serializes full objects by default. Because log systems rarely encrypt at rest with the same rigor as the primary datastore, a single log line can become a compliance breach (PCI DSS, GDPR) and a credential-leak vector.

@@ -2,10 +2,14 @@
 id: P86
 name: UploadValidation
 refs: ASVS V12.4.x / WSTG-INPV-11, WSTG-ATHZ-04 / CS: File Upload, Protect File Upload Against Vulnerabilities
-requires: [backend, file-upload]
 ---
 
 # P86 — UploadValidation
+
+## Preconditions
+
+The code handles file uploads.
+
 
 ## Overview
 Insecure file upload lets an attacker deliver a malicious payload onto the server under a name and location the application will later store, serve, or execute. The root cause is almost always **trusting client-supplied metadata** — original filename, declared `Content-Type`, or an `accept` attribute — instead of independently verifying the actual bytes. The failure modes compound: a web shell (`.php`, `.jsp`, `.aspx`) stored under the web root yields remote code execution; an SVG or HTML file served with the wrong `Content-Type` yields stored XSS; an oversized or pathological ("decompression bomb" / "pixel bomb") upload yields denial of service. Extension block-lists are routinely bypassed (`.php5`, `.phtml`, `.svg` with embedded script, double extensions `file.php.png`, null bytes in legacy stacks), so defense must combine **extension allow-listing, content-type sniffing against magic bytes, size capping, server-side re-encoding, and storage outside the web root with a non-executable, random name**.

@@ -2,10 +2,14 @@
 id: P13
 name: PasswordReset
 refs: ASVS V2.5.x / WSTG-ATHN-09, WSTG-ATHN-10 / CS: Forgot Password, Credential Stuffing Prevention
-requires: [backend]
 ---
 
 # P13 — Password Reset
+
+## Preconditions
+
+The code handles password reset.
+
 
 ## Overview
 Password reset (and "forgot password") flows are a primary vector for account takeover because they must bootstrap authentication from an unauthenticated state using only an out-of-band channel (usually email). The design is full of footguns: the reset token must be **cryptographically random and unguessable**, short-lived, single-use, and bound to a single account; the endpoint must not **enumerate** which addresses are registered; and a successful reset must **invalidate all existing sessions** for the user. The root cause of most reset flaws is using a weak PRNG (`Math.random`, timestamps, sequential IDs, truncated hashes) to mint the token, or leaking user existence through differential responses. A predictable or reusable token is equivalent to a credential.

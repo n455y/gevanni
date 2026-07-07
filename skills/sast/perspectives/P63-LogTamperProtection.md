@@ -2,10 +2,14 @@
 id: P63
 name: LogTamperProtection
 refs: ASVS V7.1.x / WSTG-ATHZ-06, WSTG-ATHN-01 / CS: Logging
-requires: []
 ---
 
 # P63 — Log Tamper Protection
+
+## Preconditions
+
+The code writes logs.
+
 
 ## Overview
 Audit and security logs are the primary forensic record after a breach — they establish *who* did *what* and *when*. Log tamper protection addresses the threat that an attacker (or a compromised application account) can rewrite, truncate, or delete those records to cover their tracks, defeating detection, incident response, and compliance controls (PCI DSS, SOX, HIPAA, ISO 27001). The root cause is almost always operational: logs are stored on the **same host and under the same (or higher) privileges** as the application, written via overwrite-capable APIs, or never replicated off the host. Per ASVS V7.1.x, logs must be written to a destination the application cannot rewrite — append-only files under a separate low-privilege account, a remote SIEM/log management service streamed over a one-way or network-restricted channel, or WORM/object-locked storage. If the application process can edit its own audit trail, integrity is lost.

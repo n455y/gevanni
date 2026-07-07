@@ -2,10 +2,14 @@
 id: P88
 name: FileAccessTraversal
 refs: ASVS V12.1.x, V12.3.x / WSTG-INPV-11, WSTG-ATHZ-01 / CS: Injection Prevention, File Upload
-requires: [backend, file-read]
 ---
 
 # P88 — FileAccessTraversal
+
+## Preconditions
+
+The code resolves user-supplied input to locate resources.
+
 
 ## Overview
 Path traversal (directory traversal) occurs when user-controlled input — a filename, path fragment, document ID, or "return URL" — is concatenated into a server-side filesystem path **without normalization and boundary checks**, allowing `../` sequences (or absolute paths, encoded variants, and symlinks) to escape the intended base directory. The flaw is most acute in file-delivery, download, include, export, and thumbnail features that resolve a path from the request rather than from a server-side mapping. The root cause is always the same: the application trusts the path component of user input and resolves it directly against a root with `path.join`/`os.path.join`/string concatenation, never confirming the *resolved* result stays within the trusted root. A successful traversal reads (or, with write semantics, overwrites/deletes) arbitrary files: `/etc/passwd`, source code, secrets, configuration, and sometimes achieves RCE via log poisoning, LFI of uploaded content, or inclusion of attacker-controlled files.

@@ -2,10 +2,14 @@
 id: P91
 name: TempFileProtection
 refs: ASVS V12.3.x, V12.4.x / WSTG-CONF-05, WSTG-ATHN-04 / CS: File Upload, Insecure Direct Object Reference Prevention
-requires: [backend, file-upload]
 ---
 
 # P91 — TempFileProtection
+
+## Preconditions
+
+The code creates or uses temporary files.
+
 
 ## Overview
 Temporary files are scratch data written to disk during processing — uploads buffered to `/tmp`, exports rendered before streaming, intermediate parsing artifacts, retry/lock files. The risks are not from the data existing, but from how the path, permissions, and lifecycle are handled. A **predictable name** lets a local attacker pre-create or symlink the path (TOCTOU / symlink race) to overwrite an arbitrary file or read what the app writes next. Default open modes create **world-readable** files that leak sensitive content to any local user. And a **forgotten cleanup** leaves secrets, PII, or parsed input sitting on disk long after the request ends. The root cause is almost always using the OS default temp directory with a guessed filename instead of the language's secure-by-default API (`mkdtemp`, `O_TMPFILE`, `tempfile.mkstemp`).

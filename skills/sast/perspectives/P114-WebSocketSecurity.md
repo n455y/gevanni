@@ -2,10 +2,14 @@
 id: P114
 name: WebSocketSecurity
 refs: ASVS V13.x / WSTG-CLNT / CS: WebSocket Security
-requires: [backend, websocket]
 ---
 
 # P114 — WebSocketSecurity
+
+## Preconditions
+
+The code handles WebSocket connections.
+
 
 ## Overview
 WebSockets upgrade a single HTTP request into a persistent bidirectional TCP channel that bypasses most of the browser's normal request defenses — the Same-Origin Policy does not constrain a WebSocket's *server* endpoint, standard CSRF tokens are absent from frames, and once the handshake succeeds the connection stays open with whatever privileges the upgrade was granted. Two root-cause classes dominate: (1) **cross-site WebSocket hijacking (CSWSH)**, where the server fails to validate the `Origin` header, allowing any malicious page to open an authenticated socket using the victim's implicit credentials (cookies, HTTP auth); and (2) **authorization modeled only at the handshake**, where every subsequent frame is trusted as the authenticated user even though the protocol carries no per-message re-authentication and messages routinely target other users' resources (DMs, rooms, document IDs). Add `ws://` plaintext, missing frame size/rate limits, and secrets shipped over the wire, and the channel becomes a durable backdoor into the application.

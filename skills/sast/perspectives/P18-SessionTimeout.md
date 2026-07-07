@@ -2,10 +2,14 @@
 id: P18
 name: SessionTimeout
 refs: ASVS V3.3.x / WSTG-SESS-07 / CS: Session Management, Transaction Authorization
-requires: [backend]
 ---
 
 # P18 — SessionTimeout
+
+## Preconditions
+
+The code manages sessions.
+
 
 ## Overview
 Session timeout is the controlled expiration of an authenticated session after a period of inactivity (idle/absolute) or a hard maximum lifetime. When it is absent, set too long, or silently refreshed on every request without bound, a stolen or abandoned session token remains valid indefinitely — turning a one-time token leak (XSS, log entry, shared device, shoulder-surfing) into persistent account access. The root cause is usually a missing/explicitly-disabled `expiresIn` / `exp` / `maxAge`, an over-generous sliding window with no absolute cap, or a "remember me" path that issues a long-lived primary token instead of a separate low-privilege refresh token.

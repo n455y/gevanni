@@ -2,10 +2,14 @@
 id: P4
 name: DependencyVerification
 refs: ASVS V10.x / WSTG-INFO-08 / CS: Dependency Management, Third Party JS
-requires: []
 ---
 
 # P4 — Dependency Verification
+
+## Preconditions
+
+The code depends on third-party libraries.
+
 
 ## Overview
 Modern applications assemble the majority of their code from third-party dependencies — npm packages, PyPI modules, Maven artifacts, Go modules, RubyGems, Composer libraries, and CDN-hosted scripts. Each transitive dependency is an implicit grant of code execution inside the application's trust boundary. Dependency-verification failures fall into three root causes: **(1) unfixed known vulnerabilities** — a pinned (or floating) version carries an unpatched CVE; **(2) supply-chain compromise** — a typosquatted, hijacked, or maliciously-updated package is pulled in by a loose version range or a missing lockfile; and **(3) unverified integrity** — scripts/CDN assets are fetched without a checksum, signature, or Subresource Integrity (SRI) hash, so a MITM or compromised registry can swap the artifact. The category (OWASP A06:2021 — Vulnerable and Outdated Components, plus A08:2021 — Software and Data Integrity Failures) is consistently in the top causes of real-world breaches.

@@ -2,10 +2,14 @@
 id: P97
 name: GraphQLComplexity
 refs: ASVS V13.1.x / WSTG-INPV-13 / CS: GraphQL Cheat Sheet
-requires: [backend, graphql]
 ---
 
 # P97 — GraphQLComplexity
+
+## Preconditions
+
+The code exposes a GraphQL API.
+
 
 ## Overview
 GraphQL APIs let the client shape the query: which fields, how deep, how many parallel fragments. This power is a denial-of-service vector when the server applies no ceiling on query depth, complexity, or cost. The three classic exploits are **deeply nested recursive queries** (a type that references itself can recurse a schema 100 levels deep), **alias/fragment batch amplification** (request the same expensive field 10,000 times via aliases in a single document), and **unbounded list fan-out** (a `users(first: 1000)` node each returning a `posts(first: 1000)` node → 1,000,000 resolvers). Root cause is always the same: an introspection-enabled endpoint accepting arbitrary client queries with no static-analysis gate (depth limit, cost analysis, persisted-query allowlist) before execution.

@@ -2,10 +2,14 @@
 id: P104
 name: CORSOverPermissive
 refs: ASVS V14.x / WSTG-CLNT-07 / CS: Cross Origin Resource Sharing
-requires: [backend]
 ---
 
 # P104 — CORSOverPermissive
+
+## Preconditions
+
+The code serves HTTP responses.
+
 
 ## Overview
 Cross-Origin Resource Sharing (CORS) is a browser-enforced relaxation of the Same-Origin Policy (SOP) that lets a server declare which foreign origins may read its responses. A misconfigured policy — reflecting any request `Origin` header back, sending `Access-Control-Allow-Origin: *` together with `Access-Control-Allow-Credentials: true`, or whitelisting overly broad wildcard patterns — effectively abandons SOP for authenticated endpoints. The root cause is almost always developer intent to "make CORS work" without realizing that credentials (cookies, `Authorization` headers, TLS client certs) ride along automatically with cross-site `fetch`/XHR when the browser sees a permissive response. The result: any malicious website can issue authenticated requests to the victim API and read the responses, turning a same-site CSRF-like capability into full cross-origin data exfiltration.

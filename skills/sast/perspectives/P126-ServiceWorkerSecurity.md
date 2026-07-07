@@ -2,10 +2,14 @@
 id: P126
 name: ServiceWorkerSecurity
 refs: ASVS V3.x / WSTG-CLNT / CS: Service Worker, HTML5
-requires: [frontend]
 ---
 
 # P126 — ServiceWorkerSecurity
+
+## Preconditions
+
+The code registers a Service Worker.
+
 
 ## Overview
 A Service Worker (SW) is a script the browser registers against an origin and runs in the background, able to intercept **all** network requests in its scope via a `fetch` event handler. Because a SW persists across page loads, runs outside the page lifecycle, and sits transparently between the page and the network, any compromise becomes long-lived: a poisoned SW can rewrite or cache responses indefinitely, observe authenticated traffic passing through its handler, and survive a normal page refresh. The root risks are (1) lax scope so a SW registered under a user-controllable or shared path can hijack sibling paths, (2) serving the SW script itself over insecure transport or from a path the attacker can write to, (3) caching of authenticated/sensitive responses that then leak to other users or to disk, and (4) unvalidated `postMessage` channels that let any same-origin (or spoofable) context drive privileged logic inside the worker.

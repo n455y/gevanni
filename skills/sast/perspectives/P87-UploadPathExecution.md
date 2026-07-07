@@ -2,10 +2,14 @@
 id: P87
 name: UploadPathExecution
 refs: ASVS V12.x / WSTG-CONF-04, WSTG-INPV-11 / CS: File Upload, Unrestricted File Upload
-requires: [backend, file-upload]
 ---
 
 # P87 — Upload Path Execution
+
+## Preconditions
+
+The code handles file uploads.
+
 
 ## Overview
 When uploaded files are stored inside the web root (or any directory the web server interprets or executes), and the file name or extension is attacker-controlled, the upload becomes an arbitrary code execution vector: the attacker uploads a script (`shell.php`, `evil.jsp`, `cmd.aspx`) and simply requests its URL to execute it server-side. Even without code execution, serving attacker-controlled bytes from the application's own origin lets the attacker host phishing pages or mount same-origin XSS. The root cause is storing user content in a location that is both web-accessible and executable, instead of isolating uploads into non-executing storage with random names.

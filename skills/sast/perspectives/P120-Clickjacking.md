@@ -2,10 +2,14 @@
 id: P120
 name: Clickjacking
 refs: ASVS V14.x / WSTG-CLNT / CS: Clickjacking Defense
-requires: [frontend]
 ---
 
 # P120 — Clickjacking
+
+## Preconditions
+
+The code renders UI that can be framed.
+
 
 ## Overview
 Clickjacking (UI redressing) occurs when an application can be embedded in a `<frame>`, `<iframe>`, or `<object>` by an attacker-controlled page, which then layers invisible or decoy UI on top to trick an authenticated victim into clicking or typing on the framed application's sensitive buttons/forms (delete, transfer, grant permissions, "like"). The root cause is not an input/output bug but a missing or permissive framing directive: the response carries no `X-Frame-Options` (XFO) header and no `Content-Security-Policy: frame-ancestors` directive (or sets them to permissive values like `ALLOW-FROM *`). Because the victim is interacting with their own legitimate session cookies, the action is authorized and bypasses most CSRF and XSS defenses. Mobile webviews and legacy browsers that ignore CSP compound the issue.

@@ -2,10 +2,14 @@
 id: P96
 name: GraphQLIntrospection
 refs: ASVS V13.x / WSTG-INPV-13 / CS: GraphQL Cheat Sheet, GraphQL (Apollo)
-requires: [backend, graphql]
 ---
 
 # P96 — GraphQLIntrospection
+
+## Preconditions
+
+The code exposes a GraphQL API.
+
 
 ## Overview
 GraphQL introspection is a built-in query mechanism (`__schema`, `__type`) that exposes the entire API schema — types, fields, arguments, mutations, subscriptions, and deprecation hints — to any client that asks. In production this is an information-disclosure goldmine: attackers reconstruct the full attack surface without source access, uncover hidden admin mutations, and target deprecated but still-live fields. The same class of issue covers interactive IDEs (GraphiQL, Apollo Sandbox, GraphQL Playground) left enabled in prod, which combine introspection with a query console. Root cause is always a configuration default left untouched — Apollo, graphql-yoga, and most servers enable introspection by default, so shipping without an explicit `NODE_ENV==='production'` guard leaks the schema.

@@ -2,10 +2,14 @@
 id: P46
 name: OpenRedirect
 refs: ASVS V5.3.x / WSTG-INPV-12 / CS: Unvalidated Redirects and Forwards
-requires: [backend, redirect]
 ---
 
 # P46 — Open Redirect
+
+## Preconditions
+
+The code sends HTTP redirects.
+
 
 ## Overview
 An open redirect occurs when a server-side redirect target (`Location` header, redirect response, server-side or client-side forward) is derived from **unvalidated request input** — a query parameter (`next`, `url`, `redirect_uri`, `returnTo`, `callback`, `to`), a form field, or a header — and the application issues the redirect without confirming the destination is an allow-listed or same-origin target. Unlike injection, no server data is directly corrupted; the value of the flaw is its use as a **trust amplifier**. Because the redirect originates from the legitimate, trusted domain, users (and downstream security controls) are far more likely to follow it, making the vulnerability a vehicle for phishing, OAuth token theft, SSRF chaining, and bypass of URL-based allow-lists. The root cause is uniformly the same: an untrusted string reaches a redirect sink through a code path that performs no origin/host validation, or that performs a validation easily defeated by parser confusion (protocol-relative URLs, `@`, percent-encoding, whitespace, or Unicode lookalikes).

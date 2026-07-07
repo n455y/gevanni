@@ -2,10 +2,14 @@
 id: P85
 name: NonRepudiation
 refs: ASVS V11.2.x / WSTG-BUSL-05 / CS: Transaction Authorization, Logging
-requires: [backend]
 ---
 
 # P85 — NonRepudiation
+
+## Preconditions
+
+The code records user actions.
+
 
 ## Overview
 Non-repudiation is the property that the originator of a high-value action — a payment, an asset transfer, a contract or privilege change — cannot later credibly deny having performed it. It fails when the audit trail for such transactions is absent, incomplete, or forgeable: no record of *who* acted, *when*, on *what* subject, with *what result*, no tamper protection (signature, hash chain, append-only store), and no idempotency control so a replay can silently double-spend. The root cause is treating a state-mutating business operation like any other CRUD write, trusting client-supplied timestamps/identifiers, and recording only success/failure rather than a cryptographically attributable event. Without an immutable, actor-bound ledger, dispute resolution and regulator inquiries collapse into "he said / she said."

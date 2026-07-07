@@ -2,10 +2,14 @@
 id: P3
 name: MinimalExposure
 refs: ASVS V1.2.x, V1.14.x / WSTG-CONF-05 / CS: Architecture Cheat Sheet
-requires: []
 ---
 
 # P3 — MinimalExposure
+
+## Preconditions
+
+The code exposes endpoints or interfaces.
+
 
 ## Overview
 Minimal exposure is an architectural principle: every route, port, and surface that an application exposes beyond its intended trust boundary increases the attack surface. Admin consoles, debug toolbars, health/metrics endpoints, internal/management APIs, and gRPC/admin ports are routinely mounted on the same listener as public traffic — or registered unconditionally regardless of environment — and then forgotten. The root cause is not a single missing check but a configuration drift: scaffolding and development aids ship to production, the default listen address is `0.0.0.0`, and "temporary" diagnostic routes are never gated behind authentication, authorization, or network segmentation. The result is a large footprint of low-effort, high-impact findings (unauthenticated admin panels, open `/actuator`, exposed Swagger/GraphQL introspection) that violate least privilege and least exposure at the architecture layer.

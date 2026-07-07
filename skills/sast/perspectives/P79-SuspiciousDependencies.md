@@ -2,10 +2,14 @@
 id: P79
 name: SuspiciousDependencies
 refs: ASVS V10.1.x, V14.1.x / WSTG-INFO-08 / CS: Dependency Management, Third Party JS Management
-requires: []
 ---
 
 # P79 — SuspiciousDependencies
+
+## Preconditions
+
+The code depends on third-party libraries.
+
 
 ## Overview
 Supply-chain compromise is now one of the highest-impact risks to a codebase: the application's own code can be flawless, yet a single malicious or vulnerable dependency can introduce RCE, secret theft, or backdoors that bypass every perimeter control. The issue is two-fold — **malicious code** (packages authored or hijacked to run hostile `postinstall`/`preinstall` hooks, typosquats, or dependency-confusion implants) and **vulnerable code** (legitimate but outdated libraries carrying known CVEs). The root cause is almost always a failure of dependency governance: unpinned or floating version ranges, missing or ignored lockfiles, no integrity verification, and CI that installs with `npm install` rather than `npm ci` — combined with lifecycle scripts that execute at install time on developer machines and build servers with full network and filesystem access.

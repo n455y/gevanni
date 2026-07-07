@@ -2,10 +2,14 @@
 id: P35
 name: NoSQLi
 refs: ASVS V5.3.x / WSTG-INPV-05 / CS: NoSQL Injection, Query Parameterization
-requires: [backend, db]
 ---
 
 # P35 — NoSQLi
+
+## Preconditions
+
+The code queries a database.
+
 
 ## Overview
 NoSQL Injection (NoSQLi) occurs when user-controlled input is allowed to alter the **structure** of a NoSQL query rather than being treated as a bare value. In document stores such as MongoDB the vulnerability arises because query objects accept rich operator syntax (`$ne`, `$gt`, `$regex`, `$where`, `$in`); a request payload that deserializes into an object — not a string — can therefore inject conditions that bypass authentication, dump arbitrary documents, or trigger server-side JavaScript evaluation. The root cause is always the same: untrusted input reaches a query-construction path that does not coerce it to a primitive and does not restrict which operators may appear. The `$where` operator is an especially severe sub-case, since it evaluates a JavaScript expression on the database server, enabling RCE-adjacent data exfiltration and denial of service.

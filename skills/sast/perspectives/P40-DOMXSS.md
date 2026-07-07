@@ -2,10 +2,14 @@
 id: P40
 name: DOMXSS
 refs: ASVS V5.3.x / WSTG-CLNT-02 / CS: DOM based XSS Prevention
-requires: [frontend]
 ---
 
 # P40 — DOMXSS
+
+## Preconditions
+
+The code manipulates the DOM in a browser.
+
 
 ## Overview
 DOM-based Cross-Site Scripting (XSS) is a purely client-side flaw: untrusted data never touches the server, yet still reaches a dangerous **sink** in the browser. The source is a DOM property that the attacker can influence without the page being re-rendered by the server — `location.hash`, `location.search`, `document.URL`, `document.referrer`, `window.name`, a `postMessage`, `localStorage`/`sessionStorage`, or any value parsed out of `location`. The root cause is the same as other XSS — untrusted data reaches a sink without context-correct handling — but server-side output encoding does **nothing** to stop it, because the payload is injected after the HTML has already been parsed. The exploit also works against pages that are entirely static or cached, so a clean server template is no proof of safety. Single-page applications, hash-routed apps, and any code reading `location`/`postMessage` are prime targets.

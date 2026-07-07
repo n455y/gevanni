@@ -2,10 +2,14 @@
 id: P11
 name: MFA
 refs: ASVS V2.1.x, V2.2.x / WSTG-ATHN-08, WSTG-ATHN-09 / CS: Multifactor Authentication, Forgot Password, Choosing and Using Security Questions
-requires: [backend]
 ---
 
 # P11 — MFA
+
+## Preconditions
+
+The code implements multi-factor authentication.
+
 
 ## Overview
 Multi-Factor Authentication (MFA) is a primary control against credential compromise, yet it is frequently implemented in a way that can be bypassed at the application layer. The core weakness is rarely the second factor itself (TOTP, WebAuthn, SMS) but the **orchestration around it**: the server failing to enforce the second step before issuing a fully privileged session, allowing client-side flags to skip it, leaking the shared secret into a tamperable token, or omitting rate limiting on the verification endpoint. When MFA is bypassable, the attacker needs only the (commonly leaked or phished) password to take over the account, so the entire second factor becomes dead weight. Worse, organizations relying on "MFA enabled" for compliance may not notice the gap until a breach.

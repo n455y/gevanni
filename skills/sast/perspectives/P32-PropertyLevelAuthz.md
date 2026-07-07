@@ -2,10 +2,14 @@
 id: P32
 name: PropertyLevelAuthz
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-03, WSTG-ATHZ-04 / CS: Authorization, Mass Assignment, Insecure Direct Object Reference Prevention
-requires: [backend]
 ---
 
 # P32 — PropertyLevelAuthz
+
+## Preconditions
+
+The code returns data in API responses.
+
 
 ## Overview
 Property-level authorization (also called field-level or attribute-level access control) is the discipline of deciding, **per individual field**, whether the current subject may read or write it. Most applications enforce coarse object-level checks ("can this user view/own this record?") but then blindly serialize the entire entity — leaking `passwordHash`, `role`, `isAdmin`, `tenantId`, `mfaSecret`, internal flags, or another tenant's data. The write side is equally dangerous: binding request input directly onto a model (`Object.assign`, mass updaters) lets a low-privilege user flip `role`, `ownerId`, or `balance`. Root causes are (1) returning raw ORM entities instead of projection DTOs, (2) lack of field allow-lists on input binding, and (3) no per-field authz at the serializer/GraphQL-resolver layer. This is distinct from IDOR (object-level) — here the user is *allowed* to see the object, just not every field on it.

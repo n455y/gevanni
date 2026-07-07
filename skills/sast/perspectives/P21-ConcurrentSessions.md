@@ -2,10 +2,14 @@
 id: P21
 name: ConcurrentSessions
 refs: ASVS V3.3.x / WSTG-SESS-05 / CS: Session Management
-requires: [backend]
 ---
 
 # P21 — ConcurrentSessions
+
+## Preconditions
+
+The code manages user sessions.
+
 
 ## Overview
 Concurrent session control governs how many active sessions a single account may hold at once and how the application reacts when new logins occur. When unbounded, the same credentials can power dozens of simultaneous sessions from disjoint IPs, devices, and geographies — making stolen/leased credentials, account sharing, and session hijacking far harder to detect and contain. The root cause is usually a session store keyed only by session ID with no per-user cap or eviction policy: each login mints a fresh opaque token and the old ones keep working. A robust implementation limits concurrent sessions, surfaces an authenticated "devices / active sessions" list, and lets the user revoke any of them.

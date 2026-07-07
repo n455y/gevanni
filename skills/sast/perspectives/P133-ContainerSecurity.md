@@ -2,10 +2,14 @@
 id: P133
 name: ContainerSecurity
 refs: ASVS V15.x / WSTG-CONF / CS: Docker Security
-requires: []
 ---
 
 # P133 — Container Security
+
+## Preconditions
+
+The code runs in a container.
+
 
 ## Overview
 Container and Infrastructure-as-Code (IaC) misconfigurations turn a hardened application into a trivially compromised one, because they collapse the isolation boundary the runtime is expected to provide. The root cause is almost always defaults: most base images run as root, ship a writable root filesystem, and trust `:latest` tags — while Kubernetes workloads get a permissive `ClusterRole` and no `NetworkPolicy` unless an engineer explicitly opts out. Secrets baked into image layers or environment variables, build contexts that copy `.env`/`.git/credentials`, and `hostPath`/`privileged` mounts widen a single container escape into host takeover and lateral movement across the cluster. Reviewing the Dockerfile, Helm chart, Kustomize manifests, and CI build definition is therefore as load-bearing as reviewing the application code.

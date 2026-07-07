@@ -2,10 +2,14 @@
 id: P2
 name: LayerSeparation
 refs: ASVS V1.x / WSTG-INFO-02 / CS: Architecture Cheat Sheet
-requires: []
 ---
 
 # P2 — LayerSeparation
+
+## Preconditions
+
+The code has internal architecture or layers.
+
 
 ## Overview
 Layer separation is the architectural principle that presentation (router/controller), business logic, and data-access layers must be kept distinct, with input validation and security controls (authentication, authorization, output encoding) applied consistently **at each boundary**. When concerns bleed across layers — a route handler that runs raw SQL, a controller that skips authorization because "the model handles it", or business rules (price/quantity/discount calculations) scattered into client code — security checks become easy to miss on the path of least resistance. The root cause is rarely a single bug; it is an architectural smell where a developer adding a new endpoint can bypass the established control plane by writing one line directly against the database or ORM. Such lapses produce authorization bypasses, injection, and logic flaws that per-layer review would have caught.

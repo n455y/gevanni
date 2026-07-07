@@ -2,10 +2,14 @@
 id: P105
 name: SecurityHeaders
 refs: ASVS V14.5.x / WSTG-CONF-07 / CS: Content Security Policy, HTTP Headers, Clickjacking Defense
-requires: [backend]
 ---
 
 # P105 — SecurityHeaders
+
+## Preconditions
+
+The code serves HTTP responses.
+
 
 ## Overview
 HTTP security response headers are browser-enforced controls that constrain how a rendered response may be used — where scripts can load from, whether the page may be framed, what plugins/may be invoked, and how content types are sniffed. They are the last line of defense when an input-encoding or authorization flaw slips through: a strong Content Security Policy (CSP) turns a reflected XSS into a no-op, `X-Frame-Options`/`frame-ancestors` defeats clickjacking, and `X-Content-Type-Options: nosniff` blocks MIME-confusion attacks. The root cause of missing or weak headers is almost always a **framework default left unchanged, a reverse proxy/CDN that strips them, or a permissive CSP widened with `unsafe-inline`/`unsafe-eval`/wildcards** to "make things work." Headers are only effective if served on every HTML response, including error pages and static assets where applicable.

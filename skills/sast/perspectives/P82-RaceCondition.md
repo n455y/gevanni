@@ -2,10 +2,14 @@
 id: P82
 name: RaceCondition
 refs: ASVS V11.1.x, V4.x / WSTG-BUSL-06, WSTG-ATHZ-06 / CS: Race Conditions, Transaction Authorization
-requires: [backend]
 ---
 
 # P82 — RaceCondition
+
+## Preconditions
+
+The code performs operations on shared mutable state.
+
 
 ## Overview
 A race condition (TOCTOU — time-of-check to time-of-use) occurs when a multi-step operation that should be atomic — read a value, validate a business rule, then mutate state — is instead split across separate non-locked steps, leaving a window in which concurrent requests observe stale state. The root cause is a missing transaction boundary, missing row lock, or missing conditional/atomic update. Classic victims are wallet balances, inventory counts, coupon/redemption limits, rate counters, withdrawal caps, and one-time-use tokens. Because web handlers run in parallel threads/instances, an attacker firing N simultaneous requests can each pass the check before any of them commits the update, yielding double-spending, stock oversell, or repeated application of a single-use action.

@@ -2,10 +2,14 @@
 id: P29
 name: MultiTenantIsolation
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-04 / CS: Multitenancy, Authorization
-requires: [backend]
 ---
 
 # P29 — MultiTenantIsolation
+
+## Preconditions
+
+The code handles data belonging to multiple tenants.
+
 
 ## Overview
 Multi-tenant isolation failures occur when an application that hosts multiple customers, organizations, or workspaces on shared infrastructure fails to enforce a hard boundary between tenant data. A user authenticated for Tenant A can read, modify, or destroy resources belonging to Tenant B. The root cause is almost always a missing or bypassable tenant scoping predicate: a query, ORM call, file lookup, cache key, or background job that trusts a client-supplied `tenantId` (or omits the filter entirely) instead of deriving it from the authenticated session. Defense-in-depth controls — database Row-Level Security (RLS), per-tenant encryption keys, storage prefix isolation — are frequently absent or inconsistently applied, so a single forgotten `WHERE tenant_id = ?` becomes a full cross-tenant breach. This is functionally an IDOR/broken-object-level-authorization (BOLA) problem specialized to the multi-tenant shape.

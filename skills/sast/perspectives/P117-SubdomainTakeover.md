@@ -2,10 +2,14 @@
 id: P117
 name: SubdomainTakeover
 refs: ASVS V14.x / WSTG-CONF / CS: Cloud subdomain takeover
-requires: [backend]
 ---
 
 # P117 — SubdomainTakeover
+
+## Preconditions
+
+The code references external hostnames.
+
 
 ## Overview
 Subdomain takeover occurs when a DNS record (typically a `CNAME` or `A`) still points at a cloud resource — an S3 bucket, GitHub Pages site, Heroku/Azure app, Firebase project, or static-site hosting endpoint — that has been **decommissioned, renamed, or never claimed**, but the DNS entry was never cleaned up. The provider then offers that resource name back into its global namespace; whoever creates a new resource with the same name effectively controls what the trusted subdomain serves. The root cause is the decoupling of DNS ownership (controlled by the domain owner) from resource ownership (controlled by the cloud provider), combined with the absence of a decommissioning checklist that removes DNS records alongside deleted resources. Because the content is served from the victim's own subdomain over the victim's TLS certificate, browsers and users trust it implicitly.

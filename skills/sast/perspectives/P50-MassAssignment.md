@@ -2,10 +2,14 @@
 id: P50
 name: MassAssignment
 refs: ASVS V5.3.x / WSTG-INPV-12 / CS: Mass Assignment, REST Security
-requires: [backend]
 ---
 
 # P50 — Mass Assignment
+
+## Preconditions
+
+The code binds request data to objects or database records.
+
 
 ## Overview
 Mass assignment occurs when a framework auto-binds an entire client-supplied payload (`req.body`, form fields, JSON) onto a domain object — directly or via the ORM — **without an explicit allow-list of the fields the caller is permitted to set**. Because object-relational mappers and "serialize-into-model" helpers copy every key they receive, any attribute that exists on the model becomes writable by the client, including privileged fields the developer never intended to expose: `role`, `isAdmin`, `password`, `balance`, `tenantId`, `verifiedAt`, `price`, `paymentStatus`. The root cause is not a missing check on one field — it is trusting the *shape* of the request. The fix is always input shaping: pick exactly the keys the action is allowed to mutate, and reject or ignore everything else. A related failure is prototype pollution (`__proto__`, `constructor`, `prototype`), where crafted keys write to the object's prototype rather than its own properties.

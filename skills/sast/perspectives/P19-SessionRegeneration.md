@@ -2,10 +2,14 @@
 id: P19
 name: SessionRegeneration
 refs: ASVS V3.4.x, V3.7.x / WSTG-SESS-03, WSTG-SESS-08 / CS: Session Management
-requires: [backend]
 ---
 
 # P19 — Session Regeneration
+
+## Preconditions
+
+The code manages sessions.
+
 
 ## Overview
 Session fixation is a class of attack where the attacker forces a known session ID onto a victim (via a link `?sid=...`, a subdomain cookie, or a pre-set cookie) and then waits for the victim to authenticate. If the application reuses the **same** session identifier after login, the attacker's known ID is now an authenticated session — full account takeover without ever stealing a credential. The defense is to **rotate the session ID on every privilege transition**: at authentication success, at privilege change (e.g. user→admin, anonymous→2FA-verified), at re-authentication, and on logout. The root cause is always the same: a session container is created before authentication and its identifier is not invalidated/replaced when the trust level changes.

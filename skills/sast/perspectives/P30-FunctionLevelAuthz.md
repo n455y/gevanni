@@ -2,10 +2,14 @@
 id: P30
 name: FunctionLevelAuthz
 refs: ASVS V4.1.x, V4.2.x, V4.3.x / WSTG-ATHZ-01, WSTG-ATHZ-02, WSTG-ATHZ-04, WSTG-ATHZ-05 / CS: Authorization, Denial of Service, Transaction Authorization
-requires: [backend]
 ---
 
 # P30 — FunctionLevelAuthz
+
+## Preconditions
+
+The code has functionality that should be restricted to certain users.
+
 
 ## Overview
 Function-level (missing) authorization — OWASP API/Web Top-10 "Broken Function Level Authorization" — occurs when a sensitive action or endpoint (refund, delete, export, password reset, admin config) is reachable by an authenticated user who lacks the privilege to perform it. The most common root cause is relying on UI gating alone: the front end hides the button, but the back end never re-checks the caller's role or the ownership of the target resource. A second cause is trusting client-supplied feature flags or role claims without server-side verification. Unlike IDOR (object-level), this is about *which action* a user may invoke at all, regardless of which object.

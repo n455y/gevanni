@@ -2,10 +2,14 @@
 id: P112
 name: OAuthTokenHandling
 refs: ASVS V3.x / WSTG-SESS / CS: OAuth 2.0 Protocol, Session Management
-requires: [backend]
 ---
 
 # P112 — OAuthTokenHandling
+
+## Preconditions
+
+The code handles OAuth tokens.
+
 
 ## Overview
 OAuth 2.0 and OIDC delegate authentication to an authorization server and issue bearer tokens that the client presents to resource servers. A bearer token is a bearer of fact — anyone who holds it can use it until it expires — so the entire security posture hinges on **how tokens are stored, transported, rotated, and revoked**. The recurring root causes are: storing access or refresh tokens in browser-readable locations (`localStorage`, `sessionStorage`, plain cookies) where XSS can exfiltrate them; long-lived access tokens without refresh-token rotation; missing or unenforced token revocation; and overly broad scopes. Sender-constraining (DPoP/mTLS) is the strongest defense but is rarely adopted, leaving a stolen token fully usable for its lifetime.

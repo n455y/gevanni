@@ -2,10 +2,14 @@
 id: P109
 name: CookieSessionStoreConfig
 refs: ASVS V3.3.x, V14.x / WSTG-SESS-02, WSTG-SESS-07 / CS: Session Management, Cookie Security
-requires: [backend]
 ---
 
 # P109 — Cookie Session Store Config
+
+## Preconditions
+
+The code manages sessions.
+
 
 ## Overview
 Server-side session stores and the cookies that carry their session IDs are only as safe as the **global configuration** that wires them up: the signing/encryption secret, the cookie attributes (`Secure`, `HttpOnly`, `SameSite`, expiry), and the backing store's own transport and authentication. A single weak `secret` lets an attacker forge or tamper with session cookies (forgotten `secret`-based sessions, signed-cookie abuse), a missing `Secure` flag leaks the credential over HTTP, and an unauthenticated/plaintext Redis or DB connection exposes the entire session table. The root cause is almost always a development default that was never hardened for production — `secret: 'keyboard cat'`, `MemoryStore`, `cookie: { secure: false }`, or a store URI without TLS/AUTH. This perspective is the *configuration* layer; per-attribute issues belong to P17-SessionCookieAttributes and store hardening specifics to P22-SessionStoreProtection.

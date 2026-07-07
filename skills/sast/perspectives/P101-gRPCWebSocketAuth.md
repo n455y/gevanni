@@ -2,10 +2,14 @@
 id: P101
 name: gRPCWebSocketAuth
 refs: ASVS V3.4.x, V13.x / WSTG-ATHN-01, WSTG-ATHZ-01 / CS: REST Security, GraphQL Cheat Sheet
-requires: [backend, websocket]
 ---
 
 # P101 — gRPC / WebSocket Authentication & Authorization
+
+## Preconditions
+
+The code handles WebSocket or gRPC connections.
+
 
 ## Overview
 gRPC and WebSocket (WS) connections are **long-lived and stateful** at the transport layer, which inverts the per-request authentication model that ordinary HTTP APIs rely on. The recurring flaw is authenticating the *connection* once (the gRPC handshake, the WS `Upgrade` request) and then trusting every subsequent stream message or frame for the connection's lifetime. A token that expires, a role that is revoked, or a resource that the caller should no longer reach all remain accessible until the socket closes. The root cause is twofold: (1) auth logic is wired into the connect/intercept path only, and (2) authorization is never re-evaluated per message, per stream call, or after token expiry — so a single successful handshake grants a standing privilege window.

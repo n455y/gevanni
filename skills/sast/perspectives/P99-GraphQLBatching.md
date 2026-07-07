@@ -2,10 +2,14 @@
 id: P99
 name: GraphQLBatching
 refs: ASVS V13.x / WSTG-ATHN-04 / CS: GraphQL Cheat Sheet
-requires: [backend, graphql]
 ---
 
 # P99 — GraphQLBatching
+
+## Preconditions
+
+The code exposes a GraphQL API.
+
 
 ## Overview
 GraphQL query batching and aliasing let a client submit many operations (or many invocations of the same field) inside a single HTTP request. The protocol also allows one mutation/operation to be repeated dozens of times via aliases. This collapses the usual 1-request = 1-action assumption that rate limiters, account-lockout, and brute-force defenses rely on. The root cause is not in the GraphQL spec itself but in the absence of per-operation and per-field cost controls: an attacker can fire hundreds of `login(user, password)` attempts — each with a different candidate password — as one batched request that the server treats as a single transaction and that a naive IP-based rate limiter counts as one hit. Without a batch-size cap, query-depth/complexity limit, or authentication-specific throttle, the same primitive enables credential stuffing, data exfiltration via nested aliases, and resource-exhaustion DoS.

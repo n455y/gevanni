@@ -2,10 +2,14 @@
 id: P81
 name: StateTransitionBypass
 refs: ASVS V11.x / WSTG-BUSL-02, WSTG-BUSL-05 / CS: REST Security, Transaction Authorization
-requires: [backend]
 ---
 
 # P81 — StateTransitionBypass
+
+## Preconditions
+
+The code manages resources that change state over time.
+
 
 ## Overview
 State-transition (business-logic) bypass occurs when the server allows an object's lifecycle state — order, application, workflow, payment, account — to be driven directly by client-supplied input, or moved along a path that skips required preconditions (e.g. paid → shipped without payment, submitted → approved without review, draft → published without moderation). The server becomes a passive persistence layer instead of an authoritative state machine. Unlike injection, the requests are individually "valid" — the flaw is that a forbidden *sequence* is accepted, which automated scanners and schema validators almost never detect. The root cause is missing server-side transition guards: no allow-list of `(from → to)` edges, no precondition checks, no idempotency/locking on the current state.

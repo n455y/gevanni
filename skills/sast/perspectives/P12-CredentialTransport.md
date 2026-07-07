@@ -2,10 +2,14 @@
 id: P12
 name: CredentialTransport
 refs: ASVS V2.x / V9.x / WSTG-ATHN-01, WSTG-CRYP-03 / CS: Transport Layer Security, Authentication Cheat Sheet
-requires: [backend]
 ---
 
 # P12 — CredentialTransport
+
+## Preconditions
+
+The code transmits credentials over a network.
+
 
 ## Overview
 Credential-transport weaknesses arise when passwords, API keys, bearer tokens, or other secrets traverse or persist in **channels that expose them**: plaintext HTTP, URL query strings, log files, exception traces, error messages, or cached intermediaries. Even when the application itself is hardened, a single `console.log(req.body)` or an `Authorization` header captured in an error report hands the credential to anyone with access to logs or monitoring. The root causes are predictable: sending secrets over cleartext, placing them in URL components that proxies and browsers record (history, `Referer`, access logs), and failing to scrub secrets from application and infrastructure logs. TLS protects the wire; it does nothing for the URL, the logs, or the redirect that drops the user back to HTTP.

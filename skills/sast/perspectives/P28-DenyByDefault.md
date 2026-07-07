@@ -2,10 +2,14 @@
 id: P28
 name: DenyByDefault
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-02 / CS: Authorization - Enforcement Matrix, Authorization - Testing for Bypass
-requires: [backend]
 ---
 
 # P28 — DenyByDefault
+
+## Preconditions
+
+The code has functionality that should be restricted to certain users.
+
 
 ## Overview
 "Deny by default" (fail-closed / allow-list authorization) means an access decision resolves to **deny** unless a rule explicitly grants access. The opposite — deny-listing or `default: allow` — lets every uncovered case, every future code path, and every error fall through to a permitted outcome. Most real authorization bypasses (broken function-level access control, forced browsing, IDOR escalation, privilege creep through unhandled roles) are downstream symptoms of a missing default-deny posture. The root cause is an inverted predicate: code asks "is there a reason to block?" instead of "is there a reason to allow?", or it forgets to halt the request on a failed check, so execution continues past the guard.

@@ -2,10 +2,14 @@
 id: P102
 name: DefaultConfigCredentials
 refs: ASVS V14.x / WSTG-CONF-04 / CS: Default Passwords, Authentication
-requires: [backend]
 ---
 
 # P102 — DefaultConfigCredentials
+
+## Preconditions
+
+The code reads configuration.
+
 
 ## Overview
 Default or weak credentials baked into configuration layers — database servers, caches (Redis/Memcached), message brokers, admin consoles, container base images, and infrastructure service accounts — remain a top cause of rapid system compromise. Unlike application-level user accounts (see P15), these are the **configuration-layer secrets** that the application relies on at boot: a `postgres/postgres` DB login, an unauthenticated `redis://redis:6379`, a sample `config.json` shipped to production verbatim. The root cause is usually copy-pasted sample values, hardcoded defaults in base images or Helm charts, or secrets committed to VCS rather than injected from a secrets manager. Because these services are often trusted and least-privilege is rarely enforced, one unchanged default frequently leads to full data exfiltration or remote code execution.

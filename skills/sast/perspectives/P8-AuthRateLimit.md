@@ -2,10 +2,14 @@
 id: P8
 name: AuthRateLimit
 refs: ASVS V2.5.x / WSTG-ATHN-04, WSTG-ATHN-10 / CS: Authentication, Blocking Brute Force Attacks
-requires: [backend]
 ---
 
 # P8 — AuthRateLimit
+
+## Preconditions
+
+The code handles user login.
+
 
 ## Overview
 Authentication endpoints that accept credentials — login, sign-in, token issuance, password reset, MFA verification — are prime targets for brute-force and credential-stuffing attacks. Without per-user and per-IP rate limiting, account lockout, progressive delays, or CAPTCHA challenges, an attacker can submit unlimited guesses at full speed. The root cause is usually a missing throttle on the auth route, a global limiter that does not specifically cover login, or a lockout counter that was never implemented. The defense must be layered: throttling slows automation, lockouts/delays raise cost per guess, and MFA caps the value of any single cracked password.

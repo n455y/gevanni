@@ -2,10 +2,14 @@
 id: P51
 name: WeakAlgorithms
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Password Storage
-requires: [backend]
 ---
 
 # P51 — WeakAlgorithms
+
+## Preconditions
+
+The code uses cryptographic functions.
+
 
 ## Overview
 Weak or obsolete cryptographic primitives — MD5, SHA-1, DES, 3DES, RC4, and ECB block mode — no longer provide the security margin their use implies. Hashes like MD5/SHA-1 are collision-broken (and SHA-1 is practically collision-feasible), symmetric ciphers with short keys (DES, single-key 3DES) are brute-forceable, RC4 has distinguishable keystream biases, and ECB leaks plaintext structure (identical blocks produce identical ciphertext — the classic "ECB penguin"). The root cause is usually legacy copy-paste, a `Stack Overflow` snippet, or a library default that was reasonable a decade ago but now silently degrades protection. Using these for integrity, tokens, password storage, or data-at-rest encryption converts the algorithm's weakness into a directly exploitable gap.

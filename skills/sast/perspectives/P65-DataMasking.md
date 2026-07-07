@@ -2,10 +2,14 @@
 id: P65
 name: DataMasking
 refs: ASVS V8.x / WSTG-CRYP-01, WSTG-CRYP-03 / CS: User Privacy Protections Implementation, Sensitive Data Exposure
-requires: [backend]
 ---
 
 # P65 — DataMasking
+
+## Preconditions
+
+The code displays or returns data.
+
 
 ## Overview
 Data masking is the practice of truncating, redacting, or tokenizing sensitive fields — payment card numbers (PAN), government IDs (SSN, My Number), account numbers, API keys, secrets, and personal data — whenever they are **displayed to users, persisted in logs, or returned in bulk APIs**. The failure mode is not usually a missing crypto primitive but a missing rule: a handler returns the full PAN to the front end "because the screen needs it", or an error/log path serializes the raw secret for debugging. The root cause is treating masking as a UI concern instead of a server-side data-minimization control — the server should never emit more digits than the destination is authorized to see, and what it stores long-term should be tokenized or encrypted, not merely hidden in the view layer.

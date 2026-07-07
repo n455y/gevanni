@@ -2,10 +2,14 @@
 id: P122
 name: WebRTC
 refs: ASVS V17.x / WSTG-CLNT / CS: emerging WebRTC
-requires: [webrtc]
 ---
 
 # P122 — WebRTC
+
+## Preconditions
+
+The code uses WebRTC.
+
 
 ## Overview
 WebRTC lets browsers establish **direct peer-to-peer media and data channels** that bypass the originating web server, using a separate signaling channel to exchange session descriptions (SDP) and Interactive Connectivity Establishment (ICE) candidates. Because the browser itself gathers ICE candidates and exposes local IP addresses, and because DTLS-SRTP keys are negotiated peer-to-peer, misconfigurations leak client network topology, allow unauthenticated or unencrypted streams, and can be abused to turn the victim's browser into a network-probing relay. The root causes are typically: an unauthenticated or spoofable signaling channel (the security of the whole call depends on it yet it is often treated as trusted), TURN credentials issued without scoping or replay protection, ICE candidate handling that exposes private/LAN addresses, and missing enforcement of DTLS-SRTP / SDES fallback.

@@ -2,10 +2,14 @@
 id: P27
 name: ForcedBrowsing
 refs: ASVS V4.1.x, V4.2.x / WSTG-ATHZ-04 / CS: Authorization, Insecure Direct Object Reference Prevention
-requires: [backend]
 ---
 
 # P27 — Forced Browsing
+
+## Preconditions
+
+The code has functionality that should be restricted to certain users.
+
 
 ## Overview
 Forced browsing is an access-control failure where a user reaches an endpoint or resource they were never *offered* (no UI link, no menu entry, a route intended for another role) by guessing or enumerating URLs, path traversal, or directly invoking internal APIs. The defining error is treating "not linked in the UI" as if it were a security control — a posture known as **security through obscurity**. The root cause is always the same: a handler executes its logic without first verifying that *this* authenticated principal is *authorized* for *this* target (function-level authorization), or that the request is coming through the expected entrypoint. Hidden fields (`type=hidden`), unpredictable GUIDs, and "undocumented" routes are not authorization checks; any client can replay or guess the path.

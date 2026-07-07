@@ -2,10 +2,14 @@
 id: P1
 name: TrustBoundary
 refs: ASVS V1.x / WSTG-INFO-02, WSTG-ATHZ-01 / CS: Architecture Cheat Sheet, Authorization Cheat Sheet
-requires: []
 ---
 
 # P1 — TrustBoundary
+
+## Preconditions
+
+The code makes security decisions.
+
 
 ## Overview
 A trust boundary is any place where data or control flow crosses from a less-trusted domain (browser, mobile app, third-party API, public network, unauthenticated request) into a more-trusted one (server, internal service, privileged execution context). The defining mistake in this class of flaw is treating data from the untrusted side as if it had already been validated, authenticated, or authorized — e.g. trusting a `role` field posted by the client, treating a JWT payload as authoritative without signature/issuer checks, or inferring identity from spoofable request metadata (IP, User-Agent, `X-Forwarded-For`). Every crossing must re-establish identity and re-authorize on the trusted side; once a value is inside the boundary it is treated as trusted only if the boundary itself enforced the guarantee. When boundaries are missing or leaky, authorization bypass, privilege escalation, and injection all become possible regardless of other defenses.

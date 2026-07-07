@@ -2,10 +2,14 @@
 id: P67
 name: MemoryClearing
 refs: ASVS V8.x / WSTG-CRYP-04 / CS: Sensitive Data Protection
-requires: [backend]
 ---
 
 # P67 — MemoryClearing
+
+## Preconditions
+
+The code processes sensitive data in memory.
+
 
 ## Overview
 Sensitive secrets — plaintext passwords, cryptographic keys, session tokens, payment card data (PAN/CVV), and private keys — frequently linger in process memory long after they are needed. Garbage-collected runtimes (Node, Python, Java, Go, .NET) make this worse: strings are immutable and interned, GC collection is non-deterministic, and the heap can be paged to swap or captured by a core dump, heap snapshot, or `/proc/<pid>/mem` read. The root cause is treating secret lifetime as "until the process exits" rather than scoping it to the minimum window required for use, then explicitly zeroing the buffer. ASVS V8 requires that sensitive data in memory be minimized, ephemeral, and cleared as soon as practical.

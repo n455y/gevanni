@@ -2,10 +2,14 @@
 id: P42
 name: InsecureDeserialization
 refs: ASVS V5.3.4 / WSTG-INPV-11 / CS: Deserialization, Insecure Deserialization
-requires: [backend, deserialization]
 ---
 
 # P42 — Insecure Deserialization
+
+## Preconditions
+
+The code deserializes data from external sources.
+
 
 ## Overview
 Insecure deserialization occurs when an application reconstructs objects from untrusted input using a native/general-purpose deserializer (`pickle`, `Marshal`, `ObjectInputStream`, `node-serialize`, PHP `unserialize`, .NET `BinaryFormatter`) that executes logic embedded in the byte stream or invokes magic lifecycle methods (`__reduce__`, `__wakeup`, `readObject`, `readResolve`). Unlike JSON, these formats carry type information and behavior, so the attacker controls not only the data but the *classes instantiated and the methods invoked*. The root cause is always the same: untrusted bytes reach a deserializer that was designed for trusted inter-process exchange, and the gadget chain assembled from reachable application/library classes runs with the application's privileges. Exploitation commonly yields remote code execution, making this one of the highest-severity injection classes.

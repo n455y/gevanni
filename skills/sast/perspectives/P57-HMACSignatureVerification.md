@@ -2,10 +2,14 @@
 id: P57
 name: HMACSignatureVerification
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, JSON Web Token
-requires: [backend]
 ---
 
 # P57 — HMACSignatureVerification
+
+## Preconditions
+
+The code verifies signatures or MACs.
+
 
 ## Overview
 HMAC signature verification protects the integrity and authenticity of messages, webhooks, SAML assertions, and JWT/JWS tokens by recomputing a MAC over the payload with a shared secret and comparing it to the received signature. It fails when a receiver skips verification entirely, performs a non-constant-time comparison (leaking the secret or valid prefix via timing), accepts an attacker-influenced algorithm (`alg:none`, RS256↔HS256 key confusion), or canonicalizes whitespace/newlines before signing without doing the same on verify (normalization bug). The root cause is always the same: untrusted input is acted upon before its authenticity is proven with a pinned algorithm and the correct key. Webhook receivers are the most common offender because the secret lives server-side and the verification step is easy to forget or implement partially.

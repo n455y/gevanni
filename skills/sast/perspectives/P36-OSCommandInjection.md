@@ -2,10 +2,14 @@
 id: P36
 name: OSCommandInjection
 refs: ASVS V5.3.x / WSTG-INPV-12 / CS: OS Command Injection Defense, Injection Prevention
-requires: [backend, subprocess]
 ---
 
 # P36 — OS Command Injection
+
+## Preconditions
+
+The code executes system commands or spawns child processes.
+
 
 ## Overview
 OS Command Injection occurs when request-controlled input is concatenated (or interpolated) into a string that is passed to a **shell** for execution, allowing an attacker to break out of the intended argument and append new commands, pipes, or redirections (`;`, `|`, `&&`, `$()`, backticks). The root cause is always the same: untrusted data reaches a shell interpreter (`/bin/sh -c`, `cmd.exe /c`) rather than being supplied as a discrete argv element. Even a single shell metacharacter in the right position yields arbitrary code execution under the application's privileges, which is typically game-over for the host. The high-leverage distinction is **string/shell mode vs. array/argv mode**: the former parses metacharacters, the latter does not.

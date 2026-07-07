@@ -2,10 +2,14 @@
 id: P110
 name: OAuth2AuthCodeFlow
 refs: ASVS V2.x / WSTG-ATHN-09 / CS: OAuth 2.0 Protocol
-requires: [backend]
 ---
 
 # P110 — OAuth2AuthCodeFlow
+
+## Preconditions
+
+The code implements OAuth.
+
 
 ## Overview
 The OAuth 2.0 Authorization Code flow exchanges a short-lived `code` (returned via the browser redirect) for tokens at the token endpoint. Its security rests on four pillars that are routinely misimplemented: **PKCE** (so an intercepted code cannot be redeemed), the **`state`** parameter (anti-CSRF binding of the callback to the original request), **strict `redirect_uri` validation** (so codes are not leaked to attacker-controlled or open-redirect hosts), and the avoidance of the **implicit** (`response_type=token`) and **resource-owner password** grants, which expose tokens to the browser and leak credentials respectively. The root cause of nearly every OAuth account-takeover bug is one of: omitting PKCE on a public/SAGL client, accepting any `state`, performing prefix/substring matching on `redirect_uri`, or treating the authorization code as replayable and client-unbound.

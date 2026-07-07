@@ -2,10 +2,14 @@
 id: P31
 name: AuthzTOCTOU
 refs: ASVS V4.x / WSTG-ATHZ-06 / CS: Authorization, Race Conditions
-requires: [backend]
 ---
 
 # P31 — AuthzTOCTOU
+
+## Preconditions
+
+The code checks authorization before performing actions.
+
 
 ## Overview
 A Time-Of-Check-to-Time-Of-Use (TOCTOU) authorization flaw exists when the authorization decision and the state-changing operation it guards are **not executed atomically**. Between the check (e.g. "does the user have enough balance / quota?") and the use (the actual decrement, transfer, or state mutation), a second concurrent request can slip through and pass the same now-stale check — letting one privileged precondition authorize many simultaneous operations. The root cause is a read-modify-write sequence performed without a transaction, row lock, or a single conditional `UPDATE`. Classic manifestations are double-spending of balances/coupons/withdrawals, bypass of rate limits and one-time-use tokens, and IDOR-style access where the ownership check races against an ownership transfer.

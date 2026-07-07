@@ -2,10 +2,14 @@
 id: P74
 name: MixedContent
 refs: ASVS V9.1.x, V9.2.x / WSTG-CRYP-03 / CS: Transport Layer Protection, Content Security Policy
-requires: []
 ---
 
 # P74 — Mixed Content
+
+## Preconditions
+
+The code serves web pages.
+
 
 ## Overview
 Mixed Content occurs when an HTTPS-served page loads sub-resources — scripts, stylesheets, images, iframes, fonts, videos, or WebSocket connections — over an insecure `http://` origin. Because the page itself is encrypted, developers often assume it is fully protected, but any cleartext sub-resource request is observable and mutable by a network attacker (MITM). The root cause is hardcoded `http://` URLs in templates/assets, protocol-relative (`//cdn`) references that downgrade on an intercepted connection, or the use of plaintext `ws://` WebSockets. Modern browsers auto-block "active" mixed content (script, CSS, fetch, iframe) but may only warn on "passive" content (images, media), and legacy/custom clients may not block at all — leaving session data and integrity exposed.

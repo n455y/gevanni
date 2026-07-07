@@ -2,10 +2,14 @@
 id: P64
 name: TimestampCorrelationID
 refs: ASVS V7.x / WSTG-INFO-02, WSTG-ATHZ-06 / CS: Logging, Distributed Tracing
-requires: []
 ---
 
 # P64 — TimestampCorrelationID
+
+## Preconditions
+
+The code writes logs.
+
 
 ## Overview
 Audit logs, security events, and transaction records are only as trustworthy as the **timestamps and correlation IDs** attached to them. When an application stamps a record with client-supplied time (`req.body.timestamp`), an unsynchronized local clock, or an unparseable/free-form string, the resulting log can be forged, skewed, or rendered unusable for forensic reconstruction and incident response. Likewise, when each service hop emits independent log lines with no propagated `traceId`/`correlationId`, a multi-step attack that crosses service boundaries becomes impossible to follow end-to-end. The root causes are uniformly: trusting user-controlled input for time, relying on a single unverified local clock, and omitting distributed-tracing correlation. The fix is to stamp server-side with a synchronized, monotonic clock, reject or ignore client-provided time, and propagate a request-scoped correlation ID across every hop.

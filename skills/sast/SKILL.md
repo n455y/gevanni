@@ -41,52 +41,30 @@ Framework-specific routing detection patterns:
 
 Each unit should include:
 
-- HTTP method + path
-- Handler body
-- Service / validator / DAO / models called by the handler (within reachable scope)
-- `tags`: `string[]` — Code capability tags. Used to skip clearly impossible perspective combinations. The filter is **conservative**: a perspective is skipped **only when the unit demonstrably lacks a capability that is physically required** for the vulnerability to exist.
-  - **Environment** (include one):
-    - `"frontend"`: Client-side only (React/Vue components, static JS/TS, browser APIs, DOM manipulation)
-    - `"backend"`: Server-side (API handlers, controllers, services, SSR pages, middleware)
-  - **Hard capability gates** (add when present — these are the only tags used for filtering):
-    - `"db"`: Database access (SQL or NoSQL) → SQLi, NoSQLi, StoredXSS
-    - `"subprocess"`: OS command / subprocess execution → Command Injection
-    - `"ldap"`: LDAP queries → LDAP Injection
-    - `"xml"`: XML parsing (`xml2js`, `lxml`, `javax.xml`, `jackson-dataformat-xml`) → XXE
-    - `"templating"`: Server-side template engine (EJS, Pug, Jinja2, etc.) → SSTI
-    - `"deserialization"`: Dangerous deserializers (`pickle`, `unserialize`, `ObjectInputStream`) → Insecure Deserialization
-    - `"file-read"`: File system reads (`fs.readFile`, `send_file`, etc.) → Path Traversal, LFI
-    - `"redirect"`: HTTP redirect (`res.redirect`, `Location` header) → Open Redirect
-    - `"jwt"`: JWT handling (`jsonwebtoken`, `jose`, `java-jwt`) → JWT Validation, Self-contained Tokens
-    - `"graphql"`: GraphQL endpoint → GraphQL-specific
-    - `"websocket"`: WebSocket handling → WebSocket-specific
-    - `"file-upload"`: File upload handling → Upload-specific
-    - `"csv"`: CSV export → CSV Formula Injection
-    - `"email"`: Email sending → Email Header Injection
-    - `"webrtc"`: WebRTC → WebRTC
-  - **Why only these?** Perspectives like OAuth, Crypto, Auth/Session, CSRF, Rate Limiting, SSRF etc. are intentionally NOT gated by tags — they can arise through library usage, framework features, or adjacent code, even when the capability isn't explicitly visible. They fall back to environment-based filtering (backend/frontend) only.
-  - If uncertain whether a tag applies, **omit it**. Missing tags only cause false negatives (skipped perspectives), never false positives.
+- `id`: `"U01"`, `"U02"`, ...
+- `method` + `route`: the HTTP method and path pattern
+- `desc`: short description of what this unit does (1-2 sentences)
+- `files`: list of source files (relative to repo root) that contain the handler code. Agents will read these to assess relevance.
+- `deps`: other source files called by the handler (for context)
+
+No tags needed. Pre-filtering is not done by the workflow — each agent reads the actual code and determines for itself whether its perspective applies.
 
 **Splitting strategy (scale control)** — this is the key to cost:
 
 - 1 unit = 1 endpoint as a baseline.
 - Number of agents = `number of units × number of perspectives (133)`. If the number of units bloats (>8), bundle them by resource/module. Target **N ≤ 5–8**.
 
-Output: `units: Array<{ id, method, route, code, deps, tags }>`. `id` is `U01`, `U02`...
+Output: `units: Array<{ id, method, route, desc, files, deps? }>`. `id` is `U01`, `U02`...
 
 ### Step 2: Load perspective catalog + pre-filter
 
-- Under `perspectives/`, there is **one file per perspective** (`P<seq>-<english-name>.md`, e.g. `P38-ReflectedXSS.md`). First read the overall index in `perspectives/README.md`, and skip perspective files for areas clearly absent from the target code (e.g. no GraphQL → skip V4 GraphQL perspectives; no file upload → skip V5 upload perspectives) for token efficiency. **Skipped areas must be explicitly listed in the report's "Out of scope" section (No-silent-caps)**.
-- From each file read, assemble `{ id, name, requires, focus, signals, fpNote, refs }`. Each file follows a frontmatter (`id`/`name`/`refs`/`requires`) + body (`## What to check` / `## Static signals` / `## False positives`) structure (see README for details).
-  - `requires` is a string array in the frontmatter (e.g. `requires: [backend, db]`). Empty array `[]` means the perspective runs on **all** units. Each perspective file self-declares its requirements — there is no separate mapping in the workflow script.
-- **Pre-filter**: For each unit, exclude obviously irrelevant perspectives. The workflow template matches `unit.tags` against `pov.requires`:
-  - Unit must have **all** tags listed in `requires`. Missing any → **skip**.
-  - `requires: []` → always runs.
-  - Unit `tags: ["frontend"]` + `requires: ["backend", "db"]` → **skip**（例: フロントエンドコードにSQLiは不要）
-  - Unit `tags: ["backend"]` (no `ldap` tag) + P37 `requires: ["backend", "ldap"]` → **skip**（例: LDAPを使わないシステムにLDAP Injectionは不要）
-- Order perspectives by **priority** (Critical-leaning / high-frequency first) — this ensures the safety valve (the cap in `workflow-template.js`) that prunes by priority on scale overflow works correctly.
+- Under `perspectives/`, there is **one file per perspective** (`P<seq>-<english-name>.md`). First read the overall index in `perspectives/README.md`, and skip perspective files for areas clearly absent from the target code (e.g. no GraphQL → skip V4 GraphQL; no file upload → skip V5 upload; no OAuth → skip V10). **Skipped areas must be explicitly listed in the report's "Out of scope" section (No-silent-caps)**.
+- From each file read, assemble `{ id, name, precondition, focus, signals, fpNote, refs }`. Each file follows a frontmatter (`id`/`name`/`refs`) + body (`## Preconditions` / `## What to check` / `## Static signals` / `## False positives`).
+  - `precondition` is the absolute minimum requirement (1 sentence). If the code doesn't satisfy it, the perspective is skipped **by the agent at runtime** (returns `findings: []`).
+  - Per-unit tag filtering is **not used**. The workflow runs every perspective against every unit; agents self-determine relevance by reading the actual code and checking `precondition`.
+- Order perspectives by **priority** (Critical-leaning / high-frequency first) — this ensures the safety valve (`capPerspectives` in `workflow-template.js`) that prunes by priority on scale overflow works correctly.
 
-Output: `perspectives: Array<{ id, name, requires, focus, signals, fpNote, refs }>`.
+Output: `perspectives: Array<{ id, name, precondition, focus, signals, fpNote, refs }>`.
 
 ### Step 3: Fan-out assessment via Dynamic Workflow
 
@@ -123,8 +101,8 @@ Each finding has:
 | Common pitfall                                         | Correct approach                                                                                          |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | Running dynamic tests                                  | This skill is static-only. Dynamic testing goes to `gevanni`                                              |
-| Applying all perspectives to all units unconditionally | Drop via 2-layer filter: hard capability gates (SQLi→needs DB, GraphQL→needs GraphQL) + environment (frontend/backend). Most perspectives (OAuth, Crypto, XXE, etc.) are intentionally NOT gated — they run on all matching units. |
-| Setting unit `tags` incorrectly | Be conservative: if unsure whether a tag applies, omit it. Missing tags only cause skipped perspectives, not missed vulnerabilities. Each perspective's `requires` is defined in its own file — there is no separate mapping to maintain. |
+| Pre-filtering perspectives based on unit tags          | No per-unit pre-filtering. Every perspective runs on every unit. Each agent reads the actual code and checks the perspective's `## Preconditions` — if not met, returns `findings: []`. This eliminates "missing tag → skipped perspective → missed vulnerability". |
+| Tagging units with capability labels                   | Unit tags are not needed. Units only need `id`, `method`, `route`, `desc`, `files`. The workflow does not use tags for filtering. |
 | Splitting units too finely (50+)                       | Bundle by resource to keep N≤5–8. Agent count = N × perspectives                                          |
 | Ignoring framework protections and mass-producing FPs  | Parameterized queries / automatic escaping / typed inputs are considered protections and are out of scope |
 | Silently dropping skipped perspectives                 | Explicitly list them in the report's "Out of scope" section (No-silent-caps)                              |

@@ -2,10 +2,14 @@
 id: P44
 name: SSRF
 refs: ASVS V5.3.x / WSTG-INPV-13 / CS: Server Side Request Forgery Prevention
-requires: [backend]
 ---
 
 # P44 — SSRF
+
+## Preconditions
+
+The code makes outbound network requests.
+
 
 ## Overview
 Server-Side Request Forgery (SSRF) occurs when an application takes user-controlled input — a URL, hostname, IP, or redirect target — and the **server itself** issues an outbound request to it (webhook delivery, image/preview fetching, URL import, S3 presigning, PDF rendering, OAuth callback discovery). The root cause is the absence of a hardened boundary between attacker-influenced addresses and internal/infrastructure network space. A vulnerable server becomes a confused deputy: the attacker uses the server's trusted network position to reach resources that should be unreachable from the outside — the cloud metadata endpoint (`169.254.169.254`), loopback services (`127.0.0.1`, `[::1]`), private RFC1918 ranges, internal admin panels, or local files via `file://`. Modern SSRF is frequently severe: hitting the AWS/GCP/Azure IMDS yields credentials, hitting loopback admin ports yields RCE-style pivots, and SSRF is the most common entry to internal-only APIs and broker/queue systems.

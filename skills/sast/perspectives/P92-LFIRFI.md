@@ -2,10 +2,14 @@
 id: P92
 name: LFIRFI
 refs: ASVS V12.x / WSTG-INPV-11 / CS: File Upload, Injection Prevention
-requires: [backend, file-read]
 ---
 
 # P92 — LFI / RFI
+
+## Preconditions
+
+The code resolves user-supplied input to locate or load resources.
+
 
 ## Overview
 Local File Inclusion (LFI) and Remote File Inclusion (RFI) occur when user-controlled input is used to construct the path of a file that the application then **includes, requires, reads, or renders**. LFI pulls a file from the local filesystem (e.g. `/etc/passwd`, source files, logs that the attacker poisoned earlier); RFI pulls it from a remote URL (`http://attacker/shell.ext`) and is far more dangerous because it typically yields direct remote code execution. The root cause is always the same: an untrusted string reaches an include/read sink through a code path that does not confine it to an allow-list of base directories and known-good file names. Even without RFI, LFI frequently chains into code execution via log poisoning, `/proc` self-injection, PHP `php://` or `zip://` wrappers, or by including uploaded/uploadable files.

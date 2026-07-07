@@ -2,10 +2,14 @@
 id: P130
 name: ReverseTabnabbing
 refs: ASVS V3.x / WSTG-CLNT / CS: HTML5 Web Application Security
-requires: [frontend]
 ---
 
 # P130 — Reverse Tabnabbing
+
+## Preconditions
+
+The code opens external links.
+
 
 ## Overview
 Reverse tabnabbing (a.k.a. "tabnabbing via `target=_blank`") occurs when a page opens a link, popup, or new browsing context with `target="_blank"` (or `window.open`) **without** restricting the opener reference via `rel="noopener"` (and ideally `noreferrer`). In older browsers — and still today in some non-mainstream engines — the newly opened page holds a handle to its opener through `window.opener` and may call `window.opener.location = 'https://phishing.example/login'`, silently rewriting the original, authenticated tab. When the user switches back, they see a believable login prompt on what they trust as the real site and type credentials. The root cause is always the same: a navigable anchor or window-open call omits the opener-severing attributes, accepting as a target a fully or partially attacker-controlled URL.

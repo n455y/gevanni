@@ -2,10 +2,14 @@
 id: P54
 name: TimingAttack
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Authentication
-requires: [backend]
 ---
 
 # P54 — Timing Attack
+
+## Preconditions
+
+The code compares values for security decisions.
+
 
 ## Overview
 A timing (side-channel) attack recovers a secret by measuring how long a comparison or decryption takes. When secret values — tokens, HMACs, password hashes, API keys, CAPTCHA/OTP codes, password-reset tokens — are validated with ordinary short-circuiting equality (`===`, `==`, `strcmp`, `equals`), the response time correlates with the number of leading bytes that match. An attacker submits guesses, statistically averages the noisy timing samples, and recovers the secret one byte at a time. The root cause is always data-dependent control flow or memory access over secret-dependent data: comparison loops that return on the first mismatch, character-wise early-exit checks, or non-constant-time cryptographic primitives. Even a few microseconds of variance is exploitable over a network with enough samples.

@@ -2,10 +2,14 @@
 id: P90
 name: ExternalResourceFetch
 refs: ASVS V12.6.x / WSTG-INPV-13 / CS: Server Side Request Forgery, File Upload, OWASP Secure Headers
-requires: [backend]
 ---
 
 # P90 — ExternalResourceFetch
+
+## Preconditions
+
+The code makes outbound network requests.
+
 
 ## Overview
 External resource fetch (a.k.a. resource-import SSRF) occurs when a server-side component retrieves a **user-supplied URL** — image import, URL attachment, OpenGraph/OGP preview, link unfurling, webhooks, feed/RSS ingestion, "import from URL" features, PDF/HTML rendering, or web-cache prefetch — without enforcing a strict allow-list of schemes, hosts, and resolved IP addresses. The root cause is treating a URL as opaque input and passing it straight to an HTTP client; the application then makes the outbound request from inside the trust boundary, where it can reach `http://169.254.169.254/` (cloud metadata), `http://127.0.0.1:6379/` (internal Redis/admin), `file:///etc/passwd` (local file read via protocol abuse), or `gopher://`/`dict://` to speak raw bytes to internal services. Redirect-following silently re-targets a "validated" URL to a private address, so validation must run on the **post-resolution, post-redirect** socket, not the input string. This is the resource-manipulation sibling of P44 (SSRF); it concentrates on the *fetch* pathways rather than direct request forwarding.

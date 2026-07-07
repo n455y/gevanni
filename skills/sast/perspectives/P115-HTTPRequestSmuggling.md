@@ -2,10 +2,14 @@
 id: P115
 name: HTTPRequestSmuggling
 refs: ASVS V14.x / PortSwigger Request Smuggling / CS: Request Validation
-requires: [backend]
 ---
 
 # P115 — HTTPRequestSmuggling
+
+## Preconditions
+
+The code parses or proxies HTTP requests.
+
 
 ## Overview
 HTTP Request Smuggling (HTTP desync) occurs when a front-end component (reverse proxy, load balancer, CDN, WAF) and a back-end server **disagree on where one HTTP request ends and the next begins**, so that bytes an attacker prepends or appends to a request are interpreted by the back-end as the start of the *next* victim request. The root cause is a parsing discrepancy around the `Content-Length` (CL) and `Transfer-Encoding` (TE: `chunked`) headers — the classic CL.TE, TE.CL, and TE.TE variants — plus newer HTTP/2→HTTP/1.1 downgrading desync (H2.CL, H2.TE, CRLF injection via pseudo-headers) and header-length ambiguities (`Content-Length` on GET, duplicate headers, obs-fold). Because the smuggling happens *between* trusted tiers, TLS, mutual auth, and WAF rules at the front-end do nothing — the poisoned byte stream is already inside the trusted network.

@@ -2,10 +2,14 @@
 id: P78
 name: BackdoorCredentials
 refs: ASVS V10.x / WSTG-ATHN-02 / CS: Secrets Management, Password Storage
-requires: []
 ---
 
 # P78 — BackdoorCredentials
+
+## Preconditions
+
+The code uses credentials or secrets.
+
 
 ## Overview
 Backdoor credentials are hardcoded login bypasses, master passwords, or magic tokens embedded directly in source code. Unlike properly managed secrets (rotated via a vault/KMS), these are static, often intentionally hidden, and grant privileged access — sometimes deliberately inserted by a malicious insider (supply-chain compromise), sometimes a "temporary" debugging shortcut that shipped to production. They undermine every authentication control: any holder of the source (or a reverse-engineer of the binary) becomes an instant admin, with no audit trail tying them to a real identity. The root cause is always the same: an access decision is made by comparing request input to a literal embedded in the codebase rather than by going through the real identity provider / role framework.

@@ -2,10 +2,14 @@
 id: P76
 name: DebugBackdoor
 refs: ASVS V10.x, V14.3 / WSTG-CONF-05, WSTG-ATHN-05 / CS: Third Party JavaScript, Session Management
-requires: []
 ---
 
 # P76 — DebugBackdoor
+
+## Preconditions
+
+The code may contain debugging, test, or development code paths.
+
 
 ## Overview
 A debug/test/admin backdoor is any endpoint, route, or authentication branch left in production that allows unauthenticated or under-authenticated privileged access — arbitrary code execution (`/exec`, `/eval`), hidden admin panels (`/__dev`, `/__inspect`), bypass flags (`?debug=1`, `?backdoor=...`), or always-on debug toolbars. The root cause is leftover scaffolding from development that was never gated behind an environment check, removed before release, or protected with weak/credentialed auth. Unlike a logic bug, these are intentional conveniences that ship to prod and grant an attacker a direct path to RCE, data exfiltration, or auth bypass with a single unauthenticated request.

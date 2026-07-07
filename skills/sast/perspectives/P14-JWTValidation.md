@@ -2,10 +2,14 @@
 id: P14
 name: JWTValidation
 refs: ASVS V3.4.x, V3.5.x / WSTG-SESS-01, WSTG-ATHN-08 / CS: JSON Web Token Cheat Sheet
-requires: [backend, jwt]
 ---
 
 # P14 — JWT Validation
+
+## Preconditions
+
+The code processes JSON Web Tokens.
+
 
 ## Overview
 JSON Web Tokens (JWTs) are self-contained, signed bearer tokens carrying claims such as `sub`, `exp`, `iss`, and `aud`. Because the server trusts the token's content based solely on its signature, any flaw in validation — accepting `alg:none`, trusting an attacker-controlled `alg` to select the verification key, skipping signature/expiry/issuer/audience checks, or signing with a weak or leaked secret — collapses authentication entirely. The root causes are almost always: omission of an explicit `algorithms` allow-list (enabling algorithm-confusion and `none` bypass), use of `decode`/unverified parse instead of `verify`, or a symmetric secret too short to resist offline brute force.

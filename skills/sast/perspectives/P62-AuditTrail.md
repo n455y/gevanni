@@ -2,10 +2,14 @@
 id: P62
 name: AuditTrail
 refs: ASVS V7.x / WSTG-ATHN-08, WSTG-ATHZ-06 / CS: Logging, Application Logging Vocabulary
-requires: []
 ---
 
 # P62 — Audit Trail
+
+## Preconditions
+
+The code writes logs.
+
 
 ## Overview
 An audit trail is the tamper-evident, structured record of security-relevant events — authentication successes and failures, authorization denials, password and credential changes, privilege/role changes, and high-risk actions (delete, export, fund transfer, configuration change). When it is missing, incomplete, or unprotected, an attacker can act without leaving evidence, hide their tracks after a breach, and operators cannot reconstruct an incident or prove non-repudiation. The root cause is usually one of three: only the "happy path" is logged (success recorded, failures/lockouts not); audit events omit one of the four required fields (actor / timestamp / target / result); or logs are stored append-only without integrity protection, so they can be edited or truncated by anyone who gains the host.

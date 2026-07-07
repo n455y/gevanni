@@ -2,10 +2,14 @@
 id: P106
 name: ConfigFileSecrets
 refs: ASVS V14.x / WSTG-CONF-04 / CS: Secrets Management
-requires: [backend]
 ---
 
 # P106 — ConfigFileSecrets
+
+## Preconditions
+
+The code reads files or configuration.
+
 
 ## Overview
 Configuration files, environment files, and container/infrastructure definitions frequently hardcode live secrets in plaintext — database passwords, API keys, JWT signing keys, cloud provider credentials, and service-account tokens. Once committed, these secrets propagate into the source repository history, CI logs, built container images, and downstream artifacts, making rotation and revocation extremely difficult. The root cause is almost always convenience: a developer copies a working value into `.env`, `config/production.yaml`, or a `Dockerfile` `ENV` directive to make the app run, then forgets to externalize it before committing. This perspective is the configuration-layer sibling of P52-HardcodedKeys (which targets secrets embedded directly in source code).

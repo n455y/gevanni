@@ -2,10 +2,14 @@
 id: P23
 name: CSRFProtection
 refs: ASVS V3.x / WSTG-SESS-04, WSTG-INPV-12 / CS: Cross-Site Request Forgery Prevention
-requires: [backend]
 ---
 
 # P23 — CSRF Protection
+
+## Preconditions
+
+The code handles state-changing HTTP requests.
+
 
 ## Overview
 Cross-Site Request Forgery (CSRF) occurs when a state-changing request (POST/PUT/DELETE/PATCH) relies solely on an ambient credential — typically the session cookie automatically attached by the browser — and the server performs the action without any secondary proof that the request was **intentionally issued from the application's own UI**. The root cause is the browser's automatic attachment of cookies cross-origin combined with the absence of an un-forgeable, request-bound token, an `Origin`/`Referer` check, or a `SameSite` cookie restriction. The attacker never sees the cookie; they only induce the victim's browser to issue a forged request (a hidden auto-submitting form, a `fetch` from a malicious page, or an `<img>` tag for simple GETs). CSRF lets an attacker act *as* the victim within the victim's privilege level — transferring funds, changing the password/email, deleting data, or elevating an account — without ever needing to steal credentials.

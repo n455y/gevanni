@@ -2,10 +2,14 @@
 id: P123
 name: SelfContainedTokens
 refs: ASVS V9.x / WSTG-SESS / CS: JSON Web Token, OAuth 2.0 Protocol
-requires: [backend, jwt]
 ---
 
 # P123 — SelfContainedTokens
+
+## Preconditions
+
+The code processes self-contained tokens.
+
 
 ## Overview
 Self-contained tokens (JWT/JWS, PASETO) carry their own claims and signature so a stateless server can authenticate without a session lookup. That autonomy is also the risk: every verification step — algorithm, signature, `iss`, `aud`, `exp`, `nbf` — is the application's sole responsibility, and the token format exposes attacker-controllable fields (the JOSE header's `alg`, `kid`, `jwk`, `jku`, `x5u`) that libraries have historically mishandled. The root causes are (1) accepting a token signed with an algorithm the issuer never intended (algorithm confusion / `alg=none`), (2) resolving header-controlled keys against the filesystem or a remote URL (key injection / path traversal), and (3) skipping claim validation so a stolen, replayed, or cross-service token is honored. Because the bearer *is* the credential, any signature bypass or token leak is a direct authentication bypass.

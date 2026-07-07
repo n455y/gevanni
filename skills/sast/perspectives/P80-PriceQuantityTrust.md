@@ -2,10 +2,14 @@
 id: P80
 name: PriceQuantityTrust
 refs: ASVS V11.x / WSTG-BUSL-01, WSTG-BUSL-04 / CS: REST Security, Transaction Authorization
-requires: [backend]
 ---
 
 # P80 — PriceQuantityTrust
+
+## Preconditions
+
+The code handles values supplied by the client that affect transactions.
+
 
 ## Overview
 Price/quantity/discount/currency trust occurs when a server treats order-critical monetary fields received from the client — price, unit cost, quantity, tax, discount, shipping fee, total, or currency code — as authoritative instead of recomputing them server-side from a trusted product/pricing master. The root cause is conflating *user input* (what the client chooses: product ID, quantity) with *server-controlled truth* (what each item costs, how tax is applied). Because the client fully controls these values (DevTools, proxy, replay), trusting them lets an attacker buy goods for 0.01, inflate quantity without cost, apply a discount twice, or switch currency to devalue a charge. This is a business-logic flaw, not an injection bug — encoding and validation lists alone do not fix it; the price must be re-derived from a server-owned source on every request.

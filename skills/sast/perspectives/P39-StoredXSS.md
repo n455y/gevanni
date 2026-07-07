@@ -2,10 +2,14 @@
 id: P39
 name: StoredXSS
 refs: ASVS V5.3.x / WSTG-INPV-02 / CS: Cross Site Scripting Prevention
-requires: [backend, db]
 ---
 
 # P39 — Stored XSS
+
+## Preconditions
+
+The code stores and later displays user-submitted content.
+
 
 ## Overview
 Stored (persistent) Cross-Site Scripting (XSS) occurs when untrusted user input — a comment, profile bio, support ticket, message, or article body — is **persisted to a database or data store** and later rendered into an HTML response for *other* users without context-correct encoding or sanitization. Unlike reflected XSS, the payload is stored server-side, so the attacker does not need to social-engineer each victim: every user who views the affected page is compromised automatically. The root cause is identical to other XSS variants — untrusted data reaches an output sink through a path that does not encode for the relevant context (HTML body, attribute, JavaScript string, URL) — but the persistence makes it higher-severity: it is self-propagating within the application, affects privileged viewers (administrators, moderators), and survives until the stored record is removed.

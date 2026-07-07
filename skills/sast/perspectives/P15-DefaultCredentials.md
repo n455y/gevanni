@@ -2,10 +2,14 @@
 id: P15
 name: DefaultCredentials
 refs: ASVS V2.x / WSTG-ATHN-02, WSTG-CONF-04 / CS: Authentication, Default Passwords
-requires: [backend]
 ---
 
 # P15 — Default Credentials
+
+## Preconditions
+
+The code authenticates users.
+
 
 ## Overview
 Default credentials are factory or seeded authentication secrets (`admin/admin`, `admin/password`, `root/root`, vendor defaults, sample seed users) that ship with an application, framework, device, or dependency and are **never removed or forced to change** before the system reaches production. The root cause is almost always operational rather than algorithmic: seed/migration code, infrastructure-as-code, or a vendored admin account is created with a weak or well-known password, and no lifecycle step rotates it or forces a first-login change. Because these passwords are published in vendor manuals, GitHub repositories, and credential-spray dictionaries, leaving them in place is functionally equivalent to leaving an unauthenticated admin console open to anyone who can reach the login form.

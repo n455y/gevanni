@@ -2,10 +2,14 @@
 id: P9
 name: UserEnumeration
 refs: ASVS V2.1.x, V2.5.x / WSTG-ATHN-03, WSTG-ATHN-10 / CS: Authentication, User Privacy Protection
-requires: [backend]
 ---
 
 # P9 — User Enumeration
+
+## Preconditions
+
+The code handles user login or registration.
+
 
 ## Overview
 User enumeration leaks whether a given identifier (username, email, account ID) exists in the system, typically through **differential responses** during authentication, registration, or password reset. The differences can be explicit (distinct messages or HTTP status codes: "user not found" vs "wrong password") or implicit — response timing, redirect behavior, error codes, page titles, or even whether a rate-limit or lockout triggers. The root cause is asymmetric code paths: the application takes an early exit or skips work (notably password-hash verification) when the account is absent, so an attacker can distinguish "no such user" from "bad password" with a single request. The resulting account list fuels credential stuffing, targeted phishing, and privacy disclosure (membership disclosure of an email address).

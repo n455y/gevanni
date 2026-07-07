@@ -2,10 +2,14 @@
 id: P118
 name: PrototypePollution
 refs: ASVS V5.x / WSTG-INPV / CS: Prototype Pollution
-requires: [backend]
 ---
 
 # P118 — Prototype Pollution
+
+## Preconditions
+
+The code merges or extends objects.
+
 
 ## Overview
 Prototype pollution occurs when attacker-controlled keys — typically `__proto__`, `constructor`, or `prototype` — are blended into an object via recursive merge / clone / extend logic or permissive query-string parsers, so the property is written not onto the target instance but onto `Object.prototype` itself. Every plain object in the same realm then inherits the injected property, which silently changes default values, flips feature flags, or plants a "gadget" property that a downstream library reads and uses unsafely. JavaScript (Node.js and browser) is the canonical target because prototypes are mutable and globally shared, but the class transfers to any language with runtime-mutable base objects. The issue is rarely the end of the chain on its own — its real power is escalation to XSS, authentication/authorization bypass, or RCE via a gadget in a template engine, validation library, or child-process helper.

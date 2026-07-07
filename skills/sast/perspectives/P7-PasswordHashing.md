@@ -2,10 +2,14 @@
 id: P7
 name: PasswordHashing
 refs: ASVS V2.4.x / WSTG-ATHN-07 / CS: Password Storage
-requires: [backend]
 ---
 
 # P7 — Password Hashing
+
+## Preconditions
+
+The code stores or verifies user credentials.
+
 
 ## Overview
 Password hashing is the process of transforming a plaintext password into an irreversible, salted, deliberately slow value before storage. The goal is not confidentiality of a reusable secret — the user must be able to re-authenticate — but to make bulk offline cracking computationally infeasible if the credential store is ever dumped. The root cause of weakness is almost always one of: a fast general-purpose hash (MD5/SHA-1/SHA-256) used without a salt, no salt at all, a reversible cipher (AES) that lets the operator recover the original, or a deliberately-slow KDF invoked with parameters far below current guidance. Because a database leak is treated as inevitable in threat modeling, the hash is the last line of defense.

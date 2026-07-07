@@ -2,10 +2,14 @@
 id: P17
 name: SessionCookieAttributes
 refs: ASVS V3.4.1, V3.4.2, V3.4.3, V3.4.4 / WSTG-SESS-02 / CS: Session Management, Cookie Security
-requires: [backend]
 ---
 
 # P17 — Session Cookie Attributes
+
+## Preconditions
+
+The code uses HTTP cookies.
+
 
 ## Overview
 Session and authentication cookies are the bearer tokens of the web: whoever possesses them is the user. When such a cookie is issued without the `Secure`, `HttpOnly`, and `SameSite` attributes — or with an overly broad `Domain`/`Path` — it becomes exposed to network interception, cross-site request forgery (CSRF), session hijacking via XSS, and leakage to sibling applications on the same origin. The root cause is almost always a developer relying on framework defaults that are weaker than the threat model requires, or constructing the `Set-Cookie` header by hand and omitting attributes. Browser defaults (`SameSite=Lax`) mitigate some cases but are inconsistent across browsers and versions, so the attributes must be set explicitly per ASVS V3.4.

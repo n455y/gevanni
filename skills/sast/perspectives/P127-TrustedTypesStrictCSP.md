@@ -2,10 +2,14 @@
 id: P127
 name: TrustedTypesStrictCSP
 refs: ASVS V3.x / WSTG-CLNT / CS: Content Security Policy, DOM based XSS Prevention
-requires: [frontend]
 ---
 
 # P127 — TrustedTypesStrictCSP
+
+## Preconditions
+
+The code sets Content Security Policy.
+
 
 ## Overview
 Content Security Policy (CSP) and Trusted Types are the last structural defenses against cross-site scripting once an encoding bug, a misconfigured template, or a vulnerable client-side dependency lets attacker-controlled markup reach the DOM. A permissive policy — `unsafe-inline`, `unsafe-eval`, or `script-src *` — makes the header cosmetic: any injection becomes executable script. Trusted Types goes further by **removing the dangerous string sinks entirely** (`innerHTML`, `outerHTML`, `document.write`, `eval`, `insertAdjacentHTML`, attribute sinks) and requiring a typed policy object before the browser will accept markup. The root cause of findings here is always a policy that ships loopholes (JSONP endpoints, Angular template expressions, upload-hosted scripts, missing nonces/hashes) or a codebase that touches DOM sinks directly without enforcing Trusted Types, so a single future `innerHTML = userInput` cannot be blocked.

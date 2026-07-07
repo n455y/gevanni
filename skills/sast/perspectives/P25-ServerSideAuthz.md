@@ -2,10 +2,14 @@
 id: P25
 name: ServerSideAuthz
 refs: ASVS V4.1.x, V4.2.x, V4.3.x / WSTG-ATHZ-01, WSTG-ATHZ-02, WSTG-ATHZ-03, WSTG-ATHZ-04 / CS: Authorization, Access Control, Insecure Direct Object Reference Prevention
-requires: [backend]
 ---
 
 # P25 — Server-Side Authorization
+
+## Preconditions
+
+The code has functionality that should be restricted to certain users.
+
 
 ## Overview
 Broken Access Control is consistently the #1 category in OWASP Top 10 because authorization is easy to get wrong and easy to forget. Server-side authorization (authz) means the **server independently verifies, on every request, that the authenticated principal is allowed to perform the requested action on the requested resource** — it never trusts claims carried by the client (request body, JWT fields the user could have minted, hidden form fields, or the simple fact that the UI hid a button). The two failure modes are horizontal (IDOR: user A accesses user B's record by tampering an ID) and vertical (a regular user invokes an admin-only route). The root cause is almost always a missing or inconsistent guard: middleware applied to some routes but not others, a default-deny posture that was inverted to default-allow, or trust in a client-supplied attribute that should have been resolved from the session.

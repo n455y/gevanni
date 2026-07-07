@@ -2,10 +2,14 @@
 id: P6
 name: PasswordStrength
 refs: ASVS V2.5.x / WSTG-ATHN-07 / CS: Password Storage, Authentication Cheat Sheet
-requires: [backend]
 ---
 
 # P6 — PasswordStrength
+
+## Preconditions
+
+The code accepts user credentials.
+
 
 ## Overview
 Weak password policy is a foundational authentication flaw: it lets users choose credentials that are trivially guessed or cracked offline from a leaked hash. The root cause is almost always a policy that is enforced **client-side only** (and thus bypassable), that sets a minimum length too small (sub-8, let alone the NIST-recommended ≥8 with ≥12 encouraged), that omits a breach/weak-password list check, or that imposes obsolete complexity rules (mandatory symbols/mixed-case) which NIST SP 800-63B explicitly discourages in favor of length and breach-list screening. Also frequently missing: a sane **maximum length** (to prevent truncation-driven false matches and DoS on expensive hashers). The net effect is that password entropy is left to chance, making every other control (rate limiting, hashing, MFA) work harder than it needs to.

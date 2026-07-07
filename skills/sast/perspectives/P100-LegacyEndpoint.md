@@ -2,10 +2,14 @@
 id: P100
 name: LegacyEndpoint
 refs: ASVS V13.x / WSTG-CONF-05, WSTG-ATHZ-01 / CS: REST Security, OWASP API9:2023 Improper Inventory of Assets
-requires: [backend]
 ---
 
 # P100 — LegacyEndpoint
+
+## Preconditions
+
+The code exposes API endpoints.
+
 
 ## Overview
 A legacy endpoint is an older, deprecated, beta, internal, or previously-versioned API surface (`/v1`, `/legacy`, `/beta`, `/internal`) that still runs in production but is no longer covered by the current security controls. The root cause is almost always **inventory drift**: when a new major version or hardened rewrite ships, the old routes are left mounted "for backward compatibility" without inheriting the new authentication, authorization, input-validation, rate-limiting, or logging middleware. Attackers actively probe for these undocumented or un-monitored paths because they are the path of least resistance — a fortified `/v2` front door is meaningless if `/v1` still accepts unauthenticated requests against the same data store.

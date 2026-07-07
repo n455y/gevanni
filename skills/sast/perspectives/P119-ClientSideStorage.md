@@ -2,10 +2,14 @@
 id: P119
 name: ClientSideStorage
 refs: ASVS V8.x / WSTG-CLNT / CS: HTML5 Web Storage, Session Management
-requires: [frontend]
 ---
 
 # P119 — ClientSideStorage
+
+## Preconditions
+
+The code stores data in browser storage.
+
 
 ## Overview
 Client-side storage abuse occurs when an application persists secrets — access tokens, refresh tokens, API keys, PII, or session identifiers — in browser-readable stores such as `localStorage`, `sessionStorage`, `IndexedDB`, or even URL fragments, **where any running script in the page origin can read them**. The root cause is conflating "needed by the UI" with "must be readable by JavaScript": once a token lives in `localStorage`, a single XSS — first-party or in any third-party script — can lift it cleanly. The durable, cross-tab nature of `localStorage` compounds the exposure: a stolen token often outlives the tab and sometimes the browser session. The safe pattern is to keep long-lived secrets in `HttpOnly` + `Secure` + `SameSite` cookies that JS cannot read, and to store only non-sensitive UI state client-side.

@@ -2,10 +2,14 @@
 id: P77
 name: EvalDynamicExecution
 refs: ASVS V5.3.4 / WSTG-INPV-11, WSTG-INPV-12 / CS: Injection Prevention, OS Command Injection Defense
-requires: []
 ---
 
 # P77 — EvalDynamicExecution
+
+## Preconditions
+
+The code evaluates or executes code dynamically.
+
 
 ## Overview
 Dynamic code execution vulnerabilities occur when user- or externally-controlled data is fed into an interpreter that treats the input as **code rather than data**. Sinks include `eval()` / `new Function()` in JavaScript, `child_process.exec` with a shell string, Python `eval()` / `exec()` / `compile()`, `pickle.loads`, Ruby `eval` / `instance_eval` / `class_eval`, PHP `eval` / `create_function` / `assert`, Java `ScriptEngine.eval`, the Nashorn/GraalVM `eval`, and Go's rarely-misused `reflect`. The root cause is conflating a data channel with a code channel: a template, formula, math expression, rule, or "plugin path" is accepted from an untrusted source and handed to an interpreter that has full access to the host language, its standard library, and the process's ambient credentials. Unlike SQL injection (a constrained DSL), code injection typically yields **arbitrary code execution** within the application process — the most severe server-side primitive short of a memory-corruption exploit. VM-based "sandboxes" (`vm2`, `vm.runInNewContext`, PyPy sandbox, Seccomp-less containers) are routinely escapable and must not be treated as a security boundary on their own.

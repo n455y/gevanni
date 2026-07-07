@@ -2,10 +2,14 @@
 id: P24
 name: IDOR
 refs: ASVS V4.1.x, V4.2.x, V4.3.x / WSTG-ATHZ-01, WSTG-ATHZ-04 / CS: Insecure Direct Object Reference Prevention
-requires: [backend]
 ---
 
 # P24 — IDOR
+
+## Preconditions
+
+The code retrieves or modifies data objects.
+
 
 ## Overview
 Insecure Direct Object Reference (IDOR) occurs when an application exposes a reference to an internal object — a database primary key, file name, UUID, or sequential identifier — in a client-controllable input (path, query, body, or header) and then uses that reference to fetch or mutate a resource **without verifying that the requesting user is authorized to act on it**. The root cause is a missing or insufficient server-side authorization check: the application conflates "the object exists" with "the user may access it." Because object IDs are often enumerable (incrementing integers, leaked UUIDs, predictable GUIDs), an authenticated attacker can walk the keyspace to read, modify, or delete other users' data. IDOR is the most common manifestation of Broken Access Control, consistently the #1 risk in the OWASP Top 10, and a server-side flaw that cannot be fixed by encryption, encoding, or obfuscation alone.

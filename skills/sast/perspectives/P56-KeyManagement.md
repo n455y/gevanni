@@ -2,10 +2,14 @@
 id: P56
 name: KeyManagement
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Secrets Management
-requires: [backend]
 ---
 
 # P56 — KeyManagement
+
+## Preconditions
+
+The code manages cryptographic keys.
+
 
 ## Overview
 Key-management failures occur when signing or encryption keys are treated as static configuration rather than as lifecycle-managed secrets: a single fixed key is hard-coded or read from disk and used forever, with no rotation, no multi-key (key-id) support, and no revocation path. The root cause is conflating "the algorithm is correct" with "the key is safe." Even strong cryptography becomes worthless once the key leaks, and without rotation or revocation a single compromise becomes permanent. A related and especially dangerous subclass is trusting attacker-influenced key identifiers — e.g. resolving a JWT `kid` header as a filesystem path — which collapses key selection into path traversal or arbitrary-key injection.

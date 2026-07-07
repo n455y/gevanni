@@ -2,10 +2,14 @@
 id: P41
 name: XXE
 refs: ASVS V5.3.x / WSTG-INPV-07 / CS: XML External Entity Prevention
-requires: [backend, xml]
 ---
 
 # P41 — XXE
+
+## Preconditions
+
+The code parses XML.
+
 
 ## Overview
 XML External Entity (XXE) injection occurs when an application parses attacker-controlled XML with a parser that resolves external entities and DTDs **without restriction**. An XML document may declare custom entities (`<!ENTITY foo SYSTEM "file:///etc/passwd">`), and a vulnerable parser will dutifully fetch the referenced resource — a local file, an HTTP URL, or another scheme — and inline its contents into the parsed document. The root cause is always the same: a parser left on its default (or explicitly permissive) configuration is fed user input. XXE is not limited to user-supplied XML files; it also hides inside formats that wrap XML — SOAP bodies, SAML assertions, OOXML/ODF office documents, SVG uploads, RSS/Atom feeds, and `.svg`/`.xml` configuration parsed from untrusted uploads. In modern JSON-first stacks XXE is rarer, but it remains critical wherever any XML parsing path exists.

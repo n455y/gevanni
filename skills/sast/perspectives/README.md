@@ -6,16 +6,16 @@
 
 ## メインエージェントの使い方
 
-1. この README の索引を見て、対象コードに存在しない領域の観点を除外する。
+1. この README の索引を見て、対象コードに存在しない領域の観点を除外する（GraphQLが無い→V4 GraphQLを除外 等）。
 2. 残りの `P<連番>-<英名>.md` を読み、各ファイルから以下を組み立てる:
    - `id` ← frontmatter `id`
    - `name` ← frontmatter `name`
-   - `requires` ← frontmatter `requires`（必須タグ一覧。空配列 `[]` は全ユニットで実行）
    - `refs` ← frontmatter `refs`
+   - `precondition` ← `## Preconditions` 本文（前提条件。1文）
    - `focus` ← `## What to check` 本文
    - `signals` ← `## Static signals` 本文
    - `fpNote` ← `## False positives` 本文
-3. 組み立てた `perspectives[]` を `args.perspectives` として Workflow に渡す(`workflow-template.js` 参照)。
+3. 組み立てた `perspectives[]` を優先度順（Critical寄りを先頭）に並べ、`args.perspectives` として Workflow に渡す(`workflow-template.js` 参照)。
 
 ## 観点ファイルの形式
 
@@ -24,10 +24,13 @@
 id: P6
 name: PasswordStrength
 refs: ASVS V6.x / WSTG-ATHN-07 / CS: Password Storage
-requires: [backend]
 ---
 
 # PasswordStrength
+
+## Preconditions
+
+The code accepts user credentials.
 
 ## Overview
 ...

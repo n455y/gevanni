@@ -2,10 +2,14 @@
 id: P95
 name: RESTRateLimit
 refs: ASVS V13.4.x / WSTG-ATHN-04 / CS: REST Security, Denial of Service — OWASP API4:2023 Unrestricted Consumption
-requires: [backend]
 ---
 
 # P95 — REST Rate Limit
+
+## Preconditions
+
+The code exposes an API.
+
 
 ## Overview
 Unrestricted resource consumption occurs when a REST/HTTP API imposes **no effective limit** on how often, how concurrently, or how heavily a client can invoke it — letting a single caller (or a distributed botnet) exhaust CPU, memory, DB connections, third-party quota, or egress bandwidth and drive the service into denial-of-service or runaway billing. OWASP API Top 10 (2023) ranks this **API4: Unrestricted Consumption**. The root cause is not a missing crypto primitive but a missing *operational* control: endpoints that do real work — authentication, search, aggregation, export, file upload/processing, ML inference, or third-party API fan-out — are exposed without a per-user/per-IP/per-tenant rate limit, a concurrency cap, a page-size ceiling, or a per-request cost timeout. Rate limiting must be applied at the right granularity (account or token, not only IP, which is trivially spoofed behind NAT/proxies) and combined with pagination caps and backpressure to actually bound worst-case cost.

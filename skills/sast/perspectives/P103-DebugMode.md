@@ -2,10 +2,14 @@
 id: P103
 name: DebugMode
 refs: ASVS V14.x / WSTG-CONF-02, WSTG-CONF-05 / CS: Error Handling
-requires: [backend]
 ---
 
 # P103 — DebugMode
+
+## Preconditions
+
+The code has configurable behavior.
+
 
 ## Overview
 Leaving debug/diagnostic mode enabled in production is a configuration defect that exposes internals an attacker should never see — full stack traces with file paths and library versions, source maps that reconstruct the original source, interactive consoles (Django/Flask Werkzeug debugger, Laravel Ignition, PHP `display_errors`, ASP.NET developer exception pages), and verbose environment dumps that frequently leak secrets (`DATABASE_URL`, API keys, signing keys). The root cause is almost always an environment mismatch: the application keyes debug behavior off an unset or default flag (`NODE_ENV`, `APP_DEBUG`, `APP_ENV`), or a framework's pretty error page is shipped unguarded to production. The impact compounds — a single stack trace can reveal the framework, version, file layout, and SQL dialect, accelerating every other attack class on this list.

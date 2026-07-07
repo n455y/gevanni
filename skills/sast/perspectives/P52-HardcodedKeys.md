@@ -2,10 +2,14 @@
 id: P52
 name: HardcodedKeys
 refs: ASVS V6.2.x, V14 / WSTG-CONF-04, WSTG-CRYP-04 / CS: Cryptographic Storage, Secrets Management
-requires: [backend]
 ---
 
 # P52 — Hardcoded Keys & Secrets
+
+## Preconditions
+
+The code uses secrets, keys, or credentials.
+
 
 ## Overview
 Hardcoded secrets are cryptographic keys, JWT signing keys, API tokens, database passwords, or cloud credentials committed directly into source code, configuration files, or container images — instead of being injected at runtime from a secret manager or environment variable. The root cause is almost always convenience: a developer hardcodes a value to make the app start, then forgets to externalize it. Because source code is shared across environments (dev/test/prod), version-controlled indefinitely, cloned to developer laptops, and increasingly mined by attackers who scan public repos and leaked images, a single committed secret effectively grants its privilege to everyone with read access — and to anyone who later obtains the git history. Once a secret is in git, rotating it is mandatory: git history is immutable, so "deleting" the line does not retract the leaked value.

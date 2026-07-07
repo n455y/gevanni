@@ -2,10 +2,14 @@
 id: P124
 name: PostMessageOrigin
 refs: ASVS V3.x / WSTG-CLNT / CS: HTML5 Web Messaging
-requires: [frontend]
 ---
 
 # P124 — PostMessageOrigin
+
+## Preconditions
+
+The code sends or receives cross-origin messages.
+
 
 ## Overview
 `window.postMessage` is the browser-sanctioned channel for cross-origin communication between frames, popups, and workers. The API exposes two independent trust boundaries: the **targetOrigin** argument on `send` (which the browser uses to silently withhold the message if the receiver's origin does not match) and the **`event.origin`** field on `receive` (which the receiver must check before trusting the payload). When either side is mishandled — a wildcard `'*'` targetOrigin on the sender, or a missing/loose origin check on the receiver — a message built for one origin can leak to, or be accepted from, an attacker-controlled page. The root cause is almost always treating `postMessage` as a raw pipe instead of an authenticated, schema-validated protocol: the developer forgets that any window with a reference to theirs can call `postMessage`, and that `event.source` and `event.origin` are the only grounds for trust.

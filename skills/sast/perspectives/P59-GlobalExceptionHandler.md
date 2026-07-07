@@ -2,10 +2,14 @@
 id: P59
 name: GlobalExceptionHandler
 refs: ASVS V7.x / WSTG-ERRH-01 / CS: Error Handling
-requires: []
 ---
 
 # P59 — GlobalExceptionHandler
+
+## Preconditions
+
+The code handles errors.
+
 
 ## Overview
 An unhandled exception or rejected promise propagates past the request boundary with no centralized handler to catch it. The consequences are twofold: (1) the worker process crashes, the request hangs until a socket timeout, or the server returns a default stack trace — leaking internal paths, SQL fragments, framework versions, and environment details; and (2) missing `process.on('unhandledRejection' | 'uncaughtException')` hooks let one bad request take down the entire Node/Deno process. The root cause is always a missing error boundary: no Express 4-arg error middleware, no Fastify `setErrorHandler`, no Nest `ExceptionFilter`, no async wrapper for promise-returning route handlers, and no process-level backstop. A single `throw` in an unwrapped async handler is enough to destabilize a service.

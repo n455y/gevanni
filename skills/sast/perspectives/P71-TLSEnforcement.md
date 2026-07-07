@@ -2,10 +2,14 @@
 id: P71
 name: TLSEnforcement
 refs: ASVS V9.1.x / WSTG-CRYP-03 / CS: Transport Layer Protection Cheat Sheet
-requires: []
 ---
 
 # P71 — TLS Enforcement
+
+## Preconditions
+
+The code communicates over a network.
+
 
 ## Overview
 TLS enforcement is the discipline of guaranteeing that **every hop** carrying sensitive data — edge to load balancer, LB to application, app to database/cache/queue, service to service — is encrypted, authenticated, and pinned to modern protocols. The defect class is broader than "no HTTPS": it includes plaintext fallback, protocol/cipher downgrade, disabled certificate verification, expired/pin-drifted certificates, and a TLS-terminating edge that hands traffic to the app over cleartext on the internal network. Root causes are usually misconfigured defaults (`http.listen(80)` with no redirect), dev conveniences leaked to prod (`rejectUnauthorized: false`, `verify=none` in Postgres), or an assumption that "the VPC is trusted" so internal links need no TLS. The consequences — credential/session sniffing, MITM alteration of responses, and stripped-to-HTTP redirects — are severe precisely because the outer TLS often hides an insecure interior.

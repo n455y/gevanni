@@ -2,10 +2,14 @@
 id: P129
 name: HTTPParameterPollution
 refs: ASVS V2.x / WSTG-INPV / CS: Query Parameterization, Input Validation
-requires: [backend]
 ---
 
 # P129 — HTTP Parameter Pollution
+
+## Preconditions
+
+The code processes HTTP request parameters.
+
 
 ## Overview
 HTTP Parameter Pollution (HPP) occurs when an application or an upstream filter (WAF, middleware) is presented with **multiple values for the same parameter name** and the components disagree on which value wins. The browser, WAF, application framework, and downstream ORM/auth layer each apply different rules — first-wins, last-wins, array-merge, or string-join with a delimiter — so an attacker can submit `?role=user&role=admin` and have the WAF inspect `user` while the application uses `admin`. The root cause is not a single bug but a **mismatch of parameter-resolution semantics across the request pipeline**, exploited whenever validation inspects one representation of the input and the business logic consumes another. HPP is a sibling of injection and mass-assignment: it rarely breaks things on its own, but it becomes the lever that bypasses the filter guarding an injection, auth, or authorization check.

@@ -2,10 +2,14 @@
 id: P73
 name: CertValidationDisabled
 refs: ASVS V9.2.x / WSTG-CRYP-03 / CS: TLS Pinning, Transport Layer Protection
-requires: []
 ---
 
 # P73 — CertValidationDisabled
+
+## Preconditions
+
+The code makes outbound HTTPS requests.
+
 
 ## Overview
 TLS certificate validation is the client's defense against man-in-the-middle (MITM) attacks on outbound connections — to upstream APIs, webhooks, databases over TLS, mail servers, or message brokers. Disabling it (`rejectUnauthorized: false`, `verify=False`, `checkServerIdentity` returning nothing, an empty trust manager) makes the channel cryptographically opaque but **not authenticated**: anyone who can intercept traffic (rogue Wi-Fi, BGP hijack, malicious proxy, compromised CA in the bundle) can present any certificate and read or alter the data. The root cause is almost always a debugging shortcut ("the self-signed cert broke staging") that was never reverted before release, or a misguided attempt to "fix" handshake errors. This is a system-wide kill switch: one flag disables authentication for the entire process or connection, silently.

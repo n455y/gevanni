@@ -2,10 +2,14 @@
 id: P128
 name: CSVFormulaInjection
 refs: ASVS V2.x / WSTG-INPV / CS: Injection Prevention, REST Security
-requires: [backend, csv]
 ---
 
 # P128 — CSV Formula Injection
+
+## Preconditions
+
+The code exports data in tabular format.
+
 
 ## Overview
 CSV/Formula Injection (also called CSV injection or formula injection) occurs when attacker-controlled data that is later written into a CSV, Excel, or spreadsheet export begins with a formula trigger character — `=`, `+`, `-`, or `@` — and is emitted verbatim, unquoted, or insufficiently prefixed. When a victim (an analyst, accountant, or admin) opens the downloaded file, spreadsheet applications (Excel, LibreOffice, Google Sheets) interpret the cell as a formula and execute it. The root cause is treating a spreadsheet cell as inert text when the receiving application treats leading characters as active syntax. The impact is amplified because exports typically surface database fields (names, addresses, free-text notes, PII) that an attacker can pre-poison through any input the application persists — profile fields, support tickets, form comments — making the exploit chain stored rather than reflected.

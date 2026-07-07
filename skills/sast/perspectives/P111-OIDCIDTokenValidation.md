@@ -2,10 +2,14 @@
 id: P111
 name: OIDCIDTokenValidation
 refs: ASVS V2.x / WSTG-ATHN-09 / CS: OAuth 2.0 Protocol, JSON Web Token
-requires: [backend]
 ---
 
 # P111 — OIDCIDTokenValidation
+
+## Preconditions
+
+The code implements OpenID Connect.
+
 
 ## Overview
 OpenID Connect (OIDC) authentication terminates in the **ID Token** — a signed JWT asserting the end-user's identity back to the client (Relying Party). Unlike an opaque session cookie the RP validates server-side, the ID Token is verified *locally* by the client using keys and parameters it must fetch and pin itself. Any skipped or incorrect check — signature, `iss`, `aud`, `exp`, `nbf`, `nonce`, algorithm, or the `at_hash`/`c_hash` binding — is an authentication-bypass primitive: an attacker who can mint or replay a token authenticates as an arbitrary user without touching a password. The root cause is almost always "I decoded the JWT but didn't *verify* it," trusting an attacker-controllable `alg` header, hardcoding `verify=false`, or accepting the wrong tenant's token.

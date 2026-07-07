@@ -2,10 +2,14 @@
 id: P125
 name: SubresourceIntegrity
 refs: ASVS V3.x / WSTG-CLNT / CS: Third Party Javascript, Subresource Integrity
-requires: [frontend]
 ---
 
 # P125 — Subresource Integrity
+
+## Preconditions
+
+The code loads external scripts or resources.
+
 
 ## Overview
 Subresource Integrity (SRI) prevents a browser from executing a script or applying a stylesheet whose content has been tampered with in transit or at rest on a third-party host. When a page loads `<script src="https://cdn.example.com/lib.js">` without an `integrity` hash, the browser trusts whatever bytes the CDN returns — a compromised CDN, a MITM with a forged cert, a hijacked S3 bucket, or a malicious upstream package can silently swap `lib.js` for a credential-stealing version that runs with the page's full origin privileges. The root cause is the absence of a cryptographic commitment: there is no `integrity="sha384-..."` attribute to compare against, and frequently a missing or incorrect `crossorigin` attribute that would otherwise gate the integrity check itself. SRI is the frontend's last line of defense in the third-party / supply-chain trust model.

@@ -2,10 +2,14 @@
 id: P37
 name: LDAPXPathInjection
 refs: ASVS V5.3.x / WSTG-INPV-06, WSTG-INPV-10 / CS: LDAP Injection, Injection Prevention, XPATH Injection
-requires: [backend, ldap]
 ---
 
 # P37 — LDAPXPathInjection
+
+## Preconditions
+
+The code performs LDAP or XPath queries.
+
 
 ## Overview
 LDAP injection and XPath injection occur when user-controlled input is concatenated into an LDAP search filter or an XPath query string **without escaping or parameterization**. Both query languages are interpreted at runtime, and both treat metacharacters (`*`, `(`, `)`, `\`, `'`, `"`, `[`, `]`) as syntax, so an attacker who can reach those characters can reshape the query — bypassing authentication, widening a search to dump the directory, or extracting arbitrary XML nodes. The root cause is identical to SQL injection: untrusted data is fused into a command string rather than passed as a value. LDAP and XPath are less common than SQL, which makes them easy to overlook during code review and a frequent finding in directories that front SSO, address books, or config stores.

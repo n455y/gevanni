@@ -2,10 +2,14 @@
 id: P94
 name: RESTExposureMassAssignment
 refs: ASVS V13.x / WSTG-ATHZ-03, WSTG-INPV-12 / CS: REST Security, Mass Assignment (OWASP API3:2023 - Broken Object Property Level Authorization)
-requires: [backend]
 ---
 
 # P94 — REST Exposure / Mass Assignment
+
+## Preconditions
+
+The code exposes an API.
+
 
 ## Overview
 This perspective covers two related REST API design flaws, both stemming from **missing property-level authorization**: *Excessive Data Exposure* (the API returns more fields than the client needs, leaking sensitive attributes such as `role`, `tenantId`, `passwordHash`, or `apiKey`) and *Mass Assignment* (the API binds client-supplied input directly onto the domain model, letting a caller overwrite fields they were never meant to set — most dangerously `role`, `isAdmin`, `balance`, or `tenantId`). The root cause is identical in both cases: the framework's default object (de)serialization is trusted blindly, and no allow-list gates which properties may leave or enter the object. Because the request looks syntactically valid, neither the schema validator nor the business rule layer rejects it — the attacker simply adds an extra JSON key. These are the API-side facets of P70-ExcessiveDataExposure and P50-MassAssignment; this view focuses on REST/JSON handlers specifically.

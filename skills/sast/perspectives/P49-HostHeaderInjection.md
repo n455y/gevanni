@@ -2,10 +2,14 @@
 id: P49
 name: HostHeaderInjection
 refs: ASVS V5.3.x, V7.x.x / WSTG-INPV-12, WSTG-INPV-17 / CS: Header Injection, Email Injection, Forgot Password Cheat Sheet
-requires: [backend]
 ---
 
 # P49 — HostHeaderInjection
+
+## Preconditions
+
+The code reads HTTP request headers.
+
 
 ## Overview
 Host Header Injection is the abuse of client-controlled HTTP request headers — chiefly `Host`, `X-Forwarded-Host`, `X-Forwarded-For`, and `Referer` — that the application implicitly trusts when building URLs, links, redirects, or mail content. The server's `Host` header is attacker-controllable unless a trusted reverse proxy overwrites it; `X-Forwarded-*` headers are even more so because any client can forge them. The root cause is twofold: (1) using raw header values to derive absolute URLs (password-reset links, OAuth callbacks, cache keys) and (2) placing newline-containing user input into email recipients, subjects, or headers, which lets a `\r\n` sequence smuggle extra headers (Bcc, a second `To`, a `Reply-To`). Exploits range from password-reset poisoning and web-cache poisoning to mass mailer abuse and SSRF.

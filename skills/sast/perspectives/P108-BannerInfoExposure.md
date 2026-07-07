@@ -2,10 +2,14 @@
 id: P108
 name: BannerInfoExposure
 refs: ASVS V14.3.x / WSTG-CONF-07, WSTG-INFO-02 / CS: Error Handling
-requires: [backend]
 ---
 
 # P108 — BannerInfoExposure
+
+## Preconditions
+
+The code serves HTTP responses.
+
 
 ## Overview
 Banner information exposure occurs when an application or its infrastructure discloses identifying technical details — server software, framework, language runtime, library versions, OS, or internal hostnames — through HTTP response headers (`Server`, `X-Powered-By`, `X-AspNet-Version`, `X-Runtime`) or through default/verbose error pages (stack traces, "Whitelabel Error Page", Django debug page, Tomcat version block). The root cause is shipping with default disclosure settings enabled: web servers and frameworks advertise themselves by default, and unhandled exceptions fall through to a developer-oriented page that prints the stack. Banner exposure is an information-discovery primitive, not a direct exploit — it shrinks the attacker's reconnaissance cost, letting them fingerprint the exact patch level and immediately target known CVEs for that version instead of probing blindly.

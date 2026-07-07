@@ -2,10 +2,14 @@
 id: P121
 name: CloudStorageExposure
 refs: ASVS V17.x / WSTG-CONF / CS: Cloud native storage
-requires: [backend]
 ---
 
 # P121 — Cloud Storage Exposure
+
+## Preconditions
+
+The code interacts with external storage services.
+
 
 ## Overview
 Cloud storage exposure occurs when objects stored in object storage — S3, GCS, Azure Blob, Backblaze B2, R2 — are reachable by parties who should never see them: anonymous internet users, cross-account principals, or anyone holding a leaked URL. The root cause is almost always a **policy shape mismatch between intent and grant**: a developer makes a bucket "public" to host one asset and forgets it also exposes the database backups beside it, an IAM/bucket policy uses `Principal: "*"` with `s3:GetObject` on the whole prefix, or a pre-signed URL is minted with a long expiry and leaked into logs, a client bundle, or a public repo. Unlike an application-layer leak, object storage has no authentication layer of its own once a policy opens it — the cloud provider happily serves the bytes to anyone who asks.

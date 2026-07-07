@@ -2,10 +2,14 @@
 id: P113
 name: SAMLSecurity
 refs: ASVS V2.x / WSTG-ATHN / CS: SAML Security
-requires: [backend]
 ---
 
 # P113 — SAMLSecurity
+
+## Preconditions
+
+The code implements SAML.
+
 
 ## Overview
 Security Assertion Markup Language (SAML) lets an Identity Provider (IdP) vouch for a user to a Service Provider (SP) via a signed XML assertion passed through the user's browser. Because the assertion is delivered over the untrusted browser channel and is consumed by a generic XML parser, the security of the flow depends on **three independent checks** that are frequently implemented only partially: the signature must cover the *semantically meaningful* element (not merely be present and valid), the assertion's lifecycle constraints (audience, recipient, NotOnOrAfter, InResponseTo) must be enforced, and the XML must be parsed without enabling external entities or accepting wrapped/mutated document shapes. The single most common root cause is verifying a signature that covers one element while the application then trusts a *different* element the signature did not cover — the XML Signature Wrapping (XSW) class of flaws.

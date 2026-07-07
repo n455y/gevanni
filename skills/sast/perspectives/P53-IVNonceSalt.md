@@ -2,10 +2,14 @@
 id: P53
 name: IVNonceSalt
 refs: ASVS V6.2.x / WSTG-CRYP-04 / CS: Cryptographic Storage, Password Storage
-requires: [backend]
 ---
 
 # P53 — IVNonceSalt
+
+## Preconditions
+
+The code generates cryptographic nonces or salts.
+
 
 ## Overview
 Symmetric ciphers in authenticated modes (AES-GCM, ChaCha20-Poly1305) and password hashes / key-derivation functions (PBKDF2, scrypt, Argon2) all rely on a value that must never repeat or be omitted under a given key: the **initialization vector (IV) / nonce** for stream-style encryption, and the **salt** for password hashing. Reusing a nonce with the same key in GCM/ChaCha20 is catastrophic — it leaks the authentication key and enables plaintext recovery and forgery — while an omitted or constant salt makes password hashes trivially vulnerable to precomputed (rainbow-table) and multi-target dictionary attacks. The root cause is almost always developer error: a hardcoded IV/nonce (`Buffer.alloc(12, 0)`), a non-cryptographic RNG (`Math.random`), or a KDF called without its salt argument.

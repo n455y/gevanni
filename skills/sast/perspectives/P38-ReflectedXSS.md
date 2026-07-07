@@ -2,10 +2,14 @@
 id: P38
 name: ReflectedXSS
 refs: ASVS V5.3.x / WSTG-INPV-01, WSTG-INPV-02 / CS: Cross Site Scripting Prevention, DOM based XSS Prevention
-requires: [backend]
 ---
 
 # P38 — Reflected XSS
+
+## Preconditions
+
+The code includes user input in HTTP responses.
+
 
 ## Overview
 Reflected Cross-Site Scripting (XSS) occurs when request-controlled input — query string, path parameter, request body, or header — is echoed back into an HTML response **without context-correct encoding or sanitization**. The payload is not persisted (unlike stored XSS), so the victim must be induced to follow a crafted link (phishing email, malicious page with an auto-submitting form, embedded iframe). The root cause is always the same: untrusted data reaches an output sink (HTML body, attribute, JavaScript string, URL, or CSS) through a code path that does not encode for *that* context. A single generic "escape everything" helper is rarely safe across contexts.

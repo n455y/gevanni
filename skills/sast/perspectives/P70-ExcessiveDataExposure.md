@@ -2,10 +2,14 @@
 id: P70
 name: ExcessiveDataExposure
 refs: ASVS V8.3.x, V4.3.x / WSTG-ATHZ-03, WSTG-INFO-02 / CS: REST Security, REST Assessment
-requires: [backend]
 ---
 
 # P70 — ExcessiveDataExposure
+
+## Preconditions
+
+The code returns data in API responses.
+
 
 ## Overview
 Excessive Data Exposure (an API-focused weakness, OWASP API1:2023 Broken Object Level Authorization's sibling) happens when an API endpoint returns **more data than the caller is authorized to see** — internal fields, other users' records, audit/metadata, or deeply populated related objects. The root cause is rarely a missing access check on the request; it is the serializer. The handler correctly authorizes "may user X fetch order 123?" and then blindly serializes the entire ORM entity, leaking fields (password hash, internal notes, `createdAt`/`tenantId`, PII of nested objects) the client UI never displays. Unlike injection, there is no crafted payload — the attacker simply reads the JSON. BOLA exploits broken authorization to reach an object; excessive data exposure leaks fields of an object the user was legitimately allowed to fetch.

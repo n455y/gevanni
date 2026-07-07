@@ -2,10 +2,14 @@
 id: P34
 name: SQLiORM
 refs: ASVS V5.3.x / WSTG-INPV-05 / CS: SQL Injection Prevention, Query Parameterization
-requires: [backend, db]
 ---
 
 # P34 — SQLiORM
+
+## Preconditions
+
+The code sends queries to a database.
+
 
 ## Overview
 SQL injection through an ORM or query builder is the same classic flaw — untrusted data is allowed to alter the **structure** of a SQL statement, not just its data values — but it hides behind "we use an ORM, so we're safe." ORMs are only safe when their parameter-binding APIs are used; almost every ORM also exposes an escape hatch (`raw()`, `$queryRaw`, `execute`, `whereRaw`, string-built `where`) that, once fed concatenated or interpolated input, reopens the hole. A second, ORM-specific vector is **operator/mass-binding injection**: passing request-controlled objects straight into a `where` clause (`Model.find({ where: req.body })`) lets an attacker smuggle query operators such as `{$ne: null}`, `$gt`, or `$where` that bypass filters or trigger server-side JavaScript. The root cause is always treating user input as part of the query grammar rather than as a bound data value.

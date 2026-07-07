@@ -2,10 +2,14 @@
 id: P116
 name: WebCachePoisoning
 refs: ASVS V14.x / WSTG-CONF / CS: Web Cache Poisoning
-requires: [backend]
 ---
 
 # P116 — Web Cache Poisoning
+
+## Preconditions
+
+The code serves cached HTTP responses.
+
 
 ## Overview
 Web cache poisoning occurs when an attacker-controlled, **unkeyed** request input — typically an HTTP header such as `Host`, `X-Forwarded-Host`, `X-Forwarded-Scheme`, `X-Original-URL`, or `X-Forwarded-For` — is reflected into a response that a shared cache (CDN, reverse proxy, gateway) then stores and serves to every subsequent visitor for that cache key. The cache key is normally derived from the path and a curated subset of headers; any request property that influences the response body but is excluded from the key is an "unkeyed" input and a potential poisoning vector. The root cause is a mismatch between the inputs the **origin** trusts to build the response and the inputs the **cache** uses to differentiate entries. The result is a single malicious request that "infects" a cached resource (often a static JS bundle, CSS, or a public page) so that all other users receive the attacker's payload until the TTL expires or the entry is purged.

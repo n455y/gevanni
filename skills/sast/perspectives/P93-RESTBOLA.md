@@ -2,10 +2,14 @@
 id: P93
 name: RESTBOLA
 refs: ASVS V13.x / WSTG-ATHZ-04 / CS: REST Security (OWASP API1:BOLA)
-requires: [backend]
 ---
 
 # P93 — RESTBOLA
+
+## Preconditions
+
+The code exposes an API that manages resources.
+
 
 ## Overview
 Broken Object Level Authorization (BOLA, a.k.a. IDOR) is the #1 API security risk in the OWASP API Top 10 (API1:2023). It occurs when a REST endpoint exposes an object by a user-supplied identifier (`/api/orders/{id}`) and trusts that *authentication* (knowing who the caller is) implies *authorization* (the caller may touch *this* object). The endpoint fetches the object directly — `findById(id)` — without scoping the query by owner, tenant, or role, so any authenticated user can read or mutate any other user's record by guessing or enumerating IDs. The root cause is always the same: object retrieval is keyed on the object ID alone, and the resource-owner relationship is never enforced server-side. Predictable identifiers (sequential integers, exposed UUIDs, leaked document hashes) make the flaw trivially exploitable at scale.

@@ -2,10 +2,14 @@
 id: P66
 name: TempDataCaching
 refs: ASVS V8.1.x, V8.2.x / WSTG-CRYP-01, WSTG-ATHN-06 / CS: Sensitive Data, Caching, Session Management
-requires: [backend]
 ---
 
 # P66 — TempDataCaching
+
+## Preconditions
+
+The code caches data.
+
 
 ## Overview
 Sensitive responses — authenticated pages, API payloads returning PII, generated PDFs or reports, session/temp files — must be explicitly marked as non-cacheable. When a developer omits cache directives (or sets `Cache-Control: public`), browsers, forward/reverse proxies, and CDNs are free to store the response. The next user of the shared machine, an intermediary cache operator, or anyone probing a CDN edge can then replay cached authenticated content. The root cause is three-fold: (1) reliance on cache *defaults* instead of explicit `no-store`; (2) writing temp files (exports, backups, debug dumps) with world-readable permissions or predictable paths; and (3) serving sensitive content through caching layers not scoped to the authenticated principal. Each leaks confidentiality without any direct vulnerability in the application logic.

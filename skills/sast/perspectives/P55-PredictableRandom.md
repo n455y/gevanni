@@ -2,10 +2,14 @@
 id: P55
 name: PredictableRandom
 refs: ASVS V6.3.x / WSTG-CRYP-04 / CS: Cryptographic Storage
-requires: [backend]
 ---
 
 # P55 — PredictableRandom
+
+## Preconditions
+
+The code generates random values.
+
 
 ## Overview
 Predictable randomness is the use of a non-cryptographic pseudo-random number generator (PRNG) — `Math.random()`, `rand()`, LCGs, time/microsecond seeds — to produce values that are supposed to be unguessable: session IDs, tokens, CSRF nonces, password-reset codes, OTPs, API keys, or any short-lived secret. The root cause is treating "random-looking" output as "unguessable." Non-crypto PRNGs have small internal state and observable output; given a few tokens an attacker can reconstruct the generator's state and predict every past and future value. The result is a complete collapse of authentication boundaries — account takeover, session hijacking, and one-time-token forgery.

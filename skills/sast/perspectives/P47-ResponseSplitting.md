@@ -2,10 +2,14 @@
 id: P47
 name: ResponseSplitting
 refs: ASVS V5.3.x / WSTG-INPV-07 / CS: Injection Prevention
-requires: [backend]
 ---
 
 # P47 — Response Splitting (CRLF Injection)
+
+## Preconditions
+
+The code writes HTTP response headers.
+
 
 ## Overview
 HTTP Response Splitting (also called CRLF injection) occurs when **request-controlled input containing carriage-return/line-feed characters (`\r\n`)** is written into a response **header value** without stripping control characters. By injecting a raw `\r\n`, an attacker can terminate the intended header, start a new header (e.g. a second `Set-Cookie` or a `Location`), inject a blank line that ends the header block, and then begin writing the response **body** — effectively "splitting" one HTTP response into two. Modern frameworks (Express, Django, Spring, .NET) reject or encode CR/LF in header values, so the bug is now most often found in raw header manipulation, legacy code, custom HTTP/SMTP servers, redirect handlers that build `Location` strings by concatenation, and cookie generation that interpolates user input. The root cause is always the same: untrusted data reaches a header-writing sink without validation against the HTTP token/field-content grammar. Even when full response splitting is blocked, bare CR/LF can still enable header injection, log injection, and mail header injection (a sibling issue on SMTP/IMAP paths).

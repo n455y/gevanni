@@ -2,10 +2,14 @@
 id: P61
 name: LogInjection
 refs: ASVS V7.1.x / WSTG-INPV-12 / CS: Logging
-requires: []
 ---
 
 # P61 — LogInjection
+
+## Preconditions
+
+The code writes logs.
+
 
 ## Overview
 Log injection occurs when request-controlled input — username, URL path, header value, search term, error reason — is written into a log line **without sanitizing newlines and control characters**. Because most log sinks (files, syslog, stdout parsed by containers) are line-oriented, an attacker who can embed `\n`, `\r\n`, or ANSI escape sequences can forge fake log entries, overwrite or hide legitimate records, poison SIEM correlation rules, and confuse incident response. The root cause is plain-text string concatenation of untrusted data into a log message; using structured (JSON) logging or escaping newlines and control bytes before emission neutralizes the threat. A secondary risk is log forging via terminal escapes (`\x1b[2J`) that clear screens or fake "INFO" prefixes in operations dashboards.

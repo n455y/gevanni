@@ -2,10 +2,14 @@
 id: P69
 name: PIIOverCollection
 refs: ASVS V8.2.x, V8.3.x / WSTG-INFO-02, WSTG-ATHN-09 / CS: User Privacy, Privacy Engineering
-requires: [backend]
 ---
 
 # P69 — PII Over-Collection
+
+## Preconditions
+
+The code collects user information.
+
 
 ## Overview
 PII over-collection occurs when an application gathers, persists, or logs personally identifiable information beyond what the active feature actually requires — collecting a birthdate, national ID, or biometric for a service that only needs an email. The root cause is rarely a single field: it is the absence of data-minimization discipline (collect-the-least), purpose limitation (use only for the stated purpose), and a retention lifecycle (expire or anonymize). The result is a bloated, high-sensitivity data store with weak deletion guarantees — a prime target for breach exfiltration, insider abuse, and a direct violation of GDPR Art. 5(1)(c)/(e), CPRA, and similar regimes. The more PII you hold without justification, the larger your blast radius and your legal exposure.

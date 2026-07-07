@@ -2,10 +2,14 @@
 id: P20
 name: SessionInvalidation
 refs: ASVS V3.3.x, V3.6.x, V8.1.x / WSTG-SESS-06, WSTG-SESS-07 / CS: Session Management, JSON Web Token Cheat Sheet, Logging Cheat Sheet
-requires: [backend]
 ---
 
 # P20 — Session Invalidation
+
+## Preconditions
+
+The code manages user sessions.
+
 
 ## Overview
 Session invalidation flaws arise when a logout, password change, or timeout event does not fully terminate the session **on the server side**. The canonical mistake is treating session termination as a client concern — deleting the cookie or clearing local state — while the underlying session record or token remains valid. Stateless JWTs are the worst offender: by design they cannot be revoked without server-side state, so a "logout" that only removes the token from the browser leaves it usable until natural expiry. The root cause is always a mismatch between what the user believes happened (logged out) and what the server recorded (still authenticated). Attackers who obtain a leaked token (logs, referrer header, XSS, shared machine) continue to act as the victim long after the victim walked away.

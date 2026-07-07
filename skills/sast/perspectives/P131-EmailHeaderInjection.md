@@ -2,10 +2,14 @@
 id: P131
 name: EmailHeaderInjection
 refs: ASVS V1.x / WSTG-INPV / CS: Injection Prevention
-requires: [backend, email]
 ---
 
 # P131 — EmailHeaderInjection
+
+## Preconditions
+
+The code sends emails.
+
 
 ## Overview
 Email header injection occurs when user-controlled input placed into an email header field — `to`, `cc`, `bcc`, `from`, `reply-to`, `subject`, or custom headers — contains CR/LF sequences (`\r\n`, `\n`) that the mailer does not strip. Because RFC 5322 delimits headers with a blank CRLF line and individual headers with CRLF, an embedded newline lets the attacker terminate the intended header and append arbitrary new headers — additional `To`/`Bcc` recipients, a new `Subject`, a second `Content-Type`, or even a fresh message body after a blank line. The root cause is always the same: untrusted data reaches a low-level mail API that treats the value as raw header text, with no structural validation or normalization of line terminators.

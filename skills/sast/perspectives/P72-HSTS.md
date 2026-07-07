@@ -2,10 +2,14 @@
 id: P72
 name: HSTS
 refs: ASVS V9.1.1, V14.4.2 / WSTG-CONF-07 / CS: HTTP Strict Transport Security
-requires: []
 ---
 
 # P72 — HSTS
+
+## Preconditions
+
+The code serves HTTP responses.
+
 
 ## Overview
 HTTP Strict Transport Security (HSTS) instructs compliant browsers to access the site **only over HTTPS** for a defined period, neutralizing SSL-stripping / man-in-the-middle downgrade attacks. Without it, a user who types `example.com` (or clicks an `http://` link, or connects to a hostile network that injects a redirect) can be silently bridged to plaintext HTTP, where credentials, cookies, and session tokens are exposed. The issue is purely a **missing or weak response header** — `Strict-Transport-Security` absent, set with too short a `max-age`, applied over HTTP (where it can itself be stripped), or scoped too narrowly (no `includeSubDomains`/`preload`) to cover the domain's attack surface. Root cause: TLS is correctly configured but the host never commits the browser to it.

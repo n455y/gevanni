@@ -2,10 +2,14 @@
 id: P43
 name: SSTI
 refs: ASVS V5.3.x / WSTG-INPV-13 / CS: Injection Prevention, Server Side Template Injection
-requires: [backend, templating]
 ---
 
 # P43 — SSTI
+
+## Preconditions
+
+The code renders templates.
+
 
 ## Overview
 Server-Side Template Injection (SSTI) occurs when user-controlled input is treated as a **template source** (compiled and evaluated by the templating engine) rather than as a passive **data value** passed into a fixed template. The payload — typically `{{ ... }}`, `${ ... }`, or `<%= ... %>` depending on the engine — is executed on the server inside the engine's expression/sandbox context, which usually exposes the host language's runtime (Python `__class__`, JS `process`, Java reflection, Ruby `system`). Root cause is always the same: the boundary between "template string" and "template argument" is blurred — `render(userString)` instead of `render(templateFile, { data: userString })`. Because the engine runs with full application privileges, a successful SSTI almost always escalates to Remote Code Execution, file read, or full server compromise.

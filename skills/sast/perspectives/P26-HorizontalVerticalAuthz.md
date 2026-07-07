@@ -2,10 +2,14 @@
 id: P26
 name: HorizontalVerticalAuthz
 refs: ASVS V4.1.x, V4.2.x, V4.3.x / WSTG-ATHZ-01, WSTG-ATHZ-02, WSTG-ATHZ-03, WSTG-ATHZ-04 / CS: Authorization, Injection Prevention
-requires: [backend]
 ---
 
 # P26 — Horizontal & Vertical Authorization
+
+## Preconditions
+
+The code has functionality that should be restricted to certain users.
+
 
 ## Overview
 Broken access control is consistently the #1 risk in the OWASP Top 10, and within it two failure classes dominate. **Horizontal** (IDOR / BOLA) failures let one user reach another user's resources of the *same* privilege tier — replacing an `/orders/1001` ID with `/orders/1002` returns someone else's order. **Vertical** failures let a lower-privilege subject reach a higher-privilege function or data — a plain `user` calling `/admin/users/delete`, or a `support` role escalating to `admin`. The shared root cause is trusting the request (a path ID, a query param, a hidden form field, a role string in a JWT) instead of re-asserting, server-side, *who* the authenticated principal is and *what* it is allowed to do on *this specific object*. AuthN (knowing who you are) does not imply AuthZ (knowing what you may touch); a missing `WHERE owner_id = ?` clause or a missing role check is all it takes.

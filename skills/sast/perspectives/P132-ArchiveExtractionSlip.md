@@ -2,10 +2,14 @@
 id: P132
 name: ArchiveExtractionSlip
 refs: ASVS V5.x / WSTG-INPV-11 / CS: File Upload
-requires: [backend, file-upload]
 ---
 
 # P132 — ArchiveExtractionSlip
+
+## Preconditions
+
+The code extracts archives.
+
 
 ## Overview
 Archive extraction slip (Zip Slip / Tar Slip) occurs when an application extracts an uploaded or fetched archive (zip, tar, rar, 7z, jar) by joining each entry's name directly onto a destination directory **without normalizing or canonicalizing the path first**. Because the attacker controls the archive, they can set an entry name containing traversal sequences (`../`) or absolute paths (`/etc/...`, `C:\Windows\...`). When the target path resolves outside the intended extraction root, the decompressor happily writes the entry's contents wherever the OS allows — overwriting source files, configuration, scheduled-task scripts, or dropping an executable into a startup location. The root cause is the same as any path traversal: trusting attacker-controlled path components and relying on the library instead of an explicit containment check.

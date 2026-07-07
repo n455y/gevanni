@@ -2,10 +2,14 @@
 id: P33
 name: SQLiStringConcat
 refs: ASVS V5.3.x / WSTG-INPV-05 / CS: SQL Injection Prevention, Query Parameterization
-requires: [backend, db]
 ---
 
 # P33 — SQLiStringConcat
+
+## Preconditions
+
+The code sends queries to a database.
+
 
 ## Overview
 SQL Injection via string concatenation occurs when request-controlled input is spliced into a SQL query string **instead of being passed through a parameterized interface** (prepared statement, bind variable, or ORM query builder). The root cause is always treating SQL as text to assemble rather than as a structure with typed parameters: a single `'`, `"`, `;`, or `--` from user input can break out of the intended literal and append, modify, or truncate the statement. The risk is highest where developers fall back to raw strings — dynamic `ORDER BY`/`LIMIT` clauses, dynamic table or column names, and legacy `query(...)` calls — because these constructs are awkward to parameterize. Even one concatenation point in an otherwise parameterized codebase is enough to compromise the database.

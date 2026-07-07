@@ -2,10 +2,14 @@
 id: P45
 name: PathTraversal
 refs: ASVS V5.3.7 / V12.3.1, V12.3.2 / WSTG-INPV-11 / CS: File Upload, Injection Prevention
-requires: [backend, file-read]
 ---
 
 # P45 — Path Traversal
+
+## Preconditions
+
+The code resolves user-supplied input to locate resources.
+
 
 ## Overview
 Path traversal (directory traversal) occurs when user-controlled input — a filename, relative path, document ID, or URL segment — is concatenated into a filesystem path **without canonicalization and containment checks**, letting `../` sequences or absolute paths escape the intended base directory. The root cause is always the same: untrusted data reaches a filesystem API (`fs.readFile`, `open()`, `new File(...)`, `os.Open`) through a code path that joins first and validates later — or never validates at all. `path.join` and Python's `os.path.join` **do not** prevent traversal; they normalize but still honor `../`. Successful exploitation yields arbitrary file read (credentials, source, configs), and in upload/extract flows can reach arbitrary file write or overwrite (webshell drop, key replacement).

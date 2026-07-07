@@ -2,10 +2,14 @@
 id: P98
 name: GraphQLBOLA
 refs: ASVS V4.1.x, V4.3.x / WSTG-ATHZ-04 / CS: GraphQL Cheat Sheet, API1 BOLA
-requires: [backend, graphql]
 ---
 
 # P98 — GraphQL BOLA (Broken Object Level Authorization)
+
+## Preconditions
+
+The code exposes a GraphQL API.
+
 
 ## Overview
 GraphQL Broken Object Level Authorization (BOLA) occurs when a resolver or field exposes an object by a client-supplied identifier (id, slug, relation) without verifying that the caller is allowed to read or mutate **that specific object**. GraphQL magnifies the classic IDOR problem: a single endpoint accepts arbitrarily nested queries, the schema itself advertises every type and relation (via introspection), and the framework will happily fetch related objects by id unless each resolver enforces ownership. The root cause is almost always *authentication without authorization* — the server confirms *who* the user is, then trusts the id argument to scope the result. Object-level checks pushed "up" into a single middleware or applied only at the root query rarely survive nested resolvers and mutations.

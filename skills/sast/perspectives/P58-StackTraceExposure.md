@@ -2,10 +2,14 @@
 id: P58
 name: StackTraceExposure
 refs: ASVS V7.x / V14.x / WSTG-ERRH-01 / CS: Error Handling
-requires: []
 ---
 
 # P58 — StackTraceExposure
+
+## Preconditions
+
+The code handles errors.
+
 
 ## Overview
 Stack-trace and verbose-error exposure happens when an application returns internal failure detail — exception stack traces, absolute filesystem paths, SQL fragments, framework/version banners, or environment variables — to the client instead of a generic, sanitized error. The root cause is almost always an error handler that serializes the raw exception object (`err`, `err.stack`, `e.message`, `str(e)`, `printStackTrace()`) straight into the HTTP response body, or a missing global error handler that lets the framework's default debug page (Spring Boot Whitelabel, Django debug, Play Framework, ASP.NET Yellow Screen of Death, PHP Whoops, Laravel `APP_DEBUG=true`) render in production. This is an information-disclosure weakness (ASVS V7.4 / V14.4): while not a direct pre-auth exploit, it gives attackers a reconnaissance shortcut — technology stack, library versions, internal class structure, and file layout — that sharply lowers the cost of follow-on attacks.

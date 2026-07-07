@@ -3,16 +3,22 @@
 // 役割: 「診断ユニット × 観点」の直積でサブエージェントを fan-out し、
 //       構造化 FINDINGS を集約して返す。
 //
+// フィルタリング戦略:
+//   事前のタグフィルタは行わない。全観点を全ユニットで実行する。
+//   各エージェントが実際のコードを読み、観点の precondition を
+//   満たすかどうかを判断する。満たさなければ findings: []。
+//   前提条件を満たさなければ findings: [] を返す。
+//   唯一のスキップは capPerspectives の規模超過のみ。
+//
 // 呼び方(メインエージェント):
 //   Workflow({
 //     scriptPath: "<絶対パス>/.claude/skills/sast/workflow-template.js",
 //     args: { units, perspectives }
 //   })
-//   - units:        Array<{ id, method, route, code, deps?, tags: string[] }>
-//                    tags は ["backend", "db", ...]。frontend|backend は必須。
-//   - perspectives: Array<{ id, name, requires, focus, signals, fpNote, refs }>
-//                    requires は必須タグの配列（例: ["backend", "db"]）。空配列は無条件実行。
-//                    優先度順(Critical寄りを先)に並べること。規模超過時に優先度で間引く。
+//   - units:        Array<{ id, method, route, desc, files, deps? }>
+//   - perspectives: Array<{ id, name, precondition, focus, signals, fpNote, refs }>
+//                   precondition: 前提条件（1文、絶対に必要な条件のみ）。
+//                   focus: 詳細なチェック内容。signals: 参考ヒント。
 //
 // 戻り値: { summary, units, findings }
 //   - summary: { unitsAssessed, perspectivesApplied, totalFindings, bySeverity }
@@ -57,47 +63,38 @@ const FINDINGS_SCHEMA = {
   required: ['findings'],
 }
 
+const SOURCE_ROOT = '/workspace'
+
 const ASSESS_PROMPT = (unit, pov) => `あなたはセキュリティ診断エージェント。以下の「1つの診断ユニット」を「1つの観点」でのみ審査する。他の観点には踏み込まない。
 
 ## 診断ユニット
 - ID: ${unit.id}
 - ルート/メソッド: ${unit.method} ${unit.route}
-- コード:
-\`\`\`
-${unit.code}
-\`\`\`
-- 依存先(参照のみ、深追いしない): ${(unit.deps || []).join(', ') || '(なし)'}
+- 説明: ${unit.desc || unit.code || '(no description)'}
+- ソースファイル（このファイルを Read で実際に読むこと）: ${(unit.files || []).map(f => SOURCE_ROOT + '/' + f).join(', ')}
 
 ## 観点
 - ID: ${pov.id}
 - 名前: ${pov.name}
+- 前提条件（このコードに適用可能か？大雑把に判断せよ）: ${pov.precondition || pov.focus}
 - チェック内容: ${pov.focus}
-- 静的解析シグナル: ${pov.signals}
+- 検出のヒント（参考。これに限定されない）: ${pov.signals}
 - False-Positive 注意: ${pov.fpNote}
 - 参照: ${pov.refs}
 
 ## 指示
-1. この観点に関連する問題「のみ」を報告する。該当しなければ findings: [] を返す。
-2. evidence には実際のコード箇所と該当断文を含め、なぜ問題かを1-2文で書く。
-3. FP を避ける: フレームワークの保護(パラメータ化クエリ、自動エスケープ、型付き入力、ルーターのバリデーション等)が効いている場合は問題としない。判断に迷う場合は confidence を下げる。
-4. severity は悪用可能性と影響で判定する。実証不能・推測なら Info または findings:[]。
-5. remediation は具体的に(コード例や設定名)。
-6. refs には観点の refs を引き継ぐ。`
+1. **前提条件チェック**: まず上記のソースファイルを Read し、「前提条件」に照らして、この観点がこのコードに適用可能かを**意味的に**判断せよ。大雑把でよい。例えば「SQLクエリを構築している」が前提条件なら、コードがDBを使っていれば満たす。コードが前提条件を全く満たさないと判断した場合は findings: [] を返して終了。
+2. **詳細診断**: 前提条件を満たす場合、「チェック内容」に沿ってコードを精査し、脆弱性の有無を判定せよ。
+3. evidence には実際のコード箇所（file:line）と該当コード断片を含め、なぜ問題かを1-2文で書く。
+4. FP を避ける: フレームワークの保護(パラメータ化クエリ、自動エスケープ、型付き入力等)が確実に効いている場合は問題としない。判断に迷う場合は confidence を下げる。
+5. severity は悪用可能性と影響で判定する。実証不能・推測なら Info または findings:[]。
+6. remediation は具体的に(コード例や設定名)。
+7. refs には観点の refs を引き継ぐ。`
 
 // ── 観点フィルタリング ──────────────────────────────────────────────
-// unit.tags と pov.requires のマッチングでスキップ判定。
-// pov.requires は各観点ファイルの frontmatter に定義（全133ファイル）。
-// requires が空配列の観点は全ユニットで実行される。
-// ポリシー: 少しでも検知可能性が残る組み合わせは skip しない（conservative）。
-
-// unit が perspective の要件を満たすか判定
-const isRelevant = (unit, pov) => {
-  const tags = new Set(unit.tags || [])
-  const required = pov.requires || []
-  if (required.length === 0) return true
-  return required.every((r) => tags.has(r))
-}
-// 規模の安全弁。units × perspectives が上限を超える場合、優先度順に並んだ
+// 事前スキップは行わない。全観点を全ユニットで実行する。
+// 各エージェントが Preconditions を満たすかコードを読んで判断する。
+// コスト制御は capPerspectives（規模の安全弁）のみ。units × perspectives が上限を超える場合、優先度順に並んだ
 // perspectives を先頭から残す(No-silent-caps: log で明示)。
 const capPerspectives = (perspectives, unitsLen) => {
   const HARD_AGENT_CAP = 1000
@@ -125,25 +122,18 @@ const { perspectives: povs, dropped } = capPerspectives(perspectives, units.leng
 
 const results = await pipeline(
   units,
-  // stage1: 1ユニットを全観点で並列診断（明らかに無関係な観点はスキップ）
-  (unit) => {
-    const relevantPovs = povs.filter((pov) => isRelevant(unit, pov))
-    const skipped = povs.length - relevantPovs.length
-    if (skipped > 0) {
-      log(`${unit.id} (${unit.method} ${unit.route}): tags=[${(unit.tags || []).join(', ')}] → ${skipped}/${povs.length} 観点をスキップ (明らかに無関係)`)
-    }
-    return parallel(
-      relevantPovs.map((pov) => () =>
-        agent(ASSESS_PROMPT(unit, pov), {
-          label: `${unit.id}:${pov.id}`,
-          phase: '診断',
-          schema: FINDINGS_SCHEMA,
-        })
-          .then((r) => (r && Array.isArray(r.findings) ? r.findings : []))
-          .catch(() => []) // 1観点の失敗で全体は止めない
-      )
+  // stage1: 全観点を全ユニットで実行。エージェント自身がコードを読んで前提条件をチェックする
+  (unit) => parallel(
+    povs.map((pov) => () =>
+      agent(ASSESS_PROMPT(unit, pov), {
+        label: `${unit.id}:${pov.id}`,
+        phase: '診断',
+        schema: FINDINGS_SCHEMA,
+      })
+        .then((r) => (r && Array.isArray(r.findings) ? r.findings : []))
+        .catch(() => []) // 1観点の失敗で全体は止めない
     )
-  },
+  ),
   // stage2: ユニット単位でマージ
   (findingsPerPov, unit) => {
     const all = findingsPerPov.flat()

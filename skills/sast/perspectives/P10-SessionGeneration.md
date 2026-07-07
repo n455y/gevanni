@@ -2,10 +2,14 @@
 id: P10
 name: SessionGeneration
 refs: ASVS V3.3.x, V8.5.x / WSTG-SESS-01, WSTG-SESS-02 / CS: Session Management
-requires: [backend]
 ---
 
 # P10 — Session Generation
+
+## Preconditions
+
+The code creates user sessions.
+
 
 ## Overview
 A session fixation vulnerability arises when the application fails to **rotate the session identifier** at any transition in privilege level — most critically at login, but also on privilege escalation (user → admin), logout, or re-authentication. If the pre-authentication session ID is preserved, an attacker who obtained or planted that ID (via a crafted link, subdomain cookie injection, or XSS) rides the same ID into the authenticated session and becomes the victim without ever knowing their password. The root cause is always the same: the code mutates session state (`userId`, roles, `auth = true`) on the *existing* session object instead of discarding it and issuing a fresh, unpredictable ID. Stateless JWT bearer flows where a brand-new token is minted per login are out of scope here (see P14-JWTValidation).

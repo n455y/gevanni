@@ -2,10 +2,14 @@
 id: P89
 name: FileDoS
 refs: ASVS V12.x / WSTG-INPV-11 / CS: File Upload, Denial of Service
-requires: [backend]
 ---
 
 # P89 — FileDoS
+
+## Preconditions
+
+The code processes user-supplied files.
+
 
 ## Overview
 File-based denial of service occurs when an endpoint accepts user-supplied files or archives **without bounding their size, count, decompressed footprint, or processing cost**, allowing an attacker to exhaust disk, memory, CPU, or file-descriptor capacity and take the service down. The root cause is trusting the `Content-Length`, the extension, or the apparent byte size: a 10 MB ZIP can decompress to hundreds of GB (a "zip bomb"), a single image can be decoded into gigabytes of pixels, and an unbounded multipart stream can be buffered entirely in RAM. Because uploads are often unauthenticated or cheaply reachable, file DoS is one of the lowest-effort, highest-impact availability attacks against web applications.

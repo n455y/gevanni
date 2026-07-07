@@ -2,10 +2,14 @@
 id: P22
 name: SessionStoreProtection
 refs: ASVS V3.1.x, V8.1.x / WSTG-SESS-08 / CS: Session Management
-requires: [backend]
 ---
 
 # P22 — SessionStoreProtection
+
+## Preconditions
+
+The code stores session data.
+
 
 ## Overview
 Server-side session state (Redis, Memcached, a database table, or in-memory maps) and the secrets bound to it are the crown jewels of authentication: whoever can read or forge a session effectively bypasses login. The issue is that session payloads and their backing store are frequently left unauthenticated, unencrypted, or over-privileged — a plaintext credential stuffed into the session object, an open Redis `6379`, a DB column of session blobs with no integrity protection, or a client-side cookie store signed with a weak/guessable secret. The root cause is almost always treating session storage as an internal, implicitly-trusted component rather than as a secret store that must be encrypted in transit and at rest, access-controlled, and integrity-protected. Once the store is exposed (a misconfigured cloud snapshot, an SSRF that reaches the cache port, a SQL-injection that dumps the sessions table), every active session becomes a takeover primitive.

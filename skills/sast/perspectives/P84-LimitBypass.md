@@ -2,10 +2,14 @@
 id: P84
 name: LimitBypass
 refs: ASVS V11.x / WSTG-BUSL-03 / CS: REST Security
-requires: [backend]
 ---
 
 # P84 — Limit Bypass
+
+## Preconditions
+
+The code accepts user actions that should be rate-limited or restricted.
+
 
 ## Overview
 A limit bypass occurs when a business rule that caps quantity, rate, or frequency — votes per day, transfers per hour, withdrawal attempts, OTP guesses, coupon redemptions, search/export volumes — is enforced only on the client, or enforced server-side in a way an attacker can evade (race condition, key rotation, multi-account, or per-IP-only throttling). The root cause is always that the **trust boundary is in the wrong place**: the server trusts a value it should recompute, or it checks a counter it does not update atomically. Unlike classic injection flaws, the code looks correct at a glance because "the limit is there" — it just doesn't actually bind the attacker, who can repeat the action until they exhaust a resource, drain a balance, swing a vote, or brute-force a credential.

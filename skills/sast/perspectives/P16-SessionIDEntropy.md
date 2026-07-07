@@ -2,10 +2,14 @@
 id: P16
 name: SessionIDEntropy
 refs: ASVS V3.1.x, V3.2.x / WSTG-SESS-01, WSTG-SESS-02, WSTG-SESS-04 / CS: Session Management Cheat Sheet
-requires: [backend]
 ---
 
 # P16 — SessionIDEntropy
+
+## Preconditions
+
+The code generates session identifiers.
+
 
 ## Overview
 A session identifier is the sole proof of identity for an authenticated user after login; if it is predictable, an attacker can forge a valid session without ever knowing the password. The root cause is almost always **home-grown ID generation** that derives the token from a low-entropy or guessable input — a sequential counter, a timestamp, a username, or a weak PRNG such as `Math.random()` / `java.util.Random`. Even an 128-bit ID is worthless if half of the bits are constant or derived from public data. The fix is to delegate to a cryptographically secure random number generator (CSPRNG) emitting at least 128 bits of entropy, or — far better — to use the framework's hardened session store, which already does this and rotates, signs, and expires tokens correctly.
