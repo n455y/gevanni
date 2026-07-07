@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
@@ -183,7 +184,11 @@ program
         opts.scenario.length > 0
           ? opts.scenario
           : config.scenarios.map((s) => {
-              const resolvedPath = path.resolve(configDir, s.file);
+              // カレントディレクトリ基準を先に試し、なければ configDir 基準
+              const cwdPath = path.resolve(s.file);
+              const resolvedPath = fs.existsSync(cwdPath)
+                ? cwdPath
+                : path.resolve(configDir, s.file);
               return `${s.type}:${resolvedPath}`;
             });
 

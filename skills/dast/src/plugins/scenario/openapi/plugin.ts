@@ -73,10 +73,13 @@ function sendViaProxy(
       timeout: HTTP_TIMEOUT_MS,
     };
 
+    let settled = false;
     const req = (isHttps ? https : http).request(options, (res) => {
       const chunks: Buffer[] = [];
       res.on("data", (chunk: Buffer) => chunks.push(chunk));
       res.on("end", () => {
+        if (settled) return;
+        settled = true;
         const resHeaders: Record<string, string> = {};
         for (const [key, value] of Object.entries(res.headers)) {
           if (typeof value === "string") {
@@ -93,14 +96,24 @@ function sendViaProxy(
           },
         });
       });
-      res.on("error", reject);
+      res.on("error", (err) => {
+        if (settled) return;
+        settled = true;
+        reject(err);
+      });
     });
 
     req.on("timeout", () => {
+      if (settled) return;
+      settled = true;
       req.destroy();
       reject(new Error(`HTTP request timed out after ${HTTP_TIMEOUT_MS}ms: ${method} ${url}`));
     });
-    req.on("error", reject);
+    req.on("error", (err) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    });
 
     if (body) {
       req.write(body);
