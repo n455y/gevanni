@@ -10,15 +10,15 @@ export function expandScenarioPaths(inputs: string[]): string[] {
     const resolved = path.resolve(input);
     const stat = fs.statSync(resolved, { throwIfNoEntry: false });
 
-    // ディレクトリの場合はglobで展開
+    // Expand directories using glob
     if (stat?.isDirectory()) {
       const matched = globSync(SCENARIO_GLOB, { cwd: resolved });
       files.push(...matched.map((f) => path.resolve(resolved, f)));
     } else if (stat?.isFile()) {
-      // ファイルが存在する場合は直接追加
+      // File exists, add directly
       files.push(resolved);
     } else {
-      // ファイルが存在しない場合はglobパターンとして処理
+      // File doesn't exist, treat as glob pattern
       files.push(...globSync(input));
     }
   }

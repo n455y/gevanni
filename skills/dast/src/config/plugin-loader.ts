@@ -5,12 +5,12 @@ import type { PluginRegistry } from "../core/plugin.ts";
 import type { PluginSpec } from "./loader.ts";
 
 /**
- * PluginSpec 配列を解決して PluginRegistry に登録する。
- * 同名プラグインは後勝ち（Map.set の仕様）。
+ * Resolve an array of PluginSpecs and register them in the PluginRegistry.
+ * Plugins with the same name are overwritten (last wins, per Map.set semantics).
  *
- * @param specs - PluginSpec 配列
- * @param registry - プラグインレジストリ
- * @param searchDirs - プラグインファイルの検索基準ディレクトリ（優先度順）
+ * @param specs - PluginSpec array
+ * @param registry - Plugin registry
+ * @param searchDirs - Base directories to search for plugin files (in priority order)
  */
 export async function loadPlugins(
   specs: PluginSpec[],
@@ -19,17 +19,17 @@ export async function loadPlugins(
 ): Promise<void> {
   for (const spec of specs) {
     if (spec === ":builtin:") {
-      // 全ビルトインプラグインを登録
+      // Register all builtin plugins
       registerAllBuiltinPlugins(registry);
     } else if (typeof spec === "string") {
-      // ファイルから default export クラスを new() して登録
+      // Load default-export class from file and instantiate
       const Cls = await loadPluginClass(spec, searchDirs);
       registry.register(new Cls());
     } else if ("name" in spec) {
-      // ビルトインプラグインを名前指定で options 上書き登録
+      // Register builtin plugin by name with options override
       registerBuiltinPlugin(registry, spec.name, spec.options);
     } else {
-      // ファイル + options 指定
+      // File + options
       const Cls = await loadPluginClass(spec.file, searchDirs);
       registry.register(new Cls(spec.options ?? {}));
     }
@@ -37,12 +37,12 @@ export async function loadPlugins(
 }
 
 /**
- * 複数の検索ディレクトリからプラグインファイルの絶対パスを解決する。
- * 最初に見つかったパスを返す。見つからない場合は null。
+ * Resolve the absolute path of a plugin file from multiple search directories.
+ * Returns the first match found, or null if not found.
  *
- * @param file - プラグインファイルの相対パス
- * @param searchDirs - 検索基準ディレクトリのリスト（優先度順）
- * @returns 解決された絶対パス、または null
+ * @param file - Relative path to the plugin file
+ * @param searchDirs - List of base directories to search (in priority order)
+ * @returns Resolved absolute path, or null
  */
 export function resolvePluginPath(
   file: string,
@@ -58,13 +58,12 @@ export function resolvePluginPath(
 }
 
 /**
- * 複数の検索ディレクトリからプラグインファイルを探し、
- * default export クラスを読み込む。
+ * Search multiple directories for a plugin file and load its default-export class.
  *
- * @param file - プラグインファイルのパス（searchDirs 基準）
- * @param searchDirs - 検索基準ディレクトリのリスト（優先度順）
- * @returns プラグインクラスのコンストラクタ
- * @throws ファイル not found, default export なし, クラスでない場合
+ * @param file - Plugin file path (relative to searchDirs)
+ * @param searchDirs - List of base directories to search (in priority order)
+ * @returns The plugin class constructor
+ * @throws If file not found, has no default export, or is not a class
  */
 async function loadPluginClass(
   file: string,
@@ -86,13 +85,13 @@ async function loadPluginClass(
     );
   }
 
-  // default export をチェック
+  // Check for default export
   if (mod === null || typeof mod !== "object" || !("default" in mod)) {
     throw new Error(`Plugin file "${resolvedPath}" has no default export`);
   }
   const Cls = (mod as { default: unknown }).default;
 
-  // クラス（コンストラクタ）をチェック
+  // Check that it's a class (constructor)
   if (typeof Cls !== "function" || Cls.toString().startsWith("class") === false) {
     throw new Error(
       `Default export of "${resolvedPath}" is not a class (constructor)`,
@@ -103,14 +102,14 @@ async function loadPluginClass(
 }
 
 /**
- * 指定されたディレクトリ群の plugins/autoload/ 内の .ts / .js ファイルを
- * PluginSpec 配列として自動検出する。
- * 各ディレクトリの plugins/autoload/ が存在しない場合はスキップ。
+ * Auto-discover .ts / .js files from plugins/autoload/ in the given directories,
+ * returning them as a PluginSpec array.
+ * Directories where plugins/autoload/ doesn't exist are silently skipped.
  *
- * 返されるパスは絶対パス。重複は除外され、ファイル名でソートされる。
+ * Returned paths are absolute. Duplicates are removed, and results are sorted by filename.
  *
- * @param searchDirs - 検索対象の親ディレクトリ群（例: configDir, cwd/.gevanni）
- * @returns 検出されたプラグインファイルの絶対パス PluginSpec 配列
+ * @param searchDirs - Parent directories to search (e.g., configDir, cwd/.gevanni)
+ * @returns Array of absolute-path PluginSpecs for discovered plugin files
  */
 export function discoverPluginFiles(...searchDirs: string[]): PluginSpec[] {
   const seen = new Set<string>();
@@ -136,7 +135,7 @@ export function discoverPluginFiles(...searchDirs: string[]): PluginSpec[] {
       results.push(absPath);
     }
   }
-  // ファイル名でソート（決定論的な順序）
+  // Sort by filename (deterministic order)
   results.sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
   return results;
 }

@@ -43,26 +43,26 @@ Confirm authorization for both target URL and source code. If the user only prov
 
 ### Step 1: Parallel scan execution
 
-SAST は内部で Dynamic Workflow を使用しており、Workflow ツールはメインコンテキストでのみ利用可能なため、**SAST はメインコンテキストで `/sast` を実行し、DAST のみ Agent ツールで並列起動する**。
+SAST uses Dynamic Workflow internally, and the Workflow tool is only available in the main context, so **run SAST in the main context via `/sast`, and launch DAST in parallel via the Agent tool**.
 
-**実行パターン**:
+**Execution pattern**:
 
-1. **DAST を Agent ツールでバックグラウンド起動**（`run_in_background: true`）:
+1. **Launch DAST as a background agent** (`run_in_background: true`):
    ```
    Agent(label: "dast-scan", run_in_background: true):
-     "DAST スキャンを実行して。ターゲットURL: <target-url>。
-      /workspace/skills/dast/SKILL.md のワークフローに従うこと。
-      完了したら findings を構造化した JSON で返して。"
+     "Run a DAST scan. Target URL: <target-url>.
+      Follow the workflow in /workspace/skills/dast/SKILL.md.
+      When done, return the findings as structured JSON."
    ```
 
-2. **SAST をメインコンテキストで実行**:
+2. **Run SAST in the main context**:
    ```
-   /sast を起動し、<source-dir> に対して静的解析を実行する。
+   Run /sast against <source-dir> for static analysis.
    ```
 
-3. DAST のバックグラウンドエージェントが完了するのを待つ（`<task-notification>` で通知される）。
+3. Wait for the DAST background agent to complete (notified via `<task-notification>`).
 
-この方法で、SAST（メイン）と DAST（バックグラウンド）が実質的に並列実行される。
+This way, SAST (main) and DAST (background) run effectively in parallel.
 
 **DAST agent** follows `/workspace/skills/dast/SKILL.md`:
 - Generate/select scenarios → create config.json → execute `gevanni scan` → AI deep inspection
@@ -147,7 +147,7 @@ sast_only finding
 
 #### Plugin generation template
 
-Generated plugins follow the `SignaturePluginBase` pattern. Place them in `.gevanni/plugins/autoload/` — gevanni の `discoverPluginFiles()` が自動検出するため、**config.json の更新は不要**。
+Generated plugins follow the `SignaturePluginBase` pattern. Place them in `.gevanni/plugins/autoload/` — gevanni's `discoverPluginFiles()` auto-discovers them, so **no config.json update is needed**.
 
 **Template reference**: See `plugin-template.ts` in this skill directory for the base class structure. Each generated plugin must:
 
@@ -263,7 +263,7 @@ Findings SAST caught but DAST missed. Each entry includes:
 After the scan completes, the user receives:
 
 1. **Integrated report** (Markdown) — saved to `<cwd>/.gevanni/scan-report-<date>.md`
-2. **Generated plugins** — saved to `<cwd>/.gevanni/plugins/autoload/custom-*.ts` (自動検出されるため config.json 更新不要)
+2. **Generated plugins** — saved to `<cwd>/.gevanni/plugins/autoload/custom-*.ts` (auto-discovered, no config.json update needed)
 3. **Raw scan outputs** preserved for reference:
    - DAST: JSON report from `gevanni scan --reporter json`
    - SAST: Markdown report from sast workflow

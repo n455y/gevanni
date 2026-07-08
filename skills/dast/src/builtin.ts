@@ -113,8 +113,8 @@ export function registerAllBuiltinPlugins(
 }
 
 /**
- * ビルトインプラグインを個別に登録（options を上書きする用途）。
- * 同名プラグインが既に登録済みの場合、上書きする（後勝ち）。
+ * Register a single builtin plugin (for overriding options).
+ * If a plugin with the same name is already registered, it is overwritten (last wins).
  */
 export function registerBuiltinPlugin(
   registry: PluginRegistry,

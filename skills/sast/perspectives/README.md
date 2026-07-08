@@ -1,23 +1,23 @@
-# 診断観点カタログ (Perspectives Catalog)
+# Perspectives Catalog
 
-133 のセキュリティ診断観点。OWASP ASVS **v5.0** / WSTG / CheatSheetSeries を統合。ASVS v5.0 の **17章構成** に沿って分類。**1観点 = 1ファイル** (`P<連番>-<英名>.md`)。各観点が Dynamic Workflow の1サブエージェントに対応する。
+133 security assessment perspectives integrating OWASP ASVS **v5.0** / WSTG / CheatSheetSeries. Organized by ASVS v5.0's **17-chapter structure**. **1 perspective = 1 file** (`P<seq>-<english-name>.md`). Each perspective maps to one sub-agent in the Dynamic Workflow.
 
-> 注: ASVS v5.0 は v4.0 から章番号と章名が大きく再編されています。本索引は v5.0 準拠です。
+> Note: ASVS v5.0 significantly reorganizes chapter numbers and names from v4.0. This index follows v5.0.
 
-## メインエージェントの使い方
+## How the main agent uses this
 
-1. この README の索引を見て、対象コードに存在しない領域の観点を除外する（GraphQLが無い→V4 GraphQLを除外 等）。
-2. 残りの `P<連番>-<英名>.md` を読み、各ファイルから以下を組み立てる:
+1. Scan this README's index and skip perspectives for areas not present in the target code (e.g. no GraphQL → skip V4 GraphQL).
+2. Read the remaining `P<seq>-<english-name>.md` files and assemble the following from each:
    - `id` ← frontmatter `id`
    - `name` ← frontmatter `name`
    - `refs` ← frontmatter `refs`
-   - `precondition` ← `## Preconditions` 本文（前提条件。1文）
-   - `focus` ← `## What to check` 本文
-   - `signals` ← `## Static signals` 本文
-   - `fpNote` ← `## False positives` 本文
-3. 組み立てた `perspectives[]` を優先度順（Critical寄りを先頭）に並べ、`args.perspectives` として Workflow に渡す(`workflow-template.js` 参照)。
+   - `precondition` ← `## Preconditions` body (1 sentence minimum requirement)
+   - `focus` ← `## What to check` body
+   - `signals` ← `## Static signals` body
+   - `fpNote` ← `## False positives` body
+3. Sort the assembled `perspectives[]` by priority (Critical-leaning first), and pass them as `args.perspectives` to the Workflow (see `workflow-template.js`).
 
-## 観点ファイルの形式
+## Perspective file format
 
 ```markdown
 ---
@@ -37,11 +37,11 @@ The code accepts user credentials.
 ## What to check / ## Static signals / ## False positives / ## Attack scenario / ## Impact / ## Remediation / ## References
 ```
 
-## 索引 (133観点 — ASVS v5.0 の17章構成)
+## Index (133 perspectives — ASVS v5.0 17-chapter structure)
 
 ### V1 Encoding and Sanitization
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P33 | SQLiStringConcat | P33-SQLiStringConcat.md |
 | P34 | SQLiORM | P34-SQLiORM.md |
 | P35 | NoSQLi | P35-NoSQLi.md |
@@ -63,8 +63,8 @@ The code accepts user credentials.
 | P131 | EmailHeaderInjection | P131-EmailHeaderInjection.md |
 
 ### V2 Validation and Business Logic
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P80 | PriceQuantityTrust | P80-PriceQuantityTrust.md |
 | P81 | StateTransitionBypass | P81-StateTransitionBypass.md |
 | P82 | RaceCondition | P82-RaceCondition.md |
@@ -75,8 +75,8 @@ The code accepts user credentials.
 | P129 | HTTPParameterPollution | P129-HTTPParameterPollution.md |
 
 ### V3 Web Frontend Security
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P40 | DOMXSS | P40-DOMXSS.md |
 | P119 | ClientSideStorage | P119-ClientSideStorage.md |
 | P120 | Clickjacking | P120-Clickjacking.md |
@@ -87,8 +87,8 @@ The code accepts user credentials.
 | P130 | ReverseTabnabbing | P130-ReverseTabnabbing.md |
 
 ### V4 API and Web Service
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P93 | RESTBOLA | P93-RESTBOLA.md |
 | P94 | RESTExposureMassAssignment | P94-RESTExposureMassAssignment.md |
 | P95 | RESTRateLimit | P95-RESTRateLimit.md |
@@ -101,8 +101,8 @@ The code accepts user credentials.
 | P114 | WebSocketSecurity | P114-WebSocketSecurity.md |
 
 ### V5 File Handling
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P86 | UploadValidation | P86-UploadValidation.md |
 | P87 | UploadPathExecution | P87-UploadPathExecution.md |
 | P88 | FileAccessTraversal | P88-FileAccessTraversal.md |
@@ -113,8 +113,8 @@ The code accepts user credentials.
 | P132 | ArchiveExtractionSlip | P132-ArchiveExtractionSlip.md |
 
 ### V6 Authentication
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P6 | PasswordStrength | P6-PasswordStrength.md |
 | P7 | PasswordHashing | P7-PasswordHashing.md |
 | P8 | AuthRateLimit | P8-AuthRateLimit.md |
@@ -127,8 +127,8 @@ The code accepts user credentials.
 | P15 | DefaultCredentials | P15-DefaultCredentials.md |
 
 ### V7 Session Management
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P16 | SessionIDEntropy | P16-SessionIDEntropy.md |
 | P17 | SessionCookieAttributes | P17-SessionCookieAttributes.md |
 | P18 | SessionTimeout | P18-SessionTimeout.md |
@@ -139,8 +139,8 @@ The code accepts user credentials.
 | P23 | CSRFProtection | P23-CSRFProtection.md |
 
 ### V8 Authorization
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P24 | IDOR | P24-IDOR.md |
 | P25 | ServerSideAuthz | P25-ServerSideAuthz.md |
 | P26 | HorizontalVerticalAuthz | P26-HorizontalVerticalAuthz.md |
@@ -152,21 +152,21 @@ The code accepts user credentials.
 | P32 | PropertyLevelAuthz | P32-PropertyLevelAuthz.md |
 
 ### V9 Self-contained Tokens
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P123 | SelfContainedTokens | P123-SelfContainedTokens.md |
 
 ### V10 OAuth and OIDC
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P110 | OAuth2AuthCodeFlow | P110-OAuth2AuthCodeFlow.md |
 | P111 | OIDCIDTokenValidation | P111-OIDCIDTokenValidation.md |
 | P112 | OAuthTokenHandling | P112-OAuthTokenHandling.md |
 | P113 | SAMLSecurity | P113-SAMLSecurity.md |
 
 ### V11 Cryptography
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P51 | WeakAlgorithms | P51-WeakAlgorithms.md |
 | P52 | HardcodedKeys | P52-HardcodedKeys.md |
 | P53 | IVNonceSalt | P53-IVNonceSalt.md |
@@ -176,8 +176,8 @@ The code accepts user credentials.
 | P57 | HMACSignatureVerification | P57-HMACSignatureVerification.md |
 
 ### V12 Secure Communication
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P71 | TLSEnforcement | P71-TLSEnforcement.md |
 | P72 | HSTS | P72-HSTS.md |
 | P73 | CertValidationDisabled | P73-CertValidationDisabled.md |
@@ -185,8 +185,8 @@ The code accepts user credentials.
 | P75 | InternalTransportEncryption | P75-InternalTransportEncryption.md |
 
 ### V13 Configuration
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P102 | DefaultConfigCredentials | P102-DefaultConfigCredentials.md |
 | P103 | DebugMode | P103-DebugMode.md |
 | P104 | CORSOverPermissive | P104-CORSOverPermissive.md |
@@ -201,8 +201,8 @@ The code accepts user credentials.
 | P121 | CloudStorageExposure | P121-CloudStorageExposure.md |
 
 ### V14 Data Protection
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P65 | DataMasking | P65-DataMasking.md |
 | P66 | TempDataCaching | P66-TempDataCaching.md |
 | P67 | MemoryClearing | P67-MemoryClearing.md |
@@ -211,8 +211,8 @@ The code accepts user credentials.
 | P70 | ExcessiveDataExposure | P70-ExcessiveDataExposure.md |
 
 ### V15 Secure Coding and Architecture
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P1 | TrustBoundary | P1-TrustBoundary.md |
 | P2 | LayerSeparation | P2-LayerSeparation.md |
 | P3 | MinimalExposure | P3-MinimalExposure.md |
@@ -225,8 +225,8 @@ The code accepts user credentials.
 | P133 | ContainerSecurity | P133-ContainerSecurity.md |
 
 ### V16 Security Logging and Error Handling
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P58 | StackTraceExposure | P58-StackTraceExposure.md |
 | P59 | GlobalExceptionHandler | P59-GlobalExceptionHandler.md |
 | P60 | SensitiveDataLogging | P60-SensitiveDataLogging.md |
@@ -236,14 +236,14 @@ The code accepts user credentials.
 | P64 | TimestampCorrelationID | P64-TimestampCorrelationID.md |
 
 ### V17 WebRTC
-| ID | 名前 | ファイル |
-|----|------|----------|
+| ID | Name | File |
+|----|------|------|
 | P122 | WebRTC | P122-WebRTC.md |
 
-## 参照資料
+## References
 
 - OWASP ASVS v5.0.0: https://github.com/OWASP/ASVS/tree/v5.0.0/5.0
 - OWASP WSTG: https://owasp.org/www-project-web-security-testing-guide/latest/
 - OWASP Cheat Sheet Series: https://cheatsheetseries.owasp.org/index.html
 
-> `refs` 欄の ASVS/WSTG/CS ID は知識ベースに基づく。ASVS v5.0 で章番号が再編されているため、最新の正確な要件番号は公式資料で照合すること。
+> ASVS/WSTG/CS IDs in the `refs` field are knowledge-base-derived. ASVS v5.0 reorganized chapter numbers; verify exact requirement numbers against official sources.

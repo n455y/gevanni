@@ -58,9 +58,9 @@ function computeSummary(jobs: SignatureJob[]): ReportSummary {
 }
 
 /**
- * Node.js の Buffer が JSON シリアライズされると
- * {"type":"Buffer","data":[60,33,...]} になる。
- * 常に base64 + UTF-8 テキストの両方で表現する。
+ * When a Node.js Buffer is JSON-serialized it becomes
+ * {"type":"Buffer","data":[60,33,...]}.
+ * Always represent as both base64 + UTF-8 text.
  */
 function normalizeBody(body: unknown): ReadableBody | null {
   if (body === null || body === undefined) return null;
@@ -86,7 +86,7 @@ function normalizeBody(body: unknown): ReadableBody | null {
 }
 
 /**
- * オブジェクトツリー内の body フィールドを再帰的に readable 形式に変換する。
+ * Recursively convert body fields in the object tree to readable format.
  */
 function normalizeBodies(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;

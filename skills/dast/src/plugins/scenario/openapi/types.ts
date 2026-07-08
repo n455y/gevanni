@@ -35,10 +35,11 @@ export interface OpenApiOperation {
   security?: string[];
 }
 
-// components/securitySchemes/<name> の解決に必要な情報。
-// x-gevanni-token を持つ scheme は、scenario 内で token を返す step の
-// レスポンスから token を抽出し、その scheme で保護された以降の operation へ
-// type/scheme に応じた送信形式（Bearer 等）で自動注入される。
+// Information needed to resolve components/securitySchemes/<name>.
+// A scheme with x-gevanni-token extracts the token from the response of the
+// token-returning step in the scenario, then automatically injects it into
+// subsequent operations protected by that scheme, formatted according to
+// the scheme type (Bearer, etc.).
 export interface OpenApiSecurityScheme {
   type: string;
   scheme?: string;

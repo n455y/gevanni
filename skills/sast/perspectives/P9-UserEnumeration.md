@@ -54,7 +54,7 @@ Structured error keys:
 - `{"error_code":"USER_NOT_FOUND"}`, `{"field":"username","message":"..."}`, `{"errors":[{"detail":"not found"}]}` (JSON:API)
 
 ## False positives
-- A **single generic message** ("invalid username or password" / "認証情報が正しくありません") is returned for both missing-user and wrong-password, AND the code path always performs a constant-time hash comparison against a dummy hash (or otherwise equalizes work). This is the correct pattern — skip it.
+- A **single generic message** ("invalid username or password") is returned for both missing-user and wrong-password, AND the code path always performs a constant-time hash comparison against a dummy hash (or otherwise equalizes work). This is the correct pattern — skip it.
 - Endpoints intended to be public directories (intentional member search, public profile listing) where disclosure is by design — note as accepted business risk, not a defect.
 - Lockout that triggers equally on fake and real usernames (rate-limit keyed only on IP/credential pair, not on account existence).
 - Timing differences under ~1ms that are below realistic network jitter and not from skipped hash work.

@@ -106,13 +106,13 @@ export async function loadOpenApiScenarios(source: unknown): Promise<Scenario[]>
 }
 
 // --- Loader plugin ---
-// シナリオ読み込み（ファイル → Scenario[]）を担うプラグイン。
-// 実行側（scenario:openapi、ReplayCommand ハンドラ）とは別責務・別名前空間。
-// 解析ロジックは既存の loadOpenApiScenarios 関数に委譲し、ここでは wrap するだけ。
+// Plugin responsible for loading scenarios (file → Scenario[]).
+// Separate responsibility and namespace from the execution side (scenario:openapi, ReplayCommand handler).
+// Parsing logic is delegated to the existing loadOpenApiScenarios function; this just wraps it.
 export default class OpenApiLoaderPlugin implements ScenarioLoaderPlugin {
   readonly name = "scenario-loader:openapi";
 
-  // loader は commandBus に何も登録しない（読み込み専用）
+  // loader does not register anything on the commandBus (read-only)
   async init(_context: PluginContext): Promise<void> {}
 
   async loadScenarios(source: unknown): Promise<Scenario[]> {

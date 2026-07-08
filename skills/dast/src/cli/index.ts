@@ -19,8 +19,8 @@ import type { Scenario } from "../types/models.ts";
 import { loadScenariosFromSpecs } from "./scenario-spec.ts";
 import { validateScenarios } from "./validate-scenarios.ts";
 
-// config 経路（plan/resume/report）用: scenarioSources を全 scenario-loader で自動判定。
-// 形式や挙動は従来（空配列フォールバック）を維持する。
+// config path (plan/resume/report): auto-detect scenarioSources across all scenario-loaders.
+// Format and behavior match the legacy path (empty array fallback).
 async function loadScenarios(
   sources: unknown[],
   loaders: ScenarioLoaderPlugin[],
@@ -97,18 +97,18 @@ async function bootstrap(
   const ctx = new RuntimeContext({ logger });
   const registry = new PluginRegistryImpl();
 
-  // プラグインの検索基準ディレクトリ（優先度順）
+  // Plugin search base directories (in priority order)
   // 1. .gevanni/plugins/
-  // 2. カレントディレクトリ
-  // 3. configファイルが配置してあるディレクトリ
+  // 2. current working directory
+  // 3. directory containing the config file
   const searchDirs = [
     path.join(process.cwd(), ".gevanni", "plugins"),
     process.cwd(),
     configDir,
   ];
 
-  // 各検索ディレクトリの plugins/autoload/ からプラグインを自動検出
-  // 明示的に指定されたプラグインを優先 (config → auto-discovered の順でロード)
+  // Auto-discover plugins from plugins/autoload/ in each search directory
+  // Prioritize explicitly specified plugins (load config → auto-discovered order)
   const autoloadBaseDirs = [
     path.join(process.cwd(), ".gevanni"),
     process.cwd(),
@@ -179,12 +179,12 @@ program
       const { config, configDir, logger, orchestrator, registry } =
         await bootstrap(opts.config, buildOverrides(opts));
 
-      // シナリオソース: --scenario フラグがあれば CLI 指定を優先、なければ config から
+      // Scenario sources: prefer --scenario flag if provided, otherwise fall back to config
       const scenarioSpecs: string[] =
         opts.scenario.length > 0
           ? opts.scenario
           : config.scenarios.map((s) => {
-              // カレントディレクトリ基準を先に試し、なければ configDir 基準
+              // Try cwd first, fall back to configDir
               const cwdPath = path.resolve(s.file);
               const resolvedPath = fs.existsSync(cwdPath)
                 ? cwdPath
@@ -224,7 +224,7 @@ program
       opts.config,
       buildOverrides(opts),
     );
-    // scenarios → "type:file" 形式に変換
+    // scenarios → convert to "type:file" format
     const scenarioSpecs = config.scenarios.map((s) => `${s.type}:${s.file}`);
     const scenarios = await loadScenarios(scenarioSpecs, loaders);
     await orchestrator.plan(scenarios);

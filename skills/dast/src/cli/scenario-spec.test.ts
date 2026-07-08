@@ -6,7 +6,7 @@ import { parseScenarioSpec, loadScenariosFromSpecs } from "./scenario-spec.ts";
 import type { Plugin, PluginRegistry, ScenarioLoaderPlugin } from "../core/plugin.ts";
 import { loadOpenApiScenarios } from "../plugins/scenario/openapi/loader.ts";
 
-// registry を最小モックするヘルパー
+// Minimal mock helper for the registry
 function makeRegistry(loader?: ScenarioLoaderPlugin): Pick<PluginRegistry, "getByName"> {
   return {
     getByName: <T extends Plugin = Plugin>(name: string) =>

@@ -1,10 +1,10 @@
 /**
- * validate-scenarios — 生成されたシナリオの遷移を実際のHTTPリクエストで検証する。
+ * validate-scenarios — validate generated scenario transitions by sending actual HTTP requests.
  *
- * CLI から `gevanni validate-scenarios -s <loader>:<path>` で実行する。
+ * Invoked via CLI: `gevanni validate-scenarios -s <loader>:<path>`.
  *
- * プラグインレジストリ経由でシナリオをロードし、対応する scenario プラグインに
- * 検証を委譲する。特定のフォーマット（OpenAPI 等）に依存しない汎用的な設計。
+ * Loads scenarios through the plugin registry and delegates validation to the
+ * corresponding scenario plugin. Format-agnostic design (not tied to OpenAPI etc.).
  */
 
 import { loadScenariosFromSpecs } from "./scenario-spec.ts";

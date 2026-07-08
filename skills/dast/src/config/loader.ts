@@ -3,11 +3,11 @@ import path from "node:path";
 import type { LogLevel } from "../core/logger.ts";
 
 /**
- * プラグイン指定の形式
- * - ":builtin:": 全ビルトインプラグイン
- * - string: ファイルパス (./.gevanni/plugins/custom.ts)
- * - {file, options?}: options 付きファイル指定
- * - {name, options}: ビルトインプラグイン名指定で options 上書き
+ * Plugin spec formats:
+ * - ":builtin:": all builtin plugins
+ * - string: file path (./.gevanni/plugins/custom.ts)
+ * - {file, options?}: file with options
+ * - {name, options}: builtin plugin name with options override
  */
 export type PluginSpec =
   | ":builtin:"
@@ -16,9 +16,9 @@ export type PluginSpec =
   | { name: string; options: Record<string, unknown> };
 
 /**
- * シナリオ指定の形式
+ * Scenario spec format:
  * - type: "openapi", "graphql", etc.
- * - file: ファイルパス
+ * - file: file path
  */
 export interface ScenarioSpec {
   type: string;

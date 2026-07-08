@@ -7,8 +7,8 @@ export interface ScenarioSpec {
   path: string;
 }
 
-// "-s <loader-name>:<path>" 形式の spec をパースする。
-// 最初のコロンで分割する（path 側にコロンが含まれていても可）。
+// Parse a "-s <loader-name>:<path>" spec.
+// Split on the first colon (path may contain colons).
 export function parseScenarioSpec(spec: string): ScenarioSpec {
   const idx = spec.indexOf(":");
   if (idx <= 0) {
@@ -19,8 +19,8 @@ export function parseScenarioSpec(spec: string): ScenarioSpec {
   return { loaderName: spec.slice(0, idx), path: spec.slice(idx + 1) };
 }
 
-// 各 spec をパースし、registry から対応する scenario-loader を取得して読み込む。
-// 名前省略・未知名・path 展開0件は即エラー（自動判定フォールバックなし）。
+// Parse each spec, resolve the corresponding scenario-loader from the registry, and load.
+// Missing name, unknown name, or zero expanded paths are immediate errors (no auto-detect fallback).
 export async function loadScenariosFromSpecs(
   specs: string[],
   registry: PluginRegistry,

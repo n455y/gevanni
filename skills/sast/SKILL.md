@@ -51,8 +51,8 @@ No tags needed. Pre-filtering is not done by the workflow — each agent reads t
 
 **Splitting strategy (scale control)** — this is the key to cost:
 
-- 1 unit = 1 endpoint. **絶対に束ねないこと。** エンドポイントごとに attack surface は異なる。束ねると精度が落ちる。
-- エージェント数が上限(1000)を超える場合は `workflow-template.js` が観点をバッチ分割し逐次実行する。切り捨ては行われない。
+- 1 unit = 1 endpoint. **Never bundle endpoints together.** Each endpoint has a different attack surface. Bundling reduces precision.
+- If the agent count exceeds the limit (1000), `workflow-template.js` splits perspectives into batches and executes them sequentially. Nothing is silently dropped.
 
 Output: `units: Array<{ id, method, route, desc, files, deps? }>`. `id` is `U01`, `U02`...
 
@@ -62,7 +62,7 @@ Output: `units: Array<{ id, method, route, desc, files, deps? }>`. `id` is `U01`
 - From each file read, assemble `{ id, name, precondition, focus, signals, fpNote, refs }`. Each file follows a frontmatter (`id`/`name`/`refs`) + body (`## Preconditions` / `## What to check` / `## Static signals` / `## False positives`).
   - `precondition` is the absolute minimum requirement (1 sentence). If the code doesn't satisfy it, the perspective is skipped **by the agent at runtime** (returns `findings: []`).
   - Per-unit tag filtering is **not used**. The workflow runs every perspective against every unit; agents self-determine relevance by reading the actual code and checking `precondition`.
-- Order perspectives by **priority** (Critical-leaning / high-frequency first) — `units × perspectives` が上限(1000)を超えた場合、`workflow-template.js` が観点をバッチ分割し逐次実行する。切り捨ては行われない。
+- Order perspectives by **priority** (Critical-leaning / high-frequency first) — if `units × perspectives` exceeds the limit (1000), `workflow-template.js` splits perspectives into batches and executes them sequentially. Nothing is silently dropped.
 
 Output: `perspectives: Array<{ id, name, precondition, focus, signals, fpNote, refs }>`.
 
@@ -77,7 +77,7 @@ Workflow({
 })
 ```
 
-The script runs `pipeline(units, parallel-assess each unit across all perspectives, merge)` and returns structured FINDINGS. Concurrency is 16, budget is applied automatically. 上限1000を超える場合は観点をバッチ分割し逐次実行する（切り捨てなし）。 The return value is `{ summary, units, findings }`.
+The script runs `pipeline(units, parallel-assess each unit across all perspectives, merge)` and returns structured FINDINGS. Concurrency is 16, budget is applied automatically. If the limit (1000) is exceeded, perspectives are split into batches and executed sequentially (nothing is silently dropped). The return value is `{ summary, units, findings }`.
 
 ### Step 4: Generate integrated report
 
@@ -103,7 +103,7 @@ Each finding has:
 | Running dynamic tests                                  | This skill is static-only. Dynamic testing goes to `gevanni`                                              |
 | Pre-filtering perspectives based on unit tags          | No per-unit pre-filtering. Every perspective runs on every unit. Each agent reads the actual code and checks the perspective's `## Preconditions` — if not met, returns `findings: []`. This eliminates "missing tag → skipped perspective → missed vulnerability". |
 | Tagging units with capability labels                   | Unit tags are not needed. Units only need `id`, `method`, `route`, `desc`, `files`. The workflow does not use tags for filtering. |
-| Bundling endpoints together to reduce unit count        | 1 unit = 1 endpoint を厳守。attack surface が異なるエンドポイントを束ねると見落としが増える。エージェント数超過はバッチ分割で対処する |
+| Bundling endpoints together to reduce unit count        | Strictly follow 1 unit = 1 endpoint. Bundling endpoints with different attack surfaces increases missed findings. Excess agents are handled by batch-splitting. |
 | Ignoring framework protections and mass-producing FPs  | Parameterized queries / automatic escaping / typed inputs are considered protections and are out of scope |
 | Silently dropping skipped perspectives                 | Explicitly list them in the report's "Out of scope" section (No-silent-caps)                              |
 | Stuffing multiple perspectives into one agent          | 1 agent = 1 perspective. This is the core of precision and FP reduction                                   |

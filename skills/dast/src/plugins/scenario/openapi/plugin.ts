@@ -147,9 +147,9 @@ export default class OpenApiPlugin implements ScenarioPlugin {
           `No exchange captured for replayId: ${config.replayId}`,
         );
       }
-      // 保存順 = 実行順 (main steps → secondOrder steps) により、
-      // 先頭が main exchange、残りが secondOrder exchanges となる。
-      // この順序契約はここ(ハンドラ)に局所化し、呼び出し側は配列順序を知らなくて済む。
+      // Storage order = execution order (main steps → secondOrder steps), so
+      // the first is the main exchange, the rest are secondOrder exchanges.
+      // This ordering contract is localized here (in the handler); callers don't need to know the array order.
       const [exchange, ...secondOrderExchanges] = exchanges;
       return new ReplayResult(exchange, secondOrderExchanges);
     });
@@ -211,7 +211,7 @@ async function executeSteps(
       config.proxyPort,
     );
 
-    // securitySchemes の x-gevanni-token で token を抽出（token を返す step の response）
+    // Extract token via x-gevanni-token in securitySchemes (from the response of the token-returning step)
     if (securitySchemes) {
       for (const [schemeName, scheme] of Object.entries(securitySchemes)) {
         if (!scheme.tokenExpr) continue;
