@@ -1,0 +1,17 @@
+{
+  "name": "gevanni-marketplace",
+  "owner": {
+    "name": "Genki Sakanashi"
+  },
+  "plugins": [
+    {
+      "name": "gevanni",
+      "source": "./",
+      "description": "Web application security scanning plugin with DAST, SAST, and scenario generation",
+      "version": "1.0.0",
+      "author": {
+        "name": "Genki Sakanashi"
+      }
+    }
+  ]
+}

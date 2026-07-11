@@ -9,7 +9,11 @@ Web application vulnerability scanner that runs as a Claude Code plugin, combini
 ## Install
 
 ```bash
-claude plugin install github.com/n455y/gevanni
+# Add the marketplace
+claude plugin marketplace add n455y/gevanni
+
+# Install the plugin
+claude plugin install gevanni
 ```
 
 ## `/gevanni:scan`
