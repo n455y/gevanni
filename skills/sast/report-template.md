@@ -3,17 +3,20 @@
 > **Target**: {{TARGET_NAME}}
 > **Scope**: {{SCOPE}}
 > **Date**: {{DATE}}
+> **Mode**: {{MODE}} (standard: unit × perspective | fast: whole-source per perspective)
 > **Method**: White-box static analysis (Dynamic Workflow fan-out)
-> **Perspectives applied**: {{POV_COUNT}} / Assessment units: {{UNIT_COUNT}}
+> **Perspectives applied**: {{POV_COUNT}} / Assessment units: {{UNIT_COUNT_OR_WHOLE}}
 
 ---
 
 ## 1. Executive Summary
 
-- Assessment units: **{{UNIT_COUNT}}**
+- Assessment units: **{{UNIT_COUNT_OR_WHOLE}}**
 - Perspectives applied: **{{POV_COUNT}}**
 - Total findings: **{{TOTAL}}**
   - Critical: **{{C}}** / High: **{{H}}** / Medium: **{{M}}** / Low: **{{L}}** / Info: **{{I}}**
+
+{{MODE_NOTE}}
 
 ### Critical / High Findings
 
@@ -30,8 +33,8 @@
 
 Sorted by severity → confidence.
 
-| # | Severity | Perspective ID | Route / Location | Title | Confidence |
-|---|----------|----------------|------------------|-------|-------------|
+| # | Severity | Perspective ID | Location (and route) | Title | Confidence |
+|---|----------|----------------|----------------------|-------|-------------|
 {{RISK_TABLE_ROWS}}
 
 ---

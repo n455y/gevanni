@@ -11,6 +11,11 @@ White-box static analysis (SAST-style). Split the target web application's **sou
 
 **Core principle**: 1 sub-agent = 1 assessment unit × 1 perspective. Keep the context small to increase detection precision and reduce false positives.
 
+**Two modes** (ask the user which to use in Step 0):
+
+- **standard** (default): fan out across the cartesian product of `units × perspectives`. Precision-first, fewer false positives, but more agents / higher cost & time.
+- **fast**: launch **one sub-agent per perspective** (max 133) and have each scan the **whole source code**. Faster and cheaper, but lower precision, more false positives, and a higher miss rate. Use for large codebases or quick triage.
+
 ## Prerequisites & Ethics
 
 - **Authorized targets only**. Step 0 confirms the target and authorization (in-house code / CTF / commissioned penetration testing / learning samples, etc.). If unclear, confirm with the user before executing.
@@ -23,6 +28,10 @@ White-box static analysis (SAST-style). Split the target web application's **sou
 
 - Identify the directory/repository to be assessed.
 - Confirm the authorization scope. If unclear, check with the user before proceeding.
+- **Confirm the scan mode** before launching the workflow. Present the trade-off and let the user choose:
+  - **standard** (default): precision-first, fewer FPs, but more agents / higher cost & time.
+  - **fast**: one agent per perspective (max 133) scanning the whole source — faster/cheaper, but lower precision, more FPs, higher miss rate.
+  - If the user doesn't specify, default to **standard**. Record the choice as `mode` (`standard` | `fast`) and pass it to Step 3 as `args.mode`.
 
 ### Step 1: Source analysis and unit splitting
 
@@ -56,6 +65,11 @@ No tags needed. Pre-filtering is not done by the workflow — each agent reads t
 
 Output: `units: Array<{ id, method, route, desc, files, deps? }>`. `id` is `U01`, `U02`...
 
+**Mode-specific behavior:**
+
+- **standard**: extracting `units` above is mandatory.
+- **fast**: `units` are **not used**. Instead, collect a **`sourceFiles`** list — the target source files under the assessment directory (relative paths from the repo root), with build artifacts / dependencies excluded (`node_modules, .git, dist, build, .next, vendor, target, __pycache__, *.min.js, *.map, package-lock.json, yarn.lock, .terraform, coverage`). This list is passed to Step 3 as `args.sourceFiles`. (Optionally, a lightweight route extraction in fast mode improves `unitId`/`route` attribution in findings, but it is not required.)
+
 ### Step 2: Load perspective catalog + pre-filter
 
 - Under `perspectives/`, there is **one file per perspective** (`P<seq>-<english-name>.md`). First read the overall index in `perspectives/README.md`, and skip perspective files for areas clearly absent from the target code (e.g. no GraphQL → skip V4 GraphQL; no file upload → skip V5 upload; no OAuth → skip V10). **Skipped areas must be explicitly listed in the report's "Out of scope" section (No-silent-caps)**.
@@ -68,16 +82,21 @@ Output: `perspectives: Array<{ id, name, precondition, focus, signals, fpNote, r
 
 ### Step 3: Fan-out assessment via Dynamic Workflow
 
-Pass `workflow-template.js` to Workflow via `scriptPath`, and inject the results of Steps 1 & 2 into `args`:
+Pass `workflow-template.js` to Workflow via `scriptPath`, and inject the results of Steps 1 & 2 (plus the `mode` from Step 0) into `args`:
 
 ```
 Workflow({
   scriptPath: "<absolute-path>/.claude/skills/sast/workflow-template.js",
-  args: { units, perspectives }
+  args: { units, perspectives, mode, sourceFiles }
+  // standard: { units, perspectives, mode: 'standard' }
+  // fast:     { perspectives, mode: 'fast', sourceFiles }   // units omitted
 })
 ```
 
-The script runs `pipeline(units, parallel-assess each unit across all perspectives, merge)` and returns structured FINDINGS. Concurrency is 16, budget is applied automatically. If the limit (1000) is exceeded, perspectives are split into batches and executed sequentially (nothing is silently dropped). The return value is `{ summary, units, findings }`.
+- **standard**: runs `pipeline(units, parallel-assess each unit across all perspectives, merge)`. Concurrency is 16; if the limit (1000) is exceeded, perspectives are split into batches and executed sequentially (nothing is silently dropped).
+- **fast**: runs `parallel(perspectives)` — one agent per perspective scanning the whole source. No batching is needed (max 133 perspectives < 1000 cap).
+
+The return value is `{ summary, units, findings }` in both modes. `summary.mode` is `'standard'` or `'fast'`; in fast mode `summary.unitsAssessed` is `null` and `summary.scannedFiles` holds the file count, with `units` collapsed into a single pseudo-unit `WHOLE`.
 
 ### Step 4: Generate integrated report
 
@@ -108,3 +127,8 @@ Each finding has:
 | Silently dropping skipped perspectives                 | Explicitly list them in the report's "Out of scope" section (No-silent-caps)                              |
 | Stuffing multiple perspectives into one agent          | 1 agent = 1 perspective. This is the core of precision and FP reduction                                   |
 | Reading all perspective files at once                  | Skip chapters for areas absent from the target (token efficiency)                                         |
+| Running fast mode without user confirmation            | Confirm the mode in Step 0. Default is standard. Fast mode is a precision/cost trade-off the user must opt into. |
+| Treating fast mode as one "catch-all" agent            | Even in fast mode, keep **1 agent = 1 perspective**. Each agent just scans the whole source for its single perspective — the perspective decomposition is preserved. |
+| Fabricating `unitId`/`route` in fast mode              | Fast mode scans the whole source; attribution is best-effort. If unclear, omit `unitId`/`route` and rely on `location` (file:line). Do not invent endpoints. |
+| Worrying about batch-splitting in fast mode            | Perspectives max out at 133 < 1000 cap, so fast mode never needs batching. Batch logic is standard-only. |
+| Forgetting the exclude patterns in fast mode           | Always exclude `node_modules`/`dist`/`.git`/etc. in `sourceFiles`. Otherwise agents read irrelevant files and cost explodes. |

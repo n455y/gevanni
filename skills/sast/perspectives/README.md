@@ -247,3 +247,10 @@ The code accepts user credentials.
 - OWASP Cheat Sheet Series: https://cheatsheetseries.owasp.org/index.html
 
 > ASVS/WSTG/CS IDs in the `refs` field are knowledge-base-derived. ASVS v5.0 reorganized chapter numbers; verify exact requirement numbers against official sources.
+
+## How the main agent uses this catalog
+
+The assembled `perspectives[]` (`{ id, name, precondition, focus, signals, fpNote, refs }`) is passed to the Workflow as `args.perspectives` in **both** standard and fast modes. The mode only changes the fan-out shape:
+
+- **standard**: perspectives are combined with `units` (units × perspectives fan-out).
+- **fast**: perspectives are the **sole** driver — one agent per perspective, scanning the whole source. `units` are not used.
