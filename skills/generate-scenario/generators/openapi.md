@@ -10,11 +10,14 @@ Generate gevanni-compatible `x-gevanni-scenarios` entries for OpenAPI specs.
 
 ### Step 1: Discover project context
 
-1. Find existing OpenAPI spec files (`.openapi.yaml`, `.openapi.yml`, `.openapi.json`) in the project root and `.gevanni/scenarios/` directory.
-2. Read any existing spec to understand defined operations.
-3. Read the source code at the path given in `$ARGUMENTS` to discover HTTP endpoints.
+**⚠️ The source code is the single source of truth. An existing OpenAPI spec is a *reference* only — it is rarely complete or up to date.** Treat the spec as a hint (helpful for naming, example values, response shapes), then **reconstruct the full operation set from the code yourself**. Never trust the spec to enumerate endpoints, parameters, or auth requirements.
+
+1. Find existing OpenAPI spec files (`.openapi.yaml`, `.openapi.yml`, `.openapi.json`) in the project root and `.gevanni/scenarios/` directory. If found, read them **for reference only** — record the operations/parameters/examples they declare, but do not assume they are correct or exhaustive.
+2. Read the source code at the path given in `$ARGUMENTS` to discover HTTP endpoints. **This code-driven pass is authoritative.**
 
 ### Step 2: Analyze source code for HTTP endpoints
+
+**Build the complete operation list from the source code first — independently of any existing spec.** Only after the code-driven list is complete do you cross-check it against an existing spec (see the divergence report at the end of this step).
 
 Scan the source code for route definitions. Look for patterns across common frameworks:
 
@@ -83,6 +86,30 @@ While analyzing endpoints, identify any fields that require specific test data v
 - Vulnerability class(es) it is susceptible to
 - The exact parameter(s) involved (query name, body field, path param)
 - Code snippet (file:line) for reference
+
+### Step 3b: Divergence report against any existing spec
+
+The code-driven list from Step 2-3 is authoritative. If an OpenAPI spec was found in Step 1, cross-check it and report divergences — do **not** silently inherit the spec, and do **not** silently drop code-only endpoints.
+
+1. **Undocumented endpoints** — endpoints present in the code but **absent from the spec**. These are the most important: they are exactly what the stale spec failed to capture. **Include all of them** in the generated spec (with code-derived parameters/auth), and list them in the report:
+   ```
+   ➕ Undocumented (code-only) endpoints — adding to spec:
+      • POST /rest/admin/application-configuration (no entry in existing spec)
+      • GET /ftp/{file} (no entry in existing spec)
+   ```
+2. **Spec-only endpoints** — operations declared in the spec but **not found in the code**. These are likely stale/removed. Flag them as deprecated candidates and **exclude by default** unless the user confirms they exist (e.g. mounted by a framework mechanism the code scan could not statically resolve):
+   ```
+   ➖ Spec-only endpoints — not found in code, excluded (confirm if real):
+      • DELETE /rest/legacy/feedback (defined in spec, no route in code)
+   ```
+3. **Shape mismatches** — operations present in both, but where the spec's parameters, request body, response shape, or auth requirement disagree with the code. The **code wins**: generate the operation using the code-derived shape, and note the discrepancy for the report:
+   ```
+   ⚠️ Shape mismatches — using code-derived shape, spec differs:
+      • PUT /rest/user/{id} — spec lists 4 body fields, code accepts 7; spec marks it public, code requires bearerAuth
+   ```
+4. **Trust spec only where the code is silent** — example values, response schemas, and operation naming can be borrowed from the spec **only when the code provides no signal**. When borrowing, note it. Never borrow a spec's endpoint list, parameter names, or auth declaration over what the code shows.
+
+Output the divergence report in Step 5's coverage summary so gaps are visible (No-silent-caps).
 
 ### Step 4: Path parameter and type audit
 
