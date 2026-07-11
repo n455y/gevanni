@@ -32,6 +32,7 @@ White-box static analysis (SAST-style). Split the target web application's **sou
   - **standard** (default): precision-first, fewer FPs, but more agents / higher cost & time.
   - **fast**: one agent per perspective (max 133) scanning the whole source — faster/cheaper, but lower precision, more FPs, higher miss rate.
   - If the user doesn't specify, default to **standard**. Record the choice as `mode` (`standard` | `fast`).
+  - **Skip this prompt if a `mode` was already supplied by the caller** (e.g., when invoked from the `scan` skill, which confirms the mode in its own Step 0). Honor the supplied value and go straight to the matching step.
 
 ### Step 1: Source analysis and unit splitting (standard only)
 

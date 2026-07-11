@@ -38,8 +38,15 @@ Both sub-skills need user input. Collect everything before dispatching so the pa
 | Source directory | — | **Required** |
 | OpenAPI spec path | Optional | — |
 | Authorization scope | **Required** | **Required** |
+| SAST mode (`standard` \| `fast`) | — | **Required** |
 
 Confirm authorization for both target URL and source code. If the user only provides one (e.g., only a URL, no source), ask for the missing piece — a combined scan requires both.
+
+**Confirm the SAST mode before dispatching** (mirrors Step 0 of the `sast` skill). Present the trade-off and let the user choose:
+- **standard** (default): precision-first, fewer FPs, but more agents / higher cost & time.
+- **fast**: one agent per perspective (max 133) scanning the whole source — faster/cheaper, but lower precision, more FPs, higher miss rate.
+
+If the user doesn't specify, default to **standard**. Record the choice as `mode` (`standard` | `fast`) and pass it to the SAST agent in Step 1.
 
 ### Step 1: Parallel scan execution
 
@@ -55,9 +62,10 @@ SAST uses Dynamic Workflow internally, and the Workflow tool is only available i
       When done, return the findings as structured JSON."
    ```
 
-2. **Run SAST in the main context**:
+2. **Run SAST in the main context** — pass the `mode` chosen in Step 0 so the SAST skill skips its own mode prompt and runs that mode directly:
    ```
-   Run /sast against <source-dir> for static analysis.
+   Run /sast against <source-dir> for static analysis in <mode> mode
+   (where <mode> is `standard` or `fast`, as chosen in Step 0).
    ```
 
 3. Wait for the DAST background agent to complete (notified via `<task-notification>`).
