@@ -7,13 +7,13 @@ description: Use when the user wants a white-box (source-code) security review o
 
 ## Overview
 
-White-box static analysis (SAST-style). Split the target web application's **source code** by routing/handler units, then fan out sub-agents across the cartesian product of **perspectives (133) × units** for assessment. The execution engine is Dynamic Workflow. No dynamic testing (sending real requests) is performed — dynamic assessment is complemented by the `gevanni` scanner.
+White-box static analysis (SAST-style). Split the target web application's **source code** by routing/handler units, build a list of **unit × perspective** pairs (after README-area exclusion), then fan out one sub-agent per pair via Dynamic Workflow. The prompt places the **perspective block first and the unit second**, and pairs are sorted by perspective ID so adjacent agents share the perspective prefix (prompt-cache friendly). After fan-out, the main agent merges similar findings and checks for chained (combined) attacks. No dynamic testing is performed — dynamic assessment is complemented by the `gevanni` scanner.
 
-**Core principle**: 1 sub-agent = 1 assessment unit × 1 perspective. Keep the context small to increase detection precision and reduce false positives.
+**Core principle**: 1 sub-agent = 1 (assessment unit × perspective) pair. Keep the context small to increase detection precision and reduce false positives.
 
 **Two modes** (ask the user which to use in Step 0):
 
-- **standard** (default): fan out across the cartesian product of `units × perspectives`. Precision-first, fewer false positives, but more agents / higher cost & time.
+- **standard** (default): build a unit × perspective pair list (README-area exclusion only), then fan out one sub-agent per pair. Precision-first, fewer false positives, but more agents / higher cost & time.
 - **fast**: launch **one sub-agent per perspective** (max 133) and have each scan the **whole source code**. Faster and cheaper, but lower precision, more false positives, and a higher miss rate. Use for large codebases or quick triage.
 
 ## Prerequisites & Ethics
@@ -31,11 +31,11 @@ White-box static analysis (SAST-style). Split the target web application's **sou
 - **Confirm the scan mode** before launching the workflow. Present the trade-off and let the user choose:
   - **standard** (default): precision-first, fewer FPs, but more agents / higher cost & time.
   - **fast**: one agent per perspective (max 133) scanning the whole source — faster/cheaper, but lower precision, more FPs, higher miss rate.
-  - If the user doesn't specify, default to **standard**. Record the choice as `mode` (`standard` | `fast`) and pass it to Step 3 as `args.mode`.
+  - If the user doesn't specify, default to **standard**. Record the choice as `mode` (`standard` | `fast`).
 
-### Step 1: Source analysis and unit splitting
+### Step 1: Source analysis and unit splitting (standard only)
 
-Extract routing/handlers to create **assessment units**.
+Extract routing/handlers to create **assessment units**. (Fast mode skips this — go to Step 2-fast.)
 
 Framework-specific routing detection patterns:
 
@@ -53,54 +53,95 @@ Each unit should include:
 - `id`: `"U01"`, `"U02"`, ...
 - `method` + `route`: the HTTP method and path pattern
 - `desc`: short description of what this unit does (1-2 sentences)
-- `files`: list of source files (relative to repo root) that contain the handler code. Agents will read these to assess relevance.
+- `files`: list of source files (relative to repo root) that contain the handler code
 - `deps`: other source files called by the handler (for context)
 
-No tags needed. Pre-filtering is not done by the workflow — each agent reads the actual code and determines for itself whether its perspective applies.
+**Splitting strategy**: 1 unit = 1 endpoint. **Never bundle endpoints together.** Each endpoint has a different attack surface.
 
-**Splitting strategy (scale control)** — this is the key to cost:
+Output: `units: Array<{ id, method, route, desc, files, deps? }>`.
 
-- 1 unit = 1 endpoint. **Never bundle endpoints together.** Each endpoint has a different attack surface. Bundling reduces precision.
-- If the agent count exceeds the limit (1000), `workflow-template.js` splits perspectives into batches and executes them sequentially. Nothing is silently dropped.
+### Step 2-standard: Build unit × perspective pair list (via a dedicated sub-agent)
 
-Output: `units: Array<{ id, method, route, desc, files, deps? }>`. `id` is `U01`, `U02`...
+Launch **one dedicated sub-agent** (via the Agent tool) to build the pair list. Pass it:
+- `units` from Step 1
+- the full index content of `perspectives/README.md` (read it first and pass it in the prompt)
 
-**Mode-specific behavior:**
+**The sub-agent's task:**
+1. Scan the README index and exclude perspectives for areas **absolutely absent** from the target code, using the same loose, area-based criteria as the README scan:
+   - No GraphQL → skip GraphQL perspectives
+   - No file upload → skip upload perspectives
+   - No OAuth → skip OAuth perspectives
+   - No SAML → skip SAML perspectives
+   - No gRPC/WebSocket → skip the corresponding perspectives
+   - (Follow the README's chapter structure.)
+2. **Always return the excluded perspectives explicitly** as `droppedPerspectives: Array<{ povId, reason }>` (No-silent-caps — these go into the report's Out-of-scope section).
+3. Return the cartesian product of **all remaining perspectives × all units** as the pair list. Do **not** do per-unit precondition filtering — only README-area exclusion.
 
-- **standard**: extracting `units` above is mandatory.
-- **fast**: `units` are **not used**. Instead, collect a **`sourceFiles`** list — the target source files under the assessment directory (relative paths from the repo root), with build artifacts / dependencies excluded (`node_modules, .git, dist, build, .next, vendor, target, __pycache__, *.min.js, *.map, package-lock.json, yarn.lock, .terraform, coverage`). This list is passed to Step 3 as `args.sourceFiles`. (Optionally, a lightweight route extraction in fast mode improves `unitId`/`route` attribution in findings, but it is not required.)
+**Sub-agent output contract:**
+```json
+{
+  "pairs": [ { "unitId": "U01", "povId": "P1" }, ... ],
+  "droppedPerspectives": [ { "povId": "P4", "reason": "No GraphQL endpoints found" }, ... ]
+}
+```
 
-### Step 2: Load perspective catalog + pre-filter
+### Step 2-fast: Load perspectives + collect source files (fast only)
 
-- Under `perspectives/`, there is **one file per perspective** (`P<seq>-<english-name>.md`). First read the overall index in `perspectives/README.md`, and skip perspective files for areas clearly absent from the target code (e.g. no GraphQL → skip V4 GraphQL; no file upload → skip V5 upload; no OAuth → skip V10). **Skipped areas must be explicitly listed in the report's "Out of scope" section (No-silent-caps)**.
-- From each file read, assemble `{ id, name, precondition, focus, signals, fpNote, refs }`. Each file follows a frontmatter (`id`/`name`/`refs`) + body (`## Preconditions` / `## What to check` / `## Static signals` / `## False positives`).
-  - `precondition` is the absolute minimum requirement (1 sentence). If the code doesn't satisfy it, the perspective is skipped **by the agent at runtime** (returns `findings: []`).
-  - Per-unit tag filtering is **not used**. The workflow runs every perspective against every unit; agents self-determine relevance by reading the actual code and checking `precondition`.
-- Order perspectives by **priority** (Critical-leaning / high-frequency first) — if `units × perspectives` exceeds the limit (1000), `workflow-template.js` splits perspectives into batches and executes them sequentially. Nothing is silently dropped.
+Fast mode skips unit splitting. Instead:
+- Read `perspectives/README.md` and exclude perspectives for areas **absolutely absent** from the target code (same loose README-area criteria as Step 2-standard). Keep a list of excluded perspectives for the Out-of-scope section.
+- Read each remaining `P<seq>-<name>.md` and assemble `{ id, name, precondition, focus, signals, fpNote, refs }`.
+- Collect a **`sourceFiles`** list — target source files under the assessment directory (relative paths from repo root), excluding build artifacts/dependencies (`node_modules, .git, dist, build, .next, vendor, target, __pycache__, *.min.js, *.map, package-lock.json, yarn.lock, .terraform, coverage`).
 
-Output: `perspectives: Array<{ id, name, precondition, focus, signals, fpNote, refs }>`.
+Output: `perspectives: Array<{...}>` and `sourceFiles: Array<relative-path>`.
 
-### Step 3: Fan-out assessment via Dynamic Workflow
+### Step 3: Launch the Workflow (split if pairs > 1000)
 
-Pass `workflow-template.js` to Workflow via `scriptPath`, and inject the results of Steps 1 & 2 (plus the `mode` from Step 0) into `args`:
+**standard:**
+- If `pairs.length <= 1000`, launch `workflow-standard.js` once:
+  ```
+  Workflow({
+    scriptPath: "<absolute-path>/skills/sast/workflow-standard.js",
+    args: { pairs, units, perspectives }
+  })
+  ```
+  (`perspectives` here = the perspective objects for the povIds that survived exclusion; assemble them by reading the corresponding `P<seq>-*.md` files, or have the Step 2 sub-agent return them.)
+- If `pairs.length > 1000`, **split `pairs` into chunks of ≤ 1000** and launch `workflow-standard.js` **multiple times sequentially** (workflow self-recursion is limited to 1 level, so splitting must happen on the main-agent side). Concatenate each run's `findings` into one array. Log the per-chunk counts.
 
+**fast:**
 ```
 Workflow({
-  scriptPath: "<absolute-path>/.claude/skills/sast/workflow-template.js",
-  args: { units, perspectives, mode, sourceFiles }
-  // standard: { units, perspectives, mode: 'standard' }
-  // fast:     { perspectives, mode: 'fast', sourceFiles }   // units omitted
+  scriptPath: "<absolute-path>/skills/sast/workflow-fast.js",
+  args: { perspectives, sourceFiles }
 })
 ```
+Perspectives max out at 133 < 1000, so no splitting is needed.
 
-- **standard**: runs `pipeline(units, parallel-assess each unit across all perspectives, merge)`. Concurrency is 16; if the limit (1000) is exceeded, perspectives are split into batches and executed sequentially (nothing is silently dropped).
-- **fast**: runs `parallel(perspectives)` — one agent per perspective scanning the whole source. No batching is needed (max 133 perspectives < 1000 cap).
+Both templates return `{ summary, units, findings }` with the same shape. `summary.mode` is `'standard'` or `'fast'`.
 
-The return value is `{ summary, units, findings }` in both modes. `summary.mode` is `'standard'` or `'fast'`; in fast mode `summary.unitsAssessed` is `null` and `summary.scannedFiles` holds the file count, with `units` collapsed into a single pseudo-unit `WHOLE`.
+### Step 4: Fan-out assessment (inside the Workflow)
 
-### Step 4: Generate integrated report
+This runs inside the Dynamic Workflow (no main-agent action needed):
+- **standard**: `workflow-standard.js` sorts `pairs` by `povId`, then runs one sub-agent per pair. Each prompt places the **perspective block first, then the unit block** (cache-friendly). No precondition self-check — README-area exclusion already guaranteed applicability.
+- **fast**: `workflow-fast.js` runs one sub-agent per perspective, scanning the whole source.
 
-Feed the Workflow's return value into `report-template.md`, generate a single Markdown report, and save & present it.
+### Step 5: Merge similar findings (main agent)
+
+The main agent takes all `findings` (concatenated across workflow chunks in standard mode) and **merges similar findings into one**:
+- Merge criterion: same `povId` **AND** same or adjacent `location` (same function / same file, nearby lines).
+- When merging: adopt the highest severity/confidence among the merged set; aggregate the multiple evidence/location snippets into the surviving finding.
+- **Record the pre-merge count → post-merge count** (No-silent-caps).
+- This requires LLM judgment — do it directly in the main-agent context (not pure code).
+
+### Step 6: Check for chained (combined) attacks (main agent)
+
+The main agent reviews the merged findings and looks for **chained attacks** that combine multiple findings into a more severe exploit:
+- Examples: SSRF + internal metadata endpoint exposure; IDOR + information disclosure; XXE + SSRF; auth bypass + privilege escalation.
+- Add each chain as a **new finding** (often higher severity). In its `evidence`, cite the originating findings' `povId`/`location`.
+- If no plausible chain exists, skip this step — do not fabricate.
+
+### Step 7: Generate the integrated report (main agent)
+
+Feed the merged findings (Step 5) + chained-attack findings (Step 6) into `report-template.md`, generate a single Markdown report, and save & present it. In the **Out-of-scope section**, list every perspective excluded in Step 2 (`droppedPerspectives`) — no silent caps.
 
 ## Output contract
 
@@ -120,15 +161,14 @@ Each finding has:
 | Common pitfall                                         | Correct approach                                                                                          |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | Running dynamic tests                                  | This skill is static-only. Dynamic testing goes to `gevanni`                                              |
-| Pre-filtering perspectives based on unit tags          | No per-unit pre-filtering. Every perspective runs on every unit. Each agent reads the actual code and checks the perspective's `## Preconditions` — if not met, returns `findings: []`. This eliminates "missing tag → skipped perspective → missed vulnerability". |
-| Tagging units with capability labels                   | Unit tags are not needed. Units only need `id`, `method`, `route`, `desc`, `files`. The workflow does not use tags for filtering. |
-| Bundling endpoints together to reduce unit count        | Strictly follow 1 unit = 1 endpoint. Bundling endpoints with different attack surfaces increases missed findings. Excess agents are handled by batch-splitting. |
+| Per-unit precondition filtering in the Step 2 sub-agent | Step 2 does README-area exclusion ONLY (GraphQL/OAuth/upload absent → skip). Do not drop pairs by per-unit precondition judgment — the area-based exclusion already guarantees applicability. |
+| Silently dropping excluded perspectives                | The Step 2 sub-agent MUST return `droppedPerspectives`; list them in the report's Out-of-scope section (No-silent-caps) |
+| Bundling endpoints together to reduce unit count        | Strictly follow 1 unit = 1 endpoint. Bundling endpoints with different attack surfaces increases missed findings. |
 | Ignoring framework protections and mass-producing FPs  | Parameterized queries / automatic escaping / typed inputs are considered protections and are out of scope |
-| Silently dropping skipped perspectives                 | Explicitly list them in the report's "Out of scope" section (No-silent-caps)                              |
-| Stuffing multiple perspectives into one agent          | 1 agent = 1 perspective. This is the core of precision and FP reduction                                   |
-| Reading all perspective files at once                  | Skip chapters for areas absent from the target (token efficiency)                                         |
-| Running fast mode without user confirmation            | Confirm the mode in Step 0. Default is standard. Fast mode is a precision/cost trade-off the user must opt into. |
-| Treating fast mode as one "catch-all" agent            | Even in fast mode, keep **1 agent = 1 perspective**. Each agent just scans the whole source for its single perspective — the perspective decomposition is preserved. |
-| Fabricating `unitId`/`route` in fast mode              | Fast mode scans the whole source; attribution is best-effort. If unclear, omit `unitId`/`route` and rely on `location` (file:line). Do not invent endpoints. |
-| Worrying about batch-splitting in fast mode            | Perspectives max out at 133 < 1000 cap, so fast mode never needs batching. Batch logic is standard-only. |
+| Stuffing multiple perspectives into one agent          | 1 agent = 1 (unit × perspective) pair (standard) or 1 perspective (fast). This is the core of precision and FP reduction |
+| Launching one giant Workflow when pairs > 1000          | Split `pairs` into chunks of ≤ 1000 and launch `workflow-standard.js` multiple times sequentially. Workflow self-recursion is limited to 1 level, so splitting happens on the main-agent side. |
+| Putting the unit block before the perspective block in the prompt | Standard prompt order is **perspective first, unit second** (cache-friendly). `workflow-standard.js` already does this. |
 | Forgetting the exclude patterns in fast mode           | Always exclude `node_modules`/`dist`/`.git`/etc. in `sourceFiles`. Otherwise agents read irrelevant files and cost explodes. |
+| Treating fast mode as one "catch-all" agent            | Even in fast mode, keep **1 agent = 1 perspective**. Each agent just scans the whole source for its single perspective. |
+| Fabricating `unitId`/`route` in fast mode              | Fast mode scans the whole source; attribution is best-effort. If unclear, omit `unitId`/`route` and rely on `location` (file:line). |
+| Skipping the merge (Step 5) or chain check (Step 6)    | Both are main-agent steps after fan-out. Merging reduces noise; chain checks catch escalated attacks neither finding shows alone. |
