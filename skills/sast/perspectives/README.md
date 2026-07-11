@@ -250,7 +250,9 @@ The code accepts user credentials.
 
 ## How the main agent uses this catalog
 
-The assembled `perspectives[]` (`{ id, name, precondition, focus, signals, fpNote, refs }`) is passed to the Workflow as `args.perspectives` in **both** standard and fast modes. The mode only changes the fan-out shape:
+The assembled `perspectives[]` (`{ id, name, precondition, focus, signals, fpNote, refs }`) is passed to the Workflow as `args.perspectives` in **both** modes (as a lookup dictionary). The mode changes how the fan-out is driven:
 
-- **standard**: perspectives are combined with `units` (units × perspectives fan-out).
-- **fast**: perspectives are the **sole** driver — one agent per perspective, scanning the whole source. `units` are not used.
+- **standard**: a dedicated sub-agent first builds a `pairs` list (`Array<{ unitId, povId }>`) — the cartesian product of **all units × the perspectives that survived README-area exclusion**. The main agent passes `{ pairs, units, perspectives }` to `workflow-standard.js`, which sorts `pairs` by `povId` and runs one agent per pair (perspective-first prompt, no per-unit precondition filtering). If `pairs.length > 1000`, the main agent splits `pairs` into chunks and launches the Workflow multiple times.
+- **fast**: perspectives are the **sole** driver — one agent per perspective, scanning the whole source. `units`/`pairs` are not used; the main agent passes `{ perspectives, sourceFiles }` to `workflow-fast.js`.
+
+See SKILL.md Step 2 (pair-list construction) and Step 3 (Workflow launch) for the exact procedure.
