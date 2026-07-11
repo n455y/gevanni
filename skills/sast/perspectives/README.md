@@ -15,7 +15,7 @@
    - `focus` ← `## What to check` body
    - `signals` ← `## Static signals` body
    - `fpNote` ← `## False positives` body
-3. Sort the assembled `perspectives[]` by priority (Critical-leaning first), and pass them as `args.perspectives` to the Workflow (see `workflow-template.js`).
+3. Sort the assembled `perspectives[]` by priority (Critical-leaning first), and pass them as `args.perspectives` to the Workflow (`workflow-standard.js` or `workflow-fast.js`, depending on the selected mode).
 
 ## Perspective file format
 
