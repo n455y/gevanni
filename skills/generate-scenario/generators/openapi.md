@@ -19,6 +19,13 @@ Generate gevanni-compatible `x-gevanni-scenarios` entries for OpenAPI specs.
 
 **Build the complete operation list from the source code first — independently of any existing spec.** Only after the code-driven list is complete do you cross-check it against an existing spec (see the divergence report at the end of this step).
 
+**⚠️ Exhaustive discovery process (do this — do not sample):** Coverage failures come from skimming. Treat endpoint discovery as an enumeration task with a count, not a search task that returns "the important ones".
+
+1. **Enumerate every candidate file** — list every source file that could define a route/handler, using framework-appropriate locations (controller/router/view directories, `pages/api` / `app/api`, `@Controller` classes, view modules). Record the file count.
+2. **Read every enumerated file.** Do not sample a subset. For each file, extract every route/handler it defines. A file with zero routes is still "checked" (record it); the point is that **zero candidate files are skipped**.
+3. **Resolve mount points.** When routes are mounted indirectly (e.g. `app.use('/x', router)`, `include()`, `@RequestMapping` at class level, sub-app composition), resolve the full prefix so the effective path is recorded for every handler.
+4. **Record, for the report:** `candidate_files: N`, `files_with_routes: M`, `discovered_operations: K`. Every operation goes into the list — including GET-on-static, file-serving, health/version, webhooks, and anything that looks "boring". Boring endpoints are still attack surface and still need a scenario.
+
 Scan the source code for route definitions. Look for patterns across common frameworks:
 
 - **Express/Connect/Koa**: `app.get`, `app.post`, `router.put`, `router.delete`, etc.
@@ -79,7 +86,7 @@ While analyzing endpoints, identify any fields that require specific test data v
 - **Test account identifiers**: Fields like `accountId`, `customerId` when testing multi-tenant systems — actual IDs must be provided
 - **Application-specific codes**: Any other domain-specific codes or identifiers needed for testing
 
-**⚠️ Do NOT invent these values.** Document them in a list to be confirmed with the user in Step 5.
+**⚠️ Do NOT invent these values.** Document them in a list to be confirmed with the user in Step 6.
 
 **Record for each endpoint**:
 
@@ -87,7 +94,7 @@ While analyzing endpoints, identify any fields that require specific test data v
 - The exact parameter(s) involved (query name, body field, path param)
 - Code snippet (file:line) for reference
 
-### Step 3b: Divergence report against any existing spec
+### Step 4: Divergence report against any existing spec
 
 The code-driven list from Step 2-3 is authoritative. If an OpenAPI spec was found in Step 1, cross-check it and report divergences — do **not** silently inherit the spec, and do **not** silently drop code-only endpoints.
 
@@ -109,9 +116,21 @@ The code-driven list from Step 2-3 is authoritative. If an OpenAPI spec was foun
    ```
 4. **Trust spec only where the code is silent** — example values, response schemas, and operation naming can be borrowed from the spec **only when the code provides no signal**. When borrowing, note it. Never borrow a spec's endpoint list, parameter names, or auth declaration over what the code shows.
 
-Output the divergence report in Step 5's coverage summary so gaps are visible (No-silent-caps).
+**Report the counts explicitly** (No-silent-caps):
 
-### Step 4: Path parameter and type audit
+```
+🔍 Discovery & divergence summary:
+   • Candidate files:        N
+   • Files with routes:      M
+   • Operations discovered:  K   (all from code)
+   • Undocumented (code-only): U   ← added to spec
+   • Spec-only (not in code):   S   ← excluded by default
+   • Shape mismatches:          X   ← code-derived shape used
+```
+
+If `K` is far smaller than the codebase would suggest (e.g. only a handful of endpoints from a large app), **stop and re-scan** — you almost certainly skimmed instead of enumerating. The same applies if `U` is 0 despite a non-trivial app: an existing spec rarely covers everything the code exposes.
+
+### Step 5: Path parameter and type audit
 
 While building the operation list, check for gevanni limitations:
 
@@ -145,7 +164,7 @@ While building the operation list, check for gevanni limitations:
 
 4. **CAPTCHA or other bot protection**: If source code references CAPTCHA (`captcha`, `captchaId` fields, captcha verification middleware), those endpoints cannot be scanned automatically. Log: "⚠️ `{operationId}` appears to require CAPTCHA — automated scanning not possible."
 
-### Step 5: Confirm required parameters with the user
+### Step 6: Confirm required parameters with the user
 
 Before proceeding to spec generation, confirm all required runtime parameters that cannot be extracted from the code or from prior responses via OpenAPI Links.
 
@@ -227,10 +246,10 @@ These are automatically resolved by gevanni at runtime — no user input needed.
 
 **E. Proceed only after confirmation:**
 
-- Do NOT proceed to Step 3 until all required credentials and test data have been provided
+- Do NOT proceed to Step 7 until all required credentials and test data have been provided
 - If the user cannot provide certain values (e.g., valid coupon codes), mark the corresponding operations as `scannable: false` and note the reason
 
-### Step 6: Build or update the OpenAPI spec
+### Step 7: Build or update the OpenAPI spec
 
 #### operationId is MANDATORY for every operation
 
@@ -265,7 +284,7 @@ Ensure the `.gevanni/scenarios/` directory exists before writing the spec.
 - Do not remove or modify existing scenarios unless the user asks
 - Write the updated spec to `.gevanni/scenarios/openapi.yaml`
 
-### Step 7: Coverage planning — ensure every scannable operation has a scenario
+### Step 8: Coverage planning — ensure every scannable operation has a scenario
 
 This is a **mandatory validation step** before finalizing the spec. The goal is to maximize vulnerability detection coverage.
 
@@ -278,7 +297,7 @@ List every `operationId` in `paths` and mark each with:
 | operationId  | Unique operation identifier                                           |
 | auth         | `no-auth` / `bearerAuth` / `cookie`                                   |
 | params       | Parameter types present (`query`, `path`, `body`, `header`, `cookie`) |
-| vuln classes | From Step 2b: `sqli`, `nosqli`, `xss`, `pathtraversal`, `xxe`, etc.   |
+| vuln classes | From Step 3: `sqli`, `nosqli`, `xss`, `pathtraversal`, `xxe`, etc.   |
 | has scenario | ✅ or ❌                                                              |
 | scenario id  | The `x-gevanni-scenarios` id that covers this operation               |
 | scannable    | Is automated scanning feasible?                                       |
@@ -297,7 +316,7 @@ Priority order (highest first):
    - Diff strategy depends on response type
 
 3. **BearerAuth + any vulnerability**
-   - **Scan via a `[login, <op>]` scenario**: `securitySchemes.x-gevanni-token` captures the JWT from `login` and gevanni injects `Authorization: Bearer <token>` into the operation automatically (see Step 2c-3). No header parameter or Link needed.
+   - **Scan via a `[login, <op>]` scenario**: `securitySchemes.x-gevanni-token` captures the JWT from `login` and gevanni injects `Authorization: Bearer <token>` into the operation automatically (see Step 5-3). No header parameter or Link needed.
    - `diff: exact` for injection-vulnerable endpoints, `json` for read-only endpoints with dynamic responses
 
 4. **No-auth + no known vulnerability**
@@ -310,22 +329,34 @@ Priority order (highest first):
 
 **C. Coverage target**
 
-The final spec must have:
+Compute the coverage ratio:
 
+```
+coverage = covered_operations / total_operations
+        where covered_operations = operations referenced by some scenario
+          and total_operations   = all operationIds in paths
+          and uncovered-but-justified = operations marked scannable: false (CAPTCHA/TOTP/etc.)
+```
+
+The final spec must satisfy **all** of:
+
+- ✅ `coverage == 100%` **OR** every uncovered operation is explicitly marked `scannable: false` with a reason. Any uncovered, scannable operation is a **hard blocker** — do not write the spec file until it has a scenario or a justified `scannable: false`.
 - ✅ At least one scenario per **no-auth** operation (unless explicitly marked unscannable)
-- ✅ Every **injection-vulnerable** operation (Step 2b) has a scenario with `diff: exact`
+- ✅ Every **injection-vulnerable** operation (Step 3) has a scenario with `diff: exact`
 - ✅ BearerAuth operations are covered by a `[login, <op>]` scenario; gevanni injects the JWT via `securitySchemes` (`x-gevanni-token`)
 - ❌ CAPTCHA/TOTP operations are marked `scannable: false`
 
-**D. Output the coverage summary** before proceeding to Step 4. This makes gaps visible and ensures nothing is accidentally skipped.
+If you find yourself with, say, 4 scenarios for an app you discovered 40+ operations in, **that is a bug in your process, not an acceptable result** — go back to Step 2 and enumerate properly.
 
-### Step 8: Generate x-gevanni-scenarios
+**D. Output the coverage summary** before proceeding to Step 9. This makes gaps visible and ensures nothing is accidentally skipped.
+
+### Step 9: Generate x-gevanni-scenarios
 
 Follow these rules when generating scenarios:
 
 **⚠️ CRITICAL: Use user-provided values in operation examples:**
 
-When defining operations in the OpenAPI spec, use the **actual values provided by the user in Step 5** for:
+When defining operations in the OpenAPI spec, use the **actual values provided by the user in Step 6** for:
 
 - `requestBody.example` fields (credentials, coupon codes, invite codes, etc.)
 - `parameters.example` values (test IDs, specific identifiers, etc.)
@@ -395,7 +426,7 @@ x-gevanni-scenarios:
 
 gevanni evaluates `x-gevanni-token` against each step's response; once captured, the token is injected into all subsequent `security: bearerAuth` steps. `oauth2` schemes work the same way (`x-gevanni-token: $response.body#/access_token`); `apiKey` (`in: header`) injects into the configured header. Multi-step chains beyond the leading token step are only needed when operations are genuinely chained (e.g. create-then-read).
 
-**⚠️ Use user-provided credentials**: The `requestBody.example` for the `login` operation must use the **actual credentials provided by the user in Step 5**, not invented placeholders.
+**⚠️ Use user-provided credentials**: The `requestBody.example` for the `login` operation must use the **actual credentials provided by the user in Step 6**, not invented placeholders.
 
 #### Multi-step flows
 
@@ -443,14 +474,14 @@ paths:
 | ---------------------------------------- | -------------------------- | --------------------------------------------- |
 | Resource ID returned by create operation | **OpenAPI Link**           | `$response.body#/id` in next step             |
 | Authentication token from login          | **securitySchemes + Link** | `x-gevanni-token: $response.body#/token`      |
-| Discount/coupon code to apply            | **User-provided value**    | Use code from Step 5 in `requestBody.example` |
-| Invitation code to accept invite         | **User-provided value**    | Use code from Step 5 in `requestBody.example` |
-| Test account ID for multi-tenant testing | **User-provided value**    | Use ID from Step 5 in path parameter example  |
+| Discount/coupon code to apply            | **User-provided value**    | Use code from Step 6 in `requestBody.example` |
+| Invitation code to accept invite         | **User-provided value**    | Use code from Step 6 in `requestBody.example` |
+| Test account ID for multi-tenant testing | **User-provided value**    | Use ID from Step 6 in path parameter example  |
 
 **Rule of thumb:**
 
 - If the value can be **extracted from a prior response** → Use OpenAPI Links
-- If the value must be **provided externally** (coupon code, invite code, test credentials) → Ask user in Step 5, use provided value in `example`
+- If the value must be **provided externally** (coupon code, invite code, test credentials) → Ask user in Step 6, use provided value in `example`
 
 #### oneOf variants
 
@@ -537,7 +568,7 @@ Set `diff` to control how response differences are detected when a signature rep
 
 | Scenario type                     | Recommended strategy   | Reason                                              |
 | --------------------------------- | ---------------------- | --------------------------------------------------- |
-| SQLi / NoSQLi suspected (Step 2b) | `exact`                | boolean/diff signatures need value-level comparison |
+| SQLi / NoSQLi suspected (Step 3) | `exact`                | boolean/diff signatures need value-level comparison |
 | GET with no injection risk        | `json` or omit (exact) | safe default                                        |
 | Multi-step login flows            | `exact`                | token exchange differences need value comparison    |
 | HTML endpoints                    | `html`                 | strip dynamic scripts/styles before comparison      |
@@ -560,7 +591,7 @@ Set `diff` to control how response differences are detected when a signature rep
 
 Omit `diff` to use the default `exact` strategy.
 
-### Step 9: Verify scenario transition integrity
+### Step 10: Verify scenario transition integrity
 
 Before final validation, verify that every generated scenario can correctly navigate from step to step at runtime. A scenario with broken transitions will fail silently at scan time — this step catches those failures at generation time.
 
@@ -669,7 +700,7 @@ After the static checks pass, verify that scenarios can actually navigate by sen
 
 **Prerequisites:**
 
-- The target server must be running and reachable at the base URL from Step 5
+- The target server must be running and reachable at the base URL from Step 6
 - If the server is not running, skip this section and emit a note: "⚠️ Target server not available — skipping runtime transition verification."
 
 **Procedure:**
@@ -702,7 +733,7 @@ After the static checks pass, verify that scenarios can actually navigate by sen
    - 🔗 Link resolution: whether each `$response.body#/...` expression resolved to a non-empty value
 
 4. **Interpret the output:**
-   - **All steps ✅ and all Links 🔗 resolved**: transitions are valid — proceed to Step 10
+   - **All steps ✅ and all Links 🔗 resolved**: transitions are valid — proceed to Step 11
    - **Some steps ❌**: the scenario cannot navigate — fix the spec (wrong path, missing parameter, unreachable server) and re-run
    - **Steps ✅ but Links 🔗 unresolved**: the server responded but the response shape doesn't match the Link expressions — verify the `$response.body#/...` paths against the actual response JSON
    - **4xx/5xx status codes are NOT failures**: a 401 without auth or a 422 with a test value is normal during validation — only connection-level failures (ECONNREFUSED, timeout, DNS) count as transition errors
@@ -749,7 +780,7 @@ After the static checks pass, verify that scenarios can actually navigate by sen
 
 7. **Re-run after fixes**: if you modified the spec to fix transition errors, re-run the validation script to confirm the fix.
 
-### Step 10: Validate
+### Step 11: Validate
 
 Check the generated output:
 
@@ -762,9 +793,9 @@ Check the generated output:
 7. `diff.strategy` (when set) is one of `exact`, `json`, `html`
 8. **Path parameter warnings**: For every operation that defines `in: path` parameters, emit a warning that these will not be scanned by the default parser plugins. Suggest duplicating as query parameters or ensuring `parser:path` / `mutation:path` plugins are registered.
 9. **Integer path parameter check**: For any path parameter with `type: integer`, warn that injection signatures using AppendValue will break the URL. Suggest changing to `type: string` with `example: "<valid integer>"`.
-10. **Diff strategy vs vulnerability class**: For every scenario where Step 2b identified SQLi or NoSQLi risk, verify the diff strategy is **not** `json`. If it is, emit an **error** and force `exact`. This is the most common cause of false negatives.
+10. **Diff strategy vs vulnerability class**: For every scenario where Step 3 identified SQLi or NoSQLi risk, verify the diff strategy is **not** `json`. If it is, emit an **error** and force `exact`. This is the most common cause of false negatives.
 11. **BearerAuth without token flow**: For every operation with `security: bearerAuth`, verify (a) the scheme is declared in `components/securitySchemes` with `x-gevanni-token`, (b) a scenario reaches it via a token-returning step (e.g. `[login, <op>]`), and (c) no `Authorization` header parameter was added (gevanni injects it from the scheme). Emit a warning if any are missing.
-12. **CAPTCHA endpoints**: If Step 2b flagged CAPTCHA requirements, mark the scenario `scannable: false` and emit a warning.
+12. **CAPTCHA endpoints**: If Step 3 flagged CAPTCHA requirements, mark the scenario `scannable: false` and emit a warning.
 13. **operationId presence (CRITICAL)**: Iterate every method+path in `paths` and assert each operation has an `operationId`. Any operation missing `operationId` is an **error** — it cannot be referenced by a scenario and will never be scanned. List all offenders and assign one before finishing.
 14. **operationId uniqueness (CRITICAL)**: Collect all operationIds; if any duplicate exists, emit an **error** and rename (especially for multi-method paths sharing a name).
 15. **Full coverage check (CRITICAL)**: Compute `defined_operationIds − scenario_referenced_operationIds`. Every operationId not referenced by some scenario is a **gap**. Emit each as `❌ <operationId> not covered`. The only acceptable uncovered operations are those explicitly marked `scannable: false` (CAPTCHA/TOTP). Iterate until the gap list is empty or all remaining are justified.
@@ -775,6 +806,18 @@ Run tests if available:
 ```bash
 npx vitest run src/plugins/loader/openapi-loader.test.ts
 ```
+
+## Common Mistakes
+
+| Pitfall | Correct approach |
+|---------|-----------------|
+| Sampling "important" endpoints instead of enumerating all | Discovery is enumeration, not search. List every candidate file, read every one, record `candidate_files / files_with_routes / discovered_operations`. Zero skipped. |
+| Stopping at the first few routes found via grep | A single `grep` for route patterns is a starting point to locate files, not the discovery itself. Open each file and extract every handler it defines. |
+| Ignoring routes mounted indirectly (`app.use('/x', router)`, `include()`, class-level `@RequestMapping`) | Resolve every mount point to its full effective path; a handler's true path is its prefix + its own route. |
+| Trusting the existing spec's operation list | The spec is a reference. The operation set comes from the code (Step 4 divergence report). An app with a spec still needs full code enumeration. |
+| Shipping a spec with coverage < 100% | Every uncovered operation needs either a scenario or a justified `scannable: false`. Low coverage in a large app means you skimmed — re-scan. |
+| Treating "boring" endpoints (health, version, static, file-serving) as out of scope | They are attack surface. Give them scenarios like everything else. |
+| Reporting "done" without the discovery/coverage counts | The counts are mandatory — they are what make a skim detectable. |
 
 ## Reference: x-gevanni-scenarios schema
 
