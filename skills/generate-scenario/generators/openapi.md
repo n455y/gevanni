@@ -23,8 +23,32 @@ Generate gevanni-compatible `x-gevanni-scenarios` entries for OpenAPI specs.
 
 1. **Enumerate every candidate file** — list every source file that could define a route/handler, using framework-appropriate locations (controller/router/view directories, `pages/api` / `app/api`, `@Controller` classes, view modules). Record the file count.
 2. **Read every enumerated file.** Do not sample a subset. For each file, extract every route/handler it defines. A file with zero routes is still "checked" (record it); the point is that **zero candidate files are skipped**.
-3. **Resolve mount points.** When routes are mounted indirectly (e.g. `app.use('/x', router)`, `include()`, `@RequestMapping` at class level, sub-app composition), resolve the full prefix so the effective path is recorded for every handler.
-4. **Record, for the report:** `candidate_files: N`, `files_with_routes: M`, `discovered_operations: K`. Every operation goes into the list — including GET-on-static, file-serving, health/version, webhooks, and anything that looks "boring". Boring endpoints are still attack surface and still need a scenario.
+3. **Resolve mount points — mounts and handlers live on separate lines, do not read them in isolation.** When routes are mounted indirectly (`app.use('/x', router)`, `include()`, `@RequestMapping` / `@Controller` at class level, sub-app composition), resolve the full prefix so the effective path is recorded for every handler. This is especially critical in single-file entrypoints like Express `server.ts`, where middleware mounts and route handlers are interleaved across hundreds of lines:
+   - `app.use('/rest/basket', security.isAuthorized())` is **not** an operation by itself — it is a prefix + auth declaration. The actual operations are the later `app.get('/rest/basket/:id', ...)` and `app.post('/rest/basket/:id/checkout', ...)` lines. The effective paths inherit the `/rest/basket` prefix already; do not double-count and do not drop the auth requirement.
+   - A sub-router (`app.use('/api', router)` + `router.get('/users', ...)`) yields effective path `/api/users`. Always combine the mount prefix with the handler's own path.
+   - Multiple methods on the same path (`GET /api/Users` + `POST /api/Users`) are **distinct operations** with **distinct operationIds** — never collapse them.
+   - `app.use('/path', mw1, mw2, handler)` middleware stacks: even when the registration looks like `app.use(...)`, if a `.get`/`.post` handler is registered against that path it is one operation. `/rest/basket/:id` and `/rest/basket/:id/checkout` are different paths and different operations.
+   - Path-order matters for file-serving mounts: `/ftp/:file`, `/ftp/quarantine/:file`, `/.well-known/:file`, `/encryptionkeys/:file`, `/support/logs/:file` are **separate** operations even though they share a serving function (see Step 3).
+4. **Record, for the report:** `candidate_files: N`, `files_with_routes: M`, `discovered_operations: K` — where **`K` is the grep line count from the mechanical extraction below**, not the count of operationIds you transcribed into `paths`. Every operation goes into the list — including GET-on-static, file-serving, health/version, webhooks, and anything that looks "boring". Boring endpoints are still attack surface and still need a scenario.
+
+**⚠️ Mechanically extract routes with grep — do not eyeball the codebase.** Reading files and picking out "the routes you notice" is exactly how coverage fails. Route discovery is an enumeration task driven by a command, not a reading task. Run a framework-appropriate route-extraction command and use its **line count** as the authoritative `discovered_operations` number:
+
+| Framework | Extraction command (run from project root) |
+| --------- | ------------------------------------------ |
+| Express / Connect / Koa | `grep -rEn "\b(app\|router)\.(get\|post\|put\|delete\|patch\|use)\(" server.ts routes/ lib/ src/` |
+| NestJS | `grep -rEn "@(Get\|Post\|Put\|Delete\|Patch)\(" src/` then resolve each handler's full path against its class-level `@Controller('/prefix')` |
+| Spring Boot (Java/Kotlin) | `grep -rEn "@(Get\|Post\|Put\|Delete\|Patch)Mapping" src/main/` then resolve against class-level `@RequestMapping` |
+| Fastify | `grep -rEn "fastify\.(get\|post\|route)\(\|\.route\(\{" src/` (also read the `method:` field of `.route({...})` objects) |
+| Django | `grep -rEn "path\(\|re_path\(\|@.*\.route\(" */urls.py */views.py` |
+| Flask | `grep -rEn "@app\.route\(\|@.*\.route\(" app/` |
+| FastAPI | `grep -rEn "@router\.(get\|post\|put\|delete\|patch)\(\|@app\.(get\|post)\(" app/` |
+
+Rules:
+
+1. **The grep line count is your candidate `discovered_operations`.** Record it in the Step 4 divergence report as `discovered_operations`. Do not replace it with the count of operationIds you happened to transcribe into `paths`.
+2. **If the number of operationIds you wrote into `paths` is far smaller than the grep line count, you skipped handlers.** Go back and read the grep output line-by-line; reconcile every line into an operation (or document why a line is not an operation — see the Step 2 mount-merge rules below and the Step 3 dynamic-endpoint rules) before proceeding. A 5:1 gap is a bug, not a simplification.
+3. **`.use(` mounts count too.** In Express, `app.use('/prefix', router)` and `app.use('/prefix', middleware)` lines appear in the grep output; they are not operations themselves but they are prefix sources — see the mount-merge rules below. Don't discard them; resolve them.
+4. When the framework isn't in the table, grep for the route-defining keyword(s) the codebase actually uses and apply the same line-count discipline.
 
 Scan the source code for route definitions. Look for patterns across common frameworks:
 
@@ -73,7 +97,14 @@ Scan the source code for known vulnerability patterns and classify each endpoint
 - `fs.readFile(` / `path.resolve(` / `res.sendFile(` using `req.params.*` or `req.query.*`
 - `express.static(` over user-controllable directories
 - `serveIndex(` / `servePublicFiles(` / `serveQuarantineFiles(` / `serveKeyFiles(` / `serveLogFiles(` — directory listing + file download endpoints (commonly mounted at `/ftp/:file`, `/support/logs/:file`, `/encryptionkeys/:file`, `/.well-known/:file`). These expose a **path parameter** that is prime target for path traversal payloads (`../../etc/passwd`, `%00` null byte bypass). **Always add these to `paths`** with the file name as a `path` parameter.
+- **File-serving functions are mounted multiple times — each mount is a separate operation.** A single `servePublicFiles()` / `serveIndex()` / `serveKeyFiles()` / `serveLogFiles()` / `serveQuarantineFiles()` helper is typically mounted at several paths. Enumerate **every mount**, not just the first. Juice Shop mounts file-serving at `/ftp/:file`, `/ftp/quarantine/:file`, `/.well-known/:file`, `/encryptionkeys/:file`, `/support/logs/:file`, and the directory-listing `serveIndex` at `/ftp`, `/.well-known`, `/encryptionkeys`, `/support/logs`. Each path becomes its own operation with its own `file`/path parameter. Search for every `app.use('/...', <serveFunction>)` line; do not stop at one.
 - Template render with user-controlled layout/path (`res.render(req.body.layout)`) — Local File Read (LFR)
+
+**ORM-generated REST endpoints (Sequelize / LoopBack / similar) — enumerate from the models, not the routes.** When a framework auto-generates CRUD routes for every model (e.g. Sequelize exposing `GET/POST/PUT/DELETE /api/<Model>` and `/api/<Model>/:id` for each model in a `models/` directory), there is no per-route `app.get(...)` line to grep — the routes are synthesized. To capture them:
+
+- List every file in the `models/` directory (e.g. `ls models/`). Each model file (e.g. `user.ts`, `feedback.ts`) implies an `/api/<Model>` resource (model name pluralized per the framework convention — Sequelize uses the pluralized table name like `Users`, `Products`, `Feedbacks`, `Complaints`, `Cards`, `Addresss`, `Deliverys`, `Recycles`, `Quantitys`, `SecurityQuestions`, `SecurityAnswers`, `Challenges`, `PrivacyRequests`).
+- For each generated resource, treat `GET /api/<Model>` (list), `POST /api/<Model>` (create), `GET /api/<Model>/:id`, `PUT /api/<Model>/:id`, `DELETE /api/<Model>/:id` as candidate operations, **then cross-check against the explicit `app.get/post/put/delete('/api/<Model>...')` lines in the entrypoint** — Juice Shop overrides auth or denies several of these (e.g. `app.delete('/api/Products/:id', security.denyAll())`). The explicit line wins for method availability and auth; if a method has no explicit handler, infer it from the model (the framework still serves it).
+- Record the model count and the derived operation count in the divergence report so the grep-vs-spec gap stays explained.
 
 **Other classes**: XXE (XML parsing), OS Command Injection (`exec`, `spawn`), SSTI (template engines with user input), LDAP/XPath injection, Open Redirect (`res.redirect(req.query.*)`), SSRF (`fetch(req.body.url)` / `axios(req.body.*)`), RCE (`vm.runInContext(` / `eval(` with user input), Business Logic (role escalation, price/coupon manipulation)
 
@@ -122,13 +153,13 @@ The code-driven list from Step 2-3 is authoritative. If an OpenAPI spec was foun
 🔍 Discovery & divergence summary:
    • Candidate files:        N
    • Files with routes:      M
-   • Operations discovered:  K   (all from code)
+   • Operations discovered:  K   (all from code; K = grep line count from Step 2 extraction)
    • Undocumented (code-only): U   ← added to spec
    • Spec-only (not in code):   S   ← excluded by default
    • Shape mismatches:          X   ← code-derived shape used
 ```
 
-If `K` is far smaller than the codebase would suggest (e.g. only a handful of endpoints from a large app), **stop and re-scan** — you almost certainly skimmed instead of enumerating. The same applies if `U` is 0 despite a non-trivial app: an existing spec rarely covers everything the code exposes.
+If `K` (the grep line count) is far larger than the number of operationIds you placed in `paths`, **stop and reconcile** — you transcribed only a subset. Every grep line must map to an operation (or be explicitly explained away as a middleware-only mount, a same-path-different-method duplicate already captured, or a dynamic endpoint covered in Step 3). Unexplained gaps are a hard blocker. The same applies if `U` is 0 despite a non-trivial app: an existing spec rarely covers everything the code exposes.
 
 ### Step 5: Path parameter and type audit
 
@@ -332,21 +363,26 @@ Priority order (highest first):
 Compute the coverage ratio:
 
 ```
-coverage = covered_operations / total_operations
-        where covered_operations = operations referenced by some scenario
-          and total_operations   = all operationIds in paths
+coverage = covered_operations / discovered_operations
+        where covered_operations    = operations referenced by some scenario
+          and discovered_operations = the grep line count from Step 2's extraction
+                                      (NOT the count of operationIds you wrote into paths)
           and uncovered-but-justified = operations marked scannable: false (CAPTCHA/TOTP/etc.)
+                                       OR explicitly explained as a grep-line that merges into
+                                          another operation (same-path-different-method already
+                                          captured, middleware-only mount, ORM-derived method
+                                          without an explicit handler)
 ```
 
 The final spec must satisfy **all** of:
 
-- ✅ `coverage == 100%` **OR** every uncovered operation is explicitly marked `scannable: false` with a reason. Any uncovered, scannable operation is a **hard blocker** — do not write the spec file until it has a scenario or a justified `scannable: false`.
+- ✅ `coverage == 100%` against **`discovered_operations` (the Step 2 grep line count)** — not against the operationIds you happened to write. If `paths` has 24 operationIds but the grep found 170 route lines, coverage is ~14%, not 100%. Every uncovered grep line needs either a scenario, a justified `scannable: false`, or an explicit merge explanation (same-path-different-method / middleware-only / ORM-derived). **Any uncovered, unexplained grep line is a hard blocker — do not write the spec file until it is reconciled.**
 - ✅ At least one scenario per **no-auth** operation (unless explicitly marked unscannable)
 - ✅ Every **injection-vulnerable** operation (Step 3) has a scenario with `diff: exact`
 - ✅ BearerAuth operations are covered by a `[login, <op>]` scenario; gevanni injects the JWT via `securitySchemes` (`x-gevanni-token`)
 - ❌ CAPTCHA/TOTP operations are marked `scannable: false`
 
-If you find yourself with, say, 4 scenarios for an app you discovered 40+ operations in, **that is a bug in your process, not an acceptable result** — go back to Step 2 and enumerate properly.
+If the number of operationIds in `paths` is much smaller than the Step 2 grep line count (e.g. 24 operationIds against 170 grep lines — a 7:1 ratio), **that is a bug in your process, not an acceptable result** — go back to Step 2, read the grep output line-by-line, and reconcile every line before finalizing. The grep count is the truth; your transcribed operationId count is the claim being audited.
 
 **D. Output the coverage summary** before proceeding to Step 9. This makes gaps visible and ensures nothing is accidentally skipped.
 
@@ -798,7 +834,7 @@ Check the generated output:
 12. **CAPTCHA endpoints**: If Step 3 flagged CAPTCHA requirements, mark the scenario `scannable: false` and emit a warning.
 13. **operationId presence (CRITICAL)**: Iterate every method+path in `paths` and assert each operation has an `operationId`. Any operation missing `operationId` is an **error** — it cannot be referenced by a scenario and will never be scanned. List all offenders and assign one before finishing.
 14. **operationId uniqueness (CRITICAL)**: Collect all operationIds; if any duplicate exists, emit an **error** and rename (especially for multi-method paths sharing a name).
-15. **Full coverage check (CRITICAL)**: Compute `defined_operationIds − scenario_referenced_operationIds`. Every operationId not referenced by some scenario is a **gap**. Emit each as `❌ <operationId> not covered`. The only acceptable uncovered operations are those explicitly marked `scannable: false` (CAPTCHA/TOTP). Iterate until the gap list is empty or all remaining are justified.
+15. **Full coverage check (CRITICAL)**: Compute `defined_operationIds − scenario_referenced_operationIds`. Every operationId not referenced by some scenario is a **gap**. Emit each as `❌ <operationId> not covered`. The only acceptable uncovered operations are those explicitly marked `scannable: false` (CAPTCHA/TOTP). Iterate until the gap list is empty or all remaining are justified. **Note:** this check catches operations you wrote into `paths` but forgot to give a scenario. It does NOT catch operations you never wrote into `paths` at all — that is the job of the Step 2 grep-vs-`paths` reconciliation (and Step 8 coverage, whose denominator is the grep line count). Both must pass.
 16. **Multi-method path coverage**: For paths with multiple methods (GET+POST, GET+PUT, etc.), confirm **each method's** operationId has its own scenario. A single scenario cannot cover two operations on the same path.
 
 Run tests if available:

@@ -18,7 +18,7 @@ Generate gevanni-compatible scenario definitions for various API specification f
 
 ### openapi
 
-Generate `x-gevanni-scenarios` for OpenAPI 3.0 specs. Analyzes web application source code and creates gevanni-compatible scenario definitions. **The source code is authoritative.** If an OpenAPI spec already exists in the target, treat it as a reference only — it may be incomplete or stale — and reconstruct the full operation set from the code (see `generators/openapi.md` Step 1 and Step 4).
+Generate `x-gevanni-scenarios` for OpenAPI 3.0 specs. Analyzes web application source code and creates gevanni-compatible scenario definitions. **The source code is authoritative.** If an OpenAPI spec already exists in the target, treat it as a reference only — it may be incomplete or stale — and reconstruct the full operation set from the code. Discovery is grep-driven, not eyeball-driven: run a framework-appropriate route-extraction command, use its line count as the authoritative operation count, and anchor final coverage to that count (see `generators/openapi.md` Step 2 for extraction, Step 3 for dynamic endpoints, Step 4 for the divergence report, and Step 8 for coverage).
 
 ## Workflow
 
