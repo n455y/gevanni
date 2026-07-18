@@ -363,21 +363,26 @@ Priority order (highest first):
 Compute the coverage ratio:
 
 ```
-coverage = covered_operations / total_operations
-        where covered_operations = operations referenced by some scenario
-          and total_operations   = all operationIds in paths
+coverage = covered_operations / discovered_operations
+        where covered_operations    = operations referenced by some scenario
+          and discovered_operations = the grep line count from Step 2's extraction
+                                      (NOT the count of operationIds you wrote into paths)
           and uncovered-but-justified = operations marked scannable: false (CAPTCHA/TOTP/etc.)
+                                       OR explicitly explained as a grep-line that merges into
+                                          another operation (same-path-different-method already
+                                          captured, middleware-only mount, ORM-derived method
+                                          without an explicit handler)
 ```
 
 The final spec must satisfy **all** of:
 
-- ✅ `coverage == 100%` **OR** every uncovered operation is explicitly marked `scannable: false` with a reason. Any uncovered, scannable operation is a **hard blocker** — do not write the spec file until it has a scenario or a justified `scannable: false`.
+- ✅ `coverage == 100%` against **`discovered_operations` (the Step 2 grep line count)** — not against the operationIds you happened to write. If `paths` has 24 operationIds but the grep found 170 route lines, coverage is ~14%, not 100%. Every uncovered grep line needs either a scenario, a justified `scannable: false`, or an explicit merge explanation (same-path-different-method / middleware-only / ORM-derived). **Any uncovered, unexplained grep line is a hard blocker — do not write the spec file until it is reconciled.**
 - ✅ At least one scenario per **no-auth** operation (unless explicitly marked unscannable)
 - ✅ Every **injection-vulnerable** operation (Step 3) has a scenario with `diff: exact`
 - ✅ BearerAuth operations are covered by a `[login, <op>]` scenario; gevanni injects the JWT via `securitySchemes` (`x-gevanni-token`)
 - ❌ CAPTCHA/TOTP operations are marked `scannable: false`
 
-If you find yourself with, say, 4 scenarios for an app you discovered 40+ operations in, **that is a bug in your process, not an acceptable result** — go back to Step 2 and enumerate properly.
+If the number of operationIds in `paths` is much smaller than the Step 2 grep line count (e.g. 24 operationIds against 170 grep lines — a 7:1 ratio), **that is a bug in your process, not an acceptable result** — go back to Step 2, read the grep output line-by-line, and reconcile every line before finalizing. The grep count is the truth; your transcribed operationId count is the claim being audited.
 
 **D. Output the coverage summary** before proceeding to Step 9. This makes gaps visible and ensures nothing is accidentally skipped.
 
