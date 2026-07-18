@@ -24,7 +24,26 @@ Generate gevanni-compatible `x-gevanni-scenarios` entries for OpenAPI specs.
 1. **Enumerate every candidate file** — list every source file that could define a route/handler, using framework-appropriate locations (controller/router/view directories, `pages/api` / `app/api`, `@Controller` classes, view modules). Record the file count.
 2. **Read every enumerated file.** Do not sample a subset. For each file, extract every route/handler it defines. A file with zero routes is still "checked" (record it); the point is that **zero candidate files are skipped**.
 3. **Resolve mount points.** When routes are mounted indirectly (e.g. `app.use('/x', router)`, `include()`, `@RequestMapping` at class level, sub-app composition), resolve the full prefix so the effective path is recorded for every handler.
-4. **Record, for the report:** `candidate_files: N`, `files_with_routes: M`, `discovered_operations: K`. Every operation goes into the list — including GET-on-static, file-serving, health/version, webhooks, and anything that looks "boring". Boring endpoints are still attack surface and still need a scenario.
+4. **Record, for the report:** `candidate_files: N`, `files_with_routes: M`, `discovered_operations: K` — where **`K` is the grep line count from the mechanical extraction below**, not the count of operationIds you transcribed into `paths`. Every operation goes into the list — including GET-on-static, file-serving, health/version, webhooks, and anything that looks "boring". Boring endpoints are still attack surface and still need a scenario.
+
+**⚠️ Mechanically extract routes with grep — do not eyeball the codebase.** Reading files and picking out "the routes you notice" is exactly how coverage fails. Route discovery is an enumeration task driven by a command, not a reading task. Run a framework-appropriate route-extraction command and use its **line count** as the authoritative `discovered_operations` number:
+
+| Framework | Extraction command (run from project root) |
+| --------- | ------------------------------------------ |
+| Express / Connect / Koa | `grep -rEn "\b(app\|router)\.(get\|post\|put\|delete\|patch\|use)\(" server.ts routes/ lib/ src/` |
+| NestJS | `grep -rEn "@(Get\|Post\|Put\|Delete\|Patch)\(" src/` then resolve each handler's full path against its class-level `@Controller('/prefix')` |
+| Spring Boot (Java/Kotlin) | `grep -rEn "@(Get\|Post\|Put\|Delete\|Patch)Mapping" src/main/` then resolve against class-level `@RequestMapping` |
+| Fastify | `grep -rEn "fastify\.(get\|post\|route)\(\|\.route\(\{" src/` (also read the `method:` field of `.route({...})` objects) |
+| Django | `grep -rEn "path\(\|re_path\(\|@.*\.route\(" */urls.py */views.py` |
+| Flask | `grep -rEn "@app\.route\(\|@.*\.route\(" app/` |
+| FastAPI | `grep -rEn "@router\.(get\|post\|put\|delete\|patch)\(\|@app\.(get\|post)\(" app/` |
+
+Rules:
+
+1. **The grep line count is your candidate `discovered_operations`.** Record it in the Step 4 divergence report as `discovered_operations`. Do not replace it with the count of operationIds you happened to transcribe into `paths`.
+2. **If the number of operationIds you wrote into `paths` is far smaller than the grep line count, you skipped handlers.** Go back and read the grep output line-by-line; reconcile every line into an operation (or document why a line is not an operation — see the Step 2 mount-merge rules below and the Step 3 dynamic-endpoint rules) before proceeding. A 5:1 gap is a bug, not a simplification.
+3. **`.use(` mounts count too.** In Express, `app.use('/prefix', router)` and `app.use('/prefix', middleware)` lines appear in the grep output; they are not operations themselves but they are prefix sources — see the mount-merge rules below. Don't discard them; resolve them.
+4. When the framework isn't in the table, grep for the route-defining keyword(s) the codebase actually uses and apply the same line-count discipline.
 
 Scan the source code for route definitions. Look for patterns across common frameworks:
 
@@ -122,13 +141,13 @@ The code-driven list from Step 2-3 is authoritative. If an OpenAPI spec was foun
 🔍 Discovery & divergence summary:
    • Candidate files:        N
    • Files with routes:      M
-   • Operations discovered:  K   (all from code)
+   • Operations discovered:  K   (all from code; K = grep line count from Step 2 extraction)
    • Undocumented (code-only): U   ← added to spec
    • Spec-only (not in code):   S   ← excluded by default
    • Shape mismatches:          X   ← code-derived shape used
 ```
 
-If `K` is far smaller than the codebase would suggest (e.g. only a handful of endpoints from a large app), **stop and re-scan** — you almost certainly skimmed instead of enumerating. The same applies if `U` is 0 despite a non-trivial app: an existing spec rarely covers everything the code exposes.
+If `K` (the grep line count) is far larger than the number of operationIds you placed in `paths`, **stop and reconcile** — you transcribed only a subset. Every grep line must map to an operation (or be explicitly explained away as a middleware-only mount, a same-path-different-method duplicate already captured, or a dynamic endpoint covered in Step 3). Unexplained gaps are a hard blocker. The same applies if `U` is 0 despite a non-trivial app: an existing spec rarely covers everything the code exposes.
 
 ### Step 5: Path parameter and type audit
 
